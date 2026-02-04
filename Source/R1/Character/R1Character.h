@@ -1,13 +1,18 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interface/R1HighlightInterface.h"
+#include "R1Define.h"
+#include "GameplayTagContainer.h"
+#include "AbilitySystemInterface.h"
 #include "R1Character.generated.h"
 
+
 UCLASS()
-class R1_API AR1Character : public ACharacter
+class R1_API AR1Character : public ACharacter, public  IR1HighlightInterface, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -23,14 +28,43 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void HandleGameplayEvent(FGameplayTag EventTag);
+
+public:
+	virtual void Highlight() override;
+	virtual void UnHighlight() override;
+
+	virtual void OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker);
+	virtual void OnDead(TObjectPtr<AR1Character> Attacker);
+
+	void RefreshHpBarRatio();
+public:
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	virtual void InitAbilitySystem();
 
 protected:
+	UPROPERTY(BlueprintReadOnly)
+	bool bHighlighted = false;
+
+public:
+	UPROPERTY(BlueprintReadWrite)
+	ECreatureState CreatureState = ECreatureState::Moving;
+
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TObjectPtr<class UWidgetComponent> HpBarComponent;
+
+protected:
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class USpringArmComponent> SpringArm;
+	TObjectPtr<class UR1AttributeSet> AttributeSet;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UCameraComponent> Camera;
+public:
+	void AddCharacterAbility();
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TArray<TSubclassOf<class UGameplayAbility>> StartupAbilities;
 };

@@ -1,9 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+
 
 
 #include "R1Pawn.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
@@ -17,14 +16,15 @@ AR1Pawn::AR1Pawn()
 	CapsuleComponent->InitCapsuleSize(34.0f, 88.0f);
 	RootComponent = CapsuleComponent;
 
-	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SK_Mesh"));
-	SkeletalMesh->SetupAttachment(CapsuleComponent);
-	SkeletalMesh->SetRelativeLocationAndRotation(FVector(0,0,-80),FRotator(0,-90,0));
+	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
+	Mesh->SetupAttachment(CapsuleComponent);
+	Mesh->SetRelativeLocationAndRotation(FVector(0, 0, -88), FRotator(0, -90, 0));
+	//
 
-	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArm->SetupAttachment(CapsuleComponent);
-	SpringArm->TargetArmLength = 500.0f;
-	SpringArm->SetRelativeRotation(FRotator(-30, 0, 0));
+	SpringArm->TargetArmLength = 700.f;
+
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm);

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #pragma once
 
@@ -27,17 +27,15 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
-
-	UPROPERTY(Category = "Character",VisibleAnywhere,BlueprintReadOnly)
+	UPROPERTY(Category=Character, VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UCapsuleComponent> CapsuleComponent;
-	
-	UPROPERTY( VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class USpringArmComponent> SpringArm;
 
-	UPROPERTY( VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UCameraComponent> Camera;
+	UPROPERTY(Category=Character, VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class USkeletalMeshComponent> Mesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class USkeletalMeshComponent> SkeletalMesh;
+	TObjectPtr<class USpringArmComponent> SpringArm;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UCameraComponent> Camera;
 };
