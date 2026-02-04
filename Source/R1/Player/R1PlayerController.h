@@ -35,6 +35,8 @@ private:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
 
+	void OnInventoryToggle();
+
 private:
 	void TickCursorTrace();
 	void ChaseTargetAndAttack();
@@ -50,6 +52,8 @@ private:
 	FVector CacheDestination;
 	float FollowTime;
 	bool bMousePressed = false;
+
+	bool bInventoryHidden = true;
 
 protected:
 	UPROPERTY(BlueprintReadOnly)

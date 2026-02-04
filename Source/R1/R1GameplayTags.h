@@ -7,6 +7,8 @@
 namespace R1GameplayTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SetDestination);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Interaction);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Inventory);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_Begin);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_End);

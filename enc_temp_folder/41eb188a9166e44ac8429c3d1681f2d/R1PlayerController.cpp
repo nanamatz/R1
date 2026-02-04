@@ -200,6 +200,8 @@ void AR1PlayerController::ChaseTargetAndAttack()
 				R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
 
 				SetCreatureState(ECreatureState::Skill);
+
+				TargetActor = HighlightActor;
 				
 			}
 		else
@@ -257,7 +259,6 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 		if (TargetActor)
 		{
 			TargetActor->OnDamaged(10, R1Player);
-			TargetActor = HighlightActor;
 		}
 		else
 		{
