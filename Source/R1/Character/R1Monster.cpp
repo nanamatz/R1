@@ -2,6 +2,7 @@
 
 
 #include "Character/R1Monster.h"
+#include "Components/CapsuleComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1MonsterAttributeSet.h"
 
@@ -11,7 +12,6 @@ AR1Monster::AR1Monster()
 
 	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>("AbilitySystemComponent");
 	AttributeSet = CreateDefaultSubobject<UR1MonsterAttributeSet>("MonsterAttributeSet");
-
 }
 
 void AR1Monster::BeginPlay()

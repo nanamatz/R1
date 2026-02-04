@@ -21,6 +21,7 @@ AR1Character::AR1Character()
 		HpBarComponent->SetDrawAtDesiredSize(true);
 		HpBarComponent->SetRelativeLocation(FVector(0, 0, 120));
 	}
+
 }
 
 // Called when the game starts or when spawned
