@@ -196,19 +196,23 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		return;
 	}
 
-
 	FVector Direction = TargetActor->GetActorLocation() - R1Player->GetActorLocation();
-
-	if (Direction.Length() < 250.f && bMousePressed)
+	if (Direction.Length() < 250.f)
 	{
-		TargetAttackActor = TargetActor;
-		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetAttackActor->GetActorLocation());
-		R1Player->SetActorRotation(Rotation);
+		if (TargetActor)
+			{
+				FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetActor->GetActorLocation());
+				R1Player->SetActorRotation(Rotation);
 
-		R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
+				R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
 
-		SetCreatureState(ECreatureState::Skill);
-		TargetActor = HighlightActor;
+				SetCreatureState(ECreatureState::Skill);
+				
+			}
+		else
+			{
+				TargetActor = nullptr;
+			}
 	}
 	else
 	{
@@ -220,7 +224,6 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		//FVector WorldDirection = Direction.GetSafeNormal();
 		//R1Player->AddMovementInput(WorldDirection, 1.0, false);
 	}
-	
 }
 
 void AR1PlayerController::SwitchCursorType(FHitResult& OutHit)
@@ -277,11 +280,12 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 {
 	if (EventTag.MatchesTag(R1GameplayTags::Event_Montage_Attack))
 	{
-		if(IsValid(TargetAttackActor))
-			{
-				TargetAttackActor->OnDamaged(10, R1Player);
-				TargetAttackActor = nullptr;
-			}
+		if (TargetActor)
+		{
+			TargetActor->OnDamaged(10, R1Player);
+			TargetActor = HighlightActor;
+			UE_LOG(LogTemp, Warning, TEXT("On Damaged Called!"));
+		}
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("No Target Actor to attack"));
