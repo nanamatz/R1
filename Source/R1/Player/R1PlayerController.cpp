@@ -56,6 +56,9 @@ void AR1PlayerController::SetupInputComponent()
 		auto ActionInventoryToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Inventory);
 		EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
 
+		//auto ActionInteract = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Interaction);
+
+
 		
 	}
 	else
@@ -150,6 +153,10 @@ void AR1PlayerController::TickCursorTrace()
 		return;
 	}
 
+	/*UE_LOG(LogTemp,Warning,TEXT("%s"),*OutCursorHit.GetActor()->GetName());*/
+
+	SwitchCursorType(OutCursorHit);
+
 	AR1Character* LocalHighlightActor = Cast<AR1Character>(OutCursorHit.GetActor());
 	if (LocalHighlightActor == nullptr)
 	{
@@ -217,6 +224,25 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		//FVector WorldDirection = Direction.GetSafeNormal();
 		//R1Player->AddMovementInput(WorldDirection, 1.0, false);
 	}
+}
+
+void AR1PlayerController::SwitchCursorType(FHitResult& OutHit)
+{
+	AActor* CurrentActorType = OutHit.GetActor();
+
+	if(CurrentActorType->ActorHasTag(FName("Enemy")))
+	{
+		CurrentMouseCursor = EMouseCursor::Crosshairs;
+	}
+	else if(CurrentActorType->ActorHasTag(FName("Interactable")))
+	{
+		CurrentMouseCursor = EMouseCursor::Hand;
+	}
+	else
+	{
+		CurrentMouseCursor = EMouseCursor::Default;
+	}
+	
 }
 
 ECreatureState AR1PlayerController::GetCreatureState()

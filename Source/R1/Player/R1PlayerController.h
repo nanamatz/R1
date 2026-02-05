@@ -41,6 +41,8 @@ private:
 	void TickCursorTrace();
 	void ChaseTargetAndAttack();
 
+	void SwitchCursorType(FHitResult& OutHit);
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	float ShortPressThreshold = 0.3f;
@@ -61,6 +63,12 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AR1Character> HighlightActor;
+
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<class UObject> TargetObject;	//TODO
+
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<class UObject> HighlightObject;	//TODO
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<class UAnimMontage> AttackMontage;

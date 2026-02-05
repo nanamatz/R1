@@ -12,6 +12,8 @@ AR1Monster::AR1Monster()
 
 	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>("AbilitySystemComponent");
 	AttributeSet = CreateDefaultSubobject<UR1MonsterAttributeSet>("MonsterAttributeSet");
+
+	Tags.Add(FName("Enemy"));
 }
 
 void AR1Monster::BeginPlay()
