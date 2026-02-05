@@ -57,9 +57,6 @@ void AR1PlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
 
 		//auto ActionInteract = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Interaction);
-
-
-		
 	}
 	else
 	{
@@ -75,7 +72,10 @@ void AR1PlayerController::PlayerTick(float DeltaTime)
 
 	if (GetCharacter()->GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) == false)
 	{
-		SetCreatureState(ECreatureState::Moving);
+		if (R1Player)
+		{
+			R1Player->SetCreatureState(ECreatureState::Moving);
+		}
 	}
 
 	ChaseTargetAndAttack();
@@ -91,7 +91,7 @@ void AR1PlayerController::OnInputStarted()
 
 void AR1PlayerController::OnSetDestinationTriggered()
 {
-	if (GetCreatureState() == ECreatureState::Skill)
+	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Skill)
 	{
 		return;
 	}
@@ -123,7 +123,7 @@ void AR1PlayerController::OnSetDestinationReleased()
 {
 	bMousePressed = false;
 
-	if (GetCreatureState() == ECreatureState::Skill)
+	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Skill)
 	{
 		return;
 	}
@@ -191,7 +191,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		return;
 	}
 
-	if (GetCreatureState() == ECreatureState::Skill)
+	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Skill)
 	{
 		return;
 	}
@@ -207,7 +207,8 @@ void AR1PlayerController::ChaseTargetAndAttack()
 
 		R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
 
-		SetCreatureState(ECreatureState::Skill);
+		R1Player->SetCreatureState(ECreatureState::Skill);
+
 		TargetActor = HighlightActor;
 	}
 	else
@@ -242,23 +243,23 @@ void AR1PlayerController::SwitchCursorType(FHitResult& OutHit)
 	
 }
 
-ECreatureState AR1PlayerController::GetCreatureState()
-{
-	if (R1Player)
-	{
-		return R1Player->CreatureState;
-	}
-
-	return ECreatureState::None;
-}
-
-void AR1PlayerController::SetCreatureState(ECreatureState InState)
-{
-	if (R1Player)
-	{
-		R1Player->CreatureState = InState;
-	}
-}
+//ECreatureState AR1PlayerController::GetCreatureState()
+//{
+//	if (R1Player)
+//	{
+//		return R1Player->CreatureState;
+//	}
+//
+//	return ECreatureState::None;
+//}
+//
+//void AR1PlayerController::SetCreatureState(ECreatureState InState)
+//{
+//	if (R1Player)
+//	{
+//		R1Player->CreatureState = InState;
+//	}
+//}
 
 void AR1PlayerController::OnInventoryToggle()
 {
@@ -279,6 +280,7 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 	{
 		if(IsValid(TargetAttackActor))
 			{
+			//TODO 하드 코딩된 수치 값 변수로 만들기
 				TargetAttackActor->OnDamaged(10, R1Player);
 				TargetAttackActor = nullptr;
 			}

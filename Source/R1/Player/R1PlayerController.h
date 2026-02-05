@@ -32,8 +32,8 @@ private:
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
 
-	ECreatureState GetCreatureState();
-	void SetCreatureState(ECreatureState InState);
+	//ECreatureState GetCreatureState();
+	//void SetCreatureState(ECreatureState InState);
 
 	void OnInventoryToggle();
 

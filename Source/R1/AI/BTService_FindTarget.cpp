@@ -2,7 +2,7 @@
 
 
 #include "AI/BTService_FindTarget.h"
-#include "Character/R1Character.h"
+#include "Character/R1Player.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AI/R1AIController.h"
 
@@ -47,10 +47,10 @@ void UBTService_FindTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 	{
 		for (FOverlapResult& OverlapResult : OverlapResults)
 		{
-			AR1Character* R1Character = Cast<AR1Character>(OverlapResult.GetActor( ));
-			if (R1Character)
+			AR1Player* R1Player = Cast<AR1Player>(OverlapResult.GetActor( ));
+			if (R1Player)
 			{
-				OwnerComp.GetBlackboardComponent( )->SetValueAsObject(TargetKey.SelectedKeyName, R1Character);
+				OwnerComp.GetBlackboardComponent( )->SetValueAsObject(TargetKey.SelectedKeyName, R1Player);
 				DrawDebugSphere(World, Location, SearchRadius, 16, FColor::Green, false, 0.2f);
 				return;
 			}

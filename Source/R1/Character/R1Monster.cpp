@@ -33,3 +33,13 @@ void AR1Monster::InitAbilitySystem()
 	Super::InitAbilitySystem();
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
+
+//void AR1Monster::SetCreatureState(ECreatureState InState)
+//{
+//	CreatureState = InState;
+//}
+//
+//ECreatureState AR1Monster::GetCreatureState()
+//{
+//	return CreatureState;
+//}

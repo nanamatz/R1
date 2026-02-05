@@ -23,8 +23,13 @@ AR1Player::AR1Player()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArm->SetupAttachment(GetCapsuleComponent());
-	SpringArm->TargetArmLength = 800.f;
-	SpringArm->SetRelativeRotation(FRotator(-60, 0, 0));
+	SpringArm->TargetArmLength = 1400.f;
+	SpringArm->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
+	SpringArm->bInheritPitch = false;
+	SpringArm->bInheritYaw = false;
+	SpringArm->bInheritRoll = false;
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->CameraLagSpeed = 3.f;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm);
@@ -70,6 +75,15 @@ void AR1Player::InitAbilitySystem()
 	}
 }
 
+//void AR1Player::SetCreatureState(ECreatureState InState)
+//{
+//	CreatureState = InState;
+//}
+//
+//ECreatureState AR1Player::GetCreatureState()
+//{
+//	return CreatureState;
+//}
 
 // Called every frame
 void AR1Player::Tick(float DeltaTime)

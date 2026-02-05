@@ -27,4 +27,8 @@ public:
 
 	virtual void InitAbilitySystem() override;
 
+//public:
+//	virtual void SetCreatureState(ECreatureState InState) override;
+//	virtual ECreatureState GetCreatureState() override;
+
 };
