@@ -3,6 +3,7 @@
 
 #include "AI/BTService_FindTarget.h"
 #include "Character/R1Player.h"
+#include "Character/R1Monster.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AI/R1AIController.h"
 
@@ -17,6 +18,8 @@ void UBTService_FindTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	APawn* LocalPawn = OwnerComp.GetAIOwner()->GetPawn();
+
+	float SearchRadius = Cast<AR1Monster>(LocalPawn)->AggroRadius;
 
 	if (LocalPawn == nullptr)
 	{

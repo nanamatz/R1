@@ -27,8 +27,10 @@ public:
 
 	virtual void InitAbilitySystem() override;
 
-//public:
-//	virtual void SetCreatureState(ECreatureState InState) override;
-//	virtual ECreatureState GetCreatureState() override;
+public:
+	UPROPERTY(EditAnywhere, Category = "Monster")
+	float AggroRadius = 600.f;
+
+
 
 };
