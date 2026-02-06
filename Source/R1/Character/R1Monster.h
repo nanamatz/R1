@@ -31,6 +31,4 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Monster")
 	float AggroRadius = 600.f;
 
-
-
 };

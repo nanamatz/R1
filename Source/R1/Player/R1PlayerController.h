@@ -68,14 +68,5 @@ protected:
 	TObjectPtr<class AR1Character> HighlightActor;
 
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class UObject> TargetObject;	//TODO
-
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class UObject> HighlightObject;	//TODO
-
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<class UAnimMontage> AttackMontage;
-
-	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AR1Player> R1Player;
 };

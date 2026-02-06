@@ -72,4 +72,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<class UGameplayAbility>> StartupAbilities;
+
+	UPROPERTY(EditAnywhere, Category="Animation")
+	TObjectPtr<class UAnimMontage> AttackMontage;
 };

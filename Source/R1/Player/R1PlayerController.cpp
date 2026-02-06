@@ -289,4 +289,5 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 			UE_LOG(LogTemp, Warning, TEXT("No Target Actor to attack"));
 		}
 	}
+	//if(EventTag.MatchesTag(R1GameplayTags::Event))
 }
