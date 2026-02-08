@@ -27,8 +27,12 @@ public:
 
 	virtual void InitAbilitySystem() override;
 
+	void DefaultAttack();
+
+public:
+	void ActivateAbility(FGameplayTag AbilityTag);
+
 public:
 	UPROPERTY(EditAnywhere, Category = "Monster")
 	float AggroRadius = 600.f;
-
 };

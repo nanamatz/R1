@@ -24,28 +24,13 @@ EBTNodeResult::Type UBTTask_DefaultAttack::ExecuteTask(UBehaviorTreeComponent& O
         UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent();
 
         // 1. 공격 어빌리티 실행 (Tag 기반)
-        FGameplayTagContainer TargetTags;
-        TargetTags.AddTag(R1GameplayTags::Ability_Attack);
+        AR1Monster* Monster = Cast<AR1Monster>(AIC->GetPawn());
 
-        if (ASC->TryActivateAbilitiesByTag(TargetTags))
-        {
-            // 2. 어빌리티가 끝날 때까지 기다리기 위해 델리게이트 연결
-            // GAS의 OnAbilityEnded를 활용하거나, 간단하게 몬스터 클래스에 정의한 델리게이트 활용
-            AR1Character* Monster = Cast<AR1Character>(AIC->GetPawn());
-            Monster->OnAttackAbilityEnded.BindUObject(this, &UBTTask_Attack::OnAttackFinished, &OwnerComp);
+        Monster->ActivateAbility(R1GameplayTags::Ability_Attack);
 
-            return EBTNodeResult::InProgress;
-        }
+        Monster->DefaultAttack();
+
+        return EBTNodeResult::Succeeded;
     }
     return EBTNodeResult::Failed;
-}
-	AR1Monster* ControllingPawn = Cast<AR1Monster>(OwnerComp.GetAIOwner()->GetPawn());
-	if (ControllingPawn == nullptr)
-	{
-		return EBTNodeResult::Failed;
-	}
-
-	ControllingPawn->SetCreatureState(ECreatureState::Skill);
-
-	return EBTNodeResult::Type();
 }
