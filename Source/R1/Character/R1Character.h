@@ -43,13 +43,18 @@ public:
 
 	virtual void InitAbilitySystem();
 
+public:
+	// 변수를 부모로 이동
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	ECreatureState CreatureState = ECreatureState::None;
+
+	// 공통 함수는 부모에서 한 번만 구현
+	void SetCreatureState(ECreatureState InState) { CreatureState = InState; }
+	ECreatureState GetCreatureState() const { return CreatureState; }
+
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bHighlighted = false;
-
-public:
-	UPROPERTY(BlueprintReadWrite)
-	ECreatureState CreatureState = ECreatureState::Moving;
 
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
@@ -67,4 +72,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<class UGameplayAbility>> StartupAbilities;
+
+	UPROPERTY(EditAnywhere, Category="Animation")
+	TObjectPtr<class UAnimMontage> AttackMontage;
 };

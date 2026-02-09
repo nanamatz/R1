@@ -21,8 +21,6 @@ protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 	
 protected:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	float SearchRadius = 500.f;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FBlackboardKeySelector TargetKey;

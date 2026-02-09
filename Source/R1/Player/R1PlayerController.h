@@ -32,14 +32,16 @@ private:
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
 
-	ECreatureState GetCreatureState();
-	void SetCreatureState(ECreatureState InState);
+	//ECreatureState GetCreatureState();
+	//void SetCreatureState(ECreatureState InState);
 
 	void OnInventoryToggle();
 
 private:
 	void TickCursorTrace();
 	void ChaseTargetAndAttack();
+
+	void SwitchCursorType(FHitResult& OutHit);
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
@@ -60,10 +62,10 @@ protected:
 	TObjectPtr<class AR1Character> TargetActor;
 
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class AR1Character> HighlightActor;
+	TObjectPtr<class AR1Character> TargetAttackActor;
 
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<class UAnimMontage> AttackMontage;
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<class AR1Character> HighlightActor;
 
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AR1Player> R1Player;

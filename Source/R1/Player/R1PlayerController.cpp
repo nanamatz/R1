@@ -56,7 +56,7 @@ void AR1PlayerController::SetupInputComponent()
 		auto ActionInventoryToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Inventory);
 		EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
 
-		
+		//auto ActionInteract = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Interaction);
 	}
 	else
 	{
@@ -72,7 +72,10 @@ void AR1PlayerController::PlayerTick(float DeltaTime)
 
 	if (GetCharacter()->GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) == false)
 	{
-		SetCreatureState(ECreatureState::Moving);
+		if (R1Player)
+		{
+			R1Player->SetCreatureState(ECreatureState::Moving);
+		}
 	}
 
 	ChaseTargetAndAttack();
@@ -88,7 +91,7 @@ void AR1PlayerController::OnInputStarted()
 
 void AR1PlayerController::OnSetDestinationTriggered()
 {
-	if (GetCreatureState() == ECreatureState::Skill)
+	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Skill)
 	{
 		return;
 	}
@@ -120,7 +123,7 @@ void AR1PlayerController::OnSetDestinationReleased()
 {
 	bMousePressed = false;
 
-	if (GetCreatureState() == ECreatureState::Skill)
+	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Skill)
 	{
 		return;
 	}
@@ -149,6 +152,10 @@ void AR1PlayerController::TickCursorTrace()
 	{
 		return;
 	}
+
+	/*UE_LOG(LogTemp,Warning,TEXT("%s"),*OutCursorHit.GetActor()->GetName());*/
+
+	SwitchCursorType(OutCursorHit);
 
 	AR1Character* LocalHighlightActor = Cast<AR1Character>(OutCursorHit.GetActor());
 	if (LocalHighlightActor == nullptr)
@@ -184,28 +191,25 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		return;
 	}
 
-	if (GetCreatureState() == ECreatureState::Skill)
+	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Skill)
 	{
 		return;
 	}
 
+
 	FVector Direction = TargetActor->GetActorLocation() - R1Player->GetActorLocation();
-	if (Direction.Length() < 250.f)
+
+	if (Direction.Length() < 250.f && bMousePressed)
 	{
-		if (TargetActor)
-			{
-				FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetActor->GetActorLocation());
-				R1Player->SetActorRotation(Rotation);
+		TargetAttackActor = TargetActor;
+		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetAttackActor->GetActorLocation());
+		R1Player->SetActorRotation(Rotation);
 
-				R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
+		R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
 
-				SetCreatureState(ECreatureState::Skill);
-				
-			}
-		else
-			{
-				TargetActor = nullptr;
-			}
+		R1Player->SetCreatureState(ECreatureState::Skill);
+
+		TargetActor = HighlightActor;
 	}
 	else
 	{
@@ -217,25 +221,45 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		//FVector WorldDirection = Direction.GetSafeNormal();
 		//R1Player->AddMovementInput(WorldDirection, 1.0, false);
 	}
+	
 }
 
-ECreatureState AR1PlayerController::GetCreatureState()
+void AR1PlayerController::SwitchCursorType(FHitResult& OutHit)
 {
-	if (R1Player)
-	{
-		return R1Player->CreatureState;
-	}
+	AActor* CurrentActorType = OutHit.GetActor();
 
-	return ECreatureState::None;
+	if(CurrentActorType->ActorHasTag(FName("Enemy")))
+	{
+		CurrentMouseCursor = EMouseCursor::Crosshairs;
+	}
+	else if(CurrentActorType->ActorHasTag(FName("Interactable")))
+	{
+		CurrentMouseCursor = EMouseCursor::Hand;
+	}
+	else
+	{
+		CurrentMouseCursor = EMouseCursor::Default;
+	}
+	
 }
 
-void AR1PlayerController::SetCreatureState(ECreatureState InState)
-{
-	if (R1Player)
-	{
-		R1Player->CreatureState = InState;
-	}
-}
+//ECreatureState AR1PlayerController::GetCreatureState()
+//{
+//	if (R1Player)
+//	{
+//		return R1Player->CreatureState;
+//	}
+//
+//	return ECreatureState::None;
+//}
+//
+//void AR1PlayerController::SetCreatureState(ECreatureState InState)
+//{
+//	if (R1Player)
+//	{
+//		R1Player->CreatureState = InState;
+//	}
+//}
 
 void AR1PlayerController::OnInventoryToggle()
 {
@@ -254,14 +278,16 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 {
 	if (EventTag.MatchesTag(R1GameplayTags::Event_Montage_Attack))
 	{
-		if (TargetActor)
-		{
-			TargetActor->OnDamaged(10, R1Player);
-			TargetActor = HighlightActor;
-		}
+		if(IsValid(TargetAttackActor))
+			{
+			//TODO 하드 코딩된 수치 값 변수로 만들기
+				TargetAttackActor->OnDamaged(10, R1Player);
+				TargetAttackActor = nullptr;
+			}
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("No Target Actor to attack"));
 		}
 	}
+	//if(EventTag.MatchesTag(R1GameplayTags::Event))
 }

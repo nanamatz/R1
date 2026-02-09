@@ -77,13 +77,6 @@ void AR1Character::OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker)
 
 void AR1Character::OnDead(TObjectPtr<AR1Character> Attacker)
 {
-	if (CreatureState == ECreatureState::Dead)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("OnDead"));
-
-		return;
-	}
-
 	CreatureState = ECreatureState::Dead;
 }
 

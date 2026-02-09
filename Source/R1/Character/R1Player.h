@@ -29,6 +29,10 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void InitAbilitySystem() override;
 
+//public:
+//	virtual void SetCreatureState(ECreatureState InState) override;
+//	virtual ECreatureState GetCreatureState() override;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

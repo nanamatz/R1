@@ -20,5 +20,6 @@ public:
 
 	void ActivateAbility(FGameplayTag AbilityTag);
 	
-	TArray<FGameplayAbilitySpecHandle> SpecHandles;
+	//TArray<FGameplayAbilitySpecHandle> SpecHandles;
+	FGameplayTagContainer AbilityTags;
 };
