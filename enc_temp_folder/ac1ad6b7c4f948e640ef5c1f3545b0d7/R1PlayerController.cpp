@@ -197,22 +197,21 @@ void AR1PlayerController::ChaseTargetAndAttack()
 
 	if (TargetActor)
 	{
+		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetAttackActor->GetActorLocation());
+		R1Player->SetActorRotation(Rotation);
+
 		FVector Direction = TargetActor->GetActorLocation() - R1Player->GetActorLocation();
 
 		TargetAttackActor = TargetActor;
-
-		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetAttackActor->GetActorLocation());
-		R1Player->SetActorRotation(Rotation);
 
 		if (Direction.Length() < 250.f && TargetAttackActor)//하드 코딩 수치 변경 필요
 		{
 			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
 
 			R1Player->SetCreatureState(ECreatureState::Skill);
-			
-			if (bMousePressed)
+			if (!bMousePressed)
 			{
-				TargetActor = HighlightActor;
+				TargetActor = nullptr;
 			}
 		}
 		else
