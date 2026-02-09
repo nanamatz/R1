@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "AbilitySystemInterface.h"
 #include "R1PlayerState.generated.h"
 
 class UAbilitySystemComponent;
@@ -11,10 +12,10 @@ class UR1PlayerAttributeSet;
  * 
  */
 UCLASS()
-class R1_API AR1PlayerState : public APlayerState
+class R1_API AR1PlayerState : public APlayerState, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-
+	 
 public:
 	AR1PlayerState(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
@@ -26,7 +27,7 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
-	TObjectPtr<UR1AbilitySystemComponent> AbilitySystemComponent;
+	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;
 	
 	UPROPERTY()
 	TObjectPtr <UR1PlayerAttributeSet > PlayerAttributeSet;

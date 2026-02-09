@@ -22,6 +22,7 @@ void AR1Monster::BeginPlay()
 	Super::BeginPlay();
 
 	InitAbilitySystem();
+
 }
 
 void AR1Monster::Tick(float DeltaTime)
