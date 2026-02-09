@@ -39,11 +39,9 @@ void UR1AbilitySystemComponent::ActivateAbility(FGameplayTag AbilityTag)
 	//	//TODO
 	//	TryActivateAbility(SpecHandle);
 	//}
-	// 1. 네임스페이스에서 전달받은 태그(예: R1GameplayTags::Ability_Attack)를 컨테이너에 담습니다.
 
 	AbilityTags.AddTag(AbilityTag);
 
-	// 2. GAS 표준 함수 호출: 이 태그를 'Ability Tags' 섹션에 포함한 모든 어빌리티를 실행 시도합니다.
 	TryActivateAbilitiesByTag(AbilityTags);
 
 }

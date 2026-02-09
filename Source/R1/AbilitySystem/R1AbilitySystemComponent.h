@@ -20,6 +20,10 @@ public:
 
 	void ActivateAbility(FGameplayTag AbilityTag);
 	
+protected:
+	//UPROPERTY()
 	//TArray<FGameplayAbilitySpecHandle> SpecHandles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	FGameplayTagContainer AbilityTags;
 };
