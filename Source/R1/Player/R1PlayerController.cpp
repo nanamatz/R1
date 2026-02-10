@@ -86,7 +86,6 @@ void AR1PlayerController::OnInputStarted()
 	StopMovement();
 	bMousePressed = true;
 	TargetActor = HighlightActor;
-	GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Cyan, FString::Printf(TEXT("OnInputStarted %s"), *LexToString(bMousePressed)));
 }
 
 void AR1PlayerController::OnSetDestinationTriggered()
@@ -187,7 +186,6 @@ void AR1PlayerController::ChaseTargetAndAttack()
 {
 	if (TargetActor == nullptr)
 	{
-		GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Cyan, FString::Printf(TEXT("Target Actor Null"), *LexToString(bMousePressed)));
 		return;
 	}
 
@@ -197,30 +195,38 @@ void AR1PlayerController::ChaseTargetAndAttack()
 	}
 
 
-	FVector Direction = TargetActor->GetActorLocation() - R1Player->GetActorLocation();
-
-	if (Direction.Length() < 250.f && bMousePressed)
+	if (TargetActor)
 	{
+		FVector Direction = TargetActor->GetActorLocation() - R1Player->GetActorLocation();
+
 		TargetAttackActor = TargetActor;
+
 		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetAttackActor->GetActorLocation());
 		R1Player->SetActorRotation(Rotation);
 
-		R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
+		if (Direction.Length() < 250.f && TargetAttackActor)//하드 코딩 수치 변경 필요
+		{
+			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
 
-		R1Player->SetCreatureState(ECreatureState::Skill);
+			R1Player->SetCreatureState(ECreatureState::Skill);
+			
+			if (bMousePressed)
+			{
+				TargetActor = HighlightActor;
+			}
+		}
+		else
+		{
+			//too far you should move
+			CacheDestination = TargetActor->GetActorLocation();
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 
-		TargetActor = HighlightActor;
+			//기존 방식
+			//FVector WorldDirection = Direction.GetSafeNormal();
+			//R1Player->AddMovementInput(WorldDirection, 1.0, false);
+		}
 	}
-	else
-	{
-		//too far you should move
-		CacheDestination = TargetActor->GetActorLocation();
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
-
-		//기존 방식
-		//FVector WorldDirection = Direction.GetSafeNormal();
-		//R1Player->AddMovementInput(WorldDirection, 1.0, false);
-	}
+	
 	
 }
 
