@@ -21,6 +21,18 @@ void AR1HUD::BeginPlay()
             UE_LOG(LogTemp, Warning, TEXT("Failed to create InventoryWidget from class %s"), *GetNameSafe(InventoryWidgetClass));
         }
     }
+    if(PC && !BaseUIWidget)
+    {
+        BaseUIWidget = CreateWidget<UUserWidget>(PC, BaseUIWidgetClass);
+        if (BaseUIWidget)
+        {
+            BaseUIWidget->AddToViewport();
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Failed to create BaseUIWidget"));
+        }
+	}
 }
 
 void AR1HUD::ToggleInventory()

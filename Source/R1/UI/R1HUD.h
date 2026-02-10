@@ -17,10 +17,6 @@ public:
     // 인벤토리 토글 함수
     void ToggleInventory();
 
-private:
-    UPROPERTY()
-    TObjectPtr<UUserWidget> InventoryWidget;
-
 public:
 	bool bIsInventoryVisible;
 
@@ -28,8 +24,14 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category="UI")
     TSubclassOf<UUserWidget> InventoryWidgetClass;
 
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> BaseUIWidgetClass;
+
     UPROPERTY(EditDefaultsOnly)
     TObjectPtr<UUserWidget> MyInventoryWidget = nullptr;
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<UUserWidget> BaseUIWidget = nullptr;
 
     virtual void BeginPlay() override;
 };
