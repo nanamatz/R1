@@ -62,11 +62,12 @@ protected:
 	TObjectPtr<class AR1Character> TargetActor;
 
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class AR1Character> TargetAttackActor;
-
-	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AR1Character> HighlightActor;
 
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AR1Player> R1Player;
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<class AR1Character> TargetAttackActor;
 };

@@ -27,7 +27,12 @@ public:
 
 	virtual void InitAbilitySystem() override;
 
-	void DefaultAttack();
+	//void DefaultAttack();
+public:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TObjectPtr<class UWidgetComponent> HpBarComponent;
+
+	void RefreshHpBar();
 
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);

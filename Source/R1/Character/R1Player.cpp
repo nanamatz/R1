@@ -43,16 +43,10 @@ void AR1Player::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//TEMP
-	if (TestEffect && AbilitySystemComponent)
-	{
-		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
-		EffectContext.AddSourceObject(this);
-
-		FGameplayEffectSpecHandle EffectSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(TestEffect, 1, EffectContext);
-
-		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
-	}
+	BaseDamage = AttributeSet->GetBaseDamage();
+	AttackRange = AttributeSet->GetAttackRange();
+	HPRegen = AttributeSet->GetHealthRegeneration();
+	MPRegen = AttributeSet->GetManaRegeneration();
 }
 
 void AR1Player::PossessedBy(AController* NewController)
@@ -74,17 +68,6 @@ void AR1Player::InitAbilitySystem()
 		AttributeSet = PS->GetR1PlayerAttributeSet();
 	}
 }
-
-//void AR1Player::SetCreatureState(ECreatureState InState)
-//{
-//	CreatureState = InState;
-//}
-//
-//ECreatureState AR1Player::GetCreatureState()
-//{
-//	return CreatureState;
-//}
-
 // Called every frame
 void AR1Player::Tick(float DeltaTime)
 {
@@ -94,6 +77,7 @@ void AR1Player::Tick(float DeltaTime)
 
 void AR1Player::HandleGameplayEvent(FGameplayTag EventTag)
 {
+	Super::HandleGameplayEvent(EventTag);
 	//TODO
 	AR1PlayerController* PC = Cast<AR1PlayerController>(GetController());
 	if (PC)
@@ -111,4 +95,35 @@ void AR1Player::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 void AR1Player::ActivateAbility(FGameplayTag AbilityTag)
 {
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
+}
+
+
+void AR1Player::RegenerateHealth()
+{
+	if (AttributeSet)
+	{
+		float CurHP = AttributeSet->GetHealth();
+		float MaxHP = AttributeSet->GetMaxHealth();
+
+		if(CurHP < MaxHP)
+		{
+			float NewHP = FMath::Clamp(CurHP + HPRegen, 0.f, MaxHP);
+			AttributeSet->SetHealth(NewHP);
+		}
+	}
+}
+
+void AR1Player::RegenerateMana()
+{
+	if (AttributeSet)
+	{
+		float CurMP = AttributeSet->GetMana();
+		float MaxMP = AttributeSet->GetMaxMana();
+
+		if (CurMP < MaxMP)
+		{
+			float NewMP = FMath::Clamp(CurMP + MPRegen, 0.f, MaxMP);
+			AttributeSet->SetMana(NewMP);
+		}
+	}
 }

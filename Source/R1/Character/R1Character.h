@@ -10,6 +10,7 @@
 #include "AbilitySystemInterface.h"
 #include "R1Character.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHpChangedDelegate,float,Ratio);
 
 UCLASS()
 class R1_API AR1Character : public ACharacter, public  IR1HighlightInterface, public IAbilitySystemInterface
@@ -37,12 +38,20 @@ public:
 	virtual void OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker);
 	virtual void OnDead(TObjectPtr<AR1Character> Attacker);
 
-	void RefreshHpBarRatio();
+	void InitHpAndMp();
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	virtual void InitAbilitySystem();
 
+protected:
+	virtual void RegenerateHealth();
+
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnHpChangedDelegate OnHpChanged;
+
+	virtual void OnHealthChanged(float Ratio);
 public:
 	// 변수를 부모로 이동
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
@@ -56,9 +65,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bHighlighted = false;
 
-public:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TObjectPtr<class UWidgetComponent> HpBarComponent;
+
 
 protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
