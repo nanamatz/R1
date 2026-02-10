@@ -43,16 +43,16 @@ void AR1Player::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//Effect 사용하는 Test 코드
-	//if (TestEffect && AbilitySystemComponent)
-	//{
-	//	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
-	//	EffectContext.AddSourceObject(this);
+	//TEMP
+	if (TestEffect && AbilitySystemComponent)
+	{
+		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+		EffectContext.AddSourceObject(this);
 
-	//	FGameplayEffectSpecHandle EffectSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(TestEffect, 1, EffectContext);
+		FGameplayEffectSpecHandle EffectSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(TestEffect, 1, EffectContext);
 
-	//	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
-	//}
+		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+	}
 
 	BaseDamage = AttributeSet->GetBaseDamage();
 	AttackRange = AttributeSet->GetAttackRange();

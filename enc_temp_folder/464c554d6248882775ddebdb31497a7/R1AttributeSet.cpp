@@ -32,7 +32,6 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 		if (Character)
 		{
 			float Ratio = static_cast<float>(GetHealth()) / GetMaxHealth();
-			UE_LOG(LogTemp, Log, TEXT("[AttributeSet] HP Changed: %f / %f (Ratio: %f)"), GetHealth(), GetMaxHealth(), Ratio);
 			Character->OnHealthChanged(Ratio);
 		}
 	}

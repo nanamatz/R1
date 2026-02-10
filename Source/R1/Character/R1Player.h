@@ -45,9 +45,18 @@ private:
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
 
+public:
+
+	virtual void RegenerateHealth() override;
+	void RegenerateMana();
 protected:
 	//TEMP
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<class UGameplayEffect> TestEffect;
 
+public:
+	float BaseDamage;
+	float AttackRange;
+	float HPRegen;
+	float MPRegen;
 };
