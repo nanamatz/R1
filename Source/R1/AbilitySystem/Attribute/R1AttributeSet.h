@@ -30,6 +30,7 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, BaseDamage);
 	ATTRIBUTE_ACCESSORS(ThisClass, BaseDefence);
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackRange);
+	ATTRIBUTE_ACCESSORS(ThisClass, AttackRadius);
 	ATTRIBUTE_ACCESSORS(ThisClass, HealthRegeneration);
 	ATTRIBUTE_ACCESSORS(ThisClass, ManaRegeneration);
 
@@ -58,6 +59,9 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData AttackRange;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData AttackRadius;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData HealthRegeneration;

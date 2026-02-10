@@ -26,5 +26,5 @@ public:
 protected:
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
 	TObjectPtr<class UProgressBar> HpBar;
-	
+
 };

@@ -1,7 +1,6 @@
 #include "Character/R1Character.h"
 #include "Components/WidgetComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
-#include "UI/R1HpBarWidget.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 
 // Sets default values
@@ -9,18 +8,6 @@ AR1Character::AR1Character()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	//HpBarComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
-	//HpBarComponent->SetupAttachment(GetRootComponent());
-
-	//ConstructorHelpers::FClassFinder<UUserWidget> HealthBarWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/Blueprints/UI/WBP_HpBar.WBP_HpBar_C'"));
-	//if (HealthBarWidgetClass.Succeeded())
-	//{
-	//	HpBarComponent->SetWidgetClass(HealthBarWidgetClass.Class);
-	//	HpBarComponent->SetWidgetSpace(EWidgetSpace::Screen);
-	//	HpBarComponent->SetDrawAtDesiredSize(true);
-	//	HpBarComponent->SetRelativeLocation(FVector(0, 0, 120));
-	//}
 
 }
 
@@ -41,7 +28,14 @@ void AR1Character::Tick(float DeltaTime)
 
 void AR1Character::HandleGameplayEvent(FGameplayTag EventTag)
 {
+	if(AbilitySystemComponent)
+	{
+		FGameplayEventData EventData;
+		EventData.EventTag = EventTag;
+		EventData.Instigator = this;
 
+		AbilitySystemComponent->HandleGameplayEvent(EventTag, &EventData);
+	}
 }
 
 void AR1Character::Highlight()
@@ -67,7 +61,8 @@ void AR1Character::OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker)
 	AttributeSet->SetHealth(Hp);
 	
 	float Ratio = static_cast<float>(Hp) / MaxHp;
-	OnHealthChanged(Ratio);
+
+	//OnHealthChanged(Ratio);//이 부분을 뺴고 나중에 GameplayEffect로 대신해줘야 함.
 
 	if (Hp == 0)
 	{
@@ -129,8 +124,3 @@ void AR1Character::AddCharacterAbility()
 	ASC->AddCharacterAbilities(StartupAbilities);
 
 }
-
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHpChangedDelegate, float, Ratio)
-//{
-//
-//}

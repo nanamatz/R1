@@ -286,8 +286,8 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 	{
 		if(IsValid(TargetAttackActor))
 			{
-			//TODO 하드 코딩된 수치 값 변수로 만들기
-				TargetAttackActor->OnDamaged(R1Player->BaseDamage, R1Player);
+			////TODO 하드 코딩된 수치 값 변수로 만들기
+			//	TargetAttackActor->OnDamaged(R1Player->BaseDamage, R1Player);
 				TargetAttackActor = nullptr;
 			}
 		else

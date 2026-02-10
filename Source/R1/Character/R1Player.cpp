@@ -43,17 +43,6 @@ void AR1Player::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//Effect 사용하는 Test 코드
-	//if (TestEffect && AbilitySystemComponent)
-	//{
-	//	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
-	//	EffectContext.AddSourceObject(this);
-
-	//	FGameplayEffectSpecHandle EffectSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(TestEffect, 1, EffectContext);
-
-	//	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
-	//}
-
 	BaseDamage = AttributeSet->GetBaseDamage();
 	AttackRange = AttributeSet->GetAttackRange();
 	HPRegen = AttributeSet->GetHealthRegeneration();
@@ -88,6 +77,7 @@ void AR1Player::Tick(float DeltaTime)
 
 void AR1Player::HandleGameplayEvent(FGameplayTag EventTag)
 {
+	Super::HandleGameplayEvent(EventTag);
 	//TODO
 	AR1PlayerController* PC = Cast<AR1PlayerController>(GetController());
 	if (PC)

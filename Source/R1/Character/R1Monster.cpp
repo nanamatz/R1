@@ -4,7 +4,9 @@
 #include "Character/R1Monster.h"
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
+#include "Components/WidgetComponent.h"
 #include "R1Player.h"
+#include "UI/R1HpBarWidget.h"
 #include "AbilitySystem/Attribute/R1MonsterAttributeSet.h"
 
 AR1Monster::AR1Monster()
@@ -14,6 +16,18 @@ AR1Monster::AR1Monster()
 	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>("AbilitySystemComponent");
 	AttributeSet = CreateDefaultSubobject<UR1MonsterAttributeSet>("MonsterAttributeSet");
 
+	HpBarComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
+	HpBarComponent->SetupAttachment(GetRootComponent());
+
+	ConstructorHelpers::FClassFinder<UUserWidget> HealthBarWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/Blueprints/UI/WBP_HpBar.WBP_HpBar_C'"));
+	if (HealthBarWidgetClass.Succeeded())
+	{
+		HpBarComponent->SetWidgetClass(HealthBarWidgetClass.Class);
+		HpBarComponent->SetWidgetSpace(EWidgetSpace::Screen);
+		HpBarComponent->SetDrawAtDesiredSize(true);
+		HpBarComponent->SetRelativeLocation(FVector(0, 0, 120));
+	}
+
 	Tags.Add(FName("Enemy"));
 }
 
@@ -22,12 +36,14 @@ void AR1Monster::BeginPlay()
 	Super::BeginPlay();
 
 	InitAbilitySystem();
-
+	
+	RefreshHpBar();
 }
 
 void AR1Monster::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	RefreshHpBar();
 }
 
 void AR1Monster::InitAbilitySystem()
@@ -36,47 +52,60 @@ void AR1Monster::InitAbilitySystem()
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
-void AR1Monster::DefaultAttack()
+//void AR1Monster::DefaultAttack()
+//{
+//	//TArray<FHitResult> HitResults;
+//
+//	//FCollisionQueryParams Params;
+//	//Params.AddIgnoredActor(this);
+//
+//	//FVector Start = GetActorLocation();
+//	//FVector End = GetActorLocation() + GetActorForwardVector() * 100.f;
+//	//float Range = 50.f;
+//
+//	//bool bHit = GetWorld()->SweepMultiByChannel(
+//	//	HitResults,
+//	//	Start,
+//	//	End,
+//	//	FQuat::Identity,
+//	//	ECC_GameTraceChannel1,
+//	//	FCollisionShape::MakeSphere(Range),
+//	//	Params
+//	//);
+//
+//	//DrawDebugSphere(GetWorld(), Start, 50.f, 16, FColor::Green, false, 1.f);
+//	//DrawDebugSphere(GetWorld(), End, 50.f, 16, FColor::Blue, false, 1.f);
+//
+//	//for(const FHitResult& HitResult : HitResults)
+//	//{
+//	//	AR1Player* HitCharacter = Cast<AR1Player>(HitResult.GetActor());
+//
+//	//	if (HitCharacter)
+//	//	{
+//	//		HitCharacter->OnDamaged(10, this);
+//	//	}
+//	//}
+//
+//}
+
+void AR1Monster::RefreshHpBar()
 {
-	TArray<FHitResult> HitResults;
-
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-
-	FVector Start = GetActorLocation();
-	FVector End = GetActorLocation() + GetActorForwardVector() * 100.f;
-	float Range = 50.f;
-
-	bool bHit = GetWorld()->SweepMultiByChannel(
-		HitResults,
-		Start,
-		End,
-		FQuat::Identity,
-		ECC_GameTraceChannel1,
-		FCollisionShape::MakeSphere(Range),
-		Params
-	);
-
-	DrawDebugSphere(GetWorld(), Start, 50.f, 16, FColor::Green, false, 1.f);
-	DrawDebugSphere(GetWorld(), End, 50.f, 16, FColor::Blue, false, 1.f);
-	DrawDebugLine(GetWorld(), Start, End, FColor::Yellow, false, 1.f);
-
-	for(const FHitResult& HitResult : HitResults)
+	if (HpBarComponent && AttributeSet)
 	{
-		AR1Player* HitCharacter = Cast<AR1Player>(HitResult.GetActor());
+		float Hp = AttributeSet->GetHealth();
+		float MaxHp = AttributeSet->GetMaxHealth();
 
-		if (HitCharacter)
-		{
-			HitCharacter->OnDamaged(10, this);
-		}
+		float Ratio = static_cast<float>(Hp) / MaxHp;
+		UR1HpBarWidget* HpBar = Cast<UR1HpBarWidget>(HpBarComponent->GetUserWidgetObject());
+		HpBar->SetHpRatio(Ratio);
 	}
-
 }
 
 void AR1Monster::ActivateAbility(FGameplayTag AbilityTag)
 {
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
 }
+
 
 //void AR1Monster::SetCreatureState(ECreatureState InState)
 //{

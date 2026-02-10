@@ -15,8 +15,10 @@ UR1AttributeSet::UR1AttributeSet()
 	InitBaseDamage(10.f);
 	InitBaseDefence(5.f);
 	InitAttackRange(200.f);
+	InitAttackRadius(50.f);
 	InitHealthRegeneration(1.f);
 	InitManaRegeneration(1.f);
+
 }
 
 void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)

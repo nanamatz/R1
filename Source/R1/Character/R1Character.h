@@ -65,9 +65,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bHighlighted = false;
 
-//public:
-//	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-//	TObjectPtr<class UWidgetComponent> HpBarComponent;
+
 
 protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
