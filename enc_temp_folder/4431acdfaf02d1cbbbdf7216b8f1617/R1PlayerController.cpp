@@ -195,7 +195,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 	}
 
 
-	if (TargetActor && bMousePressed)
+	if (TargetActor)
 	{
 		FVector Direction = TargetActor->GetActorLocation() - R1Player->GetActorLocation();
 
@@ -210,7 +210,10 @@ void AR1PlayerController::ChaseTargetAndAttack()
 
 			R1Player->SetCreatureState(ECreatureState::Skill);
 			
-			TargetActor = HighlightActor;
+			if (bMousePressed)
+			{
+				TargetActor = HighlightActor;
+			}
 		}
 		else
 		{
