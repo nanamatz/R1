@@ -17,9 +17,10 @@ class R1_API UR1AbilitySystemComponent : public UAbilitySystemComponent
 	
 public:
 	void AddCharacterAbilities(const TArray<TSubclassOf<class UGameplayAbility>> Abilities);
+	void ApplyCharacterEffects(const TArray<TSubclassOf<class UGameplayEffect>> Effects);
+	void InitializeCharacterAttributes();
 
 	void ActivateAbility(FGameplayTag AbilityTag);
-	
 protected:
 	//UPROPERTY()
 	//TArray<FGameplayAbilitySpecHandle> SpecHandles;

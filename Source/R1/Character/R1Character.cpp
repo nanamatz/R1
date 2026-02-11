@@ -15,8 +15,9 @@ AR1Character::AR1Character()
 void AR1Character::BeginPlay()
 {
 	Super::BeginPlay();
-	//InitHpAndMp();	
+	//InitHpAndMp();
 	AddCharacterAbility();
+	ApplyCharacterEffect();
 }
 
 // Called every frame
@@ -77,15 +78,6 @@ void AR1Character::OnDead(TObjectPtr<AR1Character> Attacker)
 	CreatureState = ECreatureState::Dead;
 }
 
-void AR1Character::InitHpAndMp()
-{
-	if (AttributeSet)
-	{
-		AttributeSet->InitHealth(AttributeSet->GetHealth());
-		AttributeSet->InitMana(AttributeSet->GetMana());
-	}
-}
-
 UAbilitySystemComponent* AR1Character::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
@@ -94,10 +86,6 @@ UAbilitySystemComponent* AR1Character::GetAbilitySystemComponent() const
 void AR1Character::InitAbilitySystem()
 {
 
-}
-
-void AR1Character::RegenerateHealth()
-{
 }
 
 void AR1Character::OnHealthChanged(float Ratio)
@@ -111,6 +99,23 @@ void AR1Character::OnHealthChanged(float Ratio)
 	{
 		UE_LOG(LogTemp,Warning, TEXT("OnHpChanged is NOT bound for actor: %s"), *GetName());
 	}
+}
+
+
+void AR1Character::InitializeCharacterAttribute()
+{
+	//TODO
+}
+
+void AR1Character::ApplyCharacterEffect()
+{
+	//TODO
+	UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(AbilitySystemComponent);
+	if (ASC == nullptr)
+	{
+		return;
+	}
+	ASC->ApplyCharacterEffects(StartupEffects);
 }
 
 void AR1Character::AddCharacterAbility()

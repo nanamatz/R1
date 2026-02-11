@@ -52,6 +52,22 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 }
 
+void UR1AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	Super::PreAttributeChange(Attribute, NewValue);
+
+	// 1. 지금 변경되려는 속성이 'Health'인지 확인
+	if (Attribute == GetHealthAttribute())
+	{
+		// 2. 현재 MaxHealth 값을 가져옴
+		float CurrentMaxHealth = GetMaxHealth();
+
+		// 3. 들어오는 값(NewValue)을 0 ~ MaxHealth 사이로 가둠 (Clamping)
+		// FMath::Clamp(검사할 값, 최소값, 최대값)
+		NewValue = FMath::Clamp(NewValue, 0.0f, CurrentMaxHealth);
+	}
+}
+
 //void UR1AttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
 //{
 //	Super::PostAttributeChange(Attribute, OldValue, NewValue);

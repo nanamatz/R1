@@ -2,12 +2,12 @@
 
 #pragma once
 
+#include "AbilitySystemInterface.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameplayTagContainer.h"
 #include "Interface/R1HighlightInterface.h"
 #include "R1Define.h"
-#include "GameplayTagContainer.h"
-#include "AbilitySystemInterface.h"
 #include "R1Character.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHpChangedDelegate,float,Ratio);
@@ -38,14 +38,10 @@ public:
 	virtual void OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker);
 	virtual void OnDead(TObjectPtr<AR1Character> Attacker);
 
-	void InitHpAndMp();
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	virtual void InitAbilitySystem();
-
-protected:
-	virtual void RegenerateHealth();
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Attributes")
@@ -65,8 +61,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bHighlighted = false;
 
-
-
 protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;
@@ -75,11 +69,19 @@ protected:
 	TObjectPtr<class UR1AttributeSet> AttributeSet;
 
 public:
-	void AddCharacterAbility();
+	void AddCharacterAbility();	
+	void InitializeCharacterAttribute();
+	void ApplyCharacterEffect();
+
+public:
 
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<class UGameplayAbility>> StartupAbilities;
 
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	TArray<TSubclassOf<class UGameplayEffect>> StartupEffects;
+
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<class UAnimMontage> AttackMontage;
+
 };
