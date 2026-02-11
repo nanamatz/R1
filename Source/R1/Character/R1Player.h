@@ -46,7 +46,6 @@ public:
 	void ActivateAbility(FGameplayTag AbilityTag);
 
 public:
-	float BaseDamage;
 	float AttackRange;
 
 };

@@ -204,9 +204,11 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetAttackActor->GetActorLocation());
 		R1Player->SetActorRotation(Rotation);
 
-		if (Direction.Length() < R1Player->AttackRange && TargetAttackActor)//하드 코딩 수치 변경 필요
+		if (Direction.Length() < R1Player->AttackRange && TargetAttackActor)
 		{
 			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
+			
+			UE_LOG(LogTemp,Warning,TEXT("Attack Count : %d"),++AttackCount);
 
 			R1Player->SetCreatureState(ECreatureState::Skill);
 			
@@ -303,8 +305,6 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 	{
 		if(IsValid(TargetAttackActor))
 			{
-			////TODO 하드 코딩된 수치 값 변수로 만들기
-			//	TargetAttackActor->OnDamaged(R1Player->BaseDamage, R1Player);
 				TargetAttackActor = nullptr;
 			}
 		else

@@ -71,4 +71,6 @@ protected:
 public:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AR1Character> TargetAttackActor;
+
+	int32 AttackCount = 0;
 };

@@ -35,7 +35,7 @@ void AR1Character::HandleGameplayEvent(FGameplayTag EventTag)
 		EventData.EventTag = EventTag;
 		EventData.Instigator = this;
 
-		AbilitySystemComponent->HandleGameplayEvent(EventTag, &EventData);
+		AbilitySystemComponent->HandleGameplayEvent(EventTag,&EventData);
 	}
 }
 

@@ -43,7 +43,6 @@ void AR1Player::BeginPlay()
 {
 	Super::BeginPlay();
 
-	BaseDamage = AttributeSet->GetBaseDamage();
 	AttackRange = AttributeSet->GetAttackRange();
 }
 

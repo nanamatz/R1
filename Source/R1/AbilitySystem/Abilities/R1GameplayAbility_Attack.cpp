@@ -12,10 +12,7 @@
 UR1GameplayAbility_Attack::UR1GameplayAbility_Attack(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)	
 {
-	if (DamageEffect)
-	{
-
-	}
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerExecution;
 }
 
 bool UR1GameplayAbility_Attack::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
@@ -65,11 +62,11 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 			this,
 			AttackEventTag, // 기다릴 태그
 			nullptr,
-			false,
+			true,
 			false
 		);
-
-		// 이벤트가 도착하면 -> OnHitEventReceived 실행
+		UE_LOG(LogTemp, Warning, TEXT("@@@@@On Activate Ability@@@@"));
+		// 이벤트가 도착하면 -> OnAttackEventReceived 실행
 		WaitEventTask->EventReceived.AddDynamic(this, &UR1GameplayAbility_Attack::OnAttackEventReceived);
 
 		// Task 시작!
@@ -108,6 +105,7 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 	float AttackRange = 0.f;
 	float AttackRadius = 0.f;
 	AActor* TargetActor = nullptr;
+	UE_LOG(LogTemp, Warning, TEXT("Apply GE to Monster!"));
 
 	if (DamageEffect && SourceASC)
 	{
@@ -129,7 +127,6 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 					if (TargetASC)
 					{
 						SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
-						UE_LOG(LogTemp, Warning, TEXT("Apply GE to Monster!"));
 					}
 				}
 				else
