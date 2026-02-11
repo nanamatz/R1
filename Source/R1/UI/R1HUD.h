@@ -17,6 +17,9 @@ public:
     // 인벤토리 토글 함수
     void ToggleInventory();
 
+    UUserWidget* GetInventoryWidget() const { return MyInventoryWidget; }
+    UUserWidget* GetBaseUIWidget() const { return BaseUIWidget; }
+
 public:
 	bool bIsInventoryVisible;
 

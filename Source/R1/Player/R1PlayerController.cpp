@@ -272,9 +272,29 @@ void AR1PlayerController::OnInventoryToggle()
 		MyR1HUD->ToggleInventory();
 
 		// 입력 모드 및 커서 설정은 여기서 관리하는 것이 좋습니다 (시스템 제어)
-		bool bIsVisible = MyR1HUD->bIsInventoryVisible; // (HUD에 체크 함수 하나 만듦)
-		//UpdateInputMode(bIsVisible);
+		bool bIsVisible = MyR1HUD->bIsInventoryVisible;
+		UpdateInputMode(bIsVisible);
 	}
+}
+
+void AR1PlayerController::UpdateInputMode(bool bIsUIOpen)
+{
+	//if (bIsUIOpen)
+	//{
+	//	FInputModeGameAndUI InputMode;
+	//	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	//	InputMode.SetHideCursorDuringCapture(false);
+	//	SetInputMode(InputMode);
+	//	bShowMouseCursor = true;
+	//}
+	//else
+	//{
+	//	FInputModeGameOnly InputMode;
+
+	//	SetInputMode(InputMode);
+	//	// 이 프로젝트에서는 기본적으로 커서를 항상 보여주도록 설정되어 있으므로 true 유지
+	//	bShowMouseCursor = true; 
+	//}
 }
 
 void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)

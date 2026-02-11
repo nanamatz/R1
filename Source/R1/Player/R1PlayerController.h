@@ -27,6 +27,7 @@ protected:
 	virtual void PlayerTick(float DeltaTime) override;
 public:
 	virtual void HandleGameplayEvent(FGameplayTag EventTag);
+	void UpdateInputMode(bool bIsUIOpen);
 private:
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
