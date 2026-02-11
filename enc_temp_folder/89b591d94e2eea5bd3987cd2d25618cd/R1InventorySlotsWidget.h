@@ -59,5 +59,5 @@ private:
 	FIntPoint PreDragOverSlotPos = FIntPoint(-1, -1);
 
 	const int X_COUNT = 10;
-	const int Y_COUNT = 6;
+	const int Y_COUNT = 5;
 };

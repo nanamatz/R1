@@ -27,7 +27,7 @@ void AR1HUD::BeginPlay()
         if (BaseUIWidget)
         {
             BaseUIWidget->AddToViewport();
-            //BaseUIWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible); // 전체 화면 UI가 클릭을 막지 않도록 설정
+            BaseUIWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible); // 전체 화면 UI가 클릭을 막지 않도록 설정
         }
         else
         {

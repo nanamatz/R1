@@ -129,6 +129,7 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 					if (TargetASC)
 					{
 						SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
+						UE_LOG(LogTemp, Warning, TEXT("Apply GE to Monster!"));
 					}
 				}
 				else

@@ -279,22 +279,21 @@ void AR1PlayerController::OnInventoryToggle()
 
 void AR1PlayerController::UpdateInputMode(bool bIsUIOpen)
 {
-	//if (bIsUIOpen)
-	//{
-	//	FInputModeGameAndUI InputMode;
-	//	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	//	InputMode.SetHideCursorDuringCapture(false);
-	//	SetInputMode(InputMode);
-	//	bShowMouseCursor = true;
-	//}
-	//else
-	//{
-	//	FInputModeGameOnly InputMode;
-
-	//	SetInputMode(InputMode);
-	//	// 이 프로젝트에서는 기본적으로 커서를 항상 보여주도록 설정되어 있으므로 true 유지
-	//	bShowMouseCursor = true; 
-	//}
+	if (bIsUIOpen)
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		InputMode.SetHideCursorDuringCapture(false);
+		SetInputMode(InputMode);
+		bShowMouseCursor = true;
+	}
+	else
+	{
+		FInputModeGameOnly InputMode;
+		SetInputMode(InputMode);
+		// 이 프로젝트에서는 기본적으로 커서를 항상 보여주도록 설정되어 있으므로 true 유지
+		bShowMouseCursor = true; 
+	}
 }
 
 void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
