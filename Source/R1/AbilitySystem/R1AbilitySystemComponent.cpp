@@ -32,6 +32,25 @@ void UR1AbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<c
 	//}
 }
 
+void UR1AbilitySystemComponent::ApplyCharacterEffects(const TArray<TSubclassOf<class UGameplayEffect>> Effects)
+{
+	for(const auto& EffectClass : Effects)
+	{
+		if (EffectClass)
+		{
+			FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(EffectClass, 1, MakeEffectContext());
+			if (SpecHandle.IsValid())
+			{
+				ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			}
+		}
+	}
+}
+
+void UR1AbilitySystemComponent::InitializeCharacterAttributes()
+{
+}
+
 void UR1AbilitySystemComponent::ActivateAbility(FGameplayTag AbilityTag)
 {
 	//for (FGameplayAbilitySpecHandle& SpecHandle : SpecHandles)

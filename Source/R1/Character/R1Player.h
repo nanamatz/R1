@@ -46,14 +46,7 @@ public:
 	void ActivateAbility(FGameplayTag AbilityTag);
 
 public:
-
-	virtual void RegenerateHealth() override;
-	void RegenerateMana();
-
-
-public:
 	float BaseDamage;
 	float AttackRange;
-	float HPRegen;
-	float MPRegen;
+
 };

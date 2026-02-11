@@ -45,8 +45,6 @@ void AR1Player::BeginPlay()
 
 	BaseDamage = AttributeSet->GetBaseDamage();
 	AttackRange = AttributeSet->GetAttackRange();
-	HPRegen = AttributeSet->GetHealthRegeneration();
-	MPRegen = AttributeSet->GetManaRegeneration();
 }
 
 void AR1Player::PossessedBy(AController* NewController)
@@ -54,6 +52,7 @@ void AR1Player::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	InitAbilitySystem();
+
 }
 
 void AR1Player::InitAbilitySystem()
@@ -64,6 +63,7 @@ void AR1Player::InitAbilitySystem()
 	{
 		AbilitySystemComponent = Cast<UR1AbilitySystemComponent>(PS->GetAbilitySystemComponent());
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+		
 
 		AttributeSet = PS->GetR1PlayerAttributeSet();
 	}
@@ -72,7 +72,6 @@ void AR1Player::InitAbilitySystem()
 void AR1Player::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AR1Player::HandleGameplayEvent(FGameplayTag EventTag)
@@ -95,35 +94,4 @@ void AR1Player::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 void AR1Player::ActivateAbility(FGameplayTag AbilityTag)
 {
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
-}
-
-
-void AR1Player::RegenerateHealth()
-{
-	if (AttributeSet)
-	{
-		float CurHP = AttributeSet->GetHealth();
-		float MaxHP = AttributeSet->GetMaxHealth();
-
-		if(CurHP < MaxHP)
-		{
-			float NewHP = FMath::Clamp(CurHP + HPRegen, 0.f, MaxHP);
-			AttributeSet->SetHealth(NewHP);
-		}
-	}
-}
-
-void AR1Player::RegenerateMana()
-{
-	if (AttributeSet)
-	{
-		float CurMP = AttributeSet->GetMana();
-		float MaxMP = AttributeSet->GetMaxMana();
-
-		if (CurMP < MaxMP)
-		{
-			float NewMP = FMath::Clamp(CurMP + MPRegen, 0.f, MaxMP);
-			AttributeSet->SetMana(NewMP);
-		}
-	}
 }
