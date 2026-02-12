@@ -70,7 +70,7 @@ void AR1PlayerController::PlayerTick(float DeltaTime)
 
 	TickCursorTrace();
 
-	if (GetCharacter()->GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) == false)
+	if (GetCharacter()->GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) == false && R1Player->GetCreatureState() != ECreatureState::Dead)
 	{
 		if (R1Player)
 		{
@@ -248,23 +248,24 @@ void AR1PlayerController::SwitchCursorType(FHitResult& OutHit)
 	
 }
 
-//ECreatureState AR1PlayerController::GetCreatureState()
-//{
-//	if (R1Player)
-//	{
-//		return R1Player->CreatureState;
-//	}
-//
-//	return ECreatureState::None;
-//}
-//
-//void AR1PlayerController::SetCreatureState(ECreatureState InState)
-//{
-//	if (R1Player)
-//	{
-//		R1Player->CreatureState = InState;
-//	}
-//}
+void AR1PlayerController::PlayerOnDead()
+{
+
+	if (R1Player->GetCreatureState() == ECreatureState::Dead)
+	{
+		if (const UR1InputData* InputData = UR1AssetManager::GetAssetByName<UR1InputData>("InputData"))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+			{
+				if (Subsystem->HasMappingContext(InputData->InputMappingContext))
+				{
+					Subsystem->RemoveMappingContext(InputData->InputMappingContext);
+				}
+			}
+		}
+		UpdateInputMode();
+	}
+}
 
 void AR1PlayerController::OnInventoryToggle()
 {
@@ -273,14 +274,17 @@ void AR1PlayerController::OnInventoryToggle()
 	{
 		MyR1HUD->ToggleInventory();
 
-		// 입력 모드 및 커서 설정은 여기서 관리하는 것이 좋습니다 (시스템 제어)
-		bool bIsVisible = MyR1HUD->bIsInventoryVisible;
-		UpdateInputMode(bIsVisible);
+		//// 입력 모드 및 커서 설정은 여기서 관리하는 것이 좋습니다 (시스템 제어)
+		//bool bIsVisible = MyR1HUD->bIsInventoryVisible;
+		//UpdateInputMode(bIsVisible);
 	}
 }
 
-void AR1PlayerController::UpdateInputMode(bool bIsUIOpen)
+void AR1PlayerController::UpdateInputMode(/*bool bIsUIOpen*/)
 {
+	FInputModeUIOnly InputMode;
+	SetInputMode(InputMode);
+	bShowMouseCursor = true;
 	//if (bIsUIOpen)
 	//{
 	//	FInputModeGameAndUI InputMode;
@@ -314,3 +318,4 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 	}
 	//if(EventTag.MatchesTag(R1GameplayTags::Event))
 }
+

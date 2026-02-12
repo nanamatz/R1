@@ -15,4 +15,6 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_Attack);
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Dead);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Casting);
 }

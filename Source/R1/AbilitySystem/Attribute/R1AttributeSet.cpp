@@ -5,6 +5,7 @@
 #include "GameplayEffectExtension.h"
 #include "Character/R1Character.h"
 #include "Character/R1Player.h"
+#include "Character/R1Monster.h"
 
 UR1AttributeSet::UR1AttributeSet()
 {
@@ -35,6 +36,17 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 		{
 			float Ratio = static_cast<float>(GetHealth()) / GetMaxHealth();
 			Character->OnHealthChanged(Ratio);
+
+			if (GetHealth() <= 0.0f)
+			{
+				AActor* Attacker = Data.EffectSpec.GetContext().GetInstigator(); // 시전자 (Pawn)
+
+				if (Character->GetCreatureState() != ECreatureState::Dead)
+				{
+					Character->SetCreatureState(ECreatureState::Dead);
+					Character->OnDead(Cast<AR1Character>(Attacker));
+				}
+			}
 		}
 	}
 
@@ -59,6 +71,16 @@ void UR1AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 	// 1. 지금 변경되려는 속성이 'Health'인지 확인
 	if (Attribute == GetHealthAttribute())
 	{
+		//AActor* AvatarActor = GetOwningAbilitySystemComponent()->GetAvatarActor();
+		//AR1Character* Character = Cast<AR1Character>(AvatarActor);
+		//if (Character && Character->GetCreatureState() == ECreatureState::Dead)
+		//{
+		//	if (NewValue > GetHealth())
+		//	{
+		//		NewValue = GetHealth();
+		//	}
+		//}
+
 		// 2. 현재 MaxHealth 값을 가져옴
 		float CurrentMaxHealth = GetMaxHealth();
 
