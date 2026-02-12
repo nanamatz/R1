@@ -43,6 +43,8 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 
 	if (Attacker && Attacker->AttackMontage)
 	{
+		Attacker->SetCreatureState(ECreatureState::Casting);
+
 		UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this,
 			NAME_None,
@@ -65,7 +67,6 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 			true,
 			false
 		);
-		UE_LOG(LogTemp, Warning, TEXT("@@@@@On Activate Ability@@@@"));
 		// 이벤트가 도착하면 -> OnAttackEventReceived 실행
 		WaitEventTask->EventReceived.AddDynamic(this, &UR1GameplayAbility_Attack::OnAttackEventReceived);
 
@@ -90,6 +91,11 @@ void UR1GameplayAbility_Attack::EndAbility(const FGameplayAbilitySpecHandle Hand
 void UR1GameplayAbility_Attack::OnMontageEnded()
 {
 	// 애니메이션이 다 끝났으니 어빌리티를 완전히 종료합니다.
+	AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor);
+	if (Attacker)
+	{
+		Attacker->SetCreatureState(ECreatureState::Moving);
+	}
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 

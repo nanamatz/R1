@@ -77,7 +77,6 @@ void AR1PlayerController::PlayerTick(float DeltaTime)
 	//		R1Player->SetCreatureState(ECreatureState::Moving);
 	//	}
 	//}
-	//UE_LOG(LogTemp, Warning, TEXT("%d"), R1Player->GetCreatureState());
 
 	ChaseTargetAndAttack();
 }
@@ -194,7 +193,6 @@ void AR1PlayerController::ChaseTargetAndAttack()
 	{
 		return;
 	}
-
 
 
 	if (TargetActor && bMousePressed)
