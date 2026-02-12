@@ -36,7 +36,7 @@ public:
 	virtual void UnHighlight() override;
 
 	virtual void OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker);
-	virtual void OnDead(TObjectPtr<AR1Character> Attacker);
+	virtual void OnDead(const TObjectPtr<AR1Character> Attacker);
 
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -54,7 +54,7 @@ public:
 	ECreatureState CreatureState = ECreatureState::None;
 
 	// 공통 함수는 부모에서 한 번만 구현
-	void SetCreatureState(ECreatureState InState) { CreatureState = InState; }
+	void SetCreatureState(ECreatureState InState);
 	ECreatureState GetCreatureState() const { return CreatureState; }
 
 protected:

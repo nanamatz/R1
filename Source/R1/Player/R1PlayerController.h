@@ -27,22 +27,23 @@ protected:
 	virtual void PlayerTick(float DeltaTime) override;
 public:
 	virtual void HandleGameplayEvent(FGameplayTag EventTag);
-	void UpdateInputMode(bool bIsUIOpen);
+
+	void UpdateInputMode(/*bool bIsUIOpen*/);
+
 private:
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
-
-	//ECreatureState GetCreatureState();
-	//void SetCreatureState(ECreatureState InState);
 
 	void OnInventoryToggle();
 
 private:
 	void TickCursorTrace();
 	void ChaseTargetAndAttack();
-
 	void SwitchCursorType(FHitResult& OutHit);
+
+public:
+	void PlayerOnDead();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)

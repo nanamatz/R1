@@ -70,11 +70,15 @@ void AR1PlayerController::PlayerTick(float DeltaTime)
 
 	TickCursorTrace();
 
-	//UE_LOG(LogTemp, Warning, TEXT("%d"), R1Player->GetCreatureState());
-	if (R1Player->GetCreatureState() != ECreatureState::Dead)
-	{
-		ChaseTargetAndAttack();
-	}
+	//if (GetCharacter()->GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) == false && R1Player->GetCreatureState() != ECreatureState::Dead)
+	//{
+	//	if (R1Player)
+	//	{
+	//		R1Player->SetCreatureState(ECreatureState::Moving);
+	//	}
+	//}
+
+	ChaseTargetAndAttack();
 }
 
 void AR1PlayerController::OnInputStarted()
@@ -189,7 +193,6 @@ void AR1PlayerController::ChaseTargetAndAttack()
 	{
 		return;
 	}
-
 
 
 	if (TargetActor && bMousePressed)

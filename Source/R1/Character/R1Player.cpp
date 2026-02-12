@@ -1,14 +1,17 @@
 
 
-
 #include "Character/R1Player.h"
+#include "Character/R1Monster.h"
+
+#include "Player/R1PlayerController.h"
+#include "Player/R1PlayerState.h"
+
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Player/R1PlayerController.h"
 #include "Components/CapsuleComponent.h"
+
 #include "AbilitySystem/R1AbilitySystemComponent.h"
-#include "Player/R1PlayerState.h"
 #include "AbilitySystem/Attribute/R1PlayerAttributeSet.h"
 
 AR1Player::AR1Player()
@@ -81,6 +84,17 @@ void AR1Player::HandleGameplayEvent(FGameplayTag EventTag)
 	if (PC)
 	{
 		PC->HandleGameplayEvent(EventTag);
+	}
+}
+
+void AR1Player::OnDead(const TObjectPtr<AR1Character> Attacker)
+{
+	Super::OnDead(Attacker);
+
+	AR1PlayerController* PC = Cast<AR1PlayerController>(GetController());
+	if (PC)
+	{
+		PC->PlayerOnDead();
 	}
 }
 

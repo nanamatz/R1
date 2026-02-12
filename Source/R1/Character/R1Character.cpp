@@ -1,5 +1,6 @@
 #include "Character/R1Character.h"
 #include "Components/WidgetComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 
@@ -75,7 +76,13 @@ void AR1Character::OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker)
 
 void AR1Character::OnDead(TObjectPtr<AR1Character> Attacker)
 {
-	CreatureState = ECreatureState::Dead;
+	SetCreatureState(ECreatureState::Dead);
+	
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 }
 
 UAbilitySystemComponent* AR1Character::GetAbilitySystemComponent() const
@@ -98,6 +105,34 @@ void AR1Character::OnHealthChanged(float Ratio)
 	else
 	{
 		UE_LOG(LogTemp,Warning, TEXT("OnHpChanged is NOT bound for actor: %s"), *GetName());
+	}
+}
+
+void AR1Character::SetCreatureState(ECreatureState InState)
+{
+	CreatureState = InState;
+
+	if (CreatureState != ECreatureState::Dead)
+	{
+		return;
+	}
+
+	// GAS 컴포넌트 가져오기
+	UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(GetAbilitySystemComponent());
+
+	if (ASC)
+	{
+		// 1. 죽었을 때: Dead 태그 부착
+		if (CreatureState == ECreatureState::Dead)
+		{
+			// AddLooseGameplayTag: 코드로 강제로 태그를 붙이는 함수
+			ASC->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.State.Dead")));
+		}
+		// 2. 살았을 때: Dead 태그 제거
+		else
+		{
+			ASC->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.State.Dead")));
+		}
 	}
 }
 
