@@ -94,17 +94,7 @@ void UR1GameplayAbility_Attack::OnMontageEnded()
 	AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor);
 	if (Attacker)
 	{
-		if (Attacker->GetCreatureState() == ECreatureState::Dead)
-		{
-			Attacker->SetCreatureState(ECreatureState::Dead);
-			UE_LOG(LogTemp, Warning, TEXT("Dead"));
-		}
-		else
-		{
-			Attacker->SetCreatureState(ECreatureState::Moving);
-			UE_LOG(LogTemp, Warning, TEXT("Moving"));
-
-		}
+		Attacker->SetCreatureState(ECreatureState::Moving);
 	}
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
