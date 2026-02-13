@@ -57,7 +57,7 @@ public:
 public:
 	// 변수를 부모로 이동
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	ECreatureState CreatureState = ECreatureState::None;
+	ECreatureState CreatureState = ECreatureState::Idle;
 
 	// 공통 함수는 부모에서 한 번만 구현
 	void SetCreatureState(ECreatureState InState);

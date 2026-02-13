@@ -35,4 +35,7 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	float MaxExp = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float Level = 0.f;
 };

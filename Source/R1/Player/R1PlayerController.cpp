@@ -47,6 +47,10 @@ void AR1PlayerController::BeginPlay()
 	{
 		R1Player->OnDeadDelegate.AddDynamic(this, &ThisClass::HandlePlayerDead);
 	}
+
+	// 💡 새 레벨이 시작될 때마다 마우스 캡처 깜빡임을 방지하고 GameAndUI 모드로 확정 짓습니다.
+	UpdateInputMode(false);
+	R1Player->SetCreatureState(ECreatureState::Moving);
 }
 
 void AR1PlayerController::SetupInputComponent()
@@ -301,7 +305,7 @@ void AR1PlayerController::PlayerOnDead()
 				}
 			}
 		}
-		UpdateInputMode();
+		UpdateInputMode(R1Player->GetCreatureState() == ECreatureState::Dead);
 
 		AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
 		if (MyR1HUD)
@@ -330,11 +334,22 @@ void AR1PlayerController::OnInventoryToggle()
 	}
 }
 
-void AR1PlayerController::UpdateInputMode(/*bool bIsUIOpen*/)
+void AR1PlayerController::UpdateInputMode(bool bShouldUIOnly)
 {
-	FInputModeUIOnly InputMode;
-	SetInputMode(InputMode);
-	bShowMouseCursor = true;
+	if (bShouldUIOnly)
+	{
+		FInputModeUIOnly InputMode;
+		SetInputMode(InputMode);
+		bShowMouseCursor = true;
+	}
+	else
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetHideCursorDuringCapture(false);
+		SetInputMode(InputMode);
+		bShowMouseCursor = true;
+	}
+
 }
 
 void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)

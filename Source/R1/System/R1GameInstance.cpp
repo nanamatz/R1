@@ -49,6 +49,9 @@ bool UR1GameInstance::SavePlayerState(const AR1Player* Player, const FString& Sl
 	SaveGameObject->MaxMana = Attributes->GetMaxMana();
 	SaveGameObject->BaseDamage = Attributes->GetBaseDamage();
 	SaveGameObject->BaseDefence = Attributes->GetBaseDefence();
+	SaveGameObject->Level = Attributes->GetLevel();
+	SaveGameObject->Exp = Attributes->GetExp();
+	SaveGameObject->MaxExp = Attributes->GetMaxExp();
 
 	return UGameplayStatics::SaveGameToSlot(SaveGameObject, SlotName, UserIndex);
 }
@@ -80,6 +83,9 @@ bool UR1GameInstance::LoadPlayerStateToPlayer(AR1Player* Player, const FString& 
 	Attributes->SetMana(SaveGameObject->MaxMana);
 	Attributes->SetBaseDamage(SaveGameObject->BaseDamage);
 	Attributes->SetBaseDefence(SaveGameObject->BaseDefence);
+	Attributes->SetLevel(SaveGameObject->Level);
+	Attributes->SetMaxExp(SaveGameObject->MaxExp);
+	Attributes->SetExp(SaveGameObject->Exp);
 
 	return true;
 }

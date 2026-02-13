@@ -16,33 +16,30 @@
 UR1InventorySlotsWidget::UR1InventorySlotsWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	ConstructorHelpers::FClassFinder<UR1InventroySlotWidget> FindSlotWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/Item/Inventory/WBP_InventorySlot.WBP_InventorySlot_C'"));
-	if (FindSlotWidgetClass.Succeeded())
-	{
-		SlotWidgetClass = FindSlotWidgetClass.Class;
-	}
+	//ConstructorHelpers::FClassFinder<UR1InventroySlotWidget> FindSlotWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/Item/Inventory/WBP_InventorySlot.WBP_InventorySlot_C'"));
+	//if (FindSlotWidgetClass.Succeeded())
+	//{
+	//	SlotWidgetClass = FindSlotWidgetClass.Class;
+	//}
 
-	ConstructorHelpers::FClassFinder<UR1InventoryEntryWidget> FindEntryWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/Item/Inventory/WBP_InventoryEntry.WBP_InventoryEntry_C'"));
-	if (FindEntryWidgetClass.Succeeded())
-	{
-		EntryWidgetClass = FindEntryWidgetClass.Class;
-	}
+	//ConstructorHelpers::FClassFinder<UR1InventoryEntryWidget> FindEntryWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/Item/Inventory/WBP_InventoryEntry.WBP_InventoryEntry_C'"));
+	//if (FindEntryWidgetClass.Succeeded())
+	//{
+	//	EntryWidgetClass = FindEntryWidgetClass.Class;
+	//}
 }
 
 void UR1InventorySlotsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+	if (GridPanel_Slots == nullptr) UE_LOG(LogTemp, Error, TEXT("GridPanel_Slots가 NULL입니다!"));
+	if (CanvasPanel_Entries == nullptr) UE_LOG(LogTemp, Error, TEXT("CanvasPanel_Entries가 NULL입니다!"));
+	if (SlotWidgetClass == nullptr) UE_LOG(LogTemp, Error, TEXT("SlotWidgetClass가 NULL입니다!"));
+	if (EntryWidgetClass == nullptr) UE_LOG(LogTemp, Error, TEXT("EntryWidgetClass가 NULL입니다!"));
 
-	if (GridPanel_Slots == nullptr || CanvasPanel_Entries == nullptr)
+	if (!GridPanel_Slots || !CanvasPanel_Entries || !SlotWidgetClass || !EntryWidgetClass)
 	{
-		UE_LOG(LogTemp, Error, TEXT("R1InventorySlotsWidget: Required widget panels are null."));
-		return;
-	}
-
-	if (SlotWidgetClass == nullptr || EntryWidgetClass == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("R1InventorySlotsWidget: Slot/Entry widget class is null."));
-		return;
+		return; // 하나라도 NULL이면 중단
 	}
 
 	SlotWidgets.SetNum(X_COUNT * Y_COUNT);
