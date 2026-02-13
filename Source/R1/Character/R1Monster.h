@@ -36,8 +36,12 @@ public:
 
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
+public:
+	virtual void OnDead(const TObjectPtr<class AR1Character> Attacker) override;
 
 public:
-	UPROPERTY(EditAnywhere, Category = "Monster")
-	float AggroRadius = 600.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	TObjectPtr<class UAnimMontage> DeathAnimMontage;
+
+	float AggroRange = 600.f;
 };

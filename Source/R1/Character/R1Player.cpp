@@ -55,6 +55,7 @@ void AR1Player::PossessedBy(AController* NewController)
 
 	InitAbilitySystem();
 
+	InitAttributes();
 }
 
 void AR1Player::InitAbilitySystem()
@@ -96,6 +97,8 @@ void AR1Player::OnDead(const TObjectPtr<AR1Character> Attacker)
 	{
 		PC->PlayerOnDead();
 	}
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 }
 
 

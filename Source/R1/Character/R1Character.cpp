@@ -3,6 +3,8 @@
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "GameplayEffect.h"
+#include "DataTable/CharacterStatsRow.h"
 
 // Sets default values
 AR1Character::AR1Character()
@@ -77,12 +79,8 @@ void AR1Character::OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker)
 void AR1Character::OnDead(TObjectPtr<AR1Character> Attacker)
 {
 	SetCreatureState(ECreatureState::Dead);
-	
-	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 }
 
 UAbilitySystemComponent* AR1Character::GetAbilitySystemComponent() const
@@ -134,6 +132,72 @@ void AR1Character::SetCreatureState(ECreatureState InState)
 			ASC->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.State.Dead")));
 		}
 	}
+}
+
+void AR1Character::InitAttributes()
+{
+	if (!AbilitySystemComponent || !CharacterStatTable || !InitStatEffectClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("InitAttributes: Missing ASC, Table, or GE Class!"));
+		return;
+	}
+
+	FR1CharacterStatsRow* StatData = CharacterStatTable->FindRow<FR1CharacterStatsRow>(CharacterRowName, TEXT("InitAttributes"));
+
+	if (StatData)
+	{
+		FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+		Context.AddSourceObject(this);
+
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(InitStatEffectClass, 1.0f, Context);
+
+		if (SpecHandle.IsValid())
+		{
+			// 3. [핵심] SetByCaller로 값 주입하기
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxHealth")),
+				StatData->MaxHealth
+			);
+
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxMana")),
+				StatData->MaxMana
+			);
+
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.BaseDamage")),
+				StatData->BaseDamage
+			);
+
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.BaseDefence")),
+				StatData->BaseDefence
+			);
+
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackRange")),
+				StatData->AttackRange
+			);
+
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackRadius")),
+				StatData->AttackRadius
+			);
+
+			// 4. 내용물이 채워진 GE를 나 자신에게 적용
+			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+	}
+	if (!StatData)
+	{
+		// 여기가 뜨면 RowName 오타 (Player vs player 등)
+		UE_LOG(LogTemp, Error, TEXT("InitAttributes: '%s' 행을 찾을 수 없습니다!"), *CharacterRowName.ToString());
+		return;
+	}
+
+	// 4. 값 확인
+	UE_LOG(LogTemp, Warning, TEXT("데이터 찾음! 공격력: %f, 체력: %f"), StatData->BaseDamage, StatData->MaxHealth);
+
 }
 
 

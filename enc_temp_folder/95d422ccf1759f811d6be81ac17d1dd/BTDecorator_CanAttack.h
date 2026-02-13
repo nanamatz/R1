@@ -23,4 +23,7 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	FBlackboardKeySelector TargetKey;
+
+	UPROPERTY(EditAnywhere, Category = "Balckboard")
+	float AttackRange = 200.f;
 };

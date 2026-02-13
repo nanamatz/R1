@@ -6,6 +6,7 @@
 #include "AbilitySystem/Abilities/R1GameplayAbility.h"
 #include "R1GameplayAbility_Attack.generated.h"
 
+class AR1Character;
 /**
  * 
  */
@@ -30,6 +31,8 @@ protected:
 	// [설정] 애니메이션에서 보낼 이벤트 태그 (예: Event.Montage.Hit)
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Damage")
 	FGameplayTag AttackEventTag;
+private:
+	void CheckAndApplyDamage_Sector(const FGameplayEffectSpecHandle& SpecHandle,AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC);
 
 private:
 	// [콜백] 애니메이션이 끝났을 때 호출될 함수
@@ -39,5 +42,4 @@ private:
 	// [콜백] 공격 판정 시점(이벤트)에 호출될 함수 -> 여기서 데미지를 줍니다!
 	UFUNCTION()
 	void OnAttackEventReceived(FGameplayEventData Payload);
-
 };

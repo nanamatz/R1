@@ -2,12 +2,19 @@
 
 
 #include "Character/R1Monster.h"
-#include "Components/CapsuleComponent.h"
-#include "AbilitySystem/R1AbilitySystemComponent.h"
-#include "Components/WidgetComponent.h"
 #include "R1Player.h"
-#include "UI/R1HpBarWidget.h"
+
+#include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
 #include "AbilitySystem/Attribute/R1MonsterAttributeSet.h"
+
+#include "AI/R1AIController.h"
+#include "BrainComponent.h"
+#include "Animation/R1AnimInstance.h"
+
+#include "UI/R1HpBarWidget.h"
+#include "AbilitySystem/R1AbilitySystemComponent.h"
+
 
 AR1Monster::AR1Monster()
 {
@@ -15,6 +22,7 @@ AR1Monster::AR1Monster()
 
 	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>("AbilitySystemComponent");
 	AttributeSet = CreateDefaultSubobject<UR1MonsterAttributeSet>("MonsterAttributeSet");
+
 
 	HpBarComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
 	HpBarComponent->SetupAttachment(GetRootComponent());
@@ -38,6 +46,8 @@ void AR1Monster::BeginPlay()
 	InitAbilitySystem();
 	
 	RefreshHpBar();
+
+	InitAttributes();
 }
 
 void AR1Monster::Tick(float DeltaTime)
@@ -104,6 +114,35 @@ void AR1Monster::RefreshHpBar()
 void AR1Monster::ActivateAbility(FGameplayTag AbilityTag)
 {
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
+}
+
+void AR1Monster::OnDead(const TObjectPtr<class AR1Character> Attacker)
+{
+	Super::OnDead(Attacker);
+
+	AR1AIController* AIC = Cast<AR1AIController>(GetController());
+
+	if (AIC)
+	{
+		// 리소스 낭비를 막기 위해 AI 로직(비헤이비어 트리) 중단
+		AIC->StopMovement();
+		AIC->BrainComponent->StopLogic("Dead");
+	}
+
+	if (DeathAnimMontage)
+	{
+		UAnimInstance* AnimInstance = Cast<UAnimInstance>(GetMesh()->GetAnimInstance());
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Play(DeathAnimMontage);
+		}
+	}
+
+	if (HpBarComponent)
+	{
+		HpBarComponent->SetHiddenInGame(true);
+	}
+	//SetLifeSpan(5.0f);
 }
 
 
