@@ -78,9 +78,15 @@ void AR1Character::OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker)
 
 void AR1Character::OnDead(TObjectPtr<AR1Character> Attacker)
 {
+	if (CreatureState == ECreatureState::Dead)
+	{
+		return;
+	}
+
 	SetCreatureState(ECreatureState::Dead);
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	OnDeadDelegate.Broadcast(this, Attacker.Get());
 }
 
 UAbilitySystemComponent* AR1Character::GetAbilitySystemComponent() const

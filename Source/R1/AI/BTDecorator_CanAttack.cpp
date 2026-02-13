@@ -37,6 +37,26 @@ bool UBTDecorator_CanAttack::CalculateRawConditionValue(UBehaviorTreeComponent& 
 	{
 		return false;
 	}
+
 	float AttackRange = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
-	return (Target->GetDistanceTo(SourceCharacter) <= AttackRange);
+
+	if (Target->GetDistanceTo(ControllingPawn) > AttackRange)
+	{
+		return false;
+	}
+
+	// [추가] 각도 체크 로직 (예: 정면 기준 좌우 60도, 총 120도 안에 있어야 공격 가능)
+	FVector DirectionToTarget = (Target->GetActorLocation() - ControllingPawn->GetActorLocation()).GetSafeNormal();
+	float DotResult = FVector::DotProduct(ControllingPawn->GetActorForwardVector(), DirectionToTarget);
+
+	float AttackAngle = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackAngleAttribute());
+
+	float CosineThreshold = FMath::Cos(FMath::DegreesToRadians(AttackAngle / 2.f));
+
+	if (DotResult <= CosineThreshold)
+	{
+		return false;
+	}
+
+	return true; // 거리도 가깝고, 내 앞쪽에 있을 때만 true!
 }

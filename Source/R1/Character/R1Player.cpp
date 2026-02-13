@@ -2,8 +2,6 @@
 
 #include "Character/R1Player.h"
 #include "Character/R1Monster.h"
-
-#include "Player/R1PlayerController.h"
 #include "Player/R1PlayerState.h"
 
 #include "GameFramework/SpringArmComponent.h"
@@ -81,22 +79,12 @@ void AR1Player::HandleGameplayEvent(FGameplayTag EventTag)
 {
 	Super::HandleGameplayEvent(EventTag);
 	//TODO
-	AR1PlayerController* PC = Cast<AR1PlayerController>(GetController());
-	if (PC)
-	{
-		PC->HandleGameplayEvent(EventTag);
-	}
 }
 
 void AR1Player::OnDead(const TObjectPtr<AR1Character> Attacker)
 {
 	Super::OnDead(Attacker);
 
-	AR1PlayerController* PC = Cast<AR1PlayerController>(GetController());
-	if (PC)
-	{
-		PC->PlayerOnDead();
-	}
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 }

@@ -10,7 +10,10 @@
 #include "R1Define.h"
 #include "R1Character.generated.h"
 
+class AR1Character;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHpChangedDelegate,float,Ratio);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeadDelegate, AR1Character*, DeadCharacter, AR1Character*, Attacker);
 
 UCLASS()
 class R1_API AR1Character : public ACharacter, public  IR1HighlightInterface, public IAbilitySystemInterface
@@ -46,6 +49,9 @@ public:
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Attributes")
 	FOnHpChangedDelegate OnHpChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "State")
+	FOnDeadDelegate OnDeadDelegate;
 
 	virtual void OnHealthChanged(float Ratio);
 public:

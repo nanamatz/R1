@@ -9,7 +9,6 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Kismet/GameplayStatics.h"
 #include "System/R1AssetManager.h"
 #include "Data/R1InputData.h"
 #include "R1GameplayTags.h"
@@ -303,22 +302,5 @@ void AR1PlayerController::UpdateInputMode(/*bool bIsUIOpen*/)
 void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 {
 	//TODO
-}
-
-void AR1PlayerController::RespawnInLevel(FName LevelName)
-{
-	if (LevelName.IsNone())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("RespawnInLevel failed: LevelName is None."));
-		return;
-	}
-
-	UGameplayStatics::OpenLevel(this, LevelName);
-}
-
-void AR1PlayerController::RespawnCurrentLevel()
-{
-	const FName CurrentLevelName = FName(*UGameplayStatics::GetCurrentLevelName(this, true));
-	RespawnInLevel(CurrentLevelName);
 }
 
