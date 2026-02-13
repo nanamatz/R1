@@ -211,7 +211,7 @@ void UR1GameplayAbility_Attack::CheckAndApplyDamage_Sector(const FGameplayEffect
 		OverlapResults,
 		SourceCharacter->GetActorLocation(),
 		FQuat::Identity,
-		ECC_GameTraceChannel1, // 적(Pawn) 채널
+		ECC_GameTraceChannel2, 
 		FCollisionShape::MakeSphere(AttackRange),
 		Params
 	);
@@ -225,25 +225,35 @@ void UR1GameplayAbility_Attack::CheckAndApplyDamage_Sector(const FGameplayEffect
 	float DotThreshold = FMath::Cos(FMath::DegreesToRadians(AttackRadius / 2.0f));
 
 	FVector MyForward = SourceCharacter->GetActorForwardVector();
-	//UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 
 	for (const FOverlapResult& Result : OverlapResults)
 	{
+		TSet<AActor*> ProcessedActors;
+
 		AActor* TargetActor = Result.GetActor();
 		if (!TargetActor) continue;
 
+		if (ProcessedActors.Contains(TargetActor))
+		{
+			continue; // 이미 처리한 액터는 건너뜁니다.
+		}
+
 		// 내적 계산
-		FVector DirToTarget = (TargetActor->GetActorLocation() - SourceCharacter->GetActorLocation()).GetSafeNormal();
+		AR1Player* TargetPlayer = Cast<AR1Player>(TargetActor);
+		if (!TargetPlayer) continue;
+
+		FVector DirToTarget = (TargetPlayer->GetActorLocation() - SourceCharacter->GetActorLocation()).GetSafeNormal();
 		float DotResult = FVector::DotProduct(MyForward, DirToTarget);
 
 		// 각도 안에 있다면
 		if (DotResult >= DotThreshold)
 		{
 			// 데미지 적용
-			UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+			UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetPlayer);
 			if (TargetASC)
 			{
 				SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+				ProcessedActors.Add(TargetPlayer);
 			}
 		}
 	}

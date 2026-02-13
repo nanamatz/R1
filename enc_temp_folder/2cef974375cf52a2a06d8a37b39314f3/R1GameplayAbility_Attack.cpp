@@ -225,25 +225,35 @@ void UR1GameplayAbility_Attack::CheckAndApplyDamage_Sector(const FGameplayEffect
 	float DotThreshold = FMath::Cos(FMath::DegreesToRadians(AttackRadius / 2.0f));
 
 	FVector MyForward = SourceCharacter->GetActorForwardVector();
-	//UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 
 	for (const FOverlapResult& Result : OverlapResults)
 	{
+		TSet<AActor*> ProcessedActors;
+
 		AActor* TargetActor = Result.GetActor();
 		if (!TargetActor) continue;
 
+		if (ProcessedActors.Contains(TargetActor))
+		{
+			continue; // 이미 처리한 액터는 건너뜁니다.
+		}
+
 		// 내적 계산
-		FVector DirToTarget = (TargetActor->GetActorLocation() - SourceCharacter->GetActorLocation()).GetSafeNormal();
+		AR1Player* TargetPlayer = Cast<AR1Player>(TargetActor);
+		if (!TargetPlayer) continue;
+
+		FVector DirToTarget = (TargetPlayer->GetActorLocation() - SourceCharacter->GetActorLocation()).GetSafeNormal();
 		float DotResult = FVector::DotProduct(MyForward, DirToTarget);
 
 		// 각도 안에 있다면
 		if (DotResult >= DotThreshold)
 		{
 			// 데미지 적용
-			UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+			UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetPlayer);
 			if (TargetASC)
 			{
 				SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+				ProcessedActors.Add(TargetPlayer);
 			}
 		}
 	}
@@ -255,7 +265,7 @@ void UR1GameplayAbility_Attack::CheckAndApplyDamage_Sector(const FGameplayEffect
 		SourceCharacter->GetActorForwardVector(),            // 뻗어나가는 방향 (캐릭터 정면)
 		AttackRange,             // 사거리 (부채꼴 반지름)
 		HalfAngleRad,       // 가로 벌어짐 각도 (라디안)
-		HalfAngleRad,       // 세로 벌어짐 각도 (원뿔형이면 가로와 동일하게)
+		0,       // 세로 벌어짐 각도 (원뿔형이면 가로와 동일하게)
 		16,                 // 해상도 (몇 각형으로 그릴지, 16~32 추천)
 		FColor::Red,        // 색상
 		false,              // 영구 표시 여부 (false면 사라짐)
