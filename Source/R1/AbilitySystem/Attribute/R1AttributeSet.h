@@ -23,17 +23,25 @@ class R1_API UR1AttributeSet : public UAttributeSet
 public:
 	UR1AttributeSet();
 
+	// Common
 	ATTRIBUTE_ACCESSORS(ThisClass, Health);
 	ATTRIBUTE_ACCESSORS(ThisClass, MaxHealth);
-	ATTRIBUTE_ACCESSORS(ThisClass, Mana);
-	ATTRIBUTE_ACCESSORS(ThisClass, MaxMana);
 	ATTRIBUTE_ACCESSORS(ThisClass, BaseDamage);
 	ATTRIBUTE_ACCESSORS(ThisClass, BaseDefence);
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackRange);
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackRadius);
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackAngle);
+	//Player Only
 	ATTRIBUTE_ACCESSORS(ThisClass, HealthRegeneration);
 	ATTRIBUTE_ACCESSORS(ThisClass, ManaRegeneration);
+	ATTRIBUTE_ACCESSORS(ThisClass, Mana);
+	ATTRIBUTE_ACCESSORS(ThisClass, MaxMana);
+	ATTRIBUTE_ACCESSORS(ThisClass, Exp);
+	ATTRIBUTE_ACCESSORS(ThisClass, MaxExp);
+	ATTRIBUTE_ACCESSORS(ThisClass, Level);
+	//Monster Only
+	ATTRIBUTE_ACCESSORS(ThisClass, Xp);
+	ATTRIBUTE_ACCESSORS(ThisClass, AggroRange);
 
 protected:
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
@@ -46,12 +54,6 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData MaxHealth;
-
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FGameplayAttributeData Mana;
-
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FGameplayAttributeData MaxMana;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData BaseDamage;
@@ -68,9 +70,33 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData AttackAngle;
 
+	//Player Only
+
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData HealthRegeneration;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData ManaRegeneration;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData Mana;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData MaxMana;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData Exp;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData MaxExp;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData Level;
+	//Monster Only
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData Xp;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData AggroRange;
 };

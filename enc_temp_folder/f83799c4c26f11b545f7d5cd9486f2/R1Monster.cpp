@@ -128,12 +128,6 @@ void AR1Monster::OnDead(const TObjectPtr<class AR1Character> Attacker)
 {
 	Super::OnDead(Attacker);
 
-	if (Attacker == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("오류: Attacker가 NULL입니다! 데미지 GE 컨텍스트에서 Instigator를 세팅하지 않았습니다."));
-		return;
-	}
-
 	AR1AIController* AIC = Cast<AR1AIController>(GetController());
 
 	if (AIC)

@@ -25,6 +25,10 @@ public:
 	UR1AbilitySystemComponent* GetR1AbilitySystemComponent() const;
 	UR1PlayerAttributeSet* GetR1PlayerAttributeSet() const;
 
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	UCurveTable* PlayerStatTable;
+
 protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;

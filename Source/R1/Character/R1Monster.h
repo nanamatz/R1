@@ -44,4 +44,7 @@ public:
 	TObjectPtr<class UAnimMontage> DeathAnimMontage;
 
 	float AggroRange = 600.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GE")
+	TSubclassOf<class UGameplayEffect> XpEffect;
 };

@@ -42,8 +42,8 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 			if (GetHealth() <= 0.0f)
 			{
-				AActor* Attacker = Data.EffectSpec.GetContext().GetEffectCauser(); // 시전자 (Pawn)
-				
+				AActor* Attacker = Data.EffectSpec.GetContext().GetInstigator(); // 시전자 (Pawn)
+
 				if (Character->GetCreatureState() != ECreatureState::Dead)
 				{
 					Character->OnDead(Cast<AR1Character>(Attacker));
@@ -107,14 +107,12 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 				SetExp(CurrentExp);
 
 				// 다음 레벨업에 필요한 경험치로 갱신 (루프 계속 진행을 위함)
-				MaxExpForNextLevel = MaxExpCurve->Eval(CurrentLevel);
-				UE_LOG(LogTemp, Warning, TEXT("Max Exp : %f"), MaxExpForNextLevel);
-				SetMaxExp(MaxExpForNextLevel);
-				if (MaxExpForNextLevel <= KINDA_SMALL_NUMBER)
-				{
-					UE_LOG(LogTemp, Error, TEXT("Invalid MaxExp curve value at level %.1f."), CurrentLevel);
-					break;
-				}
+					MaxExpForNextLevel = MaxExpCurve->Eval(CurrentLevel);
+					if (MaxExpForNextLevel <= KINDA_SMALL_NUMBER)
+					{
+						UE_LOG(LogTemp, Error, TEXT("Invalid MaxExp curve value at level %.1f."), CurrentLevel);
+						break;
+					}
 
 				// 예: PS->OnLevelUp(); (파티클 재생, 스탯 상승 처리 등)
 			}

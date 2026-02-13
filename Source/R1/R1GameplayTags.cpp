@@ -17,11 +17,19 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Casting,"Character.State.Casting");
 
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxHealth, "Data.Attribute.MaxHealth");
-	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxMana, "Data.Attribute.MaxMana");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_BaseDefence, "Data.Attribute.BaseDefence");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_BaseDamage, "Data.Attribute.BaseDamage");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_AttackRange, "Data.Attribute.AttackRange");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_AttackRadius, "Data.Attribute.AttackRadius");
+
+	//player only
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxExp, "Data.Attribute.MaxExp");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxMana, "Data.Attribute.MaxMana");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_Level, "Data.Attribute.Level");
+
+	//monster only
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_Xp, "Data.Attribute.Xp");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_AggroRange, "Data.Attribute.AggroRange");
 
 
 

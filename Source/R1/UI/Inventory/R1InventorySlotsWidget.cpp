@@ -33,6 +33,17 @@ void UR1InventorySlotsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	if (GridPanel_Slots == nullptr || CanvasPanel_Entries == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("R1InventorySlotsWidget: Required widget panels are null."));
+		return;
+	}
+
+	if (SlotWidgetClass == nullptr || EntryWidgetClass == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("R1InventorySlotsWidget: Slot/Entry widget class is null."));
+		return;
+	}
 
 	SlotWidgets.SetNum(X_COUNT * Y_COUNT);
 
@@ -43,6 +54,10 @@ void UR1InventorySlotsWidget::NativeConstruct()
 			int32 index = y * X_COUNT + x;
 
 			UR1InventroySlotWidget* SlotWidget = CreateWidget<UR1InventroySlotWidget>(GetOwningPlayer(), SlotWidgetClass);
+			if (SlotWidget == nullptr)
+			{
+				continue;
+			}
 			
 			SlotWidgets[index] = SlotWidget;
 			
@@ -72,7 +87,10 @@ bool UR1InventorySlotsWidget::NativeOnDragOver(const FGeometry& InGeometry, cons
 	Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
 
 	UR1DragDropOperation* DragDrop = Cast<UR1DragDropOperation>(InOperation);
-	check(DragDrop);
+	if (DragDrop == nullptr)
+	{
+		return false;
+	}
 
 	FVector2D MouseWidgetPos = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
 	FVector2D ToWidgetPos = MouseWidgetPos - DragDrop->DeltaWidgetPos;
@@ -103,7 +121,10 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 	FinishDrag();
 
 	UR1DragDropOperation* DragDrop = Cast<UR1DragDropOperation>(InOperation);
-	check(DragDrop);
+	if (DragDrop == nullptr)
+	{
+		return false;
+	}
 
 	FVector2D MouseWidgetPos = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
 	FVector2D ToWidgetPos = MouseWidgetPos - DragDrop->DeltaWidgetPos;
@@ -126,6 +147,10 @@ void UR1InventorySlotsWidget::FinishDrag()
 void UR1InventorySlotsWidget::OnInventoryEntryChanged(const FIntPoint& InItemSlotPos, TObjectPtr<UR1ItemInstance> Item)
 {
 	int32 Slotindex = InItemSlotPos.Y * X_COUNT + InItemSlotPos.X;
+	if (!EntryWidgets.IsValidIndex(Slotindex))
+	{
+		return;
+	}
 
 	if (UR1InventoryEntryWidget* EntryWidget = EntryWidgets[Slotindex])
 	{
@@ -137,10 +162,25 @@ void UR1InventorySlotsWidget::OnInventoryEntryChanged(const FIntPoint& InItemSlo
 	}
 	else
 	{
+		if (Item == nullptr)
+		{
+			return;
+		}
+
 		EntryWidget = CreateWidget<UR1InventoryEntryWidget>(GetOwningPlayer(), EntryWidgetClass);
+		if (EntryWidget == nullptr)
+		{
+			return;
+		}
+
 		EntryWidgets[Slotindex] = EntryWidget;
 
 		UCanvasPanelSlot* CanvasPanelSlot = CanvasPanel_Entries->AddChildToCanvas(EntryWidget);
+		if (CanvasPanelSlot == nullptr)
+		{
+			EntryWidgets[Slotindex] = nullptr;
+			return;
+		}
 		CanvasPanelSlot->SetAutoSize(true);
 		CanvasPanelSlot->SetPosition(FVector2D(InItemSlotPos.X * 50, InItemSlotPos.Y * 50));
 
