@@ -4,8 +4,6 @@
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "GameplayEffectExtension.h"
 #include "Character/R1Character.h"
-#include "Character/R1Player.h"
-#include "Character/R1Monster.h"
 
 UR1AttributeSet::UR1AttributeSet()
 {
@@ -19,7 +17,6 @@ UR1AttributeSet::UR1AttributeSet()
 	InitAttackRadius(50.f);
 	InitHealthRegeneration(1.f);
 	InitManaRegeneration(1.f);
-
 }
 
 void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -29,6 +26,16 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		//AR1Character* Character = Cast<AR1Character>(GetOwningActor()); 이 한 줄로도 되는지 한 번 테스트 해봐야 함.
+		// [디버깅 코드 시작]
+		AActor* SourceActor = Data.EffectSpec.GetContext().GetOriginalInstigator(); // 때린 사람
+		AActor* TargetActor = Data.Target.GetAvatarActor(); // 맞은 사람
+		float DamageAmount = Data.EvaluatedData.Magnitude; // 들어온 데미지 양 (음수일 수 있음)
+
+		UE_LOG(LogTemp, Warning, TEXT("[Damage Debug] %s -> %s에게 데미지: %f"),
+			*GetNameSafe(SourceActor),
+			*GetNameSafe(TargetActor),
+			FMath::Abs(DamageAmount)); // 깎인 양이므로 절대값
+		// [디버깅 코드 끝]
 
 		AActor* AvatarActor = Data.Target.GetAvatarActor();
 		AR1Character* Character = Cast<AR1Character>(AvatarActor);
@@ -43,7 +50,7 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 				if (Character->GetCreatureState() != ECreatureState::Dead)
 				{
-					Character->SetCreatureState(ECreatureState::Dead);
+					//Character->SetCreatureState(ECreatureState::Dead);
 					Character->OnDead(Cast<AR1Character>(Attacker));
 				}
 			}
@@ -53,7 +60,7 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 	if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
 		AActor* AvatarActor = Data.Target.GetAvatarActor();
-		AR1Player* Player = Cast<AR1Player>(AvatarActor);
+		AR1Character* Player = Cast<AR1Character>(AvatarActor);
 		if (Player)
 		{
 			float Ratio = static_cast<float>(GetMana()) / GetMaxMana();
@@ -68,37 +75,10 @@ void UR1AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 
-	// 1. 지금 변경되려는 속성이 'Health'인지 확인
 	if (Attribute == GetHealthAttribute())
 	{
-		//AActor* AvatarActor = GetOwningAbilitySystemComponent()->GetAvatarActor();
-		//AR1Character* Character = Cast<AR1Character>(AvatarActor);
-		//if (Character && Character->GetCreatureState() == ECreatureState::Dead)
-		//{
-		//	if (NewValue > GetHealth())
-		//	{
-		//		NewValue = GetHealth();
-		//	}
-		//}
-
-		// 2. 현재 MaxHealth 값을 가져옴
 		float CurrentMaxHealth = GetMaxHealth();
-
-		// 3. 들어오는 값(NewValue)을 0 ~ MaxHealth 사이로 가둠 (Clamping)
-		// FMath::Clamp(검사할 값, 최소값, 최대값)
 		NewValue = FMath::Clamp(NewValue, 0.0f, CurrentMaxHealth);
 	}
 }
 
-//void UR1AttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
-//{
-//	Super::PostAttributeChange(Attribute, OldValue, NewValue);
-//
-//	if (Attribute == GetHealthAttribute())
-//	{
-//		// 여기서도 UI 업데이트를 요청할 수 있습니다.
-//		// 하지만 보통은 PostGameplayEffectExecute와 역할이 나뉩니다.
-//		// 여기서는 주로 Clamping만 합니다.
-//		float ClampedValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
-//	}
-//}

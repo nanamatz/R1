@@ -57,6 +57,22 @@ public:
 	void SetCreatureState(ECreatureState InState);
 	ECreatureState GetCreatureState() const { return CreatureState; }
 
+	// 초기화 함수
+	virtual void InitAttributes();
+
+protected:
+	// 1. 데이터 테이블 에셋 (에디터에서 지정)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
+	TObjectPtr<class UDataTable> CharacterStatTable;
+
+	// 2. 초기화용 GE 클래스 (GE_InitStats 넣을 곳)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
+	TSubclassOf<class UGameplayEffect> InitStatEffectClass;
+
+	// 3. 내 이름 (Row Name) - Player는 "Player", 몬스터는 "Goblin" 등
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
+	FName CharacterRowName;
+
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bHighlighted = false;

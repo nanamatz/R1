@@ -1,5 +1,3 @@
-
-
 #include "AbilitySystem/Abilities/R1GameplayAbility_Attack.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h" // 몽타주 Task
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"  // 이벤트 대기 Task
@@ -94,7 +92,16 @@ void UR1GameplayAbility_Attack::OnMontageEnded()
 	AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor);
 	if (Attacker)
 	{
-		Attacker->SetCreatureState(ECreatureState::Moving);
+		if (Attacker->GetCreatureState() == ECreatureState::Dead)
+		{
+			Attacker->SetCreatureState(ECreatureState::Dead);
+			UE_LOG(LogTemp, Warning, TEXT("Dead"));
+		}
+		else
+		{
+			Attacker->SetCreatureState(ECreatureState::Moving);
+			UE_LOG(LogTemp, Warning, TEXT("Moving"));
+		}
 	}
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
@@ -108,10 +115,8 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 
 	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 
-	float AttackRange = 0.f;
-	float AttackRadius = 0.f;
+
 	AActor* TargetActor = nullptr;
-	UE_LOG(LogTemp, Warning, TEXT("Apply GE to Monster!"));
 
 	if (DamageEffect && SourceASC)
 	{
@@ -133,6 +138,8 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 					if (TargetASC)
 					{
 						SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
+						UE_LOG(LogTemp, Warning, TEXT("Apply GE to Monster!"));
+
 					}
 				}
 				else
@@ -145,41 +152,115 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 		}
 		else
 		{
-			AttackRange = SourceASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
-			AttackRadius = SourceASC->GetNumericAttribute(UR1AttributeSet::GetAttackRadiusAttribute());
 
-			TArray<FHitResult> HitResults;
-			FVector Start = SourceCharacter->GetActorLocation();
-
-			// [변경] 하드코딩된 변수 대신, Attribute에서 가져온 값을 사용!
-			FVector End = Start + (SourceCharacter->GetActorForwardVector() * AttackRange);
-
+			CheckAndApplyDamage_Sector(EffectSpecHandle, SourceCharacter, SourceASC);
+			
+			/*TArray<FOverlapResult> OverlapResults;
 			FCollisionQueryParams Params;
-			Params.AddIgnoredActor(SourceCharacter);
+			Params.AddIgnoredActor(this);*/
 
-			bool bHit = GetWorld()->SweepMultiByChannel(
-				HitResults,
-				Start,
-				End,
-				FQuat::Identity,
-				ECC_GameTraceChannel1,
-				FCollisionShape::MakeSphere(AttackRadius), // [변경] 여기도 Attribute 값 사용
-				Params
-			);
+			//TArray<FHitResult> HitResults;
+			//FVector Start = SourceCharacter->GetActorLocation();
 
-			DrawDebugSphere(GetWorld(), Start, AttackRadius, 16, FColor::Green, false, 1.f);
-			DrawDebugSphere(GetWorld(), End, AttackRadius, 16, FColor::Blue, false, 1.f);
+			//// [변경] 하드코딩된 변수 대신, Attribute에서 가져온 값을 사용!
+			//FVector End = Start + (SourceCharacter->GetActorForwardVector() * AttackRange);
 
-			for (const FHitResult& HitResult : HitResults)
+			//FCollisionQueryParams Params;
+			//Params.AddIgnoredActor(SourceCharacter);
+
+			//bool bHit = GetWorld()->SweepMultiByChannel(
+			//	HitResults,
+			//	Start,
+			//	End,
+			//	FQuat::Identity,
+			//	ECC_GameTraceChannel1,
+			//	FCollisionShape::MakeSphere(AttackRadius), // [변경] 여기도 Attribute 값 사용
+			//	Params
+			//);
+
+			//DrawDebugSphere(GetWorld(), Start, AttackRadius,16, FColor::Green, false, 1.f);
+			//DrawDebugSphere(GetWorld(), End, AttackRadius, 16, FColor::Blue, false, 1.f);
+
+			//for (const FHitResult& HitResult : HitResults)
+			//{
+			//	AR1Player* HitPlayer = Cast<AR1Player>(HitResult.GetActor());
+
+			//	if (HitPlayer)
+			//	{
+			//		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(HitPlayer);
+			//		SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
+			//		UE_LOG(LogTemp, Warning, TEXT("Apply GE to Player!"));
+
+			//	}
+			//}
+		}
+	}
+}
+
+void UR1GameplayAbility_Attack::CheckAndApplyDamage_Sector(const FGameplayEffectSpecHandle& SpecHandle, AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC)
+{
+
+	float AttackRange = SourceASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
+	float AttackRadius = SourceASC->GetNumericAttribute(UR1AttributeSet::GetAttackRadiusAttribute());
+
+	TArray<FOverlapResult> OverlapResults;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(SourceCharacter);
+
+	bool bResult = SourceCharacter->GetWorld()->OverlapMultiByChannel(
+		OverlapResults,
+		SourceCharacter->GetActorLocation(),
+		FQuat::Identity,
+		ECC_GameTraceChannel1, // 적(Pawn) 채널
+		FCollisionShape::MakeSphere(AttackRange),
+		Params
+	);
+
+	if (!bResult)
+	{
+		return;
+	}
+
+	// 2. 각도 계산 (Dot Product)
+	float DotThreshold = FMath::Cos(FMath::DegreesToRadians(AttackRadius / 2.0f));
+
+	FVector MyForward = SourceCharacter->GetActorForwardVector();
+	//UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
+
+	for (const FOverlapResult& Result : OverlapResults)
+	{
+		AActor* TargetActor = Result.GetActor();
+		if (!TargetActor) continue;
+
+		// 내적 계산
+		FVector DirToTarget = (TargetActor->GetActorLocation() - SourceCharacter->GetActorLocation()).GetSafeNormal();
+		float DotResult = FVector::DotProduct(MyForward, DirToTarget);
+
+		// 각도 안에 있다면
+		if (DotResult >= DotThreshold)
+		{
+			// 데미지 적용
+			UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+			if (TargetASC)
 			{
-				AR1Player* HitPlayer = Cast<AR1Player>(HitResult.GetActor());
-
-				if (HitPlayer)
-				{
-					UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(HitPlayer);
-					SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
-				}
+				SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 			}
 		}
 	}
+
+	float HalfAngleRad = FMath::DegreesToRadians(AttackRadius / 2.0f);
+	DrawDebugCone(
+		SourceCharacter->GetWorld(),
+		SourceCharacter->GetActorLocation(),             // 시작점 (캐릭터 위치)
+		SourceCharacter->GetActorForwardVector(),            // 뻗어나가는 방향 (캐릭터 정면)
+		AttackRange,             // 사거리 (부채꼴 반지름)
+		HalfAngleRad,       // 가로 벌어짐 각도 (라디안)
+		HalfAngleRad,       // 세로 벌어짐 각도 (원뿔형이면 가로와 동일하게)
+		16,                 // 해상도 (몇 각형으로 그릴지, 16~32 추천)
+		FColor::Red,        // 색상
+		false,              // 영구 표시 여부 (false면 사라짐)
+		2.0f,               // 지속 시간 (2초 동안 보임)
+		0,                  // 우선순위
+		1.0f                // 선 두께
+	);
 }

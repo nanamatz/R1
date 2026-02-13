@@ -15,6 +15,15 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_Attack);
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack);
+
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Dead);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Casting);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxHealth);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxMana);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_BaseDamage);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_BaseDefence);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackRange);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackRadius);
+
 }

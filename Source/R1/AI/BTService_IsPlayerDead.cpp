@@ -10,6 +10,8 @@
 
 UBTService_IsPlayerDead::UBTService_IsPlayerDead()
 {
+    NodeName = TEXT("CheckPlayerDeadService");
+    Interval = 0.5f;
 }
 
 void UBTService_IsPlayerDead::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)

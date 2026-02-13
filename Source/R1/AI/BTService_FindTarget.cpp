@@ -1,6 +1,3 @@
-
-
-
 #include "AI/BTService_FindTarget.h"
 #include "Character/R1Player.h"
 #include "Character/R1Monster.h"
@@ -19,12 +16,19 @@ void UBTService_FindTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 
 	APawn* LocalPawn = OwnerComp.GetAIOwner()->GetPawn();
 
-	float SearchRadius = Cast<AR1Monster>(LocalPawn)->AggroRadius;
-
 	if (LocalPawn == nullptr)
 	{
 		return;
 	}
+
+	AR1Monster* Monster = Cast<AR1Monster>(LocalPawn);
+
+	if (Monster == nullptr)  // ← 추가: Cast 실패 확인
+	{
+		return;
+	}
+
+	float SearchRadius = Monster->AggroRange;
 
 	UWorld* World = LocalPawn->GetWorld( );
 	if (World == nullptr)
