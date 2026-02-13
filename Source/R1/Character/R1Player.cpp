@@ -11,6 +11,7 @@
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1PlayerAttributeSet.h"
+#include "System/R1GameInstance.h"
 
 AR1Player::AR1Player()
 {
@@ -44,7 +45,13 @@ void AR1Player::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (UR1GameInstance* R1GameInstance = GetGameInstance<UR1GameInstance>())
+	{
+		R1GameInstance->ApplyRespawnSnapshotToPlayer(this);
+	}
+	
 	AttackRange = AttributeSet->GetAttackRange();
+
 }
 
 void AR1Player::PossessedBy(AController* NewController)

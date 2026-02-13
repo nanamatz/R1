@@ -4,13 +4,19 @@
 #include "Player/R1PlayerController.h"
 #include "Character/R1Player.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
+
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
+
 #include "System/R1AssetManager.h"
+#include "System/R1GameInstance.h"
+
 #include "Data/R1InputData.h"
 #include "R1GameplayTags.h"
 #include "UI/R1HUD.h"
@@ -311,6 +317,11 @@ void AR1PlayerController::RespawnInLevel(FName LevelName)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("RespawnInLevel failed: LevelName is None."));
 		return;
+	}
+
+	if (UR1GameInstance* R1GameInstance = GetGameInstance<UR1GameInstance>())
+	{
+		R1GameInstance->SaveRespawnSnapshotFromPlayer(R1Player);
 	}
 
 	UGameplayStatics::OpenLevel(this, LevelName);
