@@ -22,9 +22,6 @@ public:
     UUserWidget* GetBaseUIWidget() const { return BaseUIWidget; }
     UUserWidget* GetGameOverUIWidget() const { return GameOverUIWidget; }
 
-protected:
-    virtual void BeginPlay() override;
-
 public:
 	bool bIsInventoryVisible;
     bool bIsGameOverUIVisible;
@@ -48,4 +45,5 @@ protected:
     UPROPERTY(EditDefaultsOnly)
     TObjectPtr<UUserWidget> GameOverUIWidget = nullptr;
 
+    virtual void BeginPlay() override;
 };

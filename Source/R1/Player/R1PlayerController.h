@@ -9,7 +9,7 @@
 #include "R1PlayerController.generated.h"
 
 struct FInputActionValue;
-
+class AR1Character;
 /**
  * 
  */
@@ -27,6 +27,12 @@ protected:
 	virtual void PlayerTick(float DeltaTime) override;
 public:
 	virtual void HandleGameplayEvent(FGameplayTag EventTag);
+	
+	UFUNCTION(BlueprintCallable, Category = "Respawn")
+	void RespawnInLevel(FName LevelName);
+
+	UFUNCTION(BlueprintCallable, Category = "Respawn")
+	void RespawnCurrentLevel();
 
 	void UpdateInputMode(/*bool bIsUIOpen*/);
 
@@ -44,6 +50,10 @@ private:
 
 public:
 	void PlayerOnDead();
+
+public:
+	UFUNCTION()
+	void HandlePlayerDead(AR1Character* DeadCharacter, AR1Character* Attacker);
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
