@@ -49,11 +49,11 @@ bool UBTDecorator_CanAttack::CalculateRawConditionValue(UBehaviorTreeComponent& 
 	FVector DirectionToTarget = (Target->GetActorLocation() - ControllingPawn->GetActorLocation()).GetSafeNormal();
 	float DotResult = FVector::DotProduct(ControllingPawn->GetActorForwardVector(), DirectionToTarget);
 
-	float AttackRadius = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackRadiusAttribute());
+	float AttackAngle = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackAngleAttribute());
 
-	float Angle = FMath::Cos(AttackRadius);
+	float CosineThreshold = FMath::Cos(FMath::DegreesToRadians(AttackAngle / 2.f));
 
-	if (DotResult <= Angle)
+	if (DotResult <= CosineThreshold)
 	{
 		return false;
 	}

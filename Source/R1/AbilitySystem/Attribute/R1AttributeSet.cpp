@@ -15,8 +15,10 @@ UR1AttributeSet::UR1AttributeSet()
 	InitBaseDefence(5.f);
 	InitAttackRange(200.f);
 	InitAttackRadius(50.f);
+	InitAttackAngle(120.f);
 	InitHealthRegeneration(1.f);
 	InitManaRegeneration(1.f);
+	
 }
 
 void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -26,16 +28,16 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		//AR1Character* Character = Cast<AR1Character>(GetOwningActor()); 이 한 줄로도 되는지 한 번 테스트 해봐야 함.
-		// [디버깅 코드 시작]
-		AActor* SourceActor = Data.EffectSpec.GetContext().GetOriginalInstigator(); // 때린 사람
-		AActor* TargetActor = Data.Target.GetAvatarActor(); // 맞은 사람
-		float DamageAmount = Data.EvaluatedData.Magnitude; // 들어온 데미지 양 (음수일 수 있음)
+		//// [디버깅 코드 시작]
+		//AActor* SourceActor = Data.EffectSpec.GetContext().GetOriginalInstigator(); // 때린 사람
+		//AActor* TargetActor = Data.Target.GetAvatarActor(); // 맞은 사람
+		//float DamageAmount = Data.EvaluatedData.Magnitude; // 들어온 데미지 양 (음수일 수 있음)
 
-		UE_LOG(LogTemp, Warning, TEXT("[Damage Debug] %s -> %s에게 데미지: %f"),
-			*GetNameSafe(SourceActor),
-			*GetNameSafe(TargetActor),
-			FMath::Abs(DamageAmount)); // 깎인 양이므로 절대값
-		// [디버깅 코드 끝]
+		//UE_LOG(LogTemp, Warning, TEXT("[Damage Debug] %s -> %s에게 데미지: %f"),
+		//	*GetNameSafe(SourceActor),
+		//	*GetNameSafe(TargetActor),
+		//	FMath::Abs(DamageAmount)); // 깎인 양이므로 절대값
+		//// [디버깅 코드 끝]
 
 		AActor* AvatarActor = Data.Target.GetAvatarActor();
 		AR1Character* Character = Cast<AR1Character>(AvatarActor);
