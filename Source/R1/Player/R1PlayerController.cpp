@@ -47,6 +47,10 @@ void AR1PlayerController::BeginPlay()
 	{
 		R1Player->OnDeadDelegate.AddDynamic(this, &ThisClass::HandlePlayerDead);
 	}
+
+	// 💡 새 레벨이 시작될 때마다 마우스 캡처 깜빡임을 방지하고 GameAndUI 모드로 확정 짓습니다.
+	UpdateInputMode(false);
+	R1Player->SetCreatureState(ECreatureState::Moving);
 }
 
 void AR1PlayerController::SetupInputComponent()
@@ -55,9 +59,19 @@ void AR1PlayerController::SetupInputComponent()
 
 	if (const UR1InputData* InputData = UR1AssetManager::GetAssetByName<UR1InputData>("InputData"))
 	{
-		UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
+		UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
+		if (EnhancedInputComponent == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: InputComponent is not UEnhancedInputComponent."));
+			return;
+		}
 
 		auto ActionMoveTo = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SetDestination);
+		if (ActionMoveTo == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionMoveTo is null."));
+			return;
+		}
 
 		EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Started, this, &ThisClass::OnInputStarted);
 		EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Triggered, this, &ThisClass::OnSetDestinationTriggered);
@@ -65,7 +79,10 @@ void AR1PlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Canceled, this, &ThisClass::OnSetDestinationReleased);
 
 		auto ActionInventoryToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Inventory);
-		EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
+		if (ActionInventoryToggle)
+		{
+			EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
+		}
 
 		//auto ActionInteract = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Interaction);
 	}
@@ -81,7 +98,15 @@ void AR1PlayerController::PlayerTick(float DeltaTime)
 
 	TickCursorTrace();
 
-	//UE_LOG(LogTemp, Warning, TEXT("%d"), R1Player->GetCreatureState());
+	if (R1Player == nullptr)
+	{
+		R1Player = Cast<AR1Player>(GetCharacter());
+		if (R1Player == nullptr)
+		{
+			return;
+		}
+	}
+
 	if (R1Player->GetCreatureState() != ECreatureState::Dead)
 	{
 		ChaseTargetAndAttack();
@@ -191,7 +216,7 @@ void AR1PlayerController::TickCursorTrace()
 
 void AR1PlayerController::ChaseTargetAndAttack()
 {
-	if (TargetActor == nullptr)
+	if (R1Player == nullptr || TargetActor == nullptr)
 	{
 		return;
 	}
@@ -240,6 +265,11 @@ void AR1PlayerController::ChaseTargetAndAttack()
 void AR1PlayerController::SwitchCursorType(FHitResult& OutHit)
 {
 	AActor* CurrentActorType = OutHit.GetActor();
+	if (CurrentActorType == nullptr)
+	{
+		CurrentMouseCursor = EMouseCursor::Default;
+		return;
+	}
 
 	if(CurrentActorType->ActorHasTag(FName("Enemy")))
 	{
@@ -258,6 +288,11 @@ void AR1PlayerController::SwitchCursorType(FHitResult& OutHit)
 
 void AR1PlayerController::PlayerOnDead()
 {
+	if (R1Player == nullptr)
+	{
+		return;
+	}
+
 	if (R1Player->GetCreatureState() == ECreatureState::Dead)
 	{
 		if (const UR1InputData* InputData = UR1AssetManager::GetAssetByName<UR1InputData>("InputData"))
@@ -270,7 +305,7 @@ void AR1PlayerController::PlayerOnDead()
 				}
 			}
 		}
-		UpdateInputMode();
+		UpdateInputMode(R1Player->GetCreatureState() == ECreatureState::Dead);
 
 		AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
 		if (MyR1HUD)
@@ -299,11 +334,22 @@ void AR1PlayerController::OnInventoryToggle()
 	}
 }
 
-void AR1PlayerController::UpdateInputMode(/*bool bIsUIOpen*/)
+void AR1PlayerController::UpdateInputMode(bool bShouldUIOnly)
 {
-	FInputModeUIOnly InputMode;
-	SetInputMode(InputMode);
-	bShowMouseCursor = true;
+	if (bShouldUIOnly)
+	{
+		FInputModeUIOnly InputMode;
+		SetInputMode(InputMode);
+		bShowMouseCursor = true;
+	}
+	else
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetHideCursorDuringCapture(false);
+		SetInputMode(InputMode);
+		bShowMouseCursor = true;
+	}
+
 }
 
 void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)

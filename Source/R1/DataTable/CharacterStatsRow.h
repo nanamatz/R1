@@ -15,15 +15,28 @@ struct FR1CharacterStatsRow : public FTableRowBase
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float MaxHealth = 100.0f;
+	float MaxHealth = 0.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float MaxMana = 0.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float BaseDamage = 50.0f;
+	float BaseDamage = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float BaseDefence = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float AttackRange = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float AttackRadius = 0.0f;
+
+	//Player Only
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float MaxMana = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float MaxExp = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float Level = 0.0f;
+
+	//Monster Only
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float Xp = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float AggroRange = 0.0f;
 };

@@ -34,7 +34,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Respawn")
 	void RespawnCurrentLevel();
 
-	void UpdateInputMode(/*bool bIsUIOpen*/);
+	void UpdateInputMode(bool bShouldUIOnly);
 
 private:
 	void OnInputStarted();

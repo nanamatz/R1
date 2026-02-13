@@ -18,7 +18,6 @@ AR1Character::AR1Character()
 void AR1Character::BeginPlay()
 {
 	Super::BeginPlay();
-	//InitHpAndMp();
 	AddCharacterAbility();
 	ApplyCharacterEffect();
 }
@@ -189,6 +188,22 @@ void AR1Character::InitAttributes()
 				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackRadius")),
 				StatData->AttackRadius
 			);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AggroRange")),
+				StatData->AggroRange
+			);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxExp")),
+				StatData->MaxExp
+			);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.Xp")),
+				StatData->Xp
+			);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.Level")),
+				StatData->Level
+			);
 
 			// 4. 내용물이 채워진 GE를 나 자신에게 적용
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
@@ -202,7 +217,7 @@ void AR1Character::InitAttributes()
 	}
 
 	// 4. 값 확인
-	UE_LOG(LogTemp, Warning, TEXT("데이터 찾음! 공격력: %f, 체력: %f"), StatData->BaseDamage, StatData->MaxHealth);
+	UE_LOG(LogTemp, Warning, TEXT("데이터 찾음! 레벨: %f, 경험치 통: %f, 경험치: %f,공격력: %f, 체력: %f"), StatData->Level,StatData->MaxExp,StatData->Xp,StatData->BaseDamage, StatData->MaxHealth);
 
 }
 

@@ -29,4 +29,13 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	float BaseDefence = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float Exp = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float MaxExp = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float Level = 0.f;
 };

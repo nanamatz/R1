@@ -5,7 +5,7 @@
 UENUM(BlueprintType)
 enum class ECreatureState: uint8
 {
-	None,
+	Idle,
 	Moving,
 	Casting,
 	Dead,

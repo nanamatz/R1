@@ -36,14 +36,21 @@ private:
 	void FinishDrag();
 
 protected:
-	UPROPERTY()
-	TSubclassOf<UR1InventorySlotsWidget> SlotWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UR1InventroySlotWidget> SlotWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UR1InventoryEntryWidget> EntryWidgetClass;
+
+	//UPROPERTY()
+	//TSubclassOf<UR1InventorySlotsWidget> SlotWidgetClass;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UR1InventroySlotWidget>> SlotWidgets;
 
-	UPROPERTY()
-	TSubclassOf<UR1InventoryEntryWidget> EntryWidgetClass;
+	//UPROPERTY()
+	//TSubclassOf<UR1InventoryEntryWidget> EntryWidgetClass;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UR1InventoryEntryWidget>> EntryWidgets;

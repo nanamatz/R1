@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "GameplayEffectExtension.h"
+#include "Player/R1PlayerState.h"
 #include "Character/R1Character.h"
 
 UR1AttributeSet::UR1AttributeSet()
@@ -18,7 +19,12 @@ UR1AttributeSet::UR1AttributeSet()
 	InitAttackAngle(120.f);
 	InitHealthRegeneration(1.f);
 	InitManaRegeneration(1.f);
-	
+	InitExp(0.f);
+	InitMaxExp(10.f);
+	InitAggroRange(300.f);
+	InitXp(10.f);
+	InitLevel(1.f);
+
 }
 
 void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -27,18 +33,6 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
-		//AR1Character* Character = Cast<AR1Character>(GetOwningActor()); 이 한 줄로도 되는지 한 번 테스트 해봐야 함.
-		//// [디버깅 코드 시작]
-		//AActor* SourceActor = Data.EffectSpec.GetContext().GetOriginalInstigator(); // 때린 사람
-		//AActor* TargetActor = Data.Target.GetAvatarActor(); // 맞은 사람
-		//float DamageAmount = Data.EvaluatedData.Magnitude; // 들어온 데미지 양 (음수일 수 있음)
-
-		//UE_LOG(LogTemp, Warning, TEXT("[Damage Debug] %s -> %s에게 데미지: %f"),
-		//	*GetNameSafe(SourceActor),
-		//	*GetNameSafe(TargetActor),
-		//	FMath::Abs(DamageAmount)); // 깎인 양이므로 절대값
-		//// [디버깅 코드 끝]
-
 		AActor* AvatarActor = Data.Target.GetAvatarActor();
 		AR1Character* Character = Cast<AR1Character>(AvatarActor);
 		if (Character)
@@ -48,11 +42,10 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 			if (GetHealth() <= 0.0f)
 			{
-				AActor* Attacker = Data.EffectSpec.GetContext().GetInstigator(); // 시전자 (Pawn)
-
+				AActor* Attacker = Data.EffectSpec.GetContext().GetEffectCauser(); // 시전자 (Pawn)
+				
 				if (Character->GetCreatureState() != ECreatureState::Dead)
 				{
-					//Character->SetCreatureState(ECreatureState::Dead);
 					Character->OnDead(Cast<AR1Character>(Attacker));
 				}
 			}
@@ -70,6 +63,63 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 		}
 	}
 
+	if (Data.EvaluatedData.Attribute == GetExpAttribute())
+	{
+		// 1. 방금 얻은 경험치량 (GE가 더해준 값)
+		float GainedExp = Data.EvaluatedData.Magnitude;
+
+		// 2. 현재 누적된 총 경험치
+		float CurExp = GetExp();
+
+		// 💡 [디버그 로그 출력]
+		UE_LOG(LogTemp, Warning, TEXT("✨ [Exp System] %s가 경험치를 얻었습니다! (획득량: +%.1f / 총 경험치: %.1f)"),
+			*GetOwningActor()->GetName(), GainedExp, CurExp);
+
+		AR1PlayerState* PS = Cast<AR1PlayerState>(GetOwningActor());
+		if (PS && PS->PlayerStatTable)
+		{
+			float CurrentExp = GetExp();
+			float CurrentLevel = GetLevel();
+
+			FRealCurve* MaxExpCurve = PS->PlayerStatTable->FindCurve(FName("MaxExp"), TEXT(""));
+			if (!MaxExpCurve)
+			{
+				UE_LOG(LogTemp, Error, TEXT("Can't find CurveTable Row Named : Max Exp!"));
+				return;
+			}
+			float MaxExpForNextLevel = MaxExpCurve->Eval(CurrentLevel);
+			if (MaxExpForNextLevel <= KINDA_SMALL_NUMBER)
+			{
+				UE_LOG(LogTemp, Error, TEXT("Invalid MaxExp curve value at level %.1f."), CurrentLevel);
+				return;
+			}
+
+			// 4. 레벨업 루프 (한 번에 여러 레벨이 오를 수도 있으므로 while 사용)
+			while (CurrentExp >= MaxExpForNextLevel)
+			{
+				// 경험치 초과분 계산 및 레벨 1 증가
+				CurrentExp -= MaxExpForNextLevel;
+				CurrentLevel += 1.0f;
+
+				UE_LOG(LogTemp, Warning, TEXT("Level UP!!!"));
+
+				SetLevel(CurrentLevel);
+				SetExp(CurrentExp);
+
+				// 다음 레벨업에 필요한 경험치로 갱신 (루프 계속 진행을 위함)
+				MaxExpForNextLevel = MaxExpCurve->Eval(CurrentLevel);
+				UE_LOG(LogTemp, Warning, TEXT("Max Exp : %f"), MaxExpForNextLevel);
+				SetMaxExp(MaxExpForNextLevel);
+				if (MaxExpForNextLevel <= KINDA_SMALL_NUMBER)
+				{
+					UE_LOG(LogTemp, Error, TEXT("Invalid MaxExp curve value at level %.1f."), CurrentLevel);
+					break;
+				}
+
+				// 예: PS->OnLevelUp(); (파티클 재생, 스탯 상승 처리 등)
+			}
+		}
+	}
 
 }
 

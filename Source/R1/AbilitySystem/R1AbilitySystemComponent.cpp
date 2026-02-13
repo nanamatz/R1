@@ -59,8 +59,8 @@ void UR1AbilitySystemComponent::ActivateAbility(FGameplayTag AbilityTag)
 	//	TryActivateAbility(SpecHandle);
 	//}
 
-	AbilityTags.AddTag(AbilityTag);
-
-	TryActivateAbilitiesByTag(AbilityTags);
+	FGameplayTagContainer LocalTagContainer;
+	LocalTagContainer.AddTag(AbilityTag);
+	TryActivateAbilitiesByTag(LocalTagContainer);
 
 }
