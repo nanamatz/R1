@@ -53,7 +53,7 @@ bool UBTDecorator_CanAttack::CalculateRawConditionValue(UBehaviorTreeComponent& 
 
 	float Angle = FMath::Cos(AttackRadius);
 
-	if (DotResult < Angle)
+	if (DotResult <= Angle)
 	{
 		return false;
 	}
