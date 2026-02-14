@@ -29,3 +29,16 @@ UR1PlayerAttributeSet* AR1PlayerState::GetR1PlayerAttributeSet() const
 	return PlayerAttributeSet;
 }
 
+float AR1PlayerState::GetCurrentExpRatio() const
+{
+	if (AbilitySystemComponent)
+	{
+		float Exp = AbilitySystemComponent->GetNumericAttribute(PlayerAttributeSet->GetExpAttribute());
+		float MaxExp = AbilitySystemComponent->GetNumericAttribute(PlayerAttributeSet->GetMaxExpAttribute());
+		if (MaxExp > 0)
+		{
+			return Exp / MaxExp;
+		}
+	}
+	return 0.f;
+}

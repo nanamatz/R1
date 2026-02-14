@@ -12,6 +12,7 @@ namespace R1GameplayTags
 
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack,"Ability.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_LevelUp,"Ability.LevelUp");
 	
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Dead,"Character.State.Dead");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Casting,"Character.State.Casting");

@@ -7,11 +7,18 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
+
 #include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1PlayerAttributeSet.h"
 #include "System/R1GameInstance.h"
+
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
+
+#include "UI/R1ExpBarWidget.h"
 
 AR1Player::AR1Player()
 {
@@ -40,6 +47,14 @@ AR1Player::AR1Player()
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+	// 시각(Sight) 자극으로 등록
+	if (StimuliSource)
+	{
+		StimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
+		StimuliSource->RegisterWithPerceptionSystem();
+	}
 }
 void AR1Player::BeginPlay()
 {
@@ -48,6 +63,8 @@ void AR1Player::BeginPlay()
 	if (UR1GameInstance* R1GameInstance = GetGameInstance<UR1GameInstance>())
 	{
 		R1GameInstance->ApplyRespawnSnapshotToPlayer(this);
+		InitExpBar();
+
 	}
 	
 	AttackRange = AttributeSet->GetAttackRange();
@@ -61,6 +78,7 @@ void AR1Player::PossessedBy(AController* NewController)
 	InitAbilitySystem();
 
 	InitAttributes();
+
 }
 
 void AR1Player::InitAbilitySystem()
@@ -92,6 +110,11 @@ void AR1Player::OnDead(const TObjectPtr<AR1Character> Attacker)
 {
 	Super::OnDead(Attacker);
 
+	if (StimuliSource)
+	{
+		StimuliSource->UnregisterFromPerceptionSystem(); // 죽으면 레이더에서 사라짐!
+	}
+
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 }
@@ -101,4 +124,16 @@ void AR1Player::OnDead(const TObjectPtr<AR1Character> Attacker)
 void AR1Player::ActivateAbility(FGameplayTag AbilityTag)
 {
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
+}
+
+void AR1Player::InitExpBar()
+{
+	AR1PlayerState* PS = GetPlayerState<AR1PlayerState>();
+	if (PS && AttributeSet)
+	{
+		float Exp = AttributeSet->GetExp();
+		float MaxExp = AttributeSet->GetMaxExp();
+		float Ratio = Exp / MaxExp;
+		PS->OnExpChanged.Broadcast(Ratio);
+	}
 }

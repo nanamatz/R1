@@ -32,7 +32,10 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TObjectPtr<class UWidgetComponent> HpBarComponent;
 
-	void RefreshHpBar();
+	UFUNCTION()
+	void RefreshHpBar(float Ratio);
+
+	class UR1AttributeSet* GetR1AttributeSet() const { return AttributeSet; }
 
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
@@ -40,11 +43,11 @@ public:
 	virtual void OnDead(const TObjectPtr<class AR1Character> Attacker) override;
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
 	TObjectPtr<class UAnimMontage> DeathAnimMontage;
 
-	float AggroRange = 600.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GE")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TSubclassOf<class UGameplayEffect> XpEffect;
+
+	float AggroRange;
 };

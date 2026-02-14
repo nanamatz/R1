@@ -78,9 +78,7 @@ bool UR1GameInstance::LoadPlayerStateToPlayer(AR1Player* Player, const FString& 
 	}
 
 	Attributes->SetMaxHealth(SaveGameObject->MaxHealth);
-	Attributes->SetHealth(SaveGameObject->MaxHealth);
 	Attributes->SetMaxMana(SaveGameObject->MaxMana);
-	Attributes->SetMana(SaveGameObject->MaxMana);
 	Attributes->SetBaseDamage(SaveGameObject->BaseDamage);
 	Attributes->SetBaseDefence(SaveGameObject->BaseDefence);
 	Attributes->SetLevel(SaveGameObject->Level);

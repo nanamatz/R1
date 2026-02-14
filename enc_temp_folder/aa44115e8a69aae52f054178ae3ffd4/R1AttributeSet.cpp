@@ -34,8 +34,6 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
-		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
-
 		AActor* AvatarActor = Data.Target.GetAvatarActor();
 		AR1Character* Character = Cast<AR1Character>(AvatarActor);
 		if (Character)

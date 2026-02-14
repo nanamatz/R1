@@ -54,6 +54,7 @@ public:
 	FOnDeadDelegate OnDeadDelegate;
 
 	virtual void OnHealthChanged(float Ratio);
+
 public:
 	// 변수를 부모로 이동
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")

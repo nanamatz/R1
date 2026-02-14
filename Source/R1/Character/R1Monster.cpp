@@ -46,15 +46,23 @@ void AR1Monster::BeginPlay()
 
 	InitAbilitySystem();
 	
-	RefreshHpBar();
-
 	InitAttributes();
+	
+	AR1Monster* Monster = Cast<AR1Monster>(this);
+
+	if (Monster)
+	{
+		Monster->OnHpChanged.AddDynamic(this, &AR1Monster::RefreshHpBar);
+	}
+	AggroRange = AbilitySystemComponent->GetNumericAttribute(AttributeSet->GetAggroRangeAttribute());
+	
+	RefreshHpBar(1.f);
 }
 
 void AR1Monster::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	RefreshHpBar();
+	//RefreshHpBar();
 }
 
 void AR1Monster::InitAbilitySystem()
@@ -63,54 +71,18 @@ void AR1Monster::InitAbilitySystem()
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
-//void AR1Monster::DefaultAttack()
-//{
-//	//TArray<FHitResult> HitResults;
-//
-//	//FCollisionQueryParams Params;
-//	//Params.AddIgnoredActor(this);
-//
-//	//FVector Start = GetActorLocation();
-//	//FVector End = GetActorLocation() + GetActorForwardVector() * 100.f;
-//	//float Range = 50.f;
-//
-//	//bool bHit = GetWorld()->SweepMultiByChannel(
-//	//	HitResults,
-//	//	Start,
-//	//	End,
-//	//	FQuat::Identity,
-//	//	ECC_GameTraceChannel1,
-//	//	FCollisionShape::MakeSphere(Range),
-//	//	Params
-//	//);
-//
-//	//DrawDebugSphere(GetWorld(), Start, 50.f, 16, FColor::Green, false, 1.f);
-//	//DrawDebugSphere(GetWorld(), End, 50.f, 16, FColor::Blue, false, 1.f);
-//
-//	//for(const FHitResult& HitResult : HitResults)
-//	//{
-//	//	AR1Player* HitCharacter = Cast<AR1Player>(HitResult.GetActor());
-//
-//	//	if (HitCharacter)
-//	//	{
-//	//		HitCharacter->OnDamaged(10, this);
-//	//	}
-//	//}
-//
-//}
-
-void AR1Monster::RefreshHpBar()
+void AR1Monster::RefreshHpBar(float Ratio)
 {
 	if (HpBarComponent && AttributeSet)
 	{
-		float Hp = AttributeSet->GetHealth();
-		float MaxHp = AttributeSet->GetMaxHealth();
-		if (MaxHp <= KINDA_SMALL_NUMBER)
-		{
-			return;
-		}
+		//float Hp = AttributeSet->GetHealth();
+		//float MaxHp = AttributeSet->GetMaxHealth();
+		//if (MaxHp <= KINDA_SMALL_NUMBER)
+		//{
+		//	return;
+		//}
 
-		float Ratio = static_cast<float>(Hp) / MaxHp;
+		//float Ratio = static_cast<float>(Hp) / MaxHp;
 		UR1HpBarWidget* HpBar = Cast<UR1HpBarWidget>(HpBarComponent->GetUserWidgetObject());
 		if (HpBar)
 		{
@@ -174,14 +146,3 @@ void AR1Monster::OnDead(const TObjectPtr<class AR1Character> Attacker)
 		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 }
-
-
-//void AR1Monster::SetCreatureState(ECreatureState InState)
-//{
-//	CreatureState = InState;
-//}
-//
-//ECreatureState AR1Monster::GetCreatureState()
-//{
-//	return CreatureState;
-//}
