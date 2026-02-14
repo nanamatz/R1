@@ -9,6 +9,8 @@
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnExpChangedDelegate, float, Ratio);
+
 UCLASS()
 class R1_API AR1Player : public AR1Character
 {
@@ -44,10 +46,18 @@ public:
 public:
 	class UR1AttributeSet* GetR1AttributeSet() const { return AttributeSet; }
 
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnExpChangedDelegate OnExpChanged;
+
+	void OnExperienceChanged(float Ratio);
+
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class UWidgetComponent> ExpBarComponent;
+
 	float AttackRange;
 
 };

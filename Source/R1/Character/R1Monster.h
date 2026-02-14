@@ -32,7 +32,8 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TObjectPtr<class UWidgetComponent> HpBarComponent;
 
-	void RefreshHpBar();
+	UFUNCTION()
+	void RefreshHpBar(float Ratio);
 
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);

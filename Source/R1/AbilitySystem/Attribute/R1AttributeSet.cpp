@@ -5,6 +5,7 @@
 #include "GameplayEffectExtension.h"
 #include "Player/R1PlayerState.h"
 #include "Character/R1Character.h"
+#include "Character/R1Player.h"
 
 UR1AttributeSet::UR1AttributeSet()
 {
@@ -71,9 +72,16 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 		// 2. 현재 누적된 총 경험치
 		float CurExp = GetExp();
 
-		// 💡 [디버그 로그 출력]
-		UE_LOG(LogTemp, Warning, TEXT("✨ [Exp System] %s가 경험치를 얻었습니다! (획득량: +%.1f / 총 경험치: %.1f)"),
-			*GetOwningActor()->GetName(), GainedExp, CurExp);
+
+		AActor* AvatarActor = Data.Target.GetAvatarActor();
+		AR1Player* Player = Cast<AR1Player>(AvatarActor);
+
+		// 3. 경험치 갱신 (레벨업 루프 전에 먼저 갱신)
+		if (Player)
+		{
+			float Ratio = static_cast<float>(GetExp()) / GetMaxExp();
+			Player->OnExperienceChanged(Ratio);
+		}
 
 		AR1PlayerState* PS = Cast<AR1PlayerState>(GetOwningActor());
 		if (PS && PS->PlayerStatTable)
@@ -115,6 +123,12 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 					UE_LOG(LogTemp, Error, TEXT("Invalid MaxExp curve value at level %.1f."), CurrentLevel);
 					break;
 				}
+				//레벨 업 후 UI 갱신
+				if (Player)
+				{
+					float Ratio = static_cast<float>(GetExp()) / GetMaxExp();
+					Player->OnExperienceChanged(Ratio);
+				}
 
 				// 예: PS->OnLevelUp(); (파티클 재생, 스탯 상승 처리 등)
 			}
@@ -132,5 +146,11 @@ void UR1AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 		float CurrentMaxHealth = GetMaxHealth();
 		NewValue = FMath::Clamp(NewValue, 0.0f, CurrentMaxHealth);
 	}
+	if (Attribute == GetManaAttribute())
+	{
+		float CurrentMaxMana = GetMaxMana();
+		NewValue = FMath::Clamp(NewValue, 0.0f, CurrentMaxMana);
+	}
+
 }
 

@@ -111,6 +111,8 @@ void AR1Character::OnHealthChanged(float Ratio)
 	}
 }
 
+
+
 void AR1Character::SetCreatureState(ECreatureState InState)
 {
 	CreatureState = InState;

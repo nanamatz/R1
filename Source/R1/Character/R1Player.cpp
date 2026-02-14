@@ -7,11 +7,15 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
+
 #include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1PlayerAttributeSet.h"
 #include "System/R1GameInstance.h"
+
+#include "UI/R1ExpBarWidget.h"
 
 AR1Player::AR1Player()
 {
@@ -96,6 +100,19 @@ void AR1Player::OnDead(const TObjectPtr<AR1Character> Attacker)
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 }
 
+
+
+void AR1Player::OnExperienceChanged(float Ratio)
+{
+	if(OnExpChanged.IsBound())
+	{
+		OnExpChanged.Broadcast(Ratio);
+	}
+	else
+	{
+		UE_LOG(LogTemp,Warning, TEXT("OnExpChanged is NOT bound for actor: %s"), *GetName());
+	}
+}
 
 
 void AR1Player::ActivateAbility(FGameplayTag AbilityTag)
