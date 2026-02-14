@@ -1,6 +1,7 @@
 #include "AI/BTService_FindTarget.h"
 #include "Character/R1Player.h"
 #include "Character/R1Monster.h"
+#include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AI/R1AIController.h"
 
@@ -28,7 +29,7 @@ void UBTService_FindTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 		return;
 	}
 
-	float SearchRadius = Monster->AggroRange;
+	float FindRange = Monster->AggroRange;
 
 	UWorld* World = LocalPawn->GetWorld( );
 	if (World == nullptr)
@@ -46,7 +47,7 @@ void UBTService_FindTarget::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 		Location,
 		FQuat::Identity,
 		ECollisionChannel::ECC_GameTraceChannel2,
-		FCollisionShape::MakeSphere(SearchRadius),
+		FCollisionShape::MakeSphere(FindRange),
 		CollisionQueryParam
 	);
 

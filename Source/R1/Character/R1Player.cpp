@@ -15,6 +15,9 @@
 #include "AbilitySystem/Attribute/R1PlayerAttributeSet.h"
 #include "System/R1GameInstance.h"
 
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
+
 #include "UI/R1ExpBarWidget.h"
 
 AR1Player::AR1Player()
@@ -44,6 +47,14 @@ AR1Player::AR1Player()
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+	// 시각(Sight) 자극으로 등록
+	if (StimuliSource)
+	{
+		StimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
+		StimuliSource->RegisterWithPerceptionSystem();
+	}
 }
 void AR1Player::BeginPlay()
 {
@@ -98,6 +109,11 @@ void AR1Player::HandleGameplayEvent(FGameplayTag EventTag)
 void AR1Player::OnDead(const TObjectPtr<AR1Character> Attacker)
 {
 	Super::OnDead(Attacker);
+
+	if (StimuliSource)
+	{
+		StimuliSource->UnregisterFromPerceptionSystem(); // 죽으면 레이더에서 사라짐!
+	}
 
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));

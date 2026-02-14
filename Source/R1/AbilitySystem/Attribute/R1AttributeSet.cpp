@@ -103,6 +103,32 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 				CurrentExp -= MaxExpForNextLevel;
 				CurrentLevel += 1.0f;
 
+				UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+				if (ASC)
+				{
+					FGameplayEventData EventData;
+
+					// 사용할 이벤트 태그 (프로젝트에 등록된 태그 사용 권장)
+					EventData.EventTag = FGameplayTag::RequestGameplayTag(FName("Ability.LevelUp"));
+					EventData.Instigator = GetOwningActor(); // PlayerState
+					EventData.Target = GetOwningActor();
+
+					// 이벤트를 아바타(자신)에게 보냅니다.
+					ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+
+					// 🌟 추가: 실행된 어빌리티 개수를 반환받아 디버깅
+					int32 TriggeredCount = ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+
+					if (TriggeredCount > 0)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("✅ 레벨업 이벤트 성공! 실행된 어빌리티 개수: %d"), TriggeredCount);
+					}
+					else
+					{
+						UE_LOG(LogTemp, Error, TEXT("❌ 레벨업 이벤트 발송했으나 실행된 어빌리티가 0개입니다!"));
+					}
+				}
+
 				UE_LOG(LogTemp, Warning, TEXT("Level UP!!!"));
 
 				SetLevel(CurrentLevel);

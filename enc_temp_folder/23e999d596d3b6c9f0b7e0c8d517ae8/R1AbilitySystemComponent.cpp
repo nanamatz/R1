@@ -16,6 +16,20 @@ void UR1AbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<c
 			GiveAbility(AbilitySpec);
 		}
 	}
+
+	// 기존의 SpecHandles.Add(SpecHandle)는 삭제해도 무방합니다.
+	// GAS 내부에서 태그를 검색할 때 자동으로 ActivatableAbilities를 뒤져서 찾기 때문입니다.
+	//for (auto& AbilityClass : Abilities)
+	//{
+	//	FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
+	//	FGameplayAbilitySpecHandle SpecHandle = GiveAbility(AbilitySpec);
+
+	//	auto& a = ActivatableAbilities;
+
+	//	//TryActivateAbility(SpecHandle);
+	//	//GiveAbilityAndActivateOnce(AbilitySpec);
+	//	SpecHandles.Add(SpecHandle);
+	//}
 }
 
 void UR1AbilitySystemComponent::ApplyCharacterEffects(const TArray<TSubclassOf<class UGameplayEffect>> Effects)

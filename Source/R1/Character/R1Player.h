@@ -30,10 +30,9 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void InitAbilitySystem() override;
 
-//public:
-//	virtual void SetCreatureState(ECreatureState InState) override;
-//	virtual ECreatureState GetCreatureState() override;
-
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	TObjectPtr<class UAIPerceptionStimuliSourceComponent> StimuliSource;
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -53,6 +52,9 @@ public:
 	TObjectPtr<class UWidgetComponent> ExpBarComponent;
 
 	float AttackRange;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	TSubclassOf<class UGameplayEffect> LevelUpEffect;
 
 private:
 	void InitExpBar();
