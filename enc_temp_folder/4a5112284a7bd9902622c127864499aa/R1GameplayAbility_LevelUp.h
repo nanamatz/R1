@@ -24,11 +24,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LevelUp")
 	TSubclassOf<class UGameplayEffect> LevelUpRecoveryEffect;
 
-protected:
-	// 에디터에서 Cascade 파티클 에셋을 할당할 변수
-	UPROPERTY(EditDefaultsOnly, Category = "Particle System")
-	TObjectPtr<class UParticleSystem> LevelUpParticle;
-
-	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category = "Effects")
-	TSubclassOf<AActor> LevelUpParticleEffectClass;
+	//// 2. 블루프린트에서 파티클 띄우고 사운드 재생하라고 알려주는 이벤트 (C++ 구현 불필요)
+	//UFUNCTION(BlueprintImplementableEvent, Category = "LevelUp")
+	//void PlayLevelUpEffects(float NewLevel);
 };
