@@ -52,8 +52,6 @@ void AR1Player::BeginPlay()
 	if (UR1GameInstance* R1GameInstance = GetGameInstance<UR1GameInstance>())
 	{
 		R1GameInstance->ApplyRespawnSnapshotToPlayer(this);
-		InitExpBar();
-
 	}
 	
 	AttackRange = AttributeSet->GetAttackRange();
@@ -68,6 +66,7 @@ void AR1Player::PossessedBy(AController* NewController)
 
 	InitAttributes();
 
+	InitExpBar();
 }
 
 void AR1Player::InitAbilitySystem()

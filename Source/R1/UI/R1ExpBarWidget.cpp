@@ -2,7 +2,7 @@
 
 
 #include "UI/R1ExpBarWidget.h"
-#include "Character/R1Player.h"
+#include "Player/R1PlayerState.h"
 #include "Components/ProgressBar.h"
 
 UR1ExpBarWidget::UR1ExpBarWidget(const FObjectInitializer& ObjectInitializer)
@@ -14,21 +14,33 @@ UR1ExpBarWidget::UR1ExpBarWidget(const FObjectInitializer& ObjectInitializer)
 void UR1ExpBarWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-
-	AR1Player* Player = Cast<AR1Player>(GetOwningPlayerPawn());
-	if (Player)
+	AR1PlayerState* PS = GetOwningPlayerState<AR1PlayerState>();
+	if (PS)
 	{
-		Player->OnExpChanged.AddDynamic(this, &UR1ExpBarWidget::UpdateExpBar);
+		// 델리게이트 바인딩
+		PS->OnExpChanged.AddDynamic(this, &UR1ExpBarWidget::UpdateExpBar);
+
+		if (ExpBar)
+		{
+			// 1. 플레이어(또는 AttributeSet)로부터 실제 세이브된/현재 경험치 비율을 가져옵니다.
+			float SavedRatio = PS->GetCurrentExpRatio();
+
+			// 2. 애니메이션 없이 즉시 바를 채워줍니다. (로드 직후 0에서 차오르는 현상 방지)
+			ExpBar->SetPercent(SavedRatio);
+
+			// 3. 큐를 비우고 현재 비율을 초기 목표로 세팅합니다.
+			TargetPercentQueue.Empty();
+			TargetPercentQueue.Add(SavedRatio);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("R1ExpBarWidget: Failed to find AR1PlayerState during NativeConstruct!"));
 	}
 
 	if (!ExpBar)
 	{
 		UE_LOG(LogTemp, Error, TEXT("R1ExpBarWidget: ExpBar component is missing!"));
-	}
-	else
-	{
-		// UI가 처음 켜졌을 때 현재 바의 상태를 초기 목표로 큐에 넣음
-		TargetPercentQueue.Add(ExpBar->GetPercent());
 	}
 }
 

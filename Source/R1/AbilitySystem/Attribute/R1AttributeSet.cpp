@@ -72,19 +72,13 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 		// 2. 현재 누적된 총 경험치
 		float CurExp = GetExp();
 
-
-		AActor* AvatarActor = Data.Target.GetAvatarActor();
-		AR1Player* Player = Cast<AR1Player>(AvatarActor);
-
-		// 3. 경험치 갱신 (레벨업 루프 전에 먼저 갱신)
-		if (Player)
+		AR1PlayerState* PS = Cast<AR1PlayerState>(GetOwningActor());
+		if (PS)
 		{
 			float Ratio = static_cast<float>(GetExp()) / GetMaxExp();
-			Player->OnExperienceChanged(Ratio);
+			PS->OnExpChanged.Broadcast(Ratio); // Broadcast로 수정 (델리게이트 이름 맞추기)
 		}
-
-		AR1PlayerState* PS = Cast<AR1PlayerState>(GetOwningActor());
-		if (PS && PS->PlayerStatTable)
+		if (PS->PlayerStatTable)
 		{
 			float CurrentExp = GetExp();
 			float CurrentLevel = GetLevel();
@@ -124,10 +118,10 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 					break;
 				}
 				//레벨 업 후 UI 갱신
-				if (Player)
+				if (PS)
 				{
 					float Ratio = static_cast<float>(GetExp()) / GetMaxExp();
-					Player->OnExperienceChanged(Ratio);
+					PS->OnExpChanged.Broadcast(Ratio);
 				}
 
 				// 예: PS->OnLevelUp(); (파티클 재생, 스탯 상승 처리 등)
