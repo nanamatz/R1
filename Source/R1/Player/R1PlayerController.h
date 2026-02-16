@@ -42,6 +42,9 @@ private:
 	void OnSetDestinationReleased();
 
 	void OnInventoryToggle();
+public:
+	UFUNCTION(BlueprintCallable)
+	void OnGameMenuToggle();
 
 private:
 	void TickCursorTrace();

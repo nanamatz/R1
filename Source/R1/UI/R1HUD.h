@@ -17,17 +17,20 @@ public:
     // 인벤토리 토글 함수
     void ToggleInventory();
     void UpdateGameOverUI();
+    void ToggleGameMenu();
 
-    UUserWidget* GetInventoryWidget() const { return MyInventoryWidget; }
+    UUserWidget* GetInventoryWidget() const { return InventoryUIWidget; }
     UUserWidget* GetBaseUIWidget() const { return BaseUIWidget; }
     UUserWidget* GetGameOverUIWidget() const { return GameOverUIWidget; }
+    UUserWidget* GetGameMenuUIWidget() const { return GameMenuUIWidget; }
 
 protected:
     virtual void BeginPlay() override;
 
 public:
-	bool bIsInventoryVisible;
+	bool bIsInventoryUIVisible;
     bool bIsGameOverUIVisible;
+    bool bIsGameMenuUIVisible;
 
 protected:
     UPROPERTY(EditDefaultsOnly, Category="UI")
@@ -39,13 +42,19 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UUserWidget> GameOverUIWidgetClass;
 
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> GameMenuUIWidgetClass;
+
     UPROPERTY(EditDefaultsOnly)
-    TObjectPtr<UUserWidget> MyInventoryWidget = nullptr;
+    TObjectPtr<UUserWidget> InventoryUIWidget = nullptr;
 
     UPROPERTY(EditDefaultsOnly)
     TObjectPtr<UUserWidget> BaseUIWidget = nullptr;
 
     UPROPERTY(EditDefaultsOnly)
     TObjectPtr<UUserWidget> GameOverUIWidget = nullptr;
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<UUserWidget> GameMenuUIWidget = nullptr;
 
 };
