@@ -9,14 +9,14 @@ void AR1HUD::BeginPlay()
     APlayerController* PC = GetOwningPlayerController();
     if (PC)
     {
-        if (!MyInventoryWidget)
+        if (!InventoryUIWidget)
         {
-            MyInventoryWidget = CreateWidget<UUserWidget>(PC, InventoryWidgetClass);
-            if (MyInventoryWidget)
+            InventoryUIWidget = CreateWidget<UUserWidget>(PC, InventoryWidgetClass);
+            if (InventoryUIWidget)
             {
-                MyInventoryWidget->AddToViewport(10); // 인벤토리가 다른 UI보다 위에 오도록 설정
-                MyInventoryWidget->SetVisibility(ESlateVisibility::Hidden);
-                bIsInventoryVisible = false;
+                InventoryUIWidget->AddToViewport(10); // 인벤토리가 다른 UI보다 위에 오도록 설정
+                InventoryUIWidget->SetVisibility(ESlateVisibility::Hidden);
+                bIsInventoryUIVisible = false;
             }
             else
             {
@@ -43,10 +43,26 @@ void AR1HUD::BeginPlay()
             {
                 GameOverUIWidget->AddToViewport(15);
                 GameOverUIWidget->SetVisibility(ESlateVisibility::Hidden);
+                bIsGameOverUIVisible = false;
             }
             else
             {
                 UE_LOG(LogTemp, Warning, TEXT("Failed to create GameOverUIWidget"));
+            }
+        }
+        if (!GameMenuUIWidget)
+        {
+            GameMenuUIWidget = CreateWidget<UUserWidget>(PC, GameMenuUIWidgetClass);
+            if (GameMenuUIWidget)
+            {
+                GameMenuUIWidget->AddToViewport(15);
+                GameMenuUIWidget->SetVisibility(ESlateVisibility::Hidden);
+                bIsGameMenuUIVisible = false;
+
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Failed to create GameMenuUIWidget"));
             }
         }
     }
@@ -55,17 +71,17 @@ void AR1HUD::BeginPlay()
 
 void AR1HUD::ToggleInventory()
 {
-    if (!InventoryWidgetClass || !MyInventoryWidget) return;
+    if (!InventoryWidgetClass || !InventoryUIWidget) return;
 
-    if (bIsInventoryVisible)
+    if (bIsInventoryUIVisible)
     {
-        MyInventoryWidget->SetVisibility(ESlateVisibility::Hidden);
-		bIsInventoryVisible = false;
+        InventoryUIWidget->SetVisibility(ESlateVisibility::Hidden);
+		bIsInventoryUIVisible = false;
     }
     else
     {
-        MyInventoryWidget->SetVisibility(ESlateVisibility::Visible);
-		bIsInventoryVisible = true;
+        InventoryUIWidget->SetVisibility(ESlateVisibility::Visible);
+		bIsInventoryUIVisible = true;
     }
 }
 
@@ -82,6 +98,22 @@ void AR1HUD::UpdateGameOverUI()
     {
         GameOverUIWidget->SetVisibility(ESlateVisibility::Visible);
         bIsGameOverUIVisible = true;
+    }
+}
+
+void AR1HUD::ToggleGameMenu()
+{
+    if (!GameMenuUIWidgetClass || !GameMenuUIWidget) return;
+
+    if (bIsGameMenuUIVisible)
+    {
+        GameMenuUIWidget->SetVisibility(ESlateVisibility::Hidden);
+        bIsGameMenuUIVisible = false;
+    }
+    else
+    {
+        GameMenuUIWidget->SetVisibility(ESlateVisibility::Visible);
+        bIsGameMenuUIVisible = true;
     }
 }
 

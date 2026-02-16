@@ -79,10 +79,25 @@ void AR1PlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Canceled, this, &ThisClass::OnSetDestinationReleased);
 
 		auto ActionInventoryToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Inventory);
-		if (ActionInventoryToggle)
+
+		if (ActionInventoryToggle == nullptr)
 		{
-			EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionInventroyToggle is null."));
+			return;
 		}
+		
+		EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
+
+		auto ActionGameMenuToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_GameMenu);
+
+		if (ActionGameMenuToggle == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionGameMenuToggle is null."));
+			return;
+		}
+
+		EnhancedInputComponent->BindAction(ActionGameMenuToggle, ETriggerEvent::Started, this, &ThisClass::OnGameMenuToggle);
+
 
 		//auto ActionInteract = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Interaction);
 	}
@@ -334,6 +349,34 @@ void AR1PlayerController::OnInventoryToggle()
 	}
 }
 
+void AR1PlayerController::OnGameMenuToggle()
+{
+	bool bIsPaused = IsPaused();
+	if (bIsPaused)
+	{
+		AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
+
+		if (MyR1HUD)
+		{
+			MyR1HUD->ToggleGameMenu();
+		}
+
+		SetPause(false);
+	}
+	else
+	{
+		AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
+
+		if (MyR1HUD)
+		{
+			MyR1HUD->ToggleGameMenu();
+		}
+
+		SetPause(true);
+	}
+
+}
+
 void AR1PlayerController::UpdateInputMode(bool bShouldUIOnly)
 {
 	if (bShouldUIOnly)
@@ -349,7 +392,6 @@ void AR1PlayerController::UpdateInputMode(bool bShouldUIOnly)
 		SetInputMode(InputMode);
 		bShowMouseCursor = true;
 	}
-
 }
 
 void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
