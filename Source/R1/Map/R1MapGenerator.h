@@ -10,6 +10,16 @@
 class UR1RoomDefinitionData;
 class UR1AssetData;
 
+UENUM(BlueprintType)
+enum class ER1DoorDirection : uint8
+{
+	North	UMETA(DisplayName = "North (Y+1)"),
+	South	UMETA(DisplayName = "South (Y-1)"),
+	East	UMETA(DisplayName = "East (X+1)"),
+	West	UMETA(DisplayName = "West (X-1)"),
+	None	UMETA(DisplayName = "None")
+};
+
 // 맵의 각 방(노드) 정보를 담는 구조체
 USTRUCT(BlueprintType)
 struct FR1MapNode
@@ -94,4 +104,15 @@ private:
 
 	// 해당 그리드 좌표에 이미 방이 존재하는지 확인하는 헬퍼 함수
 	bool HasRoomAt(FIntPoint Pos);
+
+private:
+	// 현재 플레이어가 위치한 방의 고유 번호 (시작은 0번)
+	int32 CurrentActiveNodeID = 0;
+
+	// 특정 방향(동서남북)에 논리적으로 연결된 방이 있는지 찾아주는 헬퍼 함수
+	int32 GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorDirection Direction);
+
+	// 플레이어가 문을 밟았을 때 문의 델리게이트가 호출할 콜백 함수
+	UFUNCTION()
+	void OnPlayerEnteredDoor(ER1DoorDirection Direction);
 };

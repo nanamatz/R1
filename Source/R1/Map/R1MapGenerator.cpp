@@ -4,8 +4,10 @@
 #include "Engine/LevelStreamingDynamic.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
+#include "Map/R1Door.h"
 #include "Containers/Queue.h"
-#include "Data/R1AssetData.h" // 헤더 추가
+#include "Data/R1AssetData.h" 
+#include "EngineUtils.h" // TActorIterator를 사용하기 위해 추가
 
 AR1MapGenerator::AR1MapGenerator()
 {
@@ -238,6 +240,48 @@ bool AR1MapGenerator::HasRoomAt(FIntPoint Pos)
 	return false;
 }
 
+int32 AR1MapGenerator::GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorDirection Direction)
+{
+	if (!GeneratedMap.IsValidIndex(CurrentNodeID)) return -1;
+
+	const FR1MapNode& CurrentNode = GeneratedMap[CurrentNodeID];
+	FIntPoint TargetGridPos = CurrentNode.GridPosition;
+
+	// 1. 타겟 방향의 가상 그리드 좌표를 계산합니다.
+	switch (Direction)
+	{
+	case ER1DoorDirection::North: TargetGridPos.Y += 1; break;
+	case ER1DoorDirection::South: TargetGridPos.Y -= 1; break;
+	case ER1DoorDirection::East:  TargetGridPos.X += 1; break;
+	case ER1DoorDirection::West:  TargetGridPos.X -= 1; break;
+	default: return -1;
+	}
+
+	// 2. 현재 방과 "연결된(Connected)" 방들 중에서, 타겟 좌표에 위치한 방이 있는지 검사합니다.
+	for (int32 ConnectedID : CurrentNode.ConnectedNodeIDs)
+	{
+		if (GeneratedMap.IsValidIndex(ConnectedID) && GeneratedMap[ConnectedID].GridPosition == TargetGridPos)
+		{
+			return ConnectedID; // 찾았습니다! 그 방의 번호를 반환합니다.
+		}
+	}
+
+	return -1; // 해당 방향으로 뚫린 방이 없습니다.
+}
+
+void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
+{
+	int32 NextNodeID = GetConnectedNodeInDirection(CurrentActiveNodeID, Direction);
+
+	if (NextNodeID != -1)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 문 통과 감지! %d번 방에서 %d번 방으로 텔레포트를 시도합니다."), CurrentActiveNodeID, NextNodeID);
+
+		// 다음 스텝: 이 곳에서 서브시스템을 호출해 NextNodeID 방을 스폰하고, 
+		// 플레이어를 다음 방의 '반대편 문' 앞으로 이동시키는 로직을 작성하게 됩니다!
+	}
+}
+
 void AR1MapGenerator::OnRoomLoaded()
 {
 	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 0번 시작 방 로딩 완료! 플레이어를 안전하게 이동시킵니다."));
@@ -258,4 +302,47 @@ void AR1MapGenerator::OnRoomLoaded()
 	{
 		RoomSubsystem->MarkRoomGameplayReady(GeneratedMap[0].RoomDefinition);
 	}
+	FTimerHandle SetupTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(SetupTimerHandle, FTimerDelegate::CreateLambda([this]()
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 타이머 발동! 문 세팅을 시작합니다."));
+
+			// --- 여기서부터 기존 문 찾는 로직 시작 ---
+			FVector CurrentRoomLocation = GeneratedMap[CurrentActiveNodeID].SpawnLocation;
+			int32 FoundDoors = 0;
+
+			for (TActorIterator<AR1Door> It(GetWorld()); It; ++It)
+			{
+				AR1Door* Door = *It;
+
+				// 다시 거리를 필터링해 줍니다 (방이 크다면 15000 등 넉넉하게!)
+				if (FVector::Dist(Door->GetActorLocation(), CurrentRoomLocation) < 15000.0f)
+				{
+					FoundDoors++;
+					int32 TargetNode = GetConnectedNodeInDirection(CurrentActiveNodeID, Door->DoorDirection);
+
+					UE_LOG(LogTemp, Warning, TEXT("[문 세팅] %d번 방 문 세팅. 방향: %d, 타겟 방: %d"),
+						CurrentActiveNodeID, (int32)Door->DoorDirection, TargetNode);
+
+					Door->SetupDoorConnection(TargetNode);
+
+					if (TargetNode != -1)
+					{
+						Door->OnDoorEntered.RemoveDynamic(this, &AR1MapGenerator::OnPlayerEnteredDoor);
+						Door->OnDoorEntered.AddDynamic(this, &AR1MapGenerator::OnPlayerEnteredDoor);
+					}
+				}
+			}
+			UE_LOG(LogTemp, Warning, TEXT("[문 세팅 완료] 총 %d개의 문을 찾았습니다."), FoundDoors);
+
+			// 3. 플레이어 강제 이동 (문 세팅이 끝난 후 안전하게 이동)
+			ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
+			if (PlayerCharacter)
+			{
+				FVector SafeLocation = GeneratedMap[CurrentActiveNodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
+				PlayerCharacter->SetActorLocation(SafeLocation);
+				PlayerCharacter->GetVelocity() = FVector::ZeroVector;
+			}
+
+		}), 0.1f, false); // 0.1초 뒤에 1번만 실행
 }
