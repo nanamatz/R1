@@ -1,6 +1,3 @@
-
-
-
 #include "Character/R1Monster.h"
 #include "R1Player.h"
 
@@ -15,6 +12,8 @@
 
 #include "UI/R1HpBarWidget.h"
 #include "AbilitySystemBlueprintLibrary.h"
+
+#include "Map/DungeonManager.h"
 
 
 AR1Monster::AR1Monster()
@@ -62,7 +61,6 @@ void AR1Monster::BeginPlay()
 void AR1Monster::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//RefreshHpBar();
 }
 
 void AR1Monster::InitAbilitySystem()
@@ -75,14 +73,6 @@ void AR1Monster::RefreshHpBar(float Ratio)
 {
 	if (HpBarComponent && AttributeSet)
 	{
-		//float Hp = AttributeSet->GetHealth();
-		//float MaxHp = AttributeSet->GetMaxHealth();
-		//if (MaxHp <= KINDA_SMALL_NUMBER)
-		//{
-		//	return;
-		//}
-
-		//float Ratio = static_cast<float>(Hp) / MaxHp;
 		UR1HpBarWidget* HpBar = Cast<UR1HpBarWidget>(HpBarComponent->GetUserWidgetObject());
 		if (HpBar)
 		{
@@ -145,4 +135,19 @@ void AR1Monster::OnDead(const TObjectPtr<class AR1Character> Attacker)
 		// 4. 플레이어에게 GE를 적용합니다!
 		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
+
+	SetLifeSpan(5.f); // 5초 뒤에 사라지도록 설정 (죽은 시점부터 사라질 때까지 시간 벌기)
+}
+
+void AR1Monster::InitializeWithManager(ADungeonManager* InManager)
+{
+	if (!IsValid(InManager)) return;
+
+	// 1. 주입받은 지휘관의 명부에 내 이름을 올립니다.
+	InManager->RegisterMonster(this);
+	//// 2. 내가 죽을 때 지휘관의 명부에서 빠지도록 이벤트를 묶어줍니다.
+
+	this->OnDeadDelegate.AddDynamic(InManager, &ADungeonManager::UnregisterMonster);
+
+	UE_LOG(LogTemp, Warning, TEXT("[%s] 스포너를 통해 지휘관(%s)과 성공적으로 연결되었습니다!"), *GetName(), *InManager->GetName());
 }

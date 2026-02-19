@@ -115,6 +115,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
 	void TickRoomCachePolicy();
 
+	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
+	void MarkRoomAsLeft(UR1RoomDefinitionData* RoomDefinition);
+
 	UPROPERTY(BlueprintAssignable, Category = "Room Streaming")
 	FR1RoomStateChanged OnRoomBecameHot;
 

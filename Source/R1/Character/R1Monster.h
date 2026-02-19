@@ -43,6 +43,10 @@ public:
 	virtual void OnDead(const TObjectPtr<class AR1Character> Attacker) override;
 
 public:
+	// 스포너가 태어날 때 호출해 줄 주입 함수
+	void InitializeWithManager(class ADungeonManager* InManager);
+
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
 	TObjectPtr<class UAnimMontage> DeathAnimMontage;
 
@@ -50,4 +54,6 @@ public:
 	TSubclassOf<class UGameplayEffect> XpEffect;
 
 	float AggroRange;
+
+
 };

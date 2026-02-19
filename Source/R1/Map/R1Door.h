@@ -56,4 +56,12 @@ private:
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+public:
+	// 문의 잠금 상태를 변경하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Door Logic")
+	void SetLocked(bool bIsLocked);
+
+	// 현재 문이 잠겨있는지 여부 (블루프린트에서 머티리얼을 바꿀 때 쓸 수 있게 ReadOnly로 둡니다)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door Logic")
+	bool bLocked = false;
 };
