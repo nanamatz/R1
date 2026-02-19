@@ -126,6 +126,25 @@ void UR1RoomStreamingSubsystem::TickRoomCachePolicy()
 	TrimPreloadIfNeeded();
 }
 
+void UR1RoomStreamingSubsystem::MarkRoomAsLeft(UR1RoomDefinitionData* RoomDefinition)
+{
+
+	if (RoomDefinition == nullptr) return;
+
+	const FName RoomKey = MakeRoomKey(RoomDefinition);
+	if (FR1RoomRuntimeState* State = RoomStates.Find(RoomKey))
+	{
+		// 방 상태가 Hot이었다면 Warm으로 낮추고, 
+		// LastTouchedTime을 갱신하여 이때부터 'UnloadGraceSeconds(예: 5초)' 카운트다운을 시작하게 합니다!
+		if (State->ThermalState == ER1RoomThermalState::Hot)
+		{
+			State->ThermalState = ER1RoomThermalState::Warm;
+			State->LastTouchedTime = FPlatformTime::Seconds();
+			UE_LOG(LogTemp, Warning, TEXT("[%s] 플레이어가 방을 떠났습니다. 쿨다운(Warm) 타이머를 시작합니다."), *RoomKey.ToString());
+		}
+	}
+}
+
 void UR1RoomStreamingSubsystem::UnloadRoomInternal(FR1RoomRuntimeState& State)
 {
 	if (State.ThermalState == ER1RoomThermalState::Cold) return;
