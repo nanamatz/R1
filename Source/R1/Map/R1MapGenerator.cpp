@@ -6,7 +6,6 @@
 #include "System/R1RoomStreamingSubsystem.h"
 
 #include "Engine/LevelStreamingDynamic.h"
-#include "Engine/Level.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 
@@ -303,8 +302,6 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 
 			if (StreamingLevel)
 			{
-				PendingTransitionStreamingLevel = StreamingLevel;
-
 				// 방이 이미 로드되어 있다면 즉시 텔레포트 함수 호출
 				if (StreamingLevel->IsLevelLoaded())
 				{
@@ -405,147 +402,101 @@ void AR1MapGenerator::OnTransitionRoomLoaded()
 
 	// 1. [수정] 자물쇠를 여기서 풀지 않고, 목적지 번호만 임시 저장합니다.
 	int32 TargetRoomID = PendingNodeID;
-	int32 FromRoomID = CurrentActiveNodeID;
 
 	FVector NewRoomLocation = GeneratedMap[TargetRoomID].SpawnLocation;
 	ER1DoorDirection OppositeDir = GetOppositeDirection(PendingDoorDirection);
-	CurrentActiveNodeID = TargetRoomID;
-	AR1Door* TargetDoorToSpawnAt = nullptr;
-	ADungeonManager* CurrentRoomManager = nullptr;
 
-	if (IsValid(PendingTransitionStreamingLevel) && PendingTransitionStreamingLevel->GetLoadedLevel())
-	{
-		for (AActor* LevelActor : PendingTransitionStreamingLevel->GetLoadedLevel()->Actors)
+	FTimerHandle TransitionTimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, FTimerDelegate::CreateLambda([this, TargetRoomID, NewRoomLocation, OppositeDir]()
 		{
-			ADungeonManager* CandidateManager = Cast<ADungeonManager>(LevelActor);
-			if (IsValid(CandidateManager))
+			CurrentActiveNodeID = TargetRoomID;
+			AR1Door* TargetDoorToSpawnAt = nullptr;
+			ADungeonManager* CurrentRoomManager = nullptr;
+
+			// 1. [핀포인트 매칭]
+			for (TActorIterator<ADungeonManager> ManagerIt(GetWorld()); ManagerIt; ++ManagerIt)
 			{
-				CurrentRoomManager = CandidateManager;
-				break;
-			}
-		}
-
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator][TransitionDebug] StreamingLevel 기반 Manager 검색: %s"),
-			CurrentRoomManager ? TEXT("성공") : TEXT("실패"));
-	}
-
-	if (!CurrentRoomManager)
-	{
-		for (TActorIterator<ADungeonManager> ManagerIt(GetWorld()); ManagerIt; ++ManagerIt)
-		{
-			if (ManagerIt->GetActorLocation().Equals(NewRoomLocation, 200.0f))
-			{
-				CurrentRoomManager = *ManagerIt;
-				break;
-			}
-		}
-
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator][TransitionDebug] Location 보조 검색: %s (Target=%s)"),
-			CurrentRoomManager ? TEXT("성공") : TEXT("실패"), *NewRoomLocation.ToCompactString());
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator][TransitionDebug] ManagerFound=%s, FromNodeID=%d, TargetRoomID=%d, OppositeDir=%s"),
-		CurrentRoomManager ? TEXT("true") : TEXT("false"),
-		FromRoomID,
-		CurrentActiveNodeID,
-		*UEnum::GetValueAsString(OppositeDir));
-
-	if (CurrentRoomManager)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator][TransitionDebug] RoomDoors.Num=%d"), CurrentRoomManager->RoomDoors.Num());
-
-		for (AR1Door* Door : CurrentRoomManager->RoomDoors)
-		{
-			if (!IsValid(Door))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("[MapGenerator][TransitionDebug] Door invalid (null)"));
-				continue;
-			}
-
-			int32 TargetNode = GetConnectedNodeInDirection(CurrentActiveNodeID, Door->DoorDirection);
-			Door->SetupDoorConnection(TargetNode);
-
-			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator][TransitionDebug] Door=%s, Direction=%s, TargetNode=%d"),
-				*Door->GetName(),
-				*UEnum::GetValueAsString(Door->DoorDirection),
-				TargetNode);
-
-			if (TargetNode != -1)
-			{
-				Door->OnDoorEntered.RemoveDynamic(this, &AR1MapGenerator::OnPlayerEnteredDoor);
-				Door->OnDoorEntered.AddDynamic(this, &AR1MapGenerator::OnPlayerEnteredDoor);
-			}
-
-			if (!TargetDoorToSpawnAt && TargetNode == FromRoomID)
-			{
-				TargetDoorToSpawnAt = Door;
-			}
-		}
-
-		if (!TargetDoorToSpawnAt)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator][TransitionDebug] FromNode 연결 문 탐색 실패. OppositeDir fallback 시도."));
-			for (AR1Door* Door : CurrentRoomManager->RoomDoors)
-			{
-				if (IsValid(Door) && Door->DoorDirection == OppositeDir)
+				if (ManagerIt->GetActorLocation().Equals(NewRoomLocation, 10.0f))
 				{
-					TargetDoorToSpawnAt = Door;
+					CurrentRoomManager = *ManagerIt;
 					break;
 				}
 			}
-		}
 
-		CurrentRoomManager->RoomNodeID = CurrentActiveNodeID;
-		CurrentRoomManager->OnRoomCleared.RemoveDynamic(this, &AR1MapGenerator::OnRoomClearedCallback);
-		CurrentRoomManager->OnRoomCleared.AddDynamic(this, &AR1MapGenerator::OnRoomClearedCallback);
+			// 2. 지휘관이 들고 있는 문만 세팅
+			if (CurrentRoomManager)
+			{
+				for (AR1Door* Door : CurrentRoomManager->RoomDoors)
+				{
+					if (!IsValid(Door)) continue;
 
-		if (GeneratedMap[CurrentActiveNodeID].bIsCleared)
-		{
-			CurrentRoomManager->bIsCleared = true;
-			CurrentRoomManager->UnlockRoomDoors();
-		}
-		else
-		{
-			CurrentRoomManager->LockRoomDoors();
-		}
-		CurrentRoomManager->StartRoomCombat();
-	}
+					int32 TargetNode = GetConnectedNodeInDirection(CurrentActiveNodeID, Door->DoorDirection);
+					Door->SetupDoorConnection(TargetNode);
 
-	// 3. 플레이어 텔레포트
-	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
-	if (PlayerCharacter)
-	{
-		if (TargetDoorToSpawnAt)
-		{
-			FVector DirectionToCenter = (NewRoomLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
-			FVector SafeLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
-			PlayerCharacter->SetActorLocation(SafeLocation);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 타겟 문 없음! 방 중앙으로 비상 이동!"));
-			FVector EmergencyLocation = NewRoomLocation + FVector(0.0f, 0.0f, 150.0f);
-			PlayerCharacter->SetActorLocation(EmergencyLocation);
-		}
-		PlayerCharacter->GetVelocity() = FVector::ZeroVector;
-	}
+					if (TargetNode != -1)
+					{
+						Door->OnDoorEntered.RemoveDynamic(this, &AR1MapGenerator::OnPlayerEnteredDoor);
+						Door->OnDoorEntered.AddDynamic(this, &AR1MapGenerator::OnPlayerEnteredDoor);
+					}
 
-	PendingNodeID = -1;
-	PendingTransitionStreamingLevel = nullptr;
+					if (Door->DoorDirection == OppositeDir)
+					{
+						TargetDoorToSpawnAt = Door;
+					}
+				}
 
-	// 8. 주변 방 선로딩
-	UR1RoomStreamingSubsystem* InnerRoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
-	if (InnerRoomSubsystem)
-	{
-		InnerRoomSubsystem->MarkRoomGameplayReady(GeneratedMap[CurrentActiveNodeID].RoomDefinition);
+				CurrentRoomManager->RoomNodeID = CurrentActiveNodeID;
+				CurrentRoomManager->OnRoomCleared.RemoveDynamic(this, &AR1MapGenerator::OnRoomClearedCallback);
+				CurrentRoomManager->OnRoomCleared.AddDynamic(this, &AR1MapGenerator::OnRoomClearedCallback);
 
-		TArray<UR1RoomDefinitionData*> AdjacentRooms;
-		for (int32 ConnectedID : GeneratedMap[CurrentActiveNodeID].ConnectedNodeIDs)
-		{
-			AdjacentRooms.Add(GeneratedMap[ConnectedID].RoomDefinition);
-		}
-		InnerRoomSubsystem->QueuePreloadRooms(AdjacentRooms);
-	}
+				if (GeneratedMap[CurrentActiveNodeID].bIsCleared)
+				{
+					CurrentRoomManager->bIsCleared = true;
+					CurrentRoomManager->UnlockRoomDoors();
+				}
+				else
+				{
+					CurrentRoomManager->LockRoomDoors();
+				}
+				CurrentRoomManager->StartRoomCombat();
+			}
+
+			// 3. 플레이어 텔레포트
+			ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
+			if (PlayerCharacter)
+			{
+				if (TargetDoorToSpawnAt)
+				{
+					FVector DirectionToCenter = (NewRoomLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
+					FVector SafeLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
+					PlayerCharacter->SetActorLocation(SafeLocation);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 타겟 문 없음! 방 중앙으로 비상 이동!"));
+					FVector EmergencyLocation = NewRoomLocation + FVector(0.0f, 0.0f, 150.0f);
+					PlayerCharacter->SetActorLocation(EmergencyLocation);
+				}
+				PlayerCharacter->GetVelocity() = FVector::ZeroVector;
+			}
+
+			PendingNodeID = -1;
+
+			// 8. 주변 방 선로딩
+			UR1RoomStreamingSubsystem* InnerRoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
+			if (InnerRoomSubsystem)
+			{
+				InnerRoomSubsystem->MarkRoomGameplayReady(GeneratedMap[CurrentActiveNodeID].RoomDefinition);
+
+				TArray<UR1RoomDefinitionData*> AdjacentRooms;
+				for (int32 ConnectedID : GeneratedMap[CurrentActiveNodeID].ConnectedNodeIDs)
+				{
+					AdjacentRooms.Add(GeneratedMap[ConnectedID].RoomDefinition);
+				}
+				InnerRoomSubsystem->QueuePreloadRooms(AdjacentRooms);
+			}
+
+		}), 0.1f, false);
 }
 
 ER1DoorDirection AR1MapGenerator::GetOppositeDirection(ER1DoorDirection InDir)

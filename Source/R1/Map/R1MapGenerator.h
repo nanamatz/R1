@@ -9,7 +9,6 @@
 // 전방 선언 (헤더 꼬임 방지)
 class UR1RoomDefinitionData;
 class UR1AssetData;
-class ULevelStreamingDynamic;
 
 UENUM(BlueprintType)
 enum class ER1DoorDirection : uint8
@@ -130,10 +129,6 @@ private:
 	// [추가] 새 방의 로딩이 완료되었을 때 호출될 텔레포트 전용 함수
 	UFUNCTION()
 	void OnTransitionRoomLoaded();
-
-	// 현재 전환 중인 스트리밍 레벨 핸들 (레벨 내부에서 DungeonManager를 찾는 용도)
-	UPROPERTY(Transient)
-	TObjectPtr<ULevelStreamingDynamic> PendingTransitionStreamingLevel = nullptr;
 
 	// [추가] 동->서, 남->북 등 반대 방향을 계산해주는 헬퍼 함수
 	ER1DoorDirection GetOppositeDirection(ER1DoorDirection InDir);
