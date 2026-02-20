@@ -65,7 +65,7 @@ protected:
 public:
 	// 생성할 전체 방의 개수
 	UPROPERTY(EditAnywhere, Category = "Map Generation")
-	int32 TotalRoomCount = 15;
+	int32 TotalRoomCount = 7;
 
 	// 방 맵 간의 물리적 거리 (예: 10000 = 100m, 서로 보이지 않게 띄움)
 	UPROPERTY(EditAnywhere, Category = "Map Generation")
@@ -137,4 +137,11 @@ private:
 	// 지휘관의 무전을 수신할 콜백 함수
 	UFUNCTION()
 	void OnRoomClearedCallback(int32 ClearedNodeID);
+
+private:
+	// 특정 좌표에 방이 있다면 그 방의 NodeID를 반환하는 함수
+	int32 GetNodeIDAt(FIntPoint Pos);
+
+	// 풀(Pool)에서 '우리가 원하는 방향의 문'을 가진 방을 찾아 영구적으로 빼오는 함수
+	class UR1RoomDefinitionData* PopValidRoomFromPool(TArray<class UR1RoomDefinitionData*>& Pool, ER1DoorDirection RequiredDoor);
 };

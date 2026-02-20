@@ -14,6 +14,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Map/R1Door.h"
 #include "R1RoomDefinitionData.generated.h"
 
 UENUM(BlueprintType)
@@ -51,4 +52,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Room|Spawn")
 	int32 SpawnBatchSizePerFrame = 6;
+
+	// 방이 물리적으로 가지고 있는 문의 방향들 (에디터에서 체크해 둡니다)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Settings")
+	TArray<ER1DoorDirection> AvailableDoors;
 };
