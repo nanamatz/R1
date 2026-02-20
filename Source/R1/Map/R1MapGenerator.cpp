@@ -56,73 +56,107 @@ void AR1MapGenerator::BeginPlay()
 
 void AR1MapGenerator::GenerateMap()
 {
-	int32 MaxRetries = 50; // 확률로 인해 맵이 덜 만들어졌을 때 재시도할 최대 횟수
+	int32 MaxRetries = 50;
 	bool bMapGeneratedSuccessfully = false;
 
 	while (MaxRetries > 0 && !bMapGeneratedSuccessfully)
 	{
+		// 재시도할 때마다 풀이 리셋되어야 하므로 다시 로드합니다.
+		InitializeRoomPools();
 		GeneratedMap.Empty();
+
 		TQueue<int32> RoomQueue;
 		int32 CurrentNodeID = 0;
 
-		// 1. 시작 방 생성 (그리드의 중심인 0,0 좌표에서 시작)
+		// 1. 시작 방 배정 (풀에서 1개 빼오기)
 		FR1MapNode StartNode;
 		StartNode.NodeID = CurrentNodeID;
 		StartNode.GridPosition = FIntPoint(0, 0);
-		StartNode.SpawnLocation = FVector(0.0f, 0.0f, 0.0f);
+		StartNode.SpawnLocation = FVector::ZeroVector;
+
+		if (StartRoomPool.Num() > 0)
+		{
+			int32 StartIndex = FMath::RandRange(0, StartRoomPool.Num() - 1);
+			StartNode.RoomDefinition = StartRoomPool[StartIndex];
+			StartRoomPool.RemoveAt(StartIndex);
+		}
+		StartNode.bIsCleared = true;
 
 		GeneratedMap.Add(StartNode);
 		RoomQueue.Enqueue(CurrentNodeID);
 		CurrentNodeID++;
 
-		// 2. BFS 방식 가지치기 루프
+		// 2. [핵심] 큐 순회 (퍼즐 맞추기)
 		while (!RoomQueue.IsEmpty() && CurrentNodeID < TotalRoomCount)
 		{
 			int32 ParentID;
-			RoomQueue.Dequeue(ParentID);	//ParentID에 현재 방 번호가 들어감.
+			RoomQueue.Dequeue(ParentID);
+			FR1MapNode& ParentNode = GeneratedMap[ParentID];
 
-			// 원본 배열 참조가 깨질 수 있으므로 좌표값만 복사해서 사용
-			FIntPoint ParentPos = GeneratedMap[ParentID].GridPosition;
+			if (!ParentNode.RoomDefinition) continue;
 
-			// 방향 무작위 셔플 (한쪽으로만 뻗어나가는 것을 방지)
-			TArray<FIntPoint> Directions = { FIntPoint(0, 1), FIntPoint(0, -1), FIntPoint(-1, 0), FIntPoint(1, 0) };
-			for (int32 i = Directions.Num() - 1; i > 0; i--)
+			// 현재 방에 실제로 뚫려있는 문 방향만 가져옵니다! (무지성 동서남북 배제)
+			TArray<ER1DoorDirection> ParentDoors = ParentNode.RoomDefinition->AvailableDoors;
+
+			// 가지가 한쪽으로만 뻗는 걸 막기 위해 문 방향 셔플
+			for (int32 i = ParentDoors.Num() - 1; i > 0; i--)
 			{
-				int32 j = FMath::RandRange(0, i);
-				Directions.Swap(i, j);
+				ParentDoors.Swap(i, FMath::RandRange(0, i));
 			}
 
-			// 인접한 4방향 탐색
-			for (FIntPoint Dir : Directions)
+			// 실제 뚫려있는 문을 향해서만 가지를 뻗습니다.
+			for (ER1DoorDirection DoorDir : ParentDoors)
 			{
-				if (CurrentNodeID >= TotalRoomCount) break; // 목표 개수 달성 시 중단
+				if (CurrentNodeID >= TotalRoomCount) break;
 
-				FIntPoint NewPos = ParentPos + Dir;
+				FIntPoint DirOffset = FIntPoint::ZeroValue;
+				ER1DoorDirection OppositeDir = ER1DoorDirection::None;
 
-				// 이미 이 자리에 방이 있는지 체크
-				if (HasRoomAt(NewPos)) continue;
+				switch (DoorDir)
+				{
+				case ER1DoorDirection::North: DirOffset = FIntPoint(1, 0);  OppositeDir = ER1DoorDirection::South; break; // 북쪽은 +X
+				case ER1DoorDirection::South: DirOffset = FIntPoint(-1, 0); OppositeDir = ER1DoorDirection::North; break; // 남쪽은 -X
+				case ER1DoorDirection::East:  DirOffset = FIntPoint(0, 1);  OppositeDir = ER1DoorDirection::West; break;  // 동쪽은 +Y
+				case ER1DoorDirection::West:  DirOffset = FIntPoint(0, -1); OppositeDir = ER1DoorDirection::East; break;  // 서쪽은 -Y
+				}
 
-				// 뭉침 방지: 새 위치 주변에 방이 2개 이상 있다면 생성 취소
+				FIntPoint NewPos = ParentNode.GridPosition + DirOffset;
+
+				// 이미 그 위치에 다른 방이 있다면, 연결만 해주고 스킵
+				if (int32 ExistingID = GetNodeIDAt(NewPos); ExistingID != -1)
+				{
+					GeneratedMap[ParentID].ConnectedNodeIDs.AddUnique(ExistingID);
+					GeneratedMap[ExistingID].ConnectedNodeIDs.AddUnique(ParentID);
+					continue;
+				}
+
+				// 뭉침 방지 룰 (아이작 룰)
 				int32 NeighborCount = 0;
 				FIntPoint CheckDirs[4] = { FIntPoint(0, 1), FIntPoint(0, -1), FIntPoint(-1, 0), FIntPoint(1, 0) };
 				for (FIntPoint CheckDir : CheckDirs)
 				{
-					if (HasRoomAt(NewPos + CheckDir)) NeighborCount++;
+					if (GetNodeIDAt(NewPos + CheckDir) != -1) NeighborCount++;
 				}
-
 				if (NeighborCount > 1) continue;
 
-				// 50% 확률로 새 방 생성
+				// 확률 50%
 				if (FMath::RandRange(0, 100) < 50)
 				{
+					// [가장 중요] 다음 방은 반드시 내 문과 맞물리는(OppositeDir) 문이 있어야 합니다!
+					UR1RoomDefinitionData* NextRoomData = PopValidRoomFromPool(CombatRoomPool, OppositeDir);
+
+					if (!NextRoomData)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 핏이 맞는 방이 풀에 고갈되었습니다. 이쪽 방향은 벽으로 막습니다."));
+						continue; // 풀에 퍼즐 조각이 없으면 방을 만들지 않음
+					}
+
 					FR1MapNode NewNode;
 					NewNode.NodeID = CurrentNodeID;
 					NewNode.GridPosition = NewPos;
-
-					// 실제 월드 좌표 = 그리드 좌표 * 우리가 정한 방 간격
 					NewNode.SpawnLocation = FVector(NewPos.X * RoomSpacing, NewPos.Y * RoomSpacing, 0.0f);
+					NewNode.RoomDefinition = NextRoomData; // 바로 할당!
 
-					// 서로 연결 상태 기록
 					NewNode.ConnectedNodeIDs.Add(ParentID);
 					GeneratedMap.Add(NewNode);
 					GeneratedMap[ParentID].ConnectedNodeIDs.Add(CurrentNodeID);
@@ -133,7 +167,6 @@ void AR1MapGenerator::GenerateMap()
 			}
 		}
 
-		// 목표한 방 개수를 정확히 채웠는지 확인
 		if (GeneratedMap.Num() == TotalRoomCount)
 		{
 			bMapGeneratedSuccessfully = true;
@@ -142,15 +175,37 @@ void AR1MapGenerator::GenerateMap()
 		MaxRetries--;
 	}
 
-	// 3. 지도가 완성되었다면, 데이터(PDA)를 각 방에 할당합니다.
+	// 3. 루프 종료 후, 가장 멀리 있는 방을 보스 방으로 교체
 	if (bMapGeneratedSuccessfully)
 	{
-		AssignRoomTypes();
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 총 %d개의 방 지도 생성이 완료되었습니다!"), GeneratedMap.Num());
+		int32 BossNodeID = -1;
+		float MaxDistance = -1.0f;
+
+		for (int32 i = 1; i < GeneratedMap.Num(); ++i)
+		{
+			if (GeneratedMap[i].ConnectedNodeIDs.Num() == 1) // 막다른 길
+			{
+				float Dist = FVector::Dist(FVector::ZeroVector, FVector(GeneratedMap[i].GridPosition.X, GeneratedMap[i].GridPosition.Y, 0));
+				if (Dist > MaxDistance)
+				{
+					MaxDistance = Dist;
+					BossNodeID = i;
+				}
+			}
+		}
+
+		if (BossNodeID != -1 && BossRoomPool.Num() > 0)
+		{
+			// (주의: 완벽한 퍼즐을 위해선 보스 방도 문의 방향이 맞아야 합니다.
+			// 지금은 심플하게 덮어씌웁니다. 보스 방 PDA는 모든 방향의 문(N,S,E,W)을 들고 있게 세팅하는 것이 안전합니다.)
+			GeneratedMap[BossNodeID].RoomDefinition = BossRoomPool[FMath::RandRange(0, BossRoomPool.Num() - 1)];
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 합리적인 퍼즐 맞추기로 %d개의 방 지도 생성이 완료되었습니다!"), GeneratedMap.Num());
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 맵 생성 실패: 확률 문제로 목표 개수 미달. 다시 플레이해주세요."));
+		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 퍼즐 조각이 부족하거나 알고리즘 한계로 생성 실패!"));
 	}
 }
 
@@ -195,47 +250,60 @@ void AR1MapGenerator::InitializeRoomPools()
 
 void AR1MapGenerator::AssignRoomTypes()
 {
-	// 에디터에서 풀을 안 채워놨을 경우를 대비한 방어 로직
 	if (StartRoomPool.IsEmpty() || CombatRoomPool.IsEmpty() || BossRoomPool.IsEmpty())
 	{
 		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] Room Pool이 비어있습니다. 에디터에서 PDA를 채워주세요!"));
 		return;
 	}
 
-	// 0번 방(시작 지점)은 무조건 시작 방 세팅
+	// 1. 시작 방 할당 (0번 방)
 	GeneratedMap[0].RoomDefinition = StartRoomPool[FMath::RandRange(0, StartRoomPool.Num() - 1)];
 	GeneratedMap[0].bIsCleared = true;
 
-	int32 FurthestNodeID = -1;
+	// 2. 보스 방 위치 찾기 (가장 먼 막다른 길)
+	int32 BossNodeID = -1;
 	float MaxDistance = -1.0f;
 
-	// 1번 방부터 순회하며 속성 찾기
 	for (int32 i = 1; i < GeneratedMap.Num(); ++i)
 	{
-		// 기본적으로 모든 방을 일반(Combat) 방으로 깔아둡니다.
-		GeneratedMap[i].RoomDefinition = CombatRoomPool[FMath::RandRange(0, CombatRoomPool.Num() - 1)];
-
-		// 연결된 방이 1개뿐이라면 = '막다른 길(Dead End)'
 		if (GeneratedMap[i].ConnectedNodeIDs.Num() == 1)
 		{
-			// 시작점(0,0)으로부터의 거리를 계산합니다.
 			float Dist = FVector::Dist(FVector::ZeroVector, FVector(GeneratedMap[i].GridPosition.X, GeneratedMap[i].GridPosition.Y, 0));
 			if (Dist > MaxDistance)
 			{
 				MaxDistance = Dist;
-				FurthestNodeID = i;
+				BossNodeID = i;
 			}
 		}
 	}
 
-	// 시작 방에서 가장 멀리 떨어진 '막다른 길'을 찾아 '보스 방'으로 덮어씌웁니다.
-	if (FurthestNodeID != -1)
+	// 3. 보스 방 할당
+	if (BossNodeID != -1)
 	{
-		GeneratedMap[FurthestNodeID].RoomDefinition = BossRoomPool[FMath::RandRange(0, BossRoomPool.Num() - 1)];
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 보스 방이 %d번 노드에 할당되었습니다."), FurthestNodeID);
+		GeneratedMap[BossNodeID].RoomDefinition = BossRoomPool[FMath::RandRange(0, BossRoomPool.Num() - 1)];
+		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 보스 방이 %d번 노드에 할당되었습니다."), BossNodeID);
 	}
 
+	// 4. 나머지 일반(Combat) 방 할당 (중복 방지 로직 적용)
+	for (int32 i = 1; i < GeneratedMap.Num(); ++i)
+	{
+		// 보스 방으로 지정된 곳은 건너뜁니다.
+		if (i == BossNodeID) continue;
 
+		// [안전장치] 풀이 비어있는지 체크 (맵의 방 개수보다 만들어둔 PDA가 적을 경우)
+		if (CombatRoomPool.IsEmpty())
+		{
+			UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 전투 방 종류(PDA)가 부족합니다! 생성할 방 개수보다 에디터에 만든 방 종류가 적습니다."));
+			break;
+		}
+
+		// 랜덤으로 방 하나 뽑기
+		int32 RandomIndex = FMath::RandRange(0, CombatRoomPool.Num() - 1);
+		GeneratedMap[i].RoomDefinition = CombatRoomPool[RandomIndex];
+
+		// [핵심 변경] 한 번 배정한 방은 풀에서 아예 삭제하여 중복 생성을 원천 차단합니다!
+		CombatRoomPool.RemoveAt(RandomIndex);
+	}
 }
 
 bool AR1MapGenerator::HasRoomAt(FIntPoint Pos)
@@ -257,10 +325,10 @@ int32 AR1MapGenerator::GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorD
 	// 1. 타겟 방향의 가상 그리드 좌표를 계산합니다.
 	switch (Direction)
 	{
-	case ER1DoorDirection::North: TargetGridPos.Y += 1; break;
-	case ER1DoorDirection::South: TargetGridPos.Y -= 1; break;
-	case ER1DoorDirection::East:  TargetGridPos.X += 1; break;
-	case ER1DoorDirection::West:  TargetGridPos.X -= 1; break;
+	case ER1DoorDirection::North: TargetGridPos.X += 1; break;
+	case ER1DoorDirection::South: TargetGridPos.X -= 1; break;
+	case ER1DoorDirection::East:  TargetGridPos.Y += 1; break;
+	case ER1DoorDirection::West:  TargetGridPos.Y -= 1; break;
 	default: return -1;
 	}
 
@@ -474,8 +542,8 @@ void AR1MapGenerator::OnTransitionRoomLoaded()
 				else
 				{
 					UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 타겟 문 없음! 방 중앙으로 비상 이동!"));
-					FVector EmergencyLocation = NewRoomLocation + FVector(0.0f, 0.0f, 150.0f);
-					PlayerCharacter->SetActorLocation(EmergencyLocation);
+					//FVector EmergencyLocation = NewRoomLocation + FVector(0.0f, 0.0f, 150.0f);
+					//PlayerCharacter->SetActorLocation(EmergencyLocation);
 				}
 				PlayerCharacter->GetVelocity() = FVector::ZeroVector;
 			}
@@ -520,4 +588,38 @@ void AR1MapGenerator::OnRoomClearedCallback(int32 ClearedNodeID)
 
 		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 수신 완료! %d번 방의 지도 데이터가 클리어 상태로 영구 저장되었습니다!"), ClearedNodeID);
 	}
+}
+
+int32 AR1MapGenerator::GetNodeIDAt(FIntPoint Pos)
+{
+	for (int32 i = 0; i < GeneratedMap.Num(); ++i)
+	{
+		if (GeneratedMap[i].GridPosition == Pos) return GeneratedMap[i].NodeID;
+	}
+	return -1;
+}
+
+UR1RoomDefinitionData* AR1MapGenerator::PopValidRoomFromPool(TArray<class UR1RoomDefinitionData*>& Pool, ER1DoorDirection RequiredDoor)
+{
+	// 항상 같은 방만 나오는 것을 막기 위해 인덱스를 랜덤으로 섞어서 탐색
+	TArray<int32> Indices;
+	for (int32 i = 0; i < Pool.Num(); ++i) Indices.Add(i);
+
+	for (int32 i = Indices.Num() - 1; i > 0; i--)
+	{
+		Indices.Swap(i, FMath::RandRange(0, i));
+	}
+
+	// 섞인 순서대로 조건에 맞는 방(퍼즐 조각) 찾기
+	for (int32 Index : Indices)
+	{
+		UR1RoomDefinitionData* RoomData = Pool[Index];
+		// 이 방이 우리가 요구하는 문을 가지고 있는가?
+		if (RoomData && RoomData->AvailableDoors.Contains(RequiredDoor))
+		{
+			Pool.RemoveAt(Index); // 중복 방지를 위해 풀에서 완전히 삭제!
+			return RoomData;
+		}
+	}
+	return nullptr; // 조건에 맞는 방이 풀에 없습니다.
 }

@@ -29,7 +29,7 @@ struct FR1RuntimeBudget
 {
 	GENERATED_BODY()
 
-	// 현재 + 인접 3개 정책
+	// 현재 + 인접 4개 정책
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Budget")
 	int32 MaxPreloadedRooms = 4;
 
