@@ -59,10 +59,15 @@ public:
 	void HandlePlayerDead(AR1Character* DeadCharacter, AR1Character* Attacker);
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	// 텔레포트 등 강제로 이동을 끊어야 할 때 외부에서 호출할 함수
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void ResetMovementState();
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	float ShortPressThreshold = 0.3f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UNiagaraSystem> FXCursor;
 
 private:

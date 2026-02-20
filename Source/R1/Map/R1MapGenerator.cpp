@@ -13,6 +13,8 @@
 #include "Data/R1AssetData.h" 
 #include "EngineUtils.h"
 
+#include "Player/R1PlayerController.h"
+
 
 AR1MapGenerator::AR1MapGenerator()
 {
@@ -537,13 +539,20 @@ void AR1MapGenerator::OnTransitionRoomLoaded()
 				{
 					FVector DirectionToCenter = (NewRoomLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
 					FVector SafeLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
+
 					PlayerCharacter->SetActorLocation(SafeLocation);
+					PlayerCharacter->GetVelocity() = FVector::ZeroVector;
+
+					// [여기 추가!] 텔레포트 직후에 컨트롤러의 이동 명령을 완전히 리셋합니다.
+					if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
+					{
+						PC->ResetMovementState();
+					}
 				}
 				else
 				{
 					UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 타겟 문 없음! 방 중앙으로 비상 이동!"));
-					//FVector EmergencyLocation = NewRoomLocation + FVector(0.0f, 0.0f, 150.0f);
-					//PlayerCharacter->SetActorLocation(EmergencyLocation);
+
 				}
 				PlayerCharacter->GetVelocity() = FVector::ZeroVector;
 			}
