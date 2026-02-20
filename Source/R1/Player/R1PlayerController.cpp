@@ -340,6 +340,27 @@ void AR1PlayerController::HandlePlayerDead(AR1Character* DeadCharacter, AR1Chara
 	}
 }
 
+void AR1PlayerController::ResetMovementState()
+{
+	// 1. 현재 AI(네비게이션) 시스템이 실행 중인 경로 탐색 및 이동을 즉시 정지시킵니다!
+	StopMovement();
+
+	// 2. 마우스를 누르고 있던 상태나, 마우스 홀드 시간도 리셋합니다.
+	bMousePressed = false;
+	FollowTime = 0.f;
+
+	// 3. 클릭해두었던 타겟(문이나 몬스터)을 비워줍니다.
+	TargetActor = nullptr;
+	TargetAttackActor = nullptr;
+
+	// 4. CacheDestination을 내 현재 위치로 덮어씌워서 완벽하게 초기화합니다.
+	// (0, 0, 0으로 하면 혹시나 다시 이동 명령이 들어갔을 때 맵 중앙으로 뛸 수 있으니 내 위치로 하는 게 안전합니다)
+	if (R1Player)
+	{
+		CacheDestination = R1Player->GetActorLocation();
+	}
+}
+
 void AR1PlayerController::OnInventoryToggle()
 {
 	AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
