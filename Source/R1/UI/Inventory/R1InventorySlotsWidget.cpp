@@ -11,36 +11,28 @@
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1DragDropOperation.h"
 #include "R1Define.h"
-
+#include "Item/R1ItemInstance.h"
 
 UR1InventorySlotsWidget::UR1InventorySlotsWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	//ConstructorHelpers::FClassFinder<UR1InventroySlotWidget> FindSlotWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/Item/Inventory/WBP_InventorySlot.WBP_InventorySlot_C'"));
-	//if (FindSlotWidgetClass.Succeeded())
-	//{
-	//	SlotWidgetClass = FindSlotWidgetClass.Class;
-	//}
-
-	//ConstructorHelpers::FClassFinder<UR1InventoryEntryWidget> FindEntryWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/Item/Inventory/WBP_InventoryEntry.WBP_InventoryEntry_C'"));
-	//if (FindEntryWidgetClass.Succeeded())
-	//{
-	//	EntryWidgetClass = FindEntryWidgetClass.Class;
-	//}
 }
 
 void UR1InventorySlotsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-	if (GridPanel_Slots == nullptr) UE_LOG(LogTemp, Error, TEXT("GridPanel_Slots가 NULL입니다!"));
-	if (CanvasPanel_Entries == nullptr) UE_LOG(LogTemp, Error, TEXT("CanvasPanel_Entries가 NULL입니다!"));
-	if (SlotWidgetClass == nullptr) UE_LOG(LogTemp, Error, TEXT("SlotWidgetClass가 NULL입니다!"));
-	if (EntryWidgetClass == nullptr) UE_LOG(LogTemp, Error, TEXT("EntryWidgetClass가 NULL입니다!"));
 
 	if (!GridPanel_Slots || !CanvasPanel_Entries || !SlotWidgetClass || !EntryWidgetClass)
 	{
 		return; // 하나라도 NULL이면 중단
 	}
+	UR1InventorySubsystem* Inventory = Cast<UR1InventorySubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(this, UR1InventorySubsystem::StaticClass()));
+
+	//UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+	if (!Inventory) return;
+
+	X_COUNT = Inventory->GetInventoryColumns();
+	Y_COUNT = Inventory->GetInventoryRows();
 
 	SlotWidgets.SetNum(X_COUNT * Y_COUNT);
 
@@ -64,17 +56,34 @@ void UR1InventorySlotsWidget::NativeConstruct()
 
 	EntryWidgets.SetNum(X_COUNT * Y_COUNT);
 
-	UR1InventorySubsystem * Inventory = Cast<UR1InventorySubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(this, UR1InventorySubsystem::StaticClass()));
+	//if (Inventory)
+	//{
+	//	const TArray<TObjectPtr<UR1ItemInstance>>& Items = Inventory->GetItems();
 
-	if (Inventory)
+	//	for (int32 i = 0; i < Items.Num(); i++)
+	//	{
+	//		const TObjectPtr<UR1ItemInstance>& Item = Items[i];
+	//		FIntPoint ItemSlotPos = FIntPoint(i % X_COUNT, i / X_COUNT);
+	//		OnInventoryEntryChanged(ItemSlotPos, Item);
+	//	}
+	//}
+	const TArray<TObjectPtr<UR1ItemInstance>>& Items = Inventory->GetItems();
+
+	FIntPoint CurrentPos = FIntPoint(0, 0);
+
+	for (UR1ItemInstance* Item : Items)
 	{
-		const TArray<TObjectPtr<UR1ItemInstance>>& Items = Inventory->GetItems();
+		if (!Item) continue;
 
-		for (int32 i = 0; i < Items.Num(); i++)
+		// (단순화를 위해 순차적으로 넣습니다. 실전에서는 빈 칸을 찾는 알고리즘을 쓸 수도 있습니다.)
+		if (Inventory->CanAddItemAt(Item->ItemSize, CurrentPos))
 		{
-			const TObjectPtr<UR1ItemInstance>& Item = Items[i];
-			FIntPoint ItemSlotPos = FIntPoint(i % X_COUNT, i / X_COUNT);
-			OnInventoryEntryChanged(ItemSlotPos, Item);
+			// UI 그리기
+			OnInventoryEntryChanged(CurrentPos, Item);
+			// 서브시스템(뇌)에 알박기 등록! (이게 있어야 겹침 판정이 제대로 돕니다)
+			Inventory->AddItemToGrid(Item, CurrentPos);
+
+			CurrentPos.X += Item->ItemSize.X; // 다음 아이템을 위해 X좌표 밀기
 		}
 	}
 }
@@ -101,7 +110,7 @@ bool UR1InventorySlotsWidget::NativeOnDragOver(const FGeometry& InGeometry, cons
 
 	PreDragOverSlotPos = ToSlotPos;
 
-	//TODO
+	// (선택 사항) 여기에 마우스가 올라간 위치가 빨간색/초록색으로 빛나는 로직을 추가할 수 있습니다.
 
 	return false;
 }
@@ -118,19 +127,47 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 	FinishDrag();
 
 	UR1DragDropOperation* DragDrop = Cast<UR1DragDropOperation>(InOperation);
-	if (DragDrop == nullptr)
+	if (DragDrop == nullptr || !DragDrop->ItemInstance)
 	{
 		return false;
 	}
 
 	FVector2D MouseWidgetPos = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
 	FVector2D ToWidgetPos = MouseWidgetPos - DragDrop->DeltaWidgetPos;
-	FIntPoint ToItemSlotPos = FIntPoint(ToWidgetPos.X / Item::UnitInventorySlotSize.X, ToWidgetPos.Y / Item::UnitInventorySlotSize.Y);
+	//FIntPoint ToItemSlotPos = FIntPoint(ToWidgetPos.X / Item::UnitInventorySlotSize.X, ToWidgetPos.Y / Item::UnitInventorySlotSize.Y);
+	// 💡 Tip: 화면 밖으로 드래그했을 때 음수가 나오거나 배열을 벗어나는 것을 막기 위해 Clamp를 써주면 안전합니다.
+	int32 TargetX = FMath::Clamp(FMath::FloorToInt(ToWidgetPos.X / Item::UnitInventorySlotSize.X), 0, X_COUNT - 1);
+	int32 TargetY = FMath::Clamp(FMath::FloorToInt(ToWidgetPos.Y / Item::UnitInventorySlotSize.Y), 0, Y_COUNT - 1);
+	FIntPoint ToItemSlotPos = FIntPoint(TargetX, TargetY);
 
-	if (DragDrop->FromItemSlotPos != ToItemSlotPos)
+	// 제자리에 놨으면 아무 일도 안 일어남
+	if (DragDrop->FromItemSlotPos == ToItemSlotPos)
 	{
-		OnInventoryEntryChanged(DragDrop->FromItemSlotPos, nullptr);
-		OnInventoryEntryChanged(ToItemSlotPos, DragDrop->ItemInstance);
+		return false;
+	}
+
+	// 💡 서브시스템 문지기 등판! (겹침 검사)
+	UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+	if (Inventory)
+	{
+		// 이 자리에 놓을 수 있는지 확인 (자신(ItemInstance)은 겹침 검사에서 예외 처리)
+		if (Inventory->CanAddItemAt(DragDrop->ItemInstance->ItemSize, ToItemSlotPos, DragDrop->ItemInstance))
+		{
+			// 1. 서브시스템의 실제 데이터 그리드(GridData) 위치 갱신 (아래에서 함수 추가 예정)
+			Inventory->MoveItemInGrid(DragDrop->ItemInstance, DragDrop->FromItemSlotPos, ToItemSlotPos);
+
+			// 2. UI 위젯 갱신
+			OnInventoryEntryChanged(DragDrop->FromItemSlotPos, nullptr);
+			OnInventoryEntryChanged(ToItemSlotPos, DragDrop->ItemInstance);
+
+			return true;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("여기는 겹치거나 공간이 부족해서 놓을 수 없습니다!"));
+			// false를 반환하면 OnDragCancelled가 호출되면서 원래 자리로 아이템이 돌아갑니다.
+			return false;
+		}
 	}
 
 	return false;

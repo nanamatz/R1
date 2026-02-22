@@ -4,9 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "R1Define.h"
 #include "R1InventorySubsystem.generated.h"
 
+// 델리게이트: UI들에게 인벤토리/장비창이 변했음을 알림 (추후 UI 갱신용)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
 class UR1ItemInstance;
+
 /**
  * 
  */
@@ -24,7 +28,38 @@ public:
 
 	const TArray<TObjectPtr<UR1ItemInstance>>& GetItems() { return Items; }
 
+	// 💡 가장 중요한 핵심 함수: 특정 위치에 아이템을 놓을 수 있는지 검사
+	bool CanAddItemAt(const FIntPoint& ItemSize, const FIntPoint& TargetPos, UR1ItemInstance* IgnoreItem = nullptr);
+
+	int32 GetInventoryColumns() const { return 10; } // X 칸 수
+	int32 GetInventoryRows() const { return 5; }    // Y 칸 수
+
+public:
+	// 아이템을 인벤토리 내에서 다른 좌표로 이동시킵니다 (그리드 데이터 갱신)
+	void AddItemToGrid(UR1ItemInstance* Item, const FIntPoint& Pos);
+	void RemoveItemFromGrid(UR1ItemInstance* Item, const FIntPoint& Pos);
+	void MoveItemInGrid( UR1ItemInstance* Item, FIntPoint OldPos, FIntPoint NewPos);
+
+public:
+	// 아이템을 인벤토리에서 장비창으로 이동
+	bool EquipItem( UR1ItemInstance* ItemToEquip);
+
+	// 장비를 해제하여 다시 인벤토리로 이동
+	bool UnequipItem(ER1EquipmentSlot TargetSlot);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnInventoryUpdated OnInventoryUpdated;
+
 protected:
+	// 전체 그리드를 1차원 배열로 관리 (크기: Columns * Rows)
+	// 비어있으면 nullptr, 누군가 차지하고 있으면 그 아이템의 포인터가 들어감
+	UPROPERTY()
+	TArray<TObjectPtr<UR1ItemInstance>> GridData;
+
 	UPROPERTY()
 	TArray<TObjectPtr<UR1ItemInstance>> Items;
+	// 현재 장착된 아이템들을 슬롯 부위별로 관리하는 맵
+
+	UPROPERTY()
+	TMap <ER1EquipmentSlot, TObjectPtr<UR1ItemInstance>> EquippedItems;
 };

@@ -158,15 +158,11 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 					if (TargetASC)
 					{
 						SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
-						UE_LOG(LogTemp, Warning, TEXT("Apply GE to Monster!"));
-
 					}
 				}
 				else
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Player Attacked, But TargetActor is NULL!"));
-
-					// (선택사항) 논타겟팅 보정: 타겟이 없으면 몬스터처럼 앞쪽 Sweep을 시도할 수도 있습니다.
 				}
 			}
 		}
