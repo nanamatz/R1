@@ -64,9 +64,6 @@ public:
 	void SetCreatureState(ECreatureState InState);
 	ECreatureState GetCreatureState() const { return CreatureState; }
 
-	// 초기화 함수
-	virtual void InitAttributes();
-
 protected:
 	// 1. 데이터 테이블 에셋 (에디터에서 지정)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
@@ -89,13 +86,13 @@ protected:
 	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UR1AttributeSet> AttributeSet;
+	TObjectPtr<class UR1AttributeSet> CommonAttributeSet;
 
 public:
+	//초기화 함수
 	void AddCharacterAbility();	
-	void InitializeCharacterAttribute();
 	void ApplyCharacterEffect();
-
+	virtual void InitAttributes();
 public:
 
 	UPROPERTY(EditAnywhere, Category = "Abilities")

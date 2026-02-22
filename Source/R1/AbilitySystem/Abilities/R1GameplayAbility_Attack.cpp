@@ -36,9 +36,6 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 		return;
 	}
 
-	// 2. 몽타주 재생 (PlayMontageAndWait Task 사용)
-	// 이 Task는 애니메이션이 끝날 때까지 어빌리티가 끝나지 않게 잡아주는 역할도 합니다.
-
 
 	if (Attacker && Attacker->AttackMontage)
 	{
@@ -162,47 +159,7 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 		}
 		else
 		{
-
 			CheckAndApplyDamage_Sector(EffectSpecHandle, SourceCharacter, SourceASC);
-			
-			/*TArray<FOverlapResult> OverlapResults;
-			FCollisionQueryParams Params;
-			Params.AddIgnoredActor(this);*/
-
-			//TArray<FHitResult> HitResults;
-			//FVector Start = SourceCharacter->GetActorLocation();
-
-			//// [변경] 하드코딩된 변수 대신, Attribute에서 가져온 값을 사용!
-			//FVector End = Start + (SourceCharacter->GetActorForwardVector() * AttackRange);
-
-			//FCollisionQueryParams Params;
-			//Params.AddIgnoredActor(SourceCharacter);
-
-			//bool bHit = GetWorld()->SweepMultiByChannel(
-			//	HitResults,
-			//	Start,
-			//	End,
-			//	FQuat::Identity,
-			//	ECC_GameTraceChannel1,
-			//	FCollisionShape::MakeSphere(AttackRadius), // [변경] 여기도 Attribute 값 사용
-			//	Params
-			//);
-
-			//DrawDebugSphere(GetWorld(), Start, AttackRadius,16, FColor::Green, false, 1.f);
-			//DrawDebugSphere(GetWorld(), End, AttackRadius, 16, FColor::Blue, false, 1.f);
-
-			//for (const FHitResult& HitResult : HitResults)
-			//{
-			//	AR1Player* HitPlayer = Cast<AR1Player>(HitResult.GetActor());
-
-			//	if (HitPlayer)
-			//	{
-			//		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(HitPlayer);
-			//		SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
-			//		UE_LOG(LogTemp, Warning, TEXT("Apply GE to Player!"));
-
-			//	}
-			//}
 		}
 	}
 }

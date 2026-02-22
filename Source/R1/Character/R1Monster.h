@@ -35,7 +35,7 @@ public:
 	UFUNCTION()
 	void RefreshHpBar(float Ratio);
 
-	class UR1AttributeSet* GetR1AttributeSet() const { return AttributeSet; }
+	class UR1AttributeSet* GetR1AttributeSet() const { return CoreAttributeSet; }
 
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
@@ -46,6 +46,12 @@ public:
 	// 스포너가 태어날 때 호출해 줄 주입 함수
 	void InitializeWithManager(class ADungeonManager* InManager);
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<class UMonsterAttributeSet> MonsterAttributeSet;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<class UR1AttributeSet> CoreAttributeSet;
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
 	TObjectPtr<class UAnimMontage> DeathAnimMontage;
@@ -55,5 +61,10 @@ public:
 
 	float AggroRange;
 
+protected:
+	virtual void InitAttributes() override;
 
+	// 몬스터 전용 초기화 GE (GE_InitMonsterStats 할당)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
+	TSubclassOf<class UGameplayEffect> MonsterInitStatEffectClass;
 };

@@ -12,13 +12,15 @@
 #include "Components/WidgetComponent.h"
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
-#include "AbilitySystem/Attribute/R1PlayerAttributeSet.h"
-#include "System/R1GameInstance.h"
+#include "AbilitySystem/Attribute/PlayerAttributeSet.h"
+#include "AbilitySystem/Attribute/R1AttributeSet.h"
 
+#include "System/R1GameInstance.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 
 #include "UI/R1ExpBarWidget.h"
+#include "DataTable/CharacterStatsRow.h"
 
 AR1Player::AR1Player()
 {
@@ -67,7 +69,7 @@ void AR1Player::BeginPlay()
 
 	}
 	
-	AttackRange = AttributeSet->GetAttackRange();
+	AttackRange = CommonAttributeSet->GetAttackRange();
 
 }
 
@@ -91,7 +93,7 @@ void AR1Player::InitAbilitySystem()
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 		
 
-		AttributeSet = PS->GetR1PlayerAttributeSet();
+		CommonAttributeSet = PS->GetCommonAttributeSet();
 	}
 }
 // Called every frame
@@ -129,11 +131,37 @@ void AR1Player::ActivateAbility(FGameplayTag AbilityTag)
 void AR1Player::InitExpBar()
 {
 	AR1PlayerState* PS = GetPlayerState<AR1PlayerState>();
-	if (PS && AttributeSet)
+	UPlayerAttributeSet* PlayerAttributeSet = PS->GetPlayerAttributeSet();
+	if (PS && PlayerAttributeSet)
 	{
-		float Exp = AttributeSet->GetExp();
-		float MaxExp = AttributeSet->GetMaxExp();
+		float Exp = PlayerAttributeSet->GetExp();
+		float MaxExp = PlayerAttributeSet->GetMaxExp();
 		float Ratio = Exp / MaxExp;
 		PS->OnExpChanged.Broadcast(Ratio);
+	}
+}
+
+void AR1Player::InitAttributes()
+{
+	Super::InitAttributes();
+
+	// 2. 플레이어 전용 스탯(마나, 경험치 등) 세팅
+	if (!AbilitySystemComponent || !CharacterStatTable || !PlayerInitStatEffectClass) return;
+
+	FR1CharacterStatsRow* StatData = CharacterStatTable->FindRow<FR1CharacterStatsRow>(CharacterRowName, TEXT("InitPlayerAttributes"));
+	if (StatData)
+	{
+		FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(PlayerInitStatEffectClass, 1.0f, Context);
+
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxMana")), StatData->MaxMana);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.ManaRegeneration")), StatData->ManaRegeneration);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxExp")), StatData->MaxExp);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.Level")), StatData->Level);
+
+			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
 	}
 }

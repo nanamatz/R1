@@ -3,7 +3,9 @@
 
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
-#include "AbilitySystem/Attribute/R1MonsterAttributeSet.h"
+
+#include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "AbilitySystem/Attribute/MonsterAttributeSet.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 
 #include "AI/R1AIController.h"
@@ -14,6 +16,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 
 #include "Map/DungeonManager.h"
+#include "DataTable/CharacterStatsRow.h"
 
 
 AR1Monster::AR1Monster()
@@ -21,7 +24,8 @@ AR1Monster::AR1Monster()
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 
 	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>("AbilitySystemComponent");
-	AttributeSet = CreateDefaultSubobject<UR1MonsterAttributeSet>("MonsterAttributeSet");
+	MonsterAttributeSet = CreateDefaultSubobject<UMonsterAttributeSet>("MonsterAttributeSet");
+	CoreAttributeSet = CreateDefaultSubobject<UR1AttributeSet>("CoreAttributeSet");
 
 
 	HpBarComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
@@ -53,7 +57,7 @@ void AR1Monster::BeginPlay()
 	{
 		Monster->OnHpChanged.AddDynamic(this, &AR1Monster::RefreshHpBar);
 	}
-	AggroRange = AbilitySystemComponent->GetNumericAttribute(AttributeSet->GetAggroRangeAttribute());
+	AggroRange = AbilitySystemComponent->GetNumericAttribute(MonsterAttributeSet->GetAggroRangeAttribute());
 	
 	RefreshHpBar(1.f);
 }
@@ -71,7 +75,7 @@ void AR1Monster::InitAbilitySystem()
 
 void AR1Monster::RefreshHpBar(float Ratio)
 {
-	if (HpBarComponent && AttributeSet)
+	if (HpBarComponent && CoreAttributeSet)
 	{
 		UR1HpBarWidget* HpBar = Cast<UR1HpBarWidget>(HpBarComponent->GetUserWidgetObject());
 		if (HpBar)
@@ -136,7 +140,7 @@ void AR1Monster::OnDead(const TObjectPtr<class AR1Character> Attacker)
 		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 
-	SetLifeSpan(5.f); // 5초 뒤에 사라지도록 설정 (죽은 시점부터 사라질 때까지 시간 벌기)
+	//SetLifeSpan(5.f); // 5초 뒤에 사라지도록 설정 (죽은 시점부터 사라질 때까지 시간 벌기)
 }
 
 void AR1Monster::InitializeWithManager(ADungeonManager* InManager)
@@ -149,5 +153,29 @@ void AR1Monster::InitializeWithManager(ADungeonManager* InManager)
 
 	this->OnDeadDelegate.AddDynamic(InManager, &ADungeonManager::UnregisterMonster);
 
-	UE_LOG(LogTemp, Warning, TEXT("[%s] 스포너를 통해 지휘관(%s)과 성공적으로 연결되었습니다!"), *GetName(), *InManager->GetName());
+}
+
+void AR1Monster::InitAttributes()
+{
+	// 1. 부모 함수 호출 (체력, 공격력 세팅)
+	Super::InitAttributes();
+
+	// 2. 몬스터 전용 스탯(경험치 드롭량, 어그로 범위) 세팅
+	if (!AbilitySystemComponent || !CharacterStatTable || !MonsterInitStatEffectClass) return;
+
+	FR1CharacterStatsRow* StatData = CharacterStatTable->FindRow<FR1CharacterStatsRow>(CharacterRowName, TEXT("InitMonsterAttributes"));
+	if (StatData)
+	{
+		FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(MonsterInitStatEffectClass, 1.0f, Context);
+
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.Xp")), StatData->Xp);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AggroRange")), StatData->AggroRange);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackAngle")), StatData->AttackAngle);
+
+			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+	}
 }

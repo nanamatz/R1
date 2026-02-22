@@ -7,6 +7,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "AbilitySystem/Attribute/MonsterAttributeSet.h"
 
 UBTDecorator_CanAttack::UBTDecorator_CanAttack()
 {
@@ -49,7 +50,7 @@ bool UBTDecorator_CanAttack::CalculateRawConditionValue(UBehaviorTreeComponent& 
 	FVector DirectionToTarget = (Target->GetActorLocation() - ControllingPawn->GetActorLocation()).GetSafeNormal();
 	float DotResult = FVector::DotProduct(ControllingPawn->GetActorForwardVector(), DirectionToTarget);
 
-	float AttackAngle = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackAngleAttribute());
+	float AttackAngle = ASC->GetNumericAttribute(UMonsterAttributeSet::GetAttackAngleAttribute());
 
 	float CosineThreshold = FMath::Cos(FMath::DegreesToRadians(AttackAngle / 2.f));
 

@@ -3,6 +3,7 @@
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
+
 #include "GameplayEffect.h"
 #include "DataTable/CharacterStatsRow.h"
 
@@ -56,12 +57,14 @@ void AR1Character::UnHighlight()
 
 void AR1Character::OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker)
 {
-	float Hp = AttributeSet->GetHealth();
-	float MaxHp = AttributeSet->GetMaxHealth();
+	if (CommonAttributeSet == nullptr) return;
+
+	float Hp = CommonAttributeSet->GetHealth();
+	float MaxHp = CommonAttributeSet->GetMaxHealth();
 
 
 	Hp = FMath::Clamp(Hp - Damage, 0, MaxHp);
-	AttributeSet->SetHealth(Hp);
+	CommonAttributeSet->SetHealth(Hp);
 	
 	float Ratio = static_cast<float>(Hp) / MaxHp;
 
@@ -95,7 +98,11 @@ UAbilitySystemComponent* AR1Character::GetAbilitySystemComponent() const
 
 void AR1Character::InitAbilitySystem()
 {
-
+	// ASC가 유효한지 확인 후, ASC에 부착된 CommonAttributeSet을 찾아 연결만 해줍니다.
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		CommonAttributeSet = const_cast<UR1AttributeSet*>(ASC->GetSet<UR1AttributeSet>());
+	}
 }
 
 void AR1Character::OnHealthChanged(float Ratio)
@@ -161,51 +168,15 @@ void AR1Character::InitAttributes()
 		if (SpecHandle.IsValid())
 		{
 			// 3. [핵심] SetByCaller로 값 주입하기
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxHealth")),
-				StatData->MaxHealth
-			);
-
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxMana")),
-				StatData->MaxMana
-			);
-
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.BaseDamage")),
-				StatData->BaseDamage
-			);
-
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.BaseDefence")),
-				StatData->BaseDefence
-			);
-
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackRange")),
-				StatData->AttackRange
-			);
-
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackRadius")),
-				StatData->AttackRadius
-			);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AggroRange")),
-				StatData->AggroRange
-			);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxExp")),
-				StatData->MaxExp
-			);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.Xp")),
-				StatData->Xp
-			);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(
-				FGameplayTag::RequestGameplayTag(FName("Data.Attribute.Level")),
-				StatData->Level
-			);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxHealth")), StatData->MaxHealth);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.BaseDamage")), StatData->BaseDamage);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.BaseDefence")), StatData->BaseDefence);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackRange")), StatData->AttackRange);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackRadius")), StatData->AttackRadius);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackSpeed")), StatData->AttackSpeed);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackAngle")), StatData->AttackAngle);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MoveSpeed")), StatData->MoveSpeed);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.HealthRegeneration")), StatData->HealthRegeneration);
 
 			// 4. 내용물이 채워진 GE를 나 자신에게 적용
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
@@ -221,12 +192,6 @@ void AR1Character::InitAttributes()
 	// 4. 값 확인
 	UE_LOG(LogTemp, Warning, TEXT("데이터 찾음! 레벨: %f, 경험치 통: %f, 경험치: %f,공격력: %f, 체력: %f"), StatData->Level,StatData->MaxExp,StatData->Xp,StatData->BaseDamage, StatData->MaxHealth);
 
-}
-
-
-void AR1Character::InitializeCharacterAttribute()
-{
-	//TODO
 }
 
 void AR1Character::ApplyCharacterEffect()
