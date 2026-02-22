@@ -20,20 +20,29 @@ namespace R1GameplayTags
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Dead);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Casting);
-
+	
+	// Common attributes
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxHealth);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_HealthRegeneration);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MoveSpeed);
+
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_BaseDamage);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_BaseDefence);
+
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackRange);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackRadius);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackSpeed);
+
 
 	//player only
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxExp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxMana);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_ManaRegeneration);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Level);
 
 	//monster only
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Xp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AggroRange);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackAngle);
 
 }

@@ -1,9 +1,11 @@
 #include "R1GameInstance.h"
 #include "R1AssetManager.h"
 #include "Character/R1Player.h"
+#include "AbilitySystem/Attribute/PlayerAttributeSet.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "System/R1PlayerSaveGame.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/R1PlayerState.h"
 
 const FString UR1GameInstance::RespawnSlotName = TEXT("Slot1");
 
@@ -33,8 +35,10 @@ bool UR1GameInstance::SavePlayerState(const AR1Player* Player, const FString& Sl
 		return false;
 	}
 
-	const UR1AttributeSet* Attributes = Cast<UR1AttributeSet>(Player->GetR1AttributeSet());
-	if (Attributes == nullptr)
+	AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState());
+	UR1AttributeSet* CommonAttributes = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet());
+	UPlayerAttributeSet* PlayerAttributes = Cast<UPlayerAttributeSet>(PS->GetPlayerAttributeSet());
+	if (CommonAttributes == nullptr || PlayerAttributes == nullptr)
 	{
 		return false;
 	}
@@ -45,13 +49,14 @@ bool UR1GameInstance::SavePlayerState(const AR1Player* Player, const FString& Sl
 		return false;
 	}
 
-	SaveGameObject->MaxHealth = Attributes->GetMaxHealth();
-	SaveGameObject->MaxMana = Attributes->GetMaxMana();
-	SaveGameObject->BaseDamage = Attributes->GetBaseDamage();
-	SaveGameObject->BaseDefence = Attributes->GetBaseDefence();
-	SaveGameObject->Level = Attributes->GetLevel();
-	SaveGameObject->Exp = Attributes->GetExp();
-	SaveGameObject->MaxExp = Attributes->GetMaxExp();
+	SaveGameObject->MaxHealth = CommonAttributes->GetMaxHealth();
+	SaveGameObject->BaseDamage = CommonAttributes->GetBaseDamage();
+	SaveGameObject->BaseDefence = CommonAttributes->GetBaseDefence();
+
+	SaveGameObject->MaxMana = PlayerAttributes->GetMaxMana();
+	SaveGameObject->Level = PlayerAttributes->GetLevel();
+	SaveGameObject->Exp = PlayerAttributes->GetExp();
+	SaveGameObject->MaxExp = PlayerAttributes->GetMaxExp();
 
 	return UGameplayStatics::SaveGameToSlot(SaveGameObject, SlotName, UserIndex);
 }
@@ -71,19 +76,24 @@ bool UR1GameInstance::LoadPlayerStateToPlayer(AR1Player* Player, const FString& 
 		return false;
 	}
 
-	UR1AttributeSet* Attributes = Cast<UR1AttributeSet>(Player->GetR1AttributeSet());
-	if (Attributes == nullptr)
+
+	AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState());
+	UR1AttributeSet* CommonAttributes = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet());
+	UPlayerAttributeSet* PlayerAttributes = Cast<UPlayerAttributeSet>(PS->GetPlayerAttributeSet());
+
+	if (CommonAttributes == nullptr || PlayerAttributes == nullptr)
 	{
 		return false;
 	}
 
-	Attributes->SetMaxHealth(SaveGameObject->MaxHealth);
-	Attributes->SetMaxMana(SaveGameObject->MaxMana);
-	Attributes->SetBaseDamage(SaveGameObject->BaseDamage);
-	Attributes->SetBaseDefence(SaveGameObject->BaseDefence);
-	Attributes->SetLevel(SaveGameObject->Level);
-	Attributes->SetMaxExp(SaveGameObject->MaxExp);
-	Attributes->SetExp(SaveGameObject->Exp);
+	CommonAttributes->SetMaxHealth(SaveGameObject->MaxHealth);
+	CommonAttributes->SetBaseDamage(SaveGameObject->BaseDamage);
+	CommonAttributes->SetBaseDefence(SaveGameObject->BaseDefence);
+
+	PlayerAttributes->SetLevel(SaveGameObject->Level);
+	PlayerAttributes->SetMaxExp(SaveGameObject->MaxExp);
+	PlayerAttributes->SetExp(SaveGameObject->Exp);
+	PlayerAttributes->SetMaxMana(SaveGameObject->MaxMana);
 
 	return true;
 }

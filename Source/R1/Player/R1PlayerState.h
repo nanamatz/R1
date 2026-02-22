@@ -7,9 +7,6 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnExpChangedDelegate, float, Ratio);
 
-class UAbilitySystemComponent;
-class UR1AbilitySystemComponent;
-class UR1PlayerAttributeSet;
 /**
  * 
  */
@@ -24,8 +21,9 @@ public:
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
-	UR1AbilitySystemComponent* GetR1AbilitySystemComponent() const;
-	UR1PlayerAttributeSet* GetR1PlayerAttributeSet() const;
+	class UR1AbilitySystemComponent* GetR1AbilitySystemComponent() const;
+	class UPlayerAttributeSet* GetPlayerAttributeSet() const;
+	class UR1AttributeSet* GetCommonAttributeSet() const;
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
@@ -44,6 +42,9 @@ protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;
 	
-	UPROPERTY()
-	TObjectPtr <UR1PlayerAttributeSet > PlayerAttributeSet;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	TObjectPtr <class UR1AttributeSet > CoreAttributeSet;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	TObjectPtr <class UPlayerAttributeSet > PlayerAttributeSet;
 };

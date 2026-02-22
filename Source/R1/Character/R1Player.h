@@ -42,7 +42,7 @@ public:
 	virtual void OnDead(const TObjectPtr<AR1Character> Attacker) override;
 
 public:
-	class UR1AttributeSet* GetR1AttributeSet() const { return AttributeSet; }
+	class UR1AttributeSet* GetR1AttributeSet() const { return CommonAttributeSet; }
 
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
@@ -58,4 +58,11 @@ public:
 
 private:
 	void InitExpBar();
+
+protected:
+	virtual void InitAttributes() override;
+
+	// 플레이어 전용 초기화 GE (GE_InitPlayerStats 할당)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
+	TSubclassOf<class UGameplayEffect> PlayerInitStatEffectClass;
 };
