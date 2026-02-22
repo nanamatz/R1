@@ -23,9 +23,9 @@ AR1Monster::AR1Monster()
 {
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 
-	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>("AbilitySystemComponent");
-	MonsterAttributeSet = CreateDefaultSubobject<UMonsterAttributeSet>("MonsterAttributeSet");
-	CoreAttributeSet = CreateDefaultSubobject<UR1AttributeSet>("CoreAttributeSet");
+	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	MonsterAttributeSet = CreateDefaultSubobject<UMonsterAttributeSet>(TEXT("MonsterAttributeSet"));
+	CoreAttributeSet = CreateDefaultSubobject<UR1AttributeSet>(TEXT("CoreAttributeSet"));
 
 
 	HpBarComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));

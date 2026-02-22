@@ -40,12 +40,25 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 	if (Attacker && Attacker->AttackMontage)
 	{
 		Attacker->SetCreatureState(ECreatureState::Casting);
+		float AttackRate = 1.0f; // 기본 속도
+
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			bool bFound = false;
+			// GAS에서 현재 AttackSpeed 스탯 값을 읽어옵니다.
+			float CurrentAttackSpeed = ASC->GetGameplayAttributeValue(UR1AttributeSet::GetAttackSpeedAttribute(), bFound);
+
+			if (bFound)
+			{
+				AttackRate = CurrentAttackSpeed;
+			}
+		}
 
 		UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this,
 			NAME_None,
 			Attacker->AttackMontage, // 재생할 몽타주
-			1.0f,
+			AttackRate,
 			NAME_None,
 			false
 		);
