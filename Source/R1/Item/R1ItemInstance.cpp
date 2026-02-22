@@ -9,8 +9,7 @@ UR1ItemInstance::UR1ItemInstance(const FObjectInitializer& ObjectInitializer)
 
 }
 
-
-void UR1ItemInstance::Init(int32 InItemID)
+void UR1ItemInstance::Init(int32 InItemID, FIntPoint InItemSize, ER1EquipmentSlot InEquipSlot)
 {
 	if (InItemID <= 0)
 	{
@@ -19,4 +18,8 @@ void UR1ItemInstance::Init(int32 InItemID)
 
 	ItemID = InItemID;
 	ItemRarity = EItemRarity::Common;
+
+	// 초기화 시 전달받은 크기와 슬롯 정보를 저장합니다.
+	ItemSize = InItemSize;
+	EquipSlot = InEquipSlot;
 }

@@ -1,0 +1,44 @@
+
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UI/R1UserWidget.h"
+#include "R1Define.h"
+#include "R1EquipmentSlotWidget.generated.h"
+
+
+/**
+ * 
+ */
+UCLASS()
+class R1_API UR1EquipmentSlotWidget : public UR1UserWidget
+{
+	GENERATED_BODY()
+
+public:
+	virtual void NativePreConstruct() override;
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+
+public:
+	// 💡 에디터에서 이 슬롯이 어떤 부위인지 설정할 수 있게 합니다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
+	ER1EquipmentSlot EquipmentSlotType = ER1EquipmentSlot::None;
+
+	// 현재 이 슬롯에 장착된 아이템
+	UPROPERTY(BlueprintReadOnly, Category = "Equipment")
+	TObjectPtr<class UR1ItemInstance> EquippedItem;
+
+protected:
+	// 슬롯의 물리적 크기를 결정할 사이즈 박스
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class USizeBox> SizeBox_Root;
+
+	// 빈 칸일 때 보여줄 배경 이미지 (투구 모양 실루엣 등)
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> Image_Background;
+
+	// 실제 아이템 아이콘이 표시될 이미지 (장착 시 활성화)
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UImage> Image_ItemIcon;
+};

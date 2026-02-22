@@ -3,7 +3,7 @@
 
 #include "Player/R1PlayerState.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
-#include "AbilitySystem/Attribute/R1PlayerAttributeSet.h"
+#include "AbilitySystem/Attribute/PlayerAttributeSet.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "AbilitySystem/Attribute/PlayerAttributeSet.h"
 

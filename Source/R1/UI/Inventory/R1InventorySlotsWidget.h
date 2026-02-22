@@ -23,17 +23,14 @@ public:
 	UR1InventorySlotsWidget(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 protected:
-
-	void OnInventoryEntryChanged(const FIntPoint& InItemSlotPos, TObjectPtr<UR1ItemInstance> Item);
-
 	virtual void NativeConstruct() override;
-
 	virtual bool NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation);
 	virtual void NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation);
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,UDragDropOperation* InOperation);
 
 private:
 	void FinishDrag();
+	void OnInventoryEntryChanged(const FIntPoint& InItemSlotPos, TObjectPtr<UR1ItemInstance> Item);
 
 protected:
 
@@ -43,14 +40,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UR1InventoryEntryWidget> EntryWidgetClass;
 
-	//UPROPERTY()
-	//TSubclassOf<UR1InventorySlotsWidget> SlotWidgetClass;
-
 	UPROPERTY()
 	TArray<TObjectPtr<UR1InventroySlotWidget>> SlotWidgets;
-
-	//UPROPERTY()
-	//TSubclassOf<UR1InventoryEntryWidget> EntryWidgetClass;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UR1InventoryEntryWidget>> EntryWidgets;
@@ -64,7 +55,6 @@ private:
 
 private:
 	FIntPoint PreDragOverSlotPos = FIntPoint(-1, -1);
-
-	const int X_COUNT = 10;
-	const int Y_COUNT = 5;
+	int32 X_COUNT = 10;
+	int32 Y_COUNT = 5;
 };

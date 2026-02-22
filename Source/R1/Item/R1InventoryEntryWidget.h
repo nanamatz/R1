@@ -6,6 +6,8 @@
 #include "UI/R1UserWidget.h"
 #include "R1InventoryEntryWidget.generated.h"
 
+
+
 class USizeBox;
 class UTextBlock;
 class UImage;
