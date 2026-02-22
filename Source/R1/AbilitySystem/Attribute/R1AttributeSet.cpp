@@ -6,6 +6,7 @@
 #include "Player/R1PlayerState.h"
 #include "Character/R1Character.h"
 #include "Character/R1Player.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UR1AttributeSet::UR1AttributeSet()
 {
@@ -28,6 +29,26 @@ void UR1AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 	{
 		float CurrentMaxHealth = GetMaxHealth();
 		NewValue = FMath::Clamp(NewValue, 0.0f, CurrentMaxHealth);
+	}
+}
+
+void UR1AttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+	if (Attribute == GetMoveSpeedAttribute())
+	{
+		// 아바타 액터(실제 월드에 존재하는 캐릭터)를 가져옵니다.
+		AActor* AvatarActor = GetOwningAbilitySystemComponent()->GetAvatarActor();
+		AR1Character* Character = Cast<AR1Character>(AvatarActor);
+
+		if (Character && Character->GetCharacterMovement())
+		{
+			// 캐릭터의 실제 걷기 최고 속도를 GAS의 MoveSpeed 값으로 동기화!
+			Character->GetCharacterMovement()->MaxWalkSpeed = NewValue;
+
+			// 로그로 잘 적용되는지 확인해 보세요!
+			 UE_LOG(LogTemp, Warning, TEXT("이동 속도 변경됨: %f -> %f"), OldValue, NewValue);
+		}
 	}
 }
 

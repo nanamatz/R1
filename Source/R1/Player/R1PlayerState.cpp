@@ -10,10 +10,10 @@
 AR1PlayerState::AR1PlayerState(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 
-	PlayerAttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>("PlayerAttributeSet");
-	CoreAttributeSet = CreateDefaultSubobject<UR1AttributeSet>("CoreAttributeSet");
+	PlayerAttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
+	CoreAttributeSet = CreateDefaultSubobject<UR1AttributeSet>(TEXT("CoreAttributeSet"));
 
 }
 
