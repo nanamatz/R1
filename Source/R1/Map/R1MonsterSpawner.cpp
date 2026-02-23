@@ -4,6 +4,7 @@
 #include "Map/R1MonsterSpawner.h"
 #include "Character/R1Monster.h"
 #include "Map/DungeonManager.h"
+#include "System/R1ObjectPoolSystem.h"
 
 // Sets default values
 AR1MonsterSpawner::AR1MonsterSpawner()
@@ -26,8 +27,11 @@ void AR1MonsterSpawner::SpawnMonster()
 {
 	if (!DungeonManager) return;
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	UR1ObjectPoolSystem* Poolsystem = GetWorld()->GetGameInstance()->GetSubsystem<UR1ObjectPoolSystem>();
+	if (!Poolsystem) return;
+
+	//FActorSpawnParameters SpawnParams;
+	//SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	for (const FMonsterSpawnData& SpawnData : SpawnList)
 	{
 		if (!SpawnData.MonsterClass) continue;
@@ -41,12 +45,14 @@ void AR1MonsterSpawner::SpawnMonster()
 			// 방향은 스포너가 바라보는 방향을 기준으로 생성
 			FRotator WorldRotation = GetActorRotation();
 
-			AR1Monster* SpawnedMonster = GetWorld()->SpawnActor<AR1Monster>(
-				SpawnData.MonsterClass,
-				WorldLocation,
-				WorldRotation,
-				SpawnParams
-			);
+			AR1Monster* SpawnedMonster = Poolsystem->GetMonster(SpawnData.MonsterClass, WorldLocation, WorldRotation);
+
+			//AR1Monster* SpawnedMonster = GetWorld()->SpawnActor<AR1Monster>(
+			//	SpawnData.MonsterClass,
+			//	WorldLocation,
+			//	WorldRotation,
+			//	SpawnParams
+			//);
 
 			if (SpawnedMonster)
 			{

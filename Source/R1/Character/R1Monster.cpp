@@ -3,6 +3,7 @@
 
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "AbilitySystem/Attribute/MonsterAttributeSet.h"
@@ -17,6 +18,7 @@
 
 #include "Map/DungeonManager.h"
 #include "DataTable/CharacterStatsRow.h"
+#include "TimerManager.h"
 
 
 AR1Monster::AR1Monster()
@@ -60,6 +62,13 @@ void AR1Monster::BeginPlay()
 	AggroRange = AbilitySystemComponent->GetNumericAttribute(MonsterAttributeSet->GetAggroRangeAttribute());
 	
 	RefreshHpBar(1.f);
+
+	if (GetMesh())
+	{
+		// 메시의 0번 슬롯 머티리얼을 조종 가능한 '다이내믹'으로 변환해서 저장합니다.
+		DissolveMaterial = GetMesh()->CreateDynamicMaterialInstance(0);
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *DissolveMaterial.GetName());
+	}
 }
 
 void AR1Monster::Tick(float DeltaTime)
@@ -140,19 +149,52 @@ void AR1Monster::OnDead(const TObjectPtr<class AR1Character> Attacker)
 		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 
-	//SetLifeSpan(5.f); // 5초 뒤에 사라지도록 설정 (죽은 시점부터 사라질 때까지 시간 벌기)
+	CurrentDissolve = 0.0f;
+
+	//GetWorldTimerManager().SetTimer(DissolveTimerHandle, this, &AR1Monster::UpdateDissolve, 0.01f, true);
+	GetWorldTimerManager().SetTimer(DissolveDelayTimerHandle, this, &AR1Monster::StartDissolve, 5.0f, false);
 }
 
 void AR1Monster::InitializeWithManager(ADungeonManager* InManager)
 {
 	if (!IsValid(InManager)) return;
 
-	// 1. 주입받은 지휘관의 명부에 내 이름을 올립니다.
 	InManager->RegisterMonster(this);
-	//// 2. 내가 죽을 때 지휘관의 명부에서 빠지도록 이벤트를 묶어줍니다.
 
+	this->OnDeadDelegate.RemoveDynamic(InManager, &ADungeonManager::UnregisterMonster);
 	this->OnDeadDelegate.AddDynamic(InManager, &ADungeonManager::UnregisterMonster);
 
+}
+
+void AR1Monster::StartDissolve()
+{
+	GetWorldTimerManager().SetTimer(DissolveTimerHandle, this, &AR1Monster::UpdateDissolve, 0.05f, true);
+}
+
+void AR1Monster::UpdateDissolve()
+{
+	// 한 번 실행될 때마다 지워지는 양을 0.05씩(5%) 올립니다.
+	CurrentDissolve += DissolveConstant;
+	GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Yellow, FString::Printf(TEXT("Dissolve: %f"), CurrentDissolve));
+	// 리모컨의 버튼을 눌러서, 언리얼에서 만든 "DissolveAmount" 다이얼 수치를 변경합니다.
+	if (DissolveMaterial)
+	{
+		// 주의: FName 안의 이름은 언리얼 머티리얼에서 적었던 Input Name과 스펠링이 똑같아야 합니다!
+		DissolveMaterial->SetScalarParameterValue(FName("DissolveAmount"), CurrentDissolve);
+	}
+
+	// 다이얼이 1.0(100%) 이상 올라가서 몬스터가 완전히 투명해졌다면?
+	if (CurrentDissolve >= 1.0f)
+	{
+		GetWorldTimerManager().ClearTimer(DissolveTimerHandle);
+
+		//setactorhiddeninGame(true);
+
+		if (OnReadyToSleep.IsBound())
+		{
+			OnReadyToSleep.Broadcast(this);
+		}
+	}
 }
 
 void AR1Monster::InitAttributes()
@@ -177,5 +219,89 @@ void AR1Monster::InitAttributes()
 
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		}
+	}
+}
+
+void AR1Monster::WakeUp()
+{
+	// 출근할 때, 혹시라도 돌고 있던 퇴근/디졸브 관련 타이머들을 확실히 취소합니다.
+	//GetWorldTimerManager().ClearTimer(DissolveDelayTimerHandle);
+	//GetWorldTimerManager().ClearTimer(DissolveTimerHandle);
+	// 1. 화면에 다시 보이기
+	SetActorHiddenInGame(false);
+
+	// 2. 충돌 켜기 (기본 캐릭터 프리셋 기준)
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+	// 3. 틱 연산 및 움직임 복구
+	SetActorTickEnabled(true);
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+	// 4. 상태 및 태그 초기화 (부모의 SetCreatureState 활용)
+	// 이 함수를 호출하면 내부적으로 "Character.State.Dead" 태그가 알아서 제거됩니다!
+	SetCreatureState(ECreatureState::Idle);
+
+	// 5. AI 재가동
+	AR1AIController* AIC = Cast<AR1AIController>(GetController());
+	if (AIC && AIC->BrainComponent)
+	{
+		AIC->BrainComponent->RestartLogic();
+	}
+
+	// 6. 몬스터 스탯 초기화 (GAS)
+	// InitAttributes()를 다시 불러 BaseDamage, MaxHealth 등을 덮어씌웁니다.
+	InitAttributes();
+
+	// [중요] InitAttributes()가 MaxHealth는 세팅하지만 현재 Health를 Max로 안 채워줄 수 있습니다.
+	// 따라서 현재 체력을 MaxHealth 강제로 채워줍니다.
+	if (AbilitySystemComponent && CoreAttributeSet)
+	{
+		float MaxHp = CoreAttributeSet->GetMaxHealth();
+		// 현재 체력을 베이스 값으로 리셋
+		AbilitySystemComponent->SetNumericAttributeBase(CoreAttributeSet->GetHealthAttribute(), MaxHp);
+	}
+
+	// 7. HP 바 갱신 및 표시
+	if (HpBarComponent)
+	{
+		HpBarComponent->SetHiddenInGame(false);
+		RefreshHpBar(1.0f);
+	}
+
+	// 8. 디졸브 원상복구
+	CurrentDissolve = 0.0f;
+	if (DissolveMaterial)
+	{
+		DissolveMaterial->SetScalarParameterValue(FName("DissolveAmount"), 0.0f);
+	}
+
+	// 진행 중이던 데스 애니메이션 등 취소
+	if (GetMesh()->GetAnimInstance())
+	{
+		GetMesh()->GetAnimInstance()->StopAllMontages(0.0f);
+	}
+}
+
+void AR1Monster::GoToSleep()
+{
+	// 1. 화면에서 완전히 숨기기
+	SetActorHiddenInGame(true);
+
+	// 2. 물리 및 충돌 끄기
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 3. 틱 연산 끄기
+	SetActorTickEnabled(false);
+
+	// 4. 움직임 정지 (공중에 멈춰있게)
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+
+	// 5. HP 바 위젯 끄기 (OnDead에서 하셨지만 여기서 한 번 더 확실하게)
+	if (HpBarComponent)
+	{
+		HpBarComponent->SetHiddenInGame(true);
 	}
 }
