@@ -57,4 +57,9 @@ private:
 	FIntPoint PreDragOverSlotPos = FIntPoint(-1, -1);
 	int32 X_COUNT = 10;
 	int32 Y_COUNT = 5;
+
+public:
+	// 💡 델리게이트 방송을 수신할 함수
+	UFUNCTION()
+	void RefreshInventoryUI();
 };

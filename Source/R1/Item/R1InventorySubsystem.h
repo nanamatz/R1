@@ -7,7 +7,6 @@
 #include "R1Define.h"
 #include "R1InventorySubsystem.generated.h"
 
-// 델리게이트: UI들에게 인벤토리/장비창이 변했음을 알림 (추후 UI 갱신용)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
 class UR1ItemInstance;
 
@@ -23,6 +22,8 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 	virtual void Deinitialize() override;
+
+	const TArray<TObjectPtr<UR1ItemInstance>>& GetGridData() const { return GridData; }
 
 	void AddDefaultItem();
 
@@ -58,6 +59,7 @@ protected:
 
 	UPROPERTY()
 	TArray<TObjectPtr<UR1ItemInstance>> Items;
+
 	// 현재 장착된 아이템들을 슬롯 부위별로 관리하는 맵
 
 	UPROPERTY()

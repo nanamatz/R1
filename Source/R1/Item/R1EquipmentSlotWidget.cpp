@@ -26,6 +26,7 @@ void UR1EquipmentSlotWidget::NativePreConstruct()
 		case ER1EquipmentSlot::Helmet:
 		case ER1EquipmentSlot::Boots:
 		case ER1EquipmentSlot::Armor:
+		case ER1EquipmentSlot::Glove:
 			SlotSize = FIntPoint(2, 2); // 투구, 신발은 2x2
 			break;
 		case ER1EquipmentSlot::Ring:
@@ -56,26 +57,35 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 		return false; // 부위가 다르면 드롭을 거부합니다 (튕겨나감)
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("장착 성공! 부위: %d"), (int32)EquipmentSlotType);
-
 	UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (InventorySubsystem)
 	{
+		UR1ItemInstance* OldEquippedItem = EquippedItem;
+
+		InventorySubsystem->RemoveItemFromGrid(DragDropOp->ItemInstance, DragDropOp->FromItemSlotPos);
 		// 실제 장착 실행! (인벤토리에서 빠지고 Map에 들어감)
+		if (OldEquippedItem != nullptr)
+		{
+			// 이미 장비가 있었다면 기존 장비를 인벤토리로 돌려보냄.
+			InventorySubsystem->AddItemToGrid(OldEquippedItem, DragDropOp->FromItemSlotPos);
+
+			// TODO: InventorySubsystem->UnequipItem(OldEquippedItem); // 서브시스템에 스탯 감소 등 장착 해제 로직이 있다면 여기서 호출
+			UE_LOG(LogTemp, Warning, TEXT("기존 장비와 교체(Swap) 되었습니다!"));
+		}
 		InventorySubsystem->EquipItem(DragDropOp->ItemInstance);
-
-		// 3. 내 UI 슬롯 갱신
 		EquippedItem = DragDropOp->ItemInstance;
-
 		// 아이템 아이콘 세팅 (ItemIcon 변수가 ItemInstance에 존재한다고 가정)
 		
 		if (EquippedItem->ItemIcon)
 		{
 			Image_ItemIcon->SetBrushFromTexture(EquippedItem->ItemIcon);
-			Image_ItemIcon->SetRenderOpacity(1.0f); // 숨겨뒀던 아이콘 켜기
+			Image_ItemIcon->SetRenderOpacity(1.0f);
 		}
-		
+
+		InventorySubsystem->OnInventoryUpdated.Broadcast();
+
+		return true;
 	}
 
-	return true; // true를 반환하면 드롭이 성공적으로 끝났음을 의미
+	return false;
 }

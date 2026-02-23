@@ -28,6 +28,10 @@ void UR1InventorySubsystem::AddDefaultItem()
 	TestHelmet->Init(102, FIntPoint(2, 2), ER1EquipmentSlot::Helmet);
 	Items.Add(TestHelmet);
 
+	TObjectPtr<UR1ItemInstance> TestGlove = NewObject<UR1ItemInstance>(this);
+	TestGlove->Init(102, FIntPoint(2, 2), ER1EquipmentSlot::Glove);
+	Items.Add(TestGlove);
+
 	// 3. 테스트 반지 (크기 1x1, 부위: Ring)
 	TObjectPtr<UR1ItemInstance> TestRing = NewObject<UR1ItemInstance>(this);
 	TestRing->Init(103, FIntPoint(1, 1), ER1EquipmentSlot::Ring);
@@ -37,6 +41,22 @@ void UR1InventorySubsystem::AddDefaultItem()
 	TObjectPtr<UR1ItemInstance> TestPotion = NewObject<UR1ItemInstance>(this);
 	TestPotion->Init(201, FIntPoint(1, 1), ER1EquipmentSlot::None);
 	Items.Add(TestPotion);
+
+
+	FIntPoint CurrentPos = FIntPoint(0, 0);
+
+	for (UR1ItemInstance* Item : Items)
+	{
+		if (!Item) continue;
+
+		// 빈 공간을 찾아 아이템을 GridData에 알박기 합니다 (데이터 세팅)
+		if (CanAddItemAt(Item->ItemSize, CurrentPos))
+		{
+			AddItemToGrid(Item, CurrentPos);
+
+			CurrentPos.X += Item->ItemSize.X; // 다음 아이템을 위해 X좌표 밀기 (임시 로직)
+		}
+	}
 
 	OnInventoryUpdated.Broadcast();
 }

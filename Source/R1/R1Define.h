@@ -6,11 +6,12 @@ UENUM(BlueprintType)
 enum class ER1EquipmentSlot : uint8
 {
 	None,		// 장비 아님 (포션, 재료 등)
-	Weapon,		// 무기 (예: 2x3)
-	Helmet,		// 투구 (예: 2x2)
-	Armor,		// 갑옷 (예: 2x2)
-	Ring,		// 반지 (예: 1x1)
-	Boots		// 신발 (예: 2x2)
+	Weapon,		
+	Helmet,		
+	Armor,		
+	Glove,
+	Ring,		
+	Boots		
 };
 
 UENUM(BlueprintType)
