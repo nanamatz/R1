@@ -174,7 +174,7 @@ void AR1Monster::StartDissolve()
 void AR1Monster::UpdateDissolve()
 {
 	// 한 번 실행될 때마다 지워지는 양을 0.05씩(5%) 올립니다.
-	CurrentDissolve += 0.03f;
+	CurrentDissolve += DissolveConstant;
 	GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Yellow, FString::Printf(TEXT("Dissolve: %f"), CurrentDissolve));
 	// 리모컨의 버튼을 눌러서, 언리얼에서 만든 "DissolveAmount" 다이얼 수치를 변경합니다.
 	if (DissolveMaterial)

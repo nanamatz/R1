@@ -74,9 +74,6 @@ protected:
 
 	float CurrentDissolve = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
-	const float DissolveConstant = 0.03f;
-
 	// [추가] 5초 대기용 타이머 핸들
 	struct FTimerHandle DissolveDelayTimerHandle;
 
