@@ -6,9 +6,8 @@
 #include "Character/R1Character.h"
 #include "R1Monster.generated.h"
 
-/**
- * 
- */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMonsterReadyToSleep, class AR1Monster*, DeadMonster);
+
 UCLASS()
 class R1_API AR1Monster : public AR1Character
 {
@@ -67,4 +66,29 @@ protected:
 	// 몬스터 전용 초기화 GE (GE_InitMonsterStats 할당)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
 	TSubclassOf<class UGameplayEffect> MonsterInitStatEffectClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Material")
+	TObjectPtr<class UMaterialInstanceDynamic> DissolveMaterial;
+
+	struct FTimerHandle DissolveTimerHandle;
+
+	float CurrentDissolve = 0.0f;
+
+	// [추가] 5초 대기용 타이머 핸들
+	struct FTimerHandle DissolveDelayTimerHandle;
+
+	// [추가] 5초 뒤에 실제로 디졸브를 시작할 함수
+	void StartDissolve();
+
+	void UpdateDissolve();
+
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnMonsterReadyToSleep OnReadyToSleep;
+
+	UFUNCTION(BlueprintCallable, Category = "Pool")
+	virtual void WakeUp();
+
+	UFUNCTION(BlueprintCallable, Category = "Pool")
+	virtual void GoToSleep();
 };

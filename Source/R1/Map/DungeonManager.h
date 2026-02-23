@@ -72,7 +72,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Room Logic")
 	void StartRoomCombat();
 
+	UFUNCTION()
+	void HandleMonsterReadyToSleep(class AR1Monster* DeadMonster);
+
 public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Room State")
 	TArray<class AR1Door*> RoomDoors;
+
+
 };

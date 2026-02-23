@@ -67,7 +67,6 @@ void AR1Monster::BeginPlay()
 	{
 		// 메시의 0번 슬롯 머티리얼을 조종 가능한 '다이내믹'으로 변환해서 저장합니다.
 		DissolveMaterial = GetMesh()->CreateDynamicMaterialInstance(0);
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *DissolveMaterial.GetName());
 	}
 }
 
@@ -174,8 +173,8 @@ void AR1Monster::StartDissolve()
 void AR1Monster::UpdateDissolve()
 {
 	// 한 번 실행될 때마다 지워지는 양을 0.05씩(5%) 올립니다.
-	CurrentDissolve += 0.03f;
-	GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Yellow, FString::Printf(TEXT("Dissolve: %f"), CurrentDissolve));
+	CurrentDissolve += 0.001f;
+
 	// 리모컨의 버튼을 눌러서, 언리얼에서 만든 "DissolveAmount" 다이얼 수치를 변경합니다.
 	if (DissolveMaterial)
 	{
