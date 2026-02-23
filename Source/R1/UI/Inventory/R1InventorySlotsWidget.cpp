@@ -28,13 +28,15 @@ void UR1InventorySlotsWidget::NativeConstruct()
 	}
 	UR1InventorySubsystem* Inventory = Cast<UR1InventorySubsystem>(USubsystemBlueprintLibrary::GetWorldSubsystem(this, UR1InventorySubsystem::StaticClass()));
 
-	//UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (!Inventory) return;
+
+	Inventory->OnInventoryUpdated.AddDynamic(this, &UR1InventorySlotsWidget::RefreshInventoryUI);
 
 	X_COUNT = Inventory->GetInventoryColumns();
 	Y_COUNT = Inventory->GetInventoryRows();
 
 	SlotWidgets.SetNum(X_COUNT * Y_COUNT);
+	EntryWidgets.SetNum(X_COUNT * Y_COUNT);
 
 	for (int32 y = 0; y < Y_COUNT; y++)
 	{
@@ -54,38 +56,7 @@ void UR1InventorySlotsWidget::NativeConstruct()
 		}
 	}
 
-	EntryWidgets.SetNum(X_COUNT * Y_COUNT);
-
-	//if (Inventory)
-	//{
-	//	const TArray<TObjectPtr<UR1ItemInstance>>& Items = Inventory->GetItems();
-
-	//	for (int32 i = 0; i < Items.Num(); i++)
-	//	{
-	//		const TObjectPtr<UR1ItemInstance>& Item = Items[i];
-	//		FIntPoint ItemSlotPos = FIntPoint(i % X_COUNT, i / X_COUNT);
-	//		OnInventoryEntryChanged(ItemSlotPos, Item);
-	//	}
-	//}
-	const TArray<TObjectPtr<UR1ItemInstance>>& Items = Inventory->GetItems();
-
-	FIntPoint CurrentPos = FIntPoint(0, 0);
-
-	for (UR1ItemInstance* Item : Items)
-	{
-		if (!Item) continue;
-
-		// (단순화를 위해 순차적으로 넣습니다. 실전에서는 빈 칸을 찾는 알고리즘을 쓸 수도 있습니다.)
-		if (Inventory->CanAddItemAt(Item->ItemSize, CurrentPos))
-		{
-			// UI 그리기
-			OnInventoryEntryChanged(CurrentPos, Item);
-			// 서브시스템(뇌)에 알박기 등록! (이게 있어야 겹침 판정이 제대로 돕니다)
-			Inventory->AddItemToGrid(Item, CurrentPos);
-
-			CurrentPos.X += Item->ItemSize.X; // 다음 아이템을 위해 X좌표 밀기
-		}
-	}
+	RefreshInventoryUI();
 }
 
 bool UR1InventorySlotsWidget::NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
@@ -220,5 +191,49 @@ void UR1InventorySlotsWidget::OnInventoryEntryChanged(const FIntPoint& InItemSlo
 
 		//TODO
 		EntryWidget->Init(this, Item, 1);
+	}
+}
+
+void UR1InventorySlotsWidget::RefreshInventoryUI()
+{
+	UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+	if (!Inventory) return;
+
+	// 1. 기존 화면에 그려진 아이템들을 싹 다 지웁니다.
+	if (CanvasPanel_Entries)
+	{
+		CanvasPanel_Entries->ClearChildren();
+	}
+	// 배열 포인터들도 깔끔하게 초기화합니다.
+	EntryWidgets.Init(nullptr, X_COUNT * Y_COUNT);
+
+	// 2. 서브시스템의 최신 데이터를 가져옵니다.
+	const TArray<TObjectPtr<UR1ItemInstance>>& GridData = Inventory->GetGridData();
+
+	// 💡 중복 그리기 방지용 Set (2x3 아이템은 배열의 6칸을 차지하므로 한 번만 그려야 함)
+	TSet<UR1ItemInstance*> DrawnItems;
+
+	// 3. 데이터를 순회하며 화면에 그립니다.
+	for (int32 y = 0; y < Y_COUNT; y++)
+	{
+		for (int32 x = 0; x < X_COUNT; x++)
+		{
+			int32 Index = y * X_COUNT + x;
+
+			// 배열 범위 체크 방어코드
+			if (!GridData.IsValidIndex(Index)) continue;
+
+			UR1ItemInstance* Item = GridData[Index];
+
+			// 칸에 아이템이 존재하고, 아직 화면에 안 그렸다면?
+			if (Item && !DrawnItems.Contains(Item))
+			{
+				// 좌상단(Top-Left) 기준점에 아이템 UI를 생성!
+				OnInventoryEntryChanged(FIntPoint(x, y), Item);
+
+				// 그렸다고 메모해 둠 (다음 칸에서 중복으로 안 그리게)
+				DrawnItems.Add(Item);
+			}
+		}
 	}
 }

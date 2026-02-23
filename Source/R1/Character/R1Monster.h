@@ -77,10 +77,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
 	float DissolveConstant = 0.03f;
 
-	// [추가] 5초 대기용 타이머 핸들
 	struct FTimerHandle DissolveDelayTimerHandle;
 
-	// [추가] 5초 뒤에 실제로 디졸브를 시작할 함수
 	void StartDissolve();
 
 	void UpdateDissolve();
