@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/DragDropOperation.h"
+#include "R1Define.h"
 #include "R1DragDropOperation.generated.h"
 
 class UR1ItemInstance;
@@ -21,12 +22,11 @@ public:
 public:
 	FIntPoint FromItemSlotPos = FIntPoint::ZeroValue;
 
+	ER1EquipmentSlot FromEquipmentSlot = ER1EquipmentSlot::None;
+
 public:
 	UPROPERTY()
 	TObjectPtr<UR1ItemInstance> ItemInstance;
 
-
 	FVector2D DeltaWidgetPos = FVector2D::ZeroVector;
-
-	
 };

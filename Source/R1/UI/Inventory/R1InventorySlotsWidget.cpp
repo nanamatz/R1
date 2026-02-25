@@ -121,23 +121,41 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 	UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (Inventory)
 	{
-		// 이 자리에 놓을 수 있는지 확인 (자신(ItemInstance)은 겹침 검사에서 예외 처리)
-		if (Inventory->CanAddItemAt(DragDrop->ItemInstance->ItemSize, ToItemSlotPos, DragDrop->ItemInstance))
+		// 💡 장비창에서 드래그 해온 경우 (장착 해제)
+		if (DragDrop->FromEquipmentSlot != ER1EquipmentSlot::None)
 		{
-			// 1. 서브시스템의 실제 데이터 그리드(GridData) 위치 갱신 (아래에서 함수 추가 예정)
-			Inventory->MoveItemInGrid(DragDrop->ItemInstance, DragDrop->FromItemSlotPos, ToItemSlotPos);
+			// 인벤토리 바닥에 놓을 자리가 있는지 검사
+			if (Inventory->CanAddItemAt(DragDrop->ItemInstance->GetItemSize(), ToItemSlotPos))
+			{
+				// 1. 서브시스템에서 장비 해제 (EquippedItems에서 빼고 Items 배열에 넣음)
+				Inventory->UnequipItem(DragDrop->FromEquipmentSlot);
 
-			// 2. UI 위젯 갱신
-			OnInventoryEntryChanged(DragDrop->FromItemSlotPos, nullptr);
-			OnInventoryEntryChanged(ToItemSlotPos, DragDrop->ItemInstance);
+				// 2. 마우스가 올려진 정확한 위치(GridData)에 알박기!
+				Inventory->AddItemToGrid(DragDrop->ItemInstance, ToItemSlotPos);
 
-			return true;
+				// 3. 갱신 알림! (인벤토리와 장비창 UI 둘 다 알아서 새로고침 됨)
+				Inventory->OnInventoryUpdated.Broadcast();
+				return true;
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("인벤토리에 장비를 벗어둘 공간이 부족합니다!"));
+				return false;
+			}
 		}
+		// 💡 기존 로직: 인벤토리 내부에서 이동한 경우
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("여기는 겹치거나 공간이 부족해서 놓을 수 없습니다!"));
-			// false를 반환하면 OnDragCancelled가 호출되면서 원래 자리로 아이템이 돌아갑니다.
-			return false;
+			if (Inventory->CanAddItemAt(DragDrop->ItemInstance->GetItemSize(), ToItemSlotPos, DragDrop->ItemInstance))
+			{
+				Inventory->MoveItemInGrid(DragDrop->ItemInstance, DragDrop->FromItemSlotPos, ToItemSlotPos);
+				Inventory->OnInventoryUpdated.Broadcast(); // 이제 이 한 줄이면 UI가 다 갱신됩니다!
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 	}
 
