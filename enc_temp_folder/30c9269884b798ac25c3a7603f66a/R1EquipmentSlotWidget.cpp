@@ -7,7 +7,6 @@
 #include "Item/R1DragDropOperation.h"
 #include "Item/R1ItemInstance.h"
 #include "Item/R1InventorySubsystem.h"
-#include "R1Define.h"
 
 void UR1EquipmentSlotWidget::NativePreConstruct()
 {
@@ -22,11 +21,11 @@ void UR1EquipmentSlotWidget::NativePreConstruct()
 		switch (EquipmentSlotType)
 		{
 		case ER1EquipmentSlot::Weapon:
-		case ER1EquipmentSlot::Armor:
 			SlotSize = FIntPoint(2, 3); // 무기, 갑옷은 2x3
 			break;
 		case ER1EquipmentSlot::Helmet:
 		case ER1EquipmentSlot::Boots:
+		case ER1EquipmentSlot::Armor:
 		case ER1EquipmentSlot::Glove:
 			SlotSize = FIntPoint(2, 2); // 투구, 신발은 2x2
 			break;

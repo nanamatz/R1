@@ -122,7 +122,7 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 	if (Inventory)
 	{
 		// 이 자리에 놓을 수 있는지 확인 (자신(ItemInstance)은 겹침 검사에서 예외 처리)
-		if (Inventory->CanAddItemAt(DragDrop->ItemInstance->ItemSize, ToItemSlotPos, DragDrop->ItemInstance))
+		if (Inventory->CanAddItemAt(DragDrop->ItemInstance->GetItemSize(), ToItemSlotPos, DragDrop->ItemInstance))
 		{
 			// 1. 서브시스템의 실제 데이터 그리드(GridData) 위치 갱신 (아래에서 함수 추가 예정)
 			Inventory->MoveItemInGrid(DragDrop->ItemInstance, DragDrop->FromItemSlotPos, ToItemSlotPos);

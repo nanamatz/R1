@@ -39,6 +39,7 @@ public:
 
 	void RefreshWidgetOpacity(bool bClearVisible);
 	void RefreshItemCount(int32 NewItemCount);
+
 private:
 	FIntPoint CachedFromSlotPos = FIntPoint::ZeroValue;
 	FVector2D CachedDeltaWidgetPos = FVector2D::ZeroVector;

@@ -25,17 +25,10 @@ void UR1InventoryEntryWidget::Init(UR1InventorySlotsWidget* InSlotsWidget, UR1It
 {
 	SlotsWidget = InSlotsWidget;
 	ItemInstance = InItemInstance;
-
-	RefreshItemCount(InItemCount);
+	ItemCount = InItemCount;
 
 	if (ItemInstance && SizeBox_Root)
 	{
-		// 💡 1. 아이콘 이미지 씌우기
-		if (UTexture2D* IconTex = ItemInstance->GetItemIcon())
-		{
-			Image_Icon->SetBrushFromTexture(IconTex);
-		}
-
 		const FVector2D UnitSlotSize = Item::UnitInventorySlotSize;
 
 		float WidgetWidth = ItemInstance->GetItemSize().X * UnitSlotSize.X;
@@ -96,14 +89,15 @@ void UR1InventoryEntryWidget::NativeOnDragDetected(const FGeometry& InGeometry, 
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
-	if (!ItemInstance) return;
+	if (!ItemInstance) return; // 안전 검사
 
 	UR1ItemDragWidget* DragWidget = CreateWidget<UR1ItemDragWidget>(GetOwningPlayer(), DragWidgetClass);
 	const FVector2D UnitSlotSize = FVector2D(Item::UnitInventorySlotSize);
 
 	FVector2D EntityWidgetSize = FVector2D(ItemInstance->GetItemSize().X * UnitSlotSize.X, ItemInstance->GetItemSize().Y * UnitSlotSize.Y);
 	
-	DragWidget->Init(EntityWidgetSize, ItemInstance->GetItemIcon(), ItemCount);
+	//TODO (나중에 nullptr 대신 아이템의 텍스처/아이콘을 넘기도록 수정해야 합니다)
+	DragWidget->Init(EntityWidgetSize, nullptr, ItemCount);
 
 	UR1DragDropOperation* DragDrop = NewObject<UR1DragDropOperation>();
 
@@ -114,28 +108,24 @@ void UR1InventoryEntryWidget::NativeOnDragDetected(const FGeometry& InGeometry, 
 	DragDrop->DeltaWidgetPos = CachedDeltaWidgetPos;
 
 	OutOperation = DragDrop;
-
-	// 인벤토리 바닥에 남은 내 자신은 반투명하게 만듦
-	RefreshWidgetOpacity(false);
 }
 
 void UR1InventoryEntryWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
 	Super::NativeOnDragCancelled(InDragDropEvent, InOperation);
 
-	//// 서브시스템을 확인해서, 내 아이템이 인벤토리 배열(Items)에서 사라졌는지 확인
-	//UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
-	//if (InventorySubsystem && !InventorySubsystem->GetItems().Contains(ItemInstance))
-	//{
-	//	// 인벤토리에서 이미 지워졌다면(장착되었다면), 나 자신(UI 위젯)도 화면에서 삭제!
-	//	RemoveFromParent();
-	//}
-	//else
-	//{
-	//	// 드롭에 실패해서 그냥 인벤토리에 남아있다면, 다시 불투명도를 100%로 복구
-	//	RefreshWidgetOpacity(true);
-	//}
-	RefreshWidgetOpacity(true);
+	// 서브시스템을 확인해서, 내 아이템이 인벤토리 배열(Items)에서 사라졌는지 확인
+	UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+	if (InventorySubsystem && !InventorySubsystem->GetItems().Contains(ItemInstance))
+	{
+		// 인벤토리에서 이미 지워졌다면(장착되었다면), 나 자신(UI 위젯)도 화면에서 삭제!
+		RemoveFromParent();
+	}
+	else
+	{
+		// 드롭에 실패해서 그냥 인벤토리에 남아있다면, 다시 불투명도를 100%로 복구
+		RefreshWidgetOpacity(true);
+	}
 }
 
 void UR1InventoryEntryWidget::RefreshWidgetOpacity(bool bClearVisible)

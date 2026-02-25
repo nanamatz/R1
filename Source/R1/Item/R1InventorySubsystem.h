@@ -64,4 +64,9 @@ protected:
 
 	UPROPERTY()
 	TMap <ER1EquipmentSlot, TObjectPtr<UR1ItemInstance>> EquippedItems;
+
+public:
+	// 헤더 파일에 데이터 테이블 변수 추가
+	UPROPERTY()
+	TObjectPtr<UDataTable> ItemDataTable;
 };
