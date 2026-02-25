@@ -69,4 +69,15 @@ public:
 	// 헤더 파일에 데이터 테이블 변수 추가
 	UPROPERTY()
 	TObjectPtr<UDataTable> ItemDataTable;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	UR1ItemInstance* GetEquippedItem(ER1EquipmentSlot SlotType) const
+	{
+		if (const TObjectPtr<UR1ItemInstance>* FoundItem = EquippedItems.Find(SlotType))
+		{
+			return *FoundItem;
+		}
+		return nullptr;
+	}
 };

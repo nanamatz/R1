@@ -20,6 +20,14 @@ public:
 	virtual void NativePreConstruct() override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
+protected:
+	virtual void NativeConstruct() override;
+
+public:
+	// 💡 데이터가 변할 때마다 이 슬롯을 새로 그릴 함수
+	UFUNCTION()
+	void RefreshSlotUI();
+
 public:
 	// 💡 에디터에서 이 슬롯이 어떤 부위인지 설정할 수 있게 합니다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")

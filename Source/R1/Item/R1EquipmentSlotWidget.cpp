@@ -44,49 +44,75 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 {
 	Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 
-	// 드래그 해온 데이터가 아이템인지 확인
 	UR1DragDropOperation* DragDropOp = Cast<UR1DragDropOperation>(InOperation);
-	if (!DragDropOp || !DragDropOp->ItemInstance)
-	{
-		return false;
-	}
+	if (!DragDropOp || !DragDropOp->ItemInstance) return false;
 
-	// 💡 가장 중요한 검증: "가져온 아이템의 부위가 내 부위와 일치하는가?"
 	if (DragDropOp->ItemInstance->GetEquipSlot() != EquipmentSlotType)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("착용할 수 없는 부위입니다!"));
-		return false; // 부위가 다르면 드롭을 거부합니다 (튕겨나감)
+		return false;
 	}
 
 	UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (InventorySubsystem)
 	{
+		// (기존 스왑 및 장착 로직 유지)
 		UR1ItemInstance* OldEquippedItem = EquippedItem;
-
 		InventorySubsystem->RemoveItemFromGrid(DragDropOp->ItemInstance, DragDropOp->FromItemSlotPos);
-		// 실제 장착 실행! (인벤토리에서 빠지고 Map에 들어감)
+
 		if (OldEquippedItem != nullptr)
 		{
-			// 이미 장비가 있었다면 기존 장비를 인벤토리로 돌려보냄.
 			InventorySubsystem->AddItemToGrid(OldEquippedItem, DragDropOp->FromItemSlotPos);
-
-			// TODO: InventorySubsystem->UnequipItem(OldEquippedItem); // 서브시스템에 스탯 감소 등 장착 해제 로직이 있다면 여기서 호출
-			UE_LOG(LogTemp, Warning, TEXT("기존 장비와 교체(Swap) 되었습니다!"));
 		}
+
 		InventorySubsystem->EquipItem(DragDropOp->ItemInstance);
-		EquippedItem = DragDropOp->ItemInstance;
-		// 아이템 아이콘 세팅 (ItemIcon 변수가 ItemInstance에 존재한다고 가정)
-		
-		if (EquippedItem->GetItemIcon())
-		{
-			Image_ItemIcon->SetBrushFromTexture(EquippedItem->GetItemIcon());
-			Image_ItemIcon->SetRenderOpacity(1.0f);
-		}
-
-		InventorySubsystem->OnInventoryUpdated.Broadcast();
 
 		return true;
 	}
 
 	return false;
+}
+
+void UR1EquipmentSlotWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+	if (InventorySubsystem)
+	{
+		// 1. 인벤토리/장비 데이터가 변할 때마다 내 RefreshSlotUI를 실행하라고 연결!
+		InventorySubsystem->OnInventoryUpdated.AddDynamic(this, &UR1EquipmentSlotWidget::RefreshSlotUI);
+	}
+
+	// 2. UI가 처음 생성될 때, 이미 장착된 템이 있는지 확인하고 그리기
+	RefreshSlotUI();
+}
+
+void UR1EquipmentSlotWidget::RefreshSlotUI()
+{
+	UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+	if (!InventorySubsystem) return;
+
+	// 3. 서브시스템에서 내 부위(EquipmentSlotType)에 장착된 아이템을 가져옴
+	UR1ItemInstance* LocalEquippedItem = InventorySubsystem->GetEquippedItem(EquipmentSlotType);
+
+	if (LocalEquippedItem)
+	{
+		EquippedItem = LocalEquippedItem;
+
+		// 💡 핵심: 구조체가 변경되었으므로 GetItemIcon()을 사용해야 합니다!
+		if (UTexture2D* Icon = EquippedItem->GetItemIcon())
+		{
+			Image_ItemIcon->SetBrushFromTexture(Icon);
+			Image_ItemIcon->SetRenderOpacity(1.0f);
+			Image_ItemIcon->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		}
+	}
+	else
+	{
+		// 4. 장착된 아이템이 없다면 아이콘 숨기기 (투명하게 만들고 터치 무시)
+		EquippedItem = nullptr;
+		Image_ItemIcon->SetRenderOpacity(0.0f);
+		Image_ItemIcon->SetVisibility(ESlateVisibility::Hidden);
+	}
 }
