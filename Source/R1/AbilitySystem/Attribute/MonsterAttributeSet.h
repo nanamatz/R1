@@ -29,8 +29,9 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackAngle);
 
 
-//protected:
-//	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+protected:
+	//virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+	//virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 //	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
 private:

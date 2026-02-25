@@ -6,6 +6,7 @@
 #include "Player/R1PlayerState.h"
 #include "Character/R1Character.h"
 #include "Character/R1Player.h"
+#include "R1GameplayTags.h"
 
 UPlayerAttributeSet::UPlayerAttributeSet()
 {
@@ -92,7 +93,7 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 					FGameplayEventData EventData;
 
 					// 사용할 이벤트 태그 (프로젝트에 등록된 태그 사용 권장)
-					EventData.EventTag = FGameplayTag::RequestGameplayTag(FName("Ability.LevelUp"));
+					EventData.EventTag = R1GameplayTags::Ability_LevelUp;
 					EventData.Instigator = GetOwningActor(); // PlayerState
 					EventData.Target = GetOwningActor();
 

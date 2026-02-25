@@ -6,6 +6,7 @@
 
 #include "GameplayEffect.h"
 #include "DataTable/CharacterStatsRow.h"
+#include "R1GameplayTags.h"
 
 // Sets default values
 AR1Character::AR1Character()
@@ -168,14 +169,14 @@ void AR1Character::InitAttributes()
 		if (SpecHandle.IsValid())
 		{
 			// 3. [핵심] SetByCaller로 값 주입하기
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxHealth")), StatData->MaxHealth);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.BaseDamage")), StatData->BaseDamage);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.BaseDefence")), StatData->BaseDefence);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackRange")), StatData->AttackRange);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackRadius")), StatData->AttackRadius);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackSpeed")), StatData->AttackSpeed);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MoveSpeed")), StatData->MoveSpeed);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.HealthRegeneration")), StatData->HealthRegeneration);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_MaxHealth, StatData->MaxHealth);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_BaseDamage, StatData->BaseDamage);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_BaseDefence, StatData->BaseDefence);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_AttackRange, StatData->AttackRange);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_AttackRadius, StatData->AttackRadius);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_AttackSpeed, StatData->AttackSpeed);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_MoveSpeed, StatData->MoveSpeed);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_HealthRegeneration, StatData->HealthRegeneration);
 
 			// 4. 내용물이 채워진 GE를 나 자신에게 적용
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
