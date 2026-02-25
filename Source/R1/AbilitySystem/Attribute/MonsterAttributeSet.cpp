@@ -11,3 +11,5 @@ UMonsterAttributeSet::UMonsterAttributeSet()
 	InitAttackAngle(120.f);
 
 }
+
+

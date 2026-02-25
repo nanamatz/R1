@@ -12,14 +12,17 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Montage_Attack,"Event.Monage.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Montage_Begin,"Event.Monage.Begin");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Montage_End,"Event.Monage.End");
+	UE_DEFINE_GAMEPLAY_TAG(Event_HitReact,"Event.HitReact");
 
 	//Abiility tags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack,"Ability.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_LevelUp,"Ability.LevelUp");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_HitReact,"Ability.HitReact");
 
 	//State tags
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Dead,"Character.State.Dead");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Casting,"Character.State.Casting");
+	UE_DEFINE_GAMEPLAY_TAG(Character_State_HitReact,"Character.State.HitReact");
 
 	//Common attributes
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxHealth, "Data.Attribute.MaxHealth");

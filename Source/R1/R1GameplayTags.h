@@ -14,12 +14,17 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_Begin);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_End);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_Attack);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_HitReact);
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LevelUp);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_HitReact);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Dead);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Casting);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_HitReact);
+
 	
 	// Common attributes
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxHealth);

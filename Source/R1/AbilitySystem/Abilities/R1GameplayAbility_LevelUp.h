@@ -25,9 +25,6 @@ protected:
 	TSubclassOf<class UGameplayEffect> LevelUpRecoveryEffect;
 
 protected:
-	// 에디터에서 Cascade 파티클 에셋을 할당할 변수
-	UPROPERTY(EditDefaultsOnly, Category = "Particle System")
-	TObjectPtr<class UParticleSystem> LevelUpParticle;
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category = "Effects")
 	TSubclassOf<AActor> LevelUpParticleEffectClass;

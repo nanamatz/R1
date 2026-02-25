@@ -19,6 +19,7 @@
 #include "Map/DungeonManager.h"
 #include "DataTable/CharacterStatsRow.h"
 #include "TimerManager.h"
+#include "R1GameplayTags.h"
 
 
 AR1Monster::AR1Monster()
@@ -79,6 +80,7 @@ void AR1Monster::Tick(float DeltaTime)
 void AR1Monster::InitAbilitySystem()
 {
 	Super::InitAbilitySystem();
+
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
@@ -213,9 +215,9 @@ void AR1Monster::InitAttributes()
 
 		if (SpecHandle.IsValid())
 		{
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.Xp")), StatData->Xp);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AggroRange")), StatData->AggroRange);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.AttackAngle")), StatData->AttackAngle);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_Xp, StatData->Xp);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_AggroRange, StatData->AggroRange);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_AttackAngle, StatData->AttackAngle);
 
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		}

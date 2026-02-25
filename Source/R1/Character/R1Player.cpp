@@ -21,6 +21,7 @@
 
 #include "UI/R1ExpBarWidget.h"
 #include "DataTable/CharacterStatsRow.h"
+#include "R1GameplayTags.h"
 
 AR1Player::AR1Player()
 {
@@ -156,10 +157,10 @@ void AR1Player::InitAttributes()
 
 		if (SpecHandle.IsValid())
 		{
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxMana")), StatData->MaxMana);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.ManaRegeneration")), StatData->ManaRegeneration);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.MaxExp")), StatData->MaxExp);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Attribute.Level")), StatData->Level);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_MaxMana, StatData->MaxMana);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_ManaRegeneration, StatData->ManaRegeneration);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_MaxExp, StatData->MaxExp);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_Level, StatData->Level);
 
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		}

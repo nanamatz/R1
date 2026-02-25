@@ -13,6 +13,7 @@ void UR1AbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<c
 			FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
 
 			// 2. 어빌리티 부여 (이 함수가 내부적으로 ActivatableAbilities에 추가함)
+			UE_LOG(LogTemp, Warning, TEXT("✅ [Monster] 피격 어빌리티 부여 성공!"));
 			GiveAbility(AbilitySpec);
 		}
 	}
