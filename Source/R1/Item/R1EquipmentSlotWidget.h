@@ -21,6 +21,15 @@ public:
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
 protected:
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
+	virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+
+	// 드래그할 때 마우스에 따라다닐 잔상 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, Category = "DragDrop")
+	TSubclassOf<class UR1ItemDragWidget> DragWidgetClass;
+
+protected:
 	virtual void NativeConstruct() override;
 
 public:
@@ -49,4 +58,6 @@ protected:
 	// 실제 아이템 아이콘이 표시될 이미지 (장착 시 활성화)
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UImage> Image_ItemIcon;
+
+
 };

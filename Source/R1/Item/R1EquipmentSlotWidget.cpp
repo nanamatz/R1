@@ -7,7 +7,11 @@
 #include "Item/R1DragDropOperation.h"
 #include "Item/R1ItemInstance.h"
 #include "Item/R1InventorySubsystem.h"
+#include "Item/R1ItemDragWidget.h"
 #include "R1Define.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+
+
 
 void UR1EquipmentSlotWidget::NativePreConstruct()
 {
@@ -71,6 +75,54 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 	}
 
 	return false;
+}
+
+FReply UR1EquipmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+
+	// 장착된 아이템이 있을 때만 드래그 시작
+	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && EquippedItem != nullptr)
+	{
+		Reply.DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
+	}
+	return Reply;
+}
+
+void UR1EquipmentSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
+{
+	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
+
+	if (!EquippedItem || !DragWidgetClass) return;
+
+	// 드래그 잔상 위젯 생성
+	UR1ItemDragWidget* DragWidget = CreateWidget<UR1ItemDragWidget>(GetOwningPlayer(), DragWidgetClass);
+	const FVector2D UnitSlotSize = Item::UnitInventorySlotSize;
+	FVector2D EntityWidgetSize = FVector2D(EquippedItem->GetItemSize().X * UnitSlotSize.X, EquippedItem->GetItemSize().Y * UnitSlotSize.Y);
+
+	DragWidget->Init(EntityWidgetSize, EquippedItem->GetItemIcon(), 1);
+
+	// 드래그 정보(Operation) 세팅
+	UR1DragDropOperation* DragDrop = NewObject<UR1DragDropOperation>();
+	DragDrop->DefaultDragVisual = DragWidget;
+	DragDrop->Pivot = EDragPivot::MouseDown;
+	DragDrop->ItemInstance = EquippedItem;
+	DragDrop->FromEquipmentSlot = EquipmentSlotType;
+
+	OutOperation = DragDrop;
+
+	// 드래그 중에는 원래 장비창의 아이콘을 반투명하게 만듦
+	Image_ItemIcon->SetRenderOpacity(0.5f);
+}
+
+void UR1EquipmentSlotWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+	Super::NativeOnDragCancelled(InDragDropEvent, InOperation);
+
+	if (EquippedItem)
+	{
+		Image_ItemIcon->SetRenderOpacity(1.0f);
+	}
 }
 
 void UR1EquipmentSlotWidget::NativeConstruct()
