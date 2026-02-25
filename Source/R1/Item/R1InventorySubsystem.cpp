@@ -54,6 +54,14 @@ void UR1InventorySubsystem::AddDefaultItem()
 	TestRing->Init(6, ItemDataTable);
 	Items.Add(TestRing);
 
+	TObjectPtr<UR1ItemInstance> TestRing2 = NewObject<UR1ItemInstance>(this);
+	TestRing2->Init(6, ItemDataTable);
+	Items.Add(TestRing2);
+
+	TObjectPtr<UR1ItemInstance> TestPotion = NewObject<UR1ItemInstance>(this);
+	TestPotion->Init(7, ItemDataTable);
+	Items.Add(TestPotion);
+
 	//// 2. 테스트 투구 (크기 2x2, 부위: Helmet)
 	//TObjectPtr<UR1ItemInstance> TestHelmet = NewObject<UR1ItemInstance>(this);
 	//TestHelmet->Init(102, FIntPoint(2, 2), ER1EquipmentSlot::Helmet);
@@ -74,21 +82,24 @@ void UR1InventorySubsystem::AddDefaultItem()
 	//Items.Add(TestPotion);
 
 
-	FIntPoint CurrentPos = FIntPoint(0, 0);
-
 	for (UR1ItemInstance* Item : Items)
 	{
 		if (!Item) continue;
 
-		// 빈 공간을 찾아 아이템을 GridData에 알박기 합니다 (데이터 세팅)
-		if (CanAddItemAt(Item->GetItemSize(), CurrentPos))
-		{
-			AddItemToGrid(Item, CurrentPos);
+		FIntPoint EmptyPos;
 
-			CurrentPos.X += Item->GetItemSize().X; // 다음 아이템을 위해 X좌표 밀기 (임시 로직)
+		// 💡 1. 우리가 만든 도우미 함수에게 "이 아이템 크기 들어갈 빈자리 좀 찾아와!" 라고 시킵니다.
+		if (FindEmptySlot(Item->GetItemSize(), EmptyPos))
+		{
+			// 2. 빈자리를 찾았다면 그 위치에 알박기!
+			AddItemToGrid(Item, EmptyPos);
+		}
+		else
+		{
+			// 3. 만약 Y축 끝까지 다 뒤졌는데도 자리가 없다면? (인벤토리 풀 상태)
+			UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 차서 임시 아이템(ID: %d)을 배치하지 못했습니다!"), Item->ItemID);
 		}
 	}
-
 	OnInventoryUpdated.Broadcast();
 }
 
@@ -158,11 +169,13 @@ void UR1InventorySubsystem::MoveItemInGrid(UR1ItemInstance* Item, FIntPoint OldP
 	AddItemToGrid(Item, NewPos);
 }
 
-bool UR1InventorySubsystem::EquipItem(UR1ItemInstance* ItemToEquip)
+bool UR1InventorySubsystem::EquipItem(UR1ItemInstance* ItemToEquip, ER1EquipmentSlot SpecificSlot)
 {
-	if (!ItemToEquip || ItemToEquip->GetEquipSlot() == ER1EquipmentSlot::None) return false;
+	if (!ItemToEquip) return false;
 
-	ER1EquipmentSlot TargetSlot = ItemToEquip->GetEquipSlot();
+	ER1EquipmentSlot TargetSlot = (SpecificSlot != ER1EquipmentSlot::None) ? SpecificSlot : ItemToEquip->GetEquipSlot()[0];
+
+	if (TargetSlot == ER1EquipmentSlot::None) return false;
 
 	// 1. 만약 해당 부위에 이미 낀 장비가 있다면? -> 뺀다 (스왑 처리)
 	if (EquippedItems.Contains(TargetSlot))

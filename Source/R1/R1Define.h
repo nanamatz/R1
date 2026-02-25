@@ -10,7 +10,8 @@ enum class ER1EquipmentSlot : uint8
 	Helmet,		
 	Armor,		
 	Glove,
-	Ring,		
+	Ring1,		
+	Ring2,		
 	Boots		
 };
 

@@ -43,7 +43,7 @@ public:
 
 public:
 	// 아이템을 인벤토리에서 장비창으로 이동
-	bool EquipItem( UR1ItemInstance* ItemToEquip);
+	bool EquipItem(UR1ItemInstance* ItemToEquip, ER1EquipmentSlot SpecificSlot = ER1EquipmentSlot::None);
 
 	// 장비를 해제하여 다시 인벤토리로 이동
 	bool UnequipItem(ER1EquipmentSlot TargetSlot);
