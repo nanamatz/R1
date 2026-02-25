@@ -84,8 +84,6 @@ FReply UR1EquipmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeomet
 	// 장착된 아이템이 있을 때만 드래그 시작
 	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && EquippedItem != nullptr)
 	{
-		CachedDragOffset = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
-
 		Reply.DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
 	}
 	return Reply;
@@ -110,7 +108,6 @@ void UR1EquipmentSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, c
 	DragDrop->Pivot = EDragPivot::MouseDown;
 	DragDrop->ItemInstance = EquippedItem;
 	DragDrop->FromEquipmentSlot = EquipmentSlotType;
-	DragDrop->DeltaWidgetPos = CachedDragOffset;
 
 	OutOperation = DragDrop;
 

@@ -59,5 +59,5 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UImage> Image_ItemIcon;
 
-	FVector2D CachedDragOffset = FVector2D::ZeroVector;
+
 };
