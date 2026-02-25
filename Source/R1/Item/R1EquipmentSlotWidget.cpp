@@ -81,12 +81,38 @@ FReply UR1EquipmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeomet
 {
 	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 
-	// 장착된 아이템이 있을 때만 드래그 시작
-	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && EquippedItem != nullptr)
+	if (EquippedItem == nullptr) return Reply;
+
+	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
 		CachedDragOffset = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+		return Reply.DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
+	}
+	// 💡 2. 우클릭 (추가: 빠른 장착 해제)
+	else if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+	{
+		UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+		if (Inventory)
+		{
+			FIntPoint EmptyPos;
 
-		Reply.DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
+			// 인벤토리에 이 장비가 들어갈 빈 공간이 있는지 확인
+			if (Inventory->FindEmptySlot(EquippedItem->GetItemSize(), EmptyPos))
+			{
+				UR1ItemInstance* ItemToMove = EquippedItem;
+				// 장비 해제 후 그리드에 넣기
+				Inventory->UnequipItem(EquipmentSlotType);
+				Inventory->AddItemToGrid(ItemToMove, EmptyPos);
+
+				// UI 새로고침!
+				Inventory->OnInventoryUpdated.Broadcast();
+				return FReply::Handled();
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("인벤토리에 장비를 벗어둘 공간이 부족합니다!"));
+			}
+		}
 	}
 	return Reply;
 }

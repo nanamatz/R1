@@ -71,23 +71,62 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 {
 	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 
-	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
-	{
-		Reply.DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
-	}
-
-	/*const FIntPoint UnitInventorySlotSize = FIntPoint(50, 50);*/
 	const FVector2D UnitSlotSize = FVector2D(Item::UnitInventorySlotSize);
 
 	//마우스 커서 위치에 따라 변환 및 계산
 	FVector2D MouseWidgetPos = SlotsWidget->GetCachedGeometry().AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 	FVector2D ItemWidgetPos = SlotsWidget->GetCachedGeometry().AbsoluteToLocal(InGeometry.LocalToAbsolute(UnitSlotSize / 2.f));
 	FIntPoint ItemSlotPos = FIntPoint(ItemWidgetPos.X / UnitSlotSize.X, ItemWidgetPos.Y / UnitSlotSize.Y);
-	//FVector2D ItemWidgetPos = SlotsWidget->GetCachedGeometry().AbsoluteToLocal(InGeometry.LocalToAbsolute(FVector2D::ZeroVector));
-	//FIntPoint ItemSlotPos = FIntPoint(FMath::RoundToInt(ItemWidgetPos.X / UnitSlotSize.X), FMath::RoundToInt(ItemWidgetPos.Y / UnitSlotSize.Y));
 
 	CachedFromSlotPos = ItemSlotPos;
 	CachedDeltaWidgetPos = MouseWidgetPos - ItemWidgetPos;
+
+	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	{
+		return Reply.DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
+	}
+	// 💡 2. 우클릭 (추가: 빠른 장착)
+	else if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+	{
+		if (ItemInstance && ItemInstance->GetEquipSlot() != ER1EquipmentSlot::None)
+		{
+			UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+			if (Inventory)
+			{
+				// 스왑(교체)될 기존 장비가 있는지 미리 확인
+				UR1ItemInstance* OldEquippedItem = Inventory->GetEquippedItem(ItemInstance->GetEquipSlot());
+
+				// 1. 일단 내가 있던 자리의 인벤토리 그리드를 비워줌 (그래야 스왑된 템이 이 자리에 들어올 수 있음)
+				Inventory->RemoveItemFromGrid(ItemInstance, ItemSlotPos);
+
+				// 2. 장착 실행! (서브시스템 내부에서 알아서 교체/해제됨)
+				Inventory->EquipItem(ItemInstance);
+
+				// 3. 만약 원래 끼고 있던 장비가 튕겨져 나왔다면?
+				if (OldEquippedItem)
+				{
+					// 내가 방금 비워준 자리에 들어갈 수 있으면 거기로 쏙!
+					if (Inventory->CanAddItemAt(OldEquippedItem->GetItemSize(), ItemSlotPos))
+					{
+						Inventory->AddItemToGrid(OldEquippedItem, ItemSlotPos);
+					}
+					// 내 자리에 안 들어가면(크기가 다르면) 다른 빈칸 찾아서 넣기
+					else
+					{
+						FIntPoint EmptyPos;
+						if (Inventory->FindEmptySlot(OldEquippedItem->GetItemSize(), EmptyPos))
+						{
+							Inventory->AddItemToGrid(OldEquippedItem, EmptyPos);
+						}
+					}
+				}
+
+				// 4. UI 싹 다 갱신
+				Inventory->OnInventoryUpdated.Broadcast();
+				return FReply::Handled();
+			}
+		}
+	}
 
 	return Reply;
 }
@@ -123,18 +162,6 @@ void UR1InventoryEntryWidget::NativeOnDragCancelled(const FDragDropEvent& InDrag
 {
 	Super::NativeOnDragCancelled(InDragDropEvent, InOperation);
 
-	//// 서브시스템을 확인해서, 내 아이템이 인벤토리 배열(Items)에서 사라졌는지 확인
-	//UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
-	//if (InventorySubsystem && !InventorySubsystem->GetItems().Contains(ItemInstance))
-	//{
-	//	// 인벤토리에서 이미 지워졌다면(장착되었다면), 나 자신(UI 위젯)도 화면에서 삭제!
-	//	RemoveFromParent();
-	//}
-	//else
-	//{
-	//	// 드롭에 실패해서 그냥 인벤토리에 남아있다면, 다시 불투명도를 100%로 복구
-	//	RefreshWidgetOpacity(true);
-	//}
 	RefreshWidgetOpacity(true);
 }
 

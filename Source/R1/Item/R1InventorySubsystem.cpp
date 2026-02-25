@@ -198,3 +198,24 @@ bool UR1InventorySubsystem::UnequipItem(ER1EquipmentSlot TargetSlot)
 
 	return true;
 }
+
+bool UR1InventorySubsystem::FindEmptySlot(const FIntPoint& ItemSize, FIntPoint& OutPos)
+{
+	// (0, 0)부터 인벤토리 끝까지 싹 스캔합니다.
+	for (int32 Y = 0; Y < GetInventoryRows(); ++Y)
+	{
+		for (int32 X = 0; X < GetInventoryColumns(); ++X)
+		{
+			FIntPoint CheckPos(X, Y);
+			// 내가 만든 겹침 검사 함수(CanAddItemAt) 재활용!
+			if (CanAddItemAt(ItemSize, CheckPos))
+			{
+				OutPos = CheckPos; // 빈자리 발견!
+				return true;
+			}
+		}
+	}
+	// 빈자리가 없음 (인벤토리 꽉 참)
+	UE_LOG(LogTemp, Error, TEXT("인벤토리 꽉 찼음"));
+	return false; 
+}

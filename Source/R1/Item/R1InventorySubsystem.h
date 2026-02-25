@@ -71,6 +71,10 @@ public:
 	TObjectPtr<UDataTable> ItemDataTable;
 
 public:
+	// 💡 아이템 크기에 맞는 빈 공간을 찾아 좌표를 반환해 주는 함수
+	bool FindEmptySlot(const FIntPoint& ItemSize, FIntPoint& OutPos);
+
+public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	UR1ItemInstance* GetEquippedItem(ER1EquipmentSlot SlotType) const
 	{
