@@ -34,7 +34,8 @@ void UR1EquipmentSlotWidget::NativePreConstruct()
 		case ER1EquipmentSlot::Glove:
 			SlotSize = FIntPoint(2, 2); // 투구, 신발은 2x2
 			break;
-		case ER1EquipmentSlot::Ring:
+		case ER1EquipmentSlot::Ring1:
+		case ER1EquipmentSlot::Ring2:
 			SlotSize = FIntPoint(1, 1); // 반지는 1x1
 			break;
 		}
@@ -51,7 +52,8 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 	UR1DragDropOperation* DragDropOp = Cast<UR1DragDropOperation>(InOperation);
 	if (!DragDropOp || !DragDropOp->ItemInstance) return false;
 
-	if (DragDropOp->ItemInstance->GetEquipSlot() != EquipmentSlotType)
+	// 💡 배열 안에 내가 속한 부위(EquipmentSlotType)가 있는지 검사!
+	if (!DragDropOp->ItemInstance->GetEquipSlot().Contains(EquipmentSlotType))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("착용할 수 없는 부위입니다!"));
 		return false;
@@ -60,7 +62,6 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 	UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (InventorySubsystem)
 	{
-		// (기존 스왑 및 장착 로직 유지)
 		UR1ItemInstance* OldEquippedItem = EquippedItem;
 		InventorySubsystem->RemoveItemFromGrid(DragDropOp->ItemInstance, DragDropOp->FromItemSlotPos);
 
@@ -69,7 +70,8 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 			InventorySubsystem->AddItemToGrid(OldEquippedItem, DragDropOp->FromItemSlotPos);
 		}
 
-		InventorySubsystem->EquipItem(DragDropOp->ItemInstance);
+		// 💡 장착 실행! (내가 올려놓은 이 UI의 슬롯 타입으로 강제 지정)
+		InventorySubsystem->EquipItem(DragDropOp->ItemInstance, EquipmentSlotType);
 
 		return true;
 	}

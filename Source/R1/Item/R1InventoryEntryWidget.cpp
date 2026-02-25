@@ -88,29 +88,48 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 	// 💡 2. 우클릭 (추가: 빠른 장착)
 	else if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
 	{
-		if (ItemInstance && ItemInstance->GetEquipSlot() != ER1EquipmentSlot::None)
+		TArray<ER1EquipmentSlot> CompatibleSlots = ItemInstance->GetEquipSlot();
+
+		// 장착 가능한 부위가 하나라도 있다면
+		if (CompatibleSlots.Num() > 0)
 		{
 			UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 			if (Inventory)
 			{
-				// 스왑(교체)될 기존 장비가 있는지 미리 확인
-				UR1ItemInstance* OldEquippedItem = Inventory->GetEquippedItem(ItemInstance->GetEquipSlot());
+				ER1EquipmentSlot TargetSlot = ER1EquipmentSlot::None;
 
-				// 1. 일단 내가 있던 자리의 인벤토리 그리드를 비워줌 (그래야 스왑된 템이 이 자리에 들어올 수 있음)
+				// 💡 1. 호환되는 슬롯들 중에 "비어있는" 슬롯을 우선적으로 찾습니다.
+				for (ER1EquipmentSlot EnableSlot : CompatibleSlots)
+				{
+					if (Inventory->GetEquippedItem(EnableSlot) == nullptr)
+					{
+						TargetSlot = EnableSlot;
+						break; // 빈자리 발견! 루프 종료
+					}
+				}
+
+				// 💡 2. 만약 호환 슬롯이 모두 꽉 차 있다면? -> 그냥 배열의 첫 번째 슬롯(주력 슬롯)을 덮어씌움!
+				if (TargetSlot == ER1EquipmentSlot::None)
+				{
+					TargetSlot = CompatibleSlots[0];
+				}
+
+				// 기존에 끼고 있던 아이템 백업
+				UR1ItemInstance* OldEquippedItem = Inventory->GetEquippedItem(TargetSlot);
+
+				// 내 자리 비우기
 				Inventory->RemoveItemFromGrid(ItemInstance, ItemSlotPos);
 
-				// 2. 장착 실행! (서브시스템 내부에서 알아서 교체/해제됨)
-				Inventory->EquipItem(ItemInstance);
+				// 결정된 슬롯에 장착!
+				Inventory->EquipItem(ItemInstance, TargetSlot);
 
-				// 3. 만약 원래 끼고 있던 장비가 튕겨져 나왔다면?
+				// 스왑된 기존 장비가 있다면 빈자리 찾아 넣기
 				if (OldEquippedItem)
 				{
-					// 내가 방금 비워준 자리에 들어갈 수 있으면 거기로 쏙!
 					if (Inventory->CanAddItemAt(OldEquippedItem->GetItemSize(), ItemSlotPos))
 					{
 						Inventory->AddItemToGrid(OldEquippedItem, ItemSlotPos);
 					}
-					// 내 자리에 안 들어가면(크기가 다르면) 다른 빈칸 찾아서 넣기
 					else
 					{
 						FIntPoint EmptyPos;
@@ -121,7 +140,6 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 					}
 				}
 
-				// 4. UI 싹 다 갱신
 				Inventory->OnInventoryUpdated.Broadcast();
 				return FReply::Handled();
 			}

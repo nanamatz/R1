@@ -42,7 +42,7 @@ public:
 	// --- [장비 전용 정보] ---
 	// 💡 마법의 코드: ItemType이 Equipment일 때만 에디터에 보입니다!
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2. Equipment", meta = (EditCondition = "ItemType == ER1ItemType::Equipment", EditConditionHides))
-	ER1EquipmentSlot EquipSlot = ER1EquipmentSlot::Weapon;
+	TArray<ER1EquipmentSlot> EquipSlots;
 
 	// --- [GAS 능력치 및 스킬] ---
 	// 장비: 장착 시 영구 적용되는 스탯 (최대 체력 증가 등)

@@ -53,7 +53,7 @@ public:
 	FIntPoint GetItemSize() const { return ItemData.ItemSize; }
 
 	UFUNCTION(BlueprintCallable, Category = "Item")
-	ER1EquipmentSlot GetEquipSlot() const { return ItemData.EquipSlot; }
+	TArray<ER1EquipmentSlot> GetEquipSlot() const { return ItemData.EquipSlots; }
 
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UTexture2D* GetItemIcon() const { return ItemData.ItemIcon; }
