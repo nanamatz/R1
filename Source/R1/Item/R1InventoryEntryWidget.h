@@ -66,5 +66,4 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_Hover;
-
 };

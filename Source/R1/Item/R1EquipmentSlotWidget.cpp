@@ -189,6 +189,9 @@ void UR1EquipmentSlotWidget::RefreshSlotUI()
 			Image_ItemIcon->SetBrushFromTexture(Icon);
 			Image_ItemIcon->SetRenderOpacity(1.0f);
 			Image_ItemIcon->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+
+			Image_BGIcon->SetVisibility(ESlateVisibility::Hidden);
+			Image_BGIcon->SetRenderOpacity(0.f);
 		}
 	}
 	else
@@ -197,5 +200,8 @@ void UR1EquipmentSlotWidget::RefreshSlotUI()
 		EquippedItem = nullptr;
 		Image_ItemIcon->SetRenderOpacity(0.0f);
 		Image_ItemIcon->SetVisibility(ESlateVisibility::Hidden);
+
+		Image_BGIcon->SetRenderOpacity(1.0f);
+		Image_BGIcon->SetVisibility(ESlateVisibility::Visible);
 	}
 }
