@@ -44,6 +44,10 @@ void UR1InventoryEntryWidget::Init(UR1InventorySlotsWidget* InSlotsWidget, UR1It
 		SizeBox_Root->SetWidthOverride(WidgetWidth);
 		SizeBox_Root->SetHeightOverride(WidgetHeight);
 	}
+	if (Image_Hover && !IsHovered())
+	{
+		Image_Hover->SetRenderOpacity(0.f);
+	}
 }
 
 void UR1InventoryEntryWidget::NativeConstruct()
@@ -51,6 +55,11 @@ void UR1InventoryEntryWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	Text_Count->SetText(FText::GetEmpty());	//별도의 함수로 빼는 게 좋음
+
+	if (Image_Hover)
+	{
+		Image_Hover->SetRenderOpacity(0.f);
+	}
 }
 
 void UR1InventoryEntryWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
