@@ -7,6 +7,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Character/R1Character.h"
 #include "DrawDebugHelpers.h"
+#include "R1GameplayTags.h"
 
 UR1GameplayAbility_Attack::UR1GameplayAbility_Attack(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)	
@@ -158,6 +159,15 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 					if (TargetASC)
 					{
 						SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
+
+						FGameplayEventData PayloadData;
+						PayloadData.Instigator = SourceCharacter;
+						PayloadData.Target = TargetActor;         
+
+						FGameplayTag HitEventTag = R1GameplayTags::Ability_Attack;
+
+						// 나 자신에게 이벤트를 보내서, 내 몸에 장착된 패시브 GA들이 듣고 반응하게 합니다.
+						UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceCharacter, HitEventTag, PayloadData);
 					}
 				}
 				else

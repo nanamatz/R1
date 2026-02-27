@@ -6,8 +6,12 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "BehaviorTree/BlackboardComponent.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/R1AbilitySystemComponent.h"
+#include "AbilitySystem/Attribute/MonsterAttributeSet.h"
+
 #include "Character/R1Player.h"
-#include "Character/R1Monster.h"
 
 AR1AIController::AR1AIController(const FObjectInitializer& ObjectInitializer)
 {
@@ -42,41 +46,22 @@ void AR1AIController::OnPossess(APawn* InPawn)
 		AIPerception->OnTargetPerceptionUpdated.AddDynamic(this, &AR1AIController::OnTargetPerceptionUpdated);
 	}
 
-	// 3. 몬스터의 AttributeSet에서 AggroRange를 가져와서 시야 거리에 동기화!
-	AR1Monster* Monster = Cast<AR1Monster>(InPawn);
-	if (Monster && SightConfig && AIPerception)
+	if (UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InPawn))
 	{
-		float FindRange = Monster->AggroRange; // (혹은 AttributeSet에서 Get)
+		bool bFound = false;
+		float CurrentRange = ASC->GetGameplayAttributeValue(UMonsterAttributeSet::GetAggroRangeAttribute(), bFound);
+		if (bFound)
+		{
+			UpdateSightRange(CurrentRange);
+		}
 
-		SightConfig->SightRadius = FindRange;
-		SightConfig->LoseSightRadius = FindRange + 150.0f; // 놓치는 거리는 살짝 더 길게
-
-		AIPerception->ConfigureSense(*SightConfig); // 설정 덮어쓰기
-		AIPerception->RequestStimuliListenerUpdate(); // 업데이트 요청
+		ASC->GetGameplayAttributeValueChangeDelegate(UMonsterAttributeSet::GetAggroRangeAttribute()).AddUObject(this, &AR1AIController::OnAggroRangeChanged);
 	}
 }
 
 void AR1AIController::BeginPlay()
 {
 	Super::BeginPlay();
-	//FVector Dest = { 0,0,0 };
-	//FAIMoveRequest MoveRequest;
-	//MoveRequest.SetGoalLocation(Dest);
-	//MoveRequest.SetAcceptanceRadius(15.f);
-
-	//FNavPathSharedPtr NavPath;	// 이동 경로를 따로 처리해주고 싶을 때 사용
-
-	//MoveTo(MoveRequest, OUT &NavPath);
-
-	//if (NavPath.IsValid())
-	//{
-	//	TArray<FNavPathPoint>& PathPoints = NavPath->GetPathPoints();
-	//	for (const auto& Point : PathPoints)
-	//	{
-	//		const FVector& Location = Point.Location;
-	//		DrawDebugSphere(GetWorld(), Location, 12.f, 12, FColor::Green, false, 10.0f);
-	//	}
-	//}
 }
 
 void AR1AIController::Tick(float DeltaTime)
@@ -109,5 +94,37 @@ void AR1AIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimu
 				BB->SetValueAsObject(TargetKeyName, nullptr);
 			}
 		}
+	}
+}
+
+void AR1AIController::OnAggroRangeChanged(const FOnAttributeChangeData& Data)
+{
+	UpdateSightRange(Data.NewValue);
+}
+
+void AR1AIController::UpdateSightRange(float NewRange)
+{
+	if (!AIPerception) return;
+
+	FAISenseID SightSenseID = UAISense::GetSenseID(UAISense_Sight::StaticClass());
+	UAISenseConfig_Sight* CurrentSightConfig = Cast<UAISenseConfig_Sight>(AIPerception->GetSenseConfig(SightSenseID));
+
+	if (CurrentSightConfig)
+	{
+		// 꺼내온 설정값 덮어쓰기
+		CurrentSightConfig->SightRadius = NewRange;
+
+		CurrentSightConfig->LoseSightRadius = NewRange + 150.0f;
+
+		CurrentSightConfig->DetectionByAffiliation.bDetectEnemies = true;
+		CurrentSightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+		CurrentSightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+
+		// 다시 적용하고 퍼셉션 업데이트 요청
+		AIPerception->ConfigureSense(*CurrentSightConfig);
+		AIPerception->SetDominantSense(CurrentSightConfig->GetSenseImplementation());
+		AIPerception->RequestStimuliListenerUpdate();
+
+		UE_LOG(LogTemp, Warning, TEXT("[AI Controller] 몬스터 시야 세팅/업데이트 완료! 새로운 반경: %f"), NewRange);
 	}
 }

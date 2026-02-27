@@ -18,6 +18,7 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack,"Ability.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_LevelUp,"Ability.LevelUp");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_HitReact,"Ability.HitReact");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_ChainLightning,"Ability.ChainLightning");
 
 	//State tags
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Dead,"Character.State.Dead");

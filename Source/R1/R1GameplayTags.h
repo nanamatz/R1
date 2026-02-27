@@ -20,6 +20,7 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LevelUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_HitReact);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_ChainLightning);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Dead);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Casting);

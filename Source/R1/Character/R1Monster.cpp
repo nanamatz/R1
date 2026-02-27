@@ -59,9 +59,7 @@ void AR1Monster::BeginPlay()
 	if (Monster)
 	{
 		Monster->OnHpChanged.AddDynamic(this, &AR1Monster::RefreshHpBar);
-	}
-	AggroRange = AbilitySystemComponent->GetNumericAttribute(MonsterAttributeSet->GetAggroRangeAttribute());
-	
+	}	
 	RefreshHpBar(1.f);
 
 	if (GetMesh())
