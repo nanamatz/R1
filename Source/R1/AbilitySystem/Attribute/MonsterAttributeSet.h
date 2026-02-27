@@ -34,7 +34,7 @@ protected:
 	//virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 //	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
-private:
+public:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData Xp;
 

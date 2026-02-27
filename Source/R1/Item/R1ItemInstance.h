@@ -5,9 +5,6 @@
 #include "CoreMinimal.h"
 #include "R1Define.h"
 #include "DataTable/R1ItemDataRow.h"
-#include "GameplayEffectTypes.h" 
-#include "GameplayAbilitySpecHandle.h"
-#include "UObject/NoExportTypes.h"
 #include "R1ItemInstance.generated.h"
 
 /**
@@ -37,24 +34,22 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Item")
 	EItemRarity ItemRarity = EItemRarity::Junk;
 
-	// 💡 핵심: 데이터 테이블에서 긁어온 "변하지 않는 원본 스펙"
-	UPROPERTY(BlueprintReadOnly, Category = "Item")
-	FR1ItemDataRow ItemData;
-
 	// 💡 GAS 장착 해제용 영수증 (장착 해제 시 스킬/스탯을 회수하기 위해 저장)
-	FGameplayAbilitySpecHandle GrantedAbilityHandle;
-	FActiveGameplayEffectHandle GrantedEffectHandle;
 
 public:
-	// 💡 기존 코드 호환성을 위한 Getter 함수들 
-	// (기존 UI 코드에서 Instance->ItemSize 등으로 접근하던 것을 Instance->GetItemSize() 로만 바꿔주면 끝납니다)
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	FR1ItemDataRow GetItemData() const { return *CachedItemData; }
 
 	UFUNCTION(BlueprintCallable, Category = "Item")
-	FIntPoint GetItemSize() const { return ItemData.ItemSize; }
+	FIntPoint GetItemSize() const { return CachedItemData->ItemSize; }
 
 	UFUNCTION(BlueprintCallable, Category = "Item")
-	TArray<ER1EquipmentSlot> GetEquipSlot() const { return ItemData.EquipSlots; }
+	TArray<ER1EquipmentSlot> GetEquipSlot() const { return CachedItemData->EquipSlots; }
 
 	UFUNCTION(BlueprintCallable, Category = "Item")
-	UTexture2D* GetItemIcon() const { return ItemData.ItemIcon; }
+	UTexture2D* GetItemIcon() const { return CachedItemData->ItemIcon; }
+
+private:
+	
+	FR1ItemDataRow* CachedItemData = nullptr;
 };

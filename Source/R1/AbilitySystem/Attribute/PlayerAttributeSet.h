@@ -31,12 +31,17 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, MaxExp);
 	ATTRIBUTE_ACCESSORS(ThisClass, Level);
 
+	ATTRIBUTE_ACCESSORS(ThisClass, WeaponDamage);
+	ATTRIBUTE_ACCESSORS(ThisClass, DamageMultiplier);
+	ATTRIBUTE_ACCESSORS(ThisClass, EquipDefence);
+	ATTRIBUTE_ACCESSORS(ThisClass, DefenceMultiplier);
+
 
 protected:
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
-private:
+public:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData ManaRegeneration;
 
@@ -54,4 +59,16 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData Level;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData WeaponDamage;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData DamageMultiplier;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData EquipDefence;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData DefenceMultiplier;
 };

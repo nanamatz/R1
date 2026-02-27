@@ -39,6 +39,10 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxMana, "Data.Attribute.MaxMana");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_ManaRegeneration, "Data.Attribute.ManaRegeneration");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_Level, "Data.Attribute.Level");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_WeaponDamage, "Data.Attribute.WeaponDamage");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_EquipDefence, "Data.Attribute.EquipDefence");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_DamageMultiplier, "Data.Attribute.DamageMultiplier");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_DefenceMultiplier, "Data.Attribute.DefenceMultiplier");
 
 	//monster only
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_Xp, "Data.Attribute.Xp");

@@ -22,6 +22,7 @@
 #include "UI/R1ExpBarWidget.h"
 #include "DataTable/CharacterStatsRow.h"
 #include "R1GameplayTags.h"
+#include "System/R1EquipmentManagerComponent.h"
 
 AR1Player::AR1Player()
 {
@@ -58,6 +59,8 @@ AR1Player::AR1Player()
 		StimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
 		StimuliSource->RegisterWithPerceptionSystem();
 	}
+
+	EquipmentManagerComponent = CreateDefaultSubobject<UR1EquipmentManagerComponent>(TEXT("EquipmentManagerComponent"));
 }
 void AR1Player::BeginPlay()
 {

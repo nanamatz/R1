@@ -63,6 +63,11 @@ protected:
 	virtual void InitAttributes() override;
 
 	// 플레이어 전용 초기화 GE (GE_InitPlayerStats 할당)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Init")
 	TSubclassOf<class UGameplayEffect> PlayerInitStatEffectClass;
+
+protected:
+	// 💡 캐릭터의 몸에 부착될 장비 관리자 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment")
+	TObjectPtr<class UR1EquipmentManagerComponent> EquipmentManagerComponent;
 };
