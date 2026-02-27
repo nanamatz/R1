@@ -58,8 +58,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TSubclassOf<class UGameplayEffect> XpEffect;
 
-	float AggroRange;
-
 protected:
 	virtual void InitAttributes() override;
 

@@ -6,10 +6,9 @@
 
 UMonsterAttributeSet::UMonsterAttributeSet()
 {
-	InitAggroRange(300.f);
+	InitAggroRange(600.f);
 	InitXp(10.f);
 	InitAttackAngle(120.f);
-
 }
 
 

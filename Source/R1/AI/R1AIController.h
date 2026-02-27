@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "GameplayEffectTypes.h"
 #include "R1AIController.generated.h"
 
 /**
@@ -38,4 +39,9 @@ protected:
 	// 블루프린트에서 수정할 수 있도록 FName으로 노출
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category = "Blackboard")
 	FName TargetKeyName;
+
+protected:
+	void OnAggroRangeChanged(const FOnAttributeChangeData& Data);
+
+	void UpdateSightRange(float NewRange);
 };

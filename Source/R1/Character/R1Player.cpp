@@ -53,10 +53,10 @@ AR1Player::AR1Player()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
-	// 시각(Sight) 자극으로 등록
 	if (StimuliSource)
 	{
-		StimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
+		StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
+
 		StimuliSource->RegisterWithPerceptionSystem();
 	}
 
