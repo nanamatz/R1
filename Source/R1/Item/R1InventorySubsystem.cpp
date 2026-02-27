@@ -3,6 +3,7 @@
 
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1ItemInstance.h"
+#include "System/R1EquipmentManagerComponent.h"
 
 
 void UR1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -61,26 +62,6 @@ void UR1InventorySubsystem::AddDefaultItem()
 	TObjectPtr<UR1ItemInstance> TestPotion = NewObject<UR1ItemInstance>(this);
 	TestPotion->Init(7, ItemDataTable);
 	Items.Add(TestPotion);
-
-	//// 2. 테스트 투구 (크기 2x2, 부위: Helmet)
-	//TObjectPtr<UR1ItemInstance> TestHelmet = NewObject<UR1ItemInstance>(this);
-	//TestHelmet->Init(102, FIntPoint(2, 2), ER1EquipmentSlot::Helmet);
-	//Items.Add(TestHelmet);
-
-	//TObjectPtr<UR1ItemInstance> TestGlove = NewObject<UR1ItemInstance>(this);
-	//TestGlove->Init(102, FIntPoint(2, 2), ER1EquipmentSlot::Glove);
-	//Items.Add(TestGlove);
-
-	//// 3. 테스트 반지 (크기 1x1, 부위: Ring)
-	//TObjectPtr<UR1ItemInstance> TestRing = NewObject<UR1ItemInstance>(this);
-	//TestRing->Init(103, FIntPoint(1, 1), ER1EquipmentSlot::Ring);
-	//Items.Add(TestRing);
-
-	//// 4. 일반 잡템 (크기 1x1, 부위: None - 장착 불가 테스트용)
-	//TObjectPtr<UR1ItemInstance> TestPotion = NewObject<UR1ItemInstance>(this);
-	//TestPotion->Init(201, FIntPoint(1, 1), ER1EquipmentSlot::None);
-	//Items.Add(TestPotion);
-
 
 	for (UR1ItemInstance* Item : Items)
 	{
@@ -192,6 +173,19 @@ bool UR1InventorySubsystem::EquipItem(UR1ItemInstance* ItemToEquip, ER1Equipment
 	// 4. UI 갱신 알림!
 	OnInventoryUpdated.Broadcast();
 
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (APawn* PlayerPawn = PC->GetPawn())
+		{
+			// 플레이어 몸에 붙어있는 장비 관리자 컴포넌트를 찾습니다.
+			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
+			{
+				// 아이템 인스턴스 안에 있는 데이터 행(Row)을 컴포넌트에게 넘겨줍니다!
+				EquipComp->EquipItem(TargetSlot, ItemToEquip->GetItemData());
+			}
+		}
+	}
+
 	UE_LOG(LogTemp, Warning, TEXT("장비 장착 완료: 슬롯 %d"), (int32)TargetSlot);
 	return true;
 }
@@ -208,6 +202,17 @@ bool UR1InventorySubsystem::UnequipItem(ER1EquipmentSlot TargetSlot)
 	Items.Add(ItemToUnequip);
 
 	OnInventoryUpdated.Broadcast();
+
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (APawn* PlayerPawn = PC->GetPawn())
+		{
+			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
+			{
+				EquipComp->UnEquipItem(TargetSlot);
+			}
+		}
+	}
 
 	return true;
 }

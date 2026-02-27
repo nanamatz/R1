@@ -45,6 +45,11 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_ManaRegeneration);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Level);
 
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_WeaponDamage);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_EquipDefence);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_DamageMultiplier);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_DefenceMultiplier);
+
 	//monster only
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Xp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AggroRange);
