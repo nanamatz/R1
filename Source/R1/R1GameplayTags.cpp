@@ -7,6 +7,10 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Interaction, "Input.Action.Interaction");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Inventory, "Input.Action.Inventory");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_GameMenu, "Input.Action.GameMenu");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SkillQ, "Input.Action.SkillQ");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SkillW, "Input.Action.SkillW");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SkillE, "Input.Action.SkillE");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SkillR, "Input.Action.SkillR");
 
 	//Montage event tags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Montage_Attack,"Event.Monage.Attack");
@@ -16,6 +20,8 @@ namespace R1GameplayTags
 
 	//Abiility tags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack,"Ability.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_JumpAttack,"Ability.JumpAttack");
+
 	UE_DEFINE_GAMEPLAY_TAG(Ability_LevelUp,"Ability.LevelUp");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_HitReact,"Ability.HitReact");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_ChainLightning,"Ability.ChainLightning");
@@ -24,6 +30,9 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Dead,"Character.State.Dead");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Casting,"Character.State.Casting");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_HitReact,"Character.State.HitReact");
+
+	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Magnitude, "Data.Skill.Magnitude");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Cost, "Data.Skill.Cost");
 
 	//Common attributes
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxHealth, "Data.Attribute.MaxHealth");

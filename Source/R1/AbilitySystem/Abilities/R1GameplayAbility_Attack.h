@@ -24,7 +24,6 @@ protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 protected:
-	//TEMP
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UGameplayEffect> DamageEffect;
 
@@ -35,11 +34,9 @@ private:
 	void CheckAndApplyDamage_Sector(const FGameplayEffectSpecHandle& SpecHandle,AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC);
 
 private:
-	// [콜백] 애니메이션이 끝났을 때 호출될 함수
 	UFUNCTION()
 	void OnMontageEnded();
 
-	// [콜백] 공격 판정 시점(이벤트)에 호출될 함수 -> 여기서 데미지를 줍니다!
 	UFUNCTION()
 	void OnAttackEventReceived(FGameplayEventData Payload);
 };

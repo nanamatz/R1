@@ -42,6 +42,10 @@ private:
 	void OnSetDestinationReleased();
 
 	void OnInventoryToggle();
+	void OnQSkill();
+	void OnWSkill();
+	void OnESkill();
+	void OnRSkill();
 public:
 	UFUNCTION(BlueprintCallable)
 	void OnGameMenuToggle();
@@ -63,9 +67,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void ResetMovementState();
 
+	class AR1Character* GetHighlightActor() const { return HighlightActor; }
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	float ShortPressThreshold = 0.3f;
+	float ShortPressThreshold = 0.3;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UNiagaraSystem> FXCursor;

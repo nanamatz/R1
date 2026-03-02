@@ -21,6 +21,8 @@
 #include "R1GameplayTags.h"
 #include "UI/R1HUD.h"
 
+#include "AbilitySystem/R1AbilitySystemComponent.h"
+
 AR1PlayerController::AR1PlayerController()
 {
 	bShowMouseCursor = true;
@@ -99,7 +101,46 @@ void AR1PlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(ActionGameMenuToggle, ETriggerEvent::Started, this, &ThisClass::OnGameMenuToggle);
 
 
-		//auto ActionInteract = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Interaction);
+		auto ActionQSkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillQ);
+
+		if (ActionQSkill == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActioQSkill is null."));
+			return;
+		}
+
+		EnhancedInputComponent->BindAction(ActionQSkill, ETriggerEvent::Triggered, this, &ThisClass::OnQSkill);
+
+		auto ActionWSkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillW);
+
+		if (ActionWSkill == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActioWSkill is null."));
+			return;
+		}
+
+		EnhancedInputComponent->BindAction(ActionWSkill, ETriggerEvent::Triggered, this, &ThisClass::OnWSkill);
+
+		auto ActionESkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillE);
+
+		if (ActionESkill == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActioESkill is null."));
+			return;
+		}
+
+		EnhancedInputComponent->BindAction(ActionESkill, ETriggerEvent::Triggered, this, &ThisClass::OnESkill);
+
+		auto ActionRSkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillR);
+
+		if (ActionRSkill == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActioRSkill is null."));
+			return;
+		}
+
+		EnhancedInputComponent->BindAction(ActionRSkill, ETriggerEvent::Triggered, this, &ThisClass::OnRSkill);
+
 	}
 	else
 	{
@@ -159,8 +200,7 @@ void AR1PlayerController::OnSetDestinationTriggered()
 
 	if (R1Player)
 	{
-		//FVector WorldDirection = (CacheDestination - R1Player->GetActorLocation()).GetSafeNormal();
-		//R1Player->AddMovementInput(WorldDirection, 1.0, false);
+
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 	}
 }
@@ -257,8 +297,6 @@ void AR1PlayerController::ChaseTargetAndAttack()
 			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
 			
 			UE_LOG(LogTemp,Warning,TEXT("Attack Count : %d"),++AttackCount);
-
-			//R1Player->SetCreatureState(ECreatureState::Casting);
 			
 			TargetActor = HighlightActor;
 		}
@@ -267,10 +305,6 @@ void AR1PlayerController::ChaseTargetAndAttack()
 			//too far you should move
 			CacheDestination = TargetActor->GetActorLocation();
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
-
-			//기존 방식
-			//FVector WorldDirection = Direction.GetSafeNormal();
-			//R1Player->AddMovementInput(WorldDirection, 1.0, false);
 		}
 	}
 	
@@ -368,6 +402,63 @@ void AR1PlayerController::OnInventoryToggle()
 	{
 		MyR1HUD->ToggleInventory();
 	}
+}
+
+void AR1PlayerController::OnQSkill()
+{
+	if (!R1Player) return;
+
+	UAbilitySystemComponent* ASC = R1Player->GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	// 1. 현재 장착된 장비나 스킬 매니저로부터 Q슬롯에 해당하는 'GA 클래스'를 가져옵니다.
+	// (이 함수는 질문자님의 장비 시스템 구조에 맞게 구현하시면 됩니다)
+	TSubclassOf<UGameplayAbility> QSkillClass = R1Player->GetEquippedSkillClass(EInputSlot::Q);
+
+	if (QSkillClass)
+	{
+		// 2. 클래스로 직접 실행 시도!
+		bool bSuccess = ASC->TryActivateAbilityByClass(QSkillClass);
+
+		if (bSuccess)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("✅ [컨트롤러] Q 스킬 직접 실행 성공!"));
+		}
+		else
+		{
+			// 실행 실패 시 (쿨타임, 마나 부족, 혹은 CanActivateAbility에서 false 반환)
+			UE_LOG(LogTemp, Error, TEXT("🚨 [컨트롤러] Q 스킬 조건 미달로 실행 실패 (마나/사거리/쿨타임 등)"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ℹ️ [컨트롤러] Q슬롯에 장착된 스킬이 없습니다."));
+	}
+}
+
+void AR1PlayerController::OnWSkill()
+{
+	UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(R1Player->GetAbilitySystemComponent());
+
+	FGameplayEventData PayloadData;
+	ASC->HandleGameplayEvent(R1GameplayTags::Input_Action_SkillW, &PayloadData);
+}
+
+void AR1PlayerController::OnESkill()
+{
+	UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(R1Player->GetAbilitySystemComponent());
+
+	FGameplayEventData PayloadData;
+	ASC->HandleGameplayEvent(R1GameplayTags::Input_Action_SkillE, &PayloadData);
+}
+
+
+void AR1PlayerController::OnRSkill()
+{
+	UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(R1Player->GetAbilitySystemComponent());
+
+	FGameplayEventData PayloadData;
+	ASC->HandleGameplayEvent(R1GameplayTags::Input_Action_SkillR, &PayloadData);
 }
 
 void AR1PlayerController::OnGameMenuToggle()

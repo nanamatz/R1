@@ -10,6 +10,10 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Interaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Inventory);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_GameMenu);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SkillQ);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SkillW);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SkillE);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SkillR);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_Begin);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_End);
@@ -18,6 +22,8 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_HitReact);
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_JumpAttack);
+
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LevelUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_HitReact);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_ChainLightning);
@@ -26,7 +32,9 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Casting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_HitReact);
 
-	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Skill_Magnitude);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Skill_Cost);
+
 	// Common attributes
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxHealth);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_HealthRegeneration);

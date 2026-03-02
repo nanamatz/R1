@@ -6,7 +6,6 @@
 #include "Engine/DataTable.h"
 #include "R1Define.h"
 #include "R1GameplayTags.h"
-
 #include "R1ItemDataRow.generated.h"
 
 
