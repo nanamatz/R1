@@ -30,14 +30,6 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 
 	AR1Character* Attacker = Cast<AR1Character>(ActorInfo->AvatarActor);
 
-	// 1. 자원(마나/스태미나) 소모 및 쿨타임 확인
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-		return;
-	}
-
-
 	if (Attacker && Attacker->AttackMontage)
 	{
 		Attacker->SetCreatureState(ECreatureState::Casting);

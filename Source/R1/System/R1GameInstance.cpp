@@ -133,3 +133,16 @@ void UR1GameInstance::ApplyRespawnSnapshotToPlayer(AR1Player* Player)
 	UGameplayStatics::SaveGameToSlot(SaveGameObject, RespawnSlotName, RespawnUserIndex);
 }
 
+const FSkillDataRow* UR1GameInstance::GetSkillData(FName SkillName) const
+{
+	// 에디터에서 데이터 테이블을 안 넣었을 경우를 대비한 안전장치
+	if (SkillDataTable == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UR1GameInstance: 스킬 데이터 테이블이 비어있습니다!"));
+		return nullptr;
+	}
+
+	// 🌟 매개변수로 받은 SkillName(행 이름)을 검색해서 반환합니다.
+	return SkillDataTable->FindRow<FSkillDataRow>(SkillName, TEXT(""));
+}
+

@@ -5,6 +5,7 @@
 #include "Attribute/PlayerAttributeSet.h"
 #include "Attribute/R1AttributeSet.h"
 #include "R1AbilitySystemComponent.h"
+#include "R1GameplayTags.h"
 
 struct R1DamageStatics
 {
@@ -59,9 +60,13 @@ void UR1DamageExecutionCalc::Execute_Implementation(const FGameplayEffectCustomE
 	float WeaponDamage = 0.0f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().WeaponDamageDef, EvaluationParameters, WeaponDamage);
 
+	float SkillDamage = ExecutionParams.GetOwningSpec().GetSetByCallerMagnitude(R1GameplayTags::Data_Skill_Magnitude, false, 0.0f);
+	
 	float DamageMultiplier = 1.0f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DamageMultiplierDef, EvaluationParameters, DamageMultiplier);
 	if (DamageMultiplier <= 0.0f) DamageMultiplier = 1.0f;
+
+
 
 	float BaseDefence = 0.0f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().BaseDefenceDef, EvaluationParameters, BaseDefence);
@@ -73,7 +78,7 @@ void UR1DamageExecutionCalc::Execute_Implementation(const FGameplayEffectCustomE
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DefenceMultiplierDef, EvaluationParameters, DefenceMultiplier);
 	//if (DefenceMultiplier <= 0.0f) DefenceMultiplier = 1.0f;
 
-	float TotalAttackPower = (BaseDamage + WeaponDamage) * DamageMultiplier;
+	float TotalAttackPower = (BaseDamage + WeaponDamage + SkillDamage) * DamageMultiplier;
 	float TotalDefencePower = (BaseDefence + EquipDefence) * DefenceMultiplier;
 
 	float MitigatedDamage = TotalAttackPower - TotalDefencePower;
