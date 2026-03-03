@@ -36,6 +36,7 @@ namespace R1GameplayTags
 
 	//Common attributes
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxHealth, "Data.Attribute.MaxHealth");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_Health, "Data.Attribute.Health");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_HealthRegeneration, "Data.Attribute.HealthRegeneration");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_BaseDefence, "Data.Attribute.BaseDefence");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_BaseDamage, "Data.Attribute.BaseDamage");
@@ -47,6 +48,7 @@ namespace R1GameplayTags
 	//player only
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxExp, "Data.Attribute.MaxExp");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxMana, "Data.Attribute.MaxMana");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_Mana, "Data.Attribute.Mana");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_ManaRegeneration, "Data.Attribute.ManaRegeneration");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_Level, "Data.Attribute.Level");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_WeaponDamage, "Data.Attribute.WeaponDamage");

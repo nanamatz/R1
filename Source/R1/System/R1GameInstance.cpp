@@ -52,11 +52,15 @@ bool UR1GameInstance::SavePlayerState(const AR1Player* Player, const FString& Sl
 	SaveGameObject->MaxHealth = CommonAttributes->GetMaxHealth();
 	SaveGameObject->BaseDamage = CommonAttributes->GetBaseDamage();
 	SaveGameObject->BaseDefence = CommonAttributes->GetBaseDefence();
+	SaveGameObject->MoveSpeed = CommonAttributes->GetMoveSpeed();
+	SaveGameObject->AttackSpeed = CommonAttributes->GetAttackSpeed();
 
 	SaveGameObject->MaxMana = PlayerAttributes->GetMaxMana();
 	SaveGameObject->Level = PlayerAttributes->GetLevel();
 	SaveGameObject->Exp = PlayerAttributes->GetExp();
 	SaveGameObject->MaxExp = PlayerAttributes->GetMaxExp();
+	SaveGameObject->Mana = PlayerAttributes->GetMana();
+
 
 	return UGameplayStatics::SaveGameToSlot(SaveGameObject, SlotName, UserIndex);
 }
@@ -89,11 +93,14 @@ bool UR1GameInstance::LoadPlayerStateToPlayer(AR1Player* Player, const FString& 
 	CommonAttributes->SetMaxHealth(SaveGameObject->MaxHealth);
 	CommonAttributes->SetBaseDamage(SaveGameObject->BaseDamage);
 	CommonAttributes->SetBaseDefence(SaveGameObject->BaseDefence);
+	CommonAttributes->SetMoveSpeed(SaveGameObject->MoveSpeed);
+	CommonAttributes->SetAttackSpeed(SaveGameObject->AttackSpeed);
 
 	PlayerAttributes->SetLevel(SaveGameObject->Level);
 	PlayerAttributes->SetMaxExp(SaveGameObject->MaxExp);
 	PlayerAttributes->SetExp(SaveGameObject->Exp);
 	PlayerAttributes->SetMaxMana(SaveGameObject->MaxMana);
+	PlayerAttributes->SetMana(SaveGameObject->Mana);
 
 	return true;
 }

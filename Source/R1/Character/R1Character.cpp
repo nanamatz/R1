@@ -170,6 +170,7 @@ void AR1Character::InitAttributes()
 		{
 			// 3. [핵심] SetByCaller로 값 주입하기
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_MaxHealth, StatData->MaxHealth);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_Health, StatData->Health);
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_BaseDamage, StatData->BaseDamage);
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_BaseDefence, StatData->BaseDefence);
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_AttackRange, StatData->AttackRange);

@@ -59,6 +59,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TSubclassOf<class UGameplayEffect> LevelUpEffect;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<class AR1Character> CombatTarget;
+
 private:
 	void InitExpBar();
 

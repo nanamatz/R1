@@ -38,4 +38,17 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	float Level = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float Health = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float Mana = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float AttackSpeed = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float MoveSpeed = 0.f;
+
 };

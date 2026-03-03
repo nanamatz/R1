@@ -2,15 +2,20 @@
 #include "Character/R1Player.h"
 #include "Character/R1Monster.h"
 #include "Player/R1PlayerController.h"
+
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/Attribute/PlayerAttributeSet.h"
+
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_ApplyRootMotionMoveToActorForce.h"
+
 #include "Components/CapsuleComponent.h"
 #include "R1GameplayTags.h"
 #include "R1Define.h"
 #include "System/R1GameInstance.h"
-#include "AbilitySystem/Attribute/PlayerAttributeSet.h"
+#include "Kismet/KismetMathLibrary.h"
 
 UR1GameplayAbility_JumpAttack::UR1GameplayAbility_JumpAttack(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
@@ -31,10 +36,13 @@ bool UR1GameplayAbility_JumpAttack::CanActivateAbility(const FGameplayAbilitySpe
 	AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController());
 	if (!PC) return false;
 
-	AR1Monster* TargetMonster = Cast<AR1Monster>(PC->GetHighlightActor());
-	if (TargetMonster == nullptr || TargetMonster->GetCreatureState() == ECreatureState::Dead) return false;
-
+	AR1Character* TargetMonster = PC->GetHighlightActor();
+	if (TargetMonster == nullptr || TargetMonster->GetCreatureState() == ECreatureState::Dead)
+	{
+		return false;
+	}	
 	float DistanceToTarget = FVector::Distance(PlayerCharacter->GetActorLocation(), TargetMonster->GetActorLocation());
+	
 	if (DistanceToTarget > CachedSkillRange)
 	{
 		return false;
@@ -54,59 +62,84 @@ void UR1GameplayAbility_JumpAttack::ActivateAbility(const FGameplayAbilitySpecHa
 		return;
 	}
 
-	if (JumpMontage != nullptr)
-	{
-		UAbilityTask_PlayMontageAndWait* PlayMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, JumpMontage);
-		PlayMontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnDashInterrupted);
-		PlayMontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnDashInterrupted);
-		PlayMontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnDashInterrupted);
-		PlayMontageTask->ReadyForActivation();
-	}
-	else
-	{
-		// 몽타주를 빼먹었을 경우 개발자가 알기 쉽게 빨간색 에러를 띄우고 스킬을 즉시 종료합니다.
-		UE_LOG(LogTemp, Error, TEXT("🚨 [GA_JumpAttack] 몽타주 에셋이 할당되지 않았습니다! 블루프린트를 확인하세요."));
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-	}
-
 	AR1Player* Player = Cast<AR1Player>(ActorInfo->AvatarActor.Get());
-	AR1PlayerController* PC = Cast<AR1PlayerController>(Player->GetController());
 
-	CachedTarget = Cast<AR1Monster>(PC->GetHighlightActor());
-
-	if(CachedTarget == nullptr)
+	if (Player == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("nullptr!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
 
-	// 벽 넘기 (비행 중 지형 충돌 무시)
-	Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
-	Player->SetCreatureState(ECreatureState::Casting);
-
-	// 1. 애니메이션 재생
-	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-		this, NAME_None, JumpMontage, 1.0f, NAME_None, false);
-
-	MontageTask->ReadyForActivation();
-
-	// 2. 도약 (Root Motion)
-	if (CachedTarget && CachedTarget->IsActorBeingDestroyed() == false)
+	AR1PlayerController* PC = Cast<AR1PlayerController>(Player->GetController());
+	
+	if(PC == nullptr)
 	{
-		UAbilityTask_ApplyRootMotionMoveToActorForce* DashTask = 
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
+	CachedTarget = Cast<AR1Monster>(PC->GetHighlightActor());
+
+	if(CachedTarget)
+	{
+		FVector Direction = CachedTarget->GetActorLocation() - Player->GetActorLocation();
+		Direction.Z = 0.f;
+
+		FRotator TargetRotation = Direction.Rotation();
+		Player->SetActorRotation(TargetRotation);
+
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+		Player->SetCreatureState(ECreatureState::Casting);
+		PC->ResetMovementState();
+
+		const float MyRadius = Player->GetCapsuleComponent()->GetScaledCapsuleRadius();
+		const float TargetRadius = CachedTarget->GetCapsuleComponent()->GetScaledCapsuleRadius();
+		const FVector TargetOffset(MyRadius + TargetRadius + 10.f, 0.f, 0.f);
+
+		if (JumpMontage)
+		{
+
+			UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+				this, NAME_None, JumpMontage, 1.5f, NAME_None, false);
+
+			MontageTask->OnCompleted.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashFinished);
+			MontageTask->OnInterrupted.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashFinished);
+			MontageTask->OnCancelled.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashFinished);
+
+			MontageTask->ReadyForActivation();
+
+			UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+				this,
+				AttackEventTag, // 기다릴 태그
+				nullptr,
+				true,
+				false
+			);
+			// 이벤트가 도착하면 -> OnAttackEventReceived 실행
+			WaitEventTask->EventReceived.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnJumpAttackEventReceived);
+
+			// Task 시작!
+			WaitEventTask->ReadyForActivation();
+		}
+		else
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+			return;
+		}
+
+		UAbilityTask_ApplyRootMotionMoveToActorForce* DashTask =
 			UAbilityTask_ApplyRootMotionMoveToActorForce::ApplyRootMotionMoveToActorForce(
 				this,
-				NAME_None,
+				TEXT("LeapQ_RootMotion"),
 				CachedTarget,
-				CachedTarget->GetActorLocation(),
+				TargetOffset,
 				ERootMotionMoveToActorTargetOffsetType::AlignFromTargetToSource,
 				DashDuration,
 				nullptr,
 				nullptr,
-				false,
-				MOVE_Walking,
-				false,
+				true,
+				MOVE_Flying,
+				true,
 				JumpHeightCurve,
 				nullptr,
 				ERootMotionFinishVelocityMode::SetVelocity,
@@ -115,9 +148,16 @@ void UR1GameplayAbility_JumpAttack::ActivateAbility(const FGameplayAbilitySpecHa
 				false
 			);
 
-		DashTask->OnFinished.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashFinished);
+		//DashTask->OnFinished.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashFinished);
+
 		DashTask->ReadyForActivation();
 	}
+	else
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
 }
 
 void UR1GameplayAbility_JumpAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -209,33 +249,27 @@ void UR1GameplayAbility_JumpAttack::ApplyCost(const FGameplayAbilitySpecHandle H
 	}
 }
 
-void UR1GameplayAbility_JumpAttack::OnDashFinished(bool bDestinationReached, bool bTimedOut, FVector FinalTargetLocation)
+void UR1GameplayAbility_JumpAttack::OnDashFinished()
 {
-	if (CachedTarget && DamageEffect && CachedTarget->GetCreatureState() != ECreatureState::Dead)
+	if (CurrentActorInfo == nullptr || CurrentActorInfo->AvatarActor.IsValid() == false)
 	{
-		UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
-		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(CachedTarget);
-
-		if (SourceASC && TargetASC)
-		{
-			FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
-			Context.AddSourceObject(this);
-
-			FGameplayEffectSpecHandle EffectSpecHandle = SourceASC->MakeOutgoingSpec(DamageEffect, 1.0f, Context);
-			EffectSpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Skill_Magnitude, CachedSkillDamage);
-
-			SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
-
-
-			FGameplayEventData PayloadData;
-			FGameplayTag HitEventTag = R1GameplayTags::Ability_Attack;
-
-			AActor* AvatarActor = GetAvatarActorFromActorInfo();
-			PayloadData.Instigator = AvatarActor;
-			PayloadData.Target = CachedTarget;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AvatarActor, HitEventTag, PayloadData);
-		}
+		return;
 	}
+
+	/*AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor.Get());
+	if (Attacker)
+	{
+		if (Attacker->GetCreatureState() == ECreatureState::Dead)
+		{
+			Attacker->SetCreatureState(ECreatureState::Dead);
+			UE_LOG(LogTemp, Warning, TEXT("Dead"));
+		}
+		else
+		{
+			Attacker->SetCreatureState(ECreatureState::Moving);
+			UE_LOG(LogTemp, Warning, TEXT("Moving"));
+		}
+	}*/
 
 	// 능력 정상 종료
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
@@ -244,5 +278,56 @@ void UR1GameplayAbility_JumpAttack::OnDashFinished(bool bDestinationReached, boo
 void UR1GameplayAbility_JumpAttack::OnDashInterrupted()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+}
+
+void UR1GameplayAbility_JumpAttack::OnJumpAttackEventReceived(FGameplayEventData Payload)
+{
+	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
+
+	if (DamageEffect && SourceASC)
+	{
+		FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
+		EffectContext.AddSourceObject(this);
+
+		FGameplayEffectSpecHandle EffectSpecHandle = SourceASC->MakeOutgoingSpec(DamageEffect, 1, EffectContext);
+		EffectSpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Skill_Magnitude, CachedSkillDamage);
+
+		if (EffectSpecHandle.IsValid() == false || EffectSpecHandle.Data.IsValid() == false)
+		{
+			return;
+		}
+		if (!CachedTarget || CachedTarget->GetCreatureState() == ECreatureState::Dead)
+		{
+			return;
+		}
+		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(CachedTarget);
+
+		if (TargetASC)
+		{
+			SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
+			FGameplayEventData PayloadData;
+			FGameplayTag HitEventTag = R1GameplayTags::Ability_Attack;
+
+			AActor* AvatarActor = GetAvatarActorFromActorInfo();
+			PayloadData.Instigator = AvatarActor;
+			PayloadData.Target = CachedTarget;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AvatarActor, HitEventTag, PayloadData);
+		}
+
+		AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor.Get());
+		if (Attacker)
+		{
+			if (Attacker->GetCreatureState() == ECreatureState::Dead)
+			{
+				Attacker->SetCreatureState(ECreatureState::Dead);
+				UE_LOG(LogTemp, Warning, TEXT("Dead"));
+			}
+			else
+			{
+				Attacker->SetCreatureState(ECreatureState::Moving);
+				UE_LOG(LogTemp, Warning, TEXT("Moving"));
+			}
+		}
+	}
 }
 

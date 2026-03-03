@@ -67,7 +67,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void ResetMovementState();
 
-	AR1Character* GetHighlightActor() const { return HighlightActor; }
+	AR1Character* GetHighlightActor();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
