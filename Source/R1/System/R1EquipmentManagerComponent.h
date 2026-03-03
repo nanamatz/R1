@@ -7,6 +7,7 @@
 #include "GameplayEffectTypes.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "DataTable/R1ItemDataRow.h"
+#include "R1Define.h"
 #include "R1EquipmentManagerComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -42,6 +43,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void UnEquipItem(ER1EquipmentSlot EquipSlot);
 
+public:
+	// Q, W, E, R 단축키를 눌렀을 때 실행할 함수
+	void ExecuteSkillSlot(ER1SkillSlot Slot);
+
+	// 플레이어가 UI에서 직접 단축키를 변경할 때 쓸 함수
+	UFUNCTION(BlueprintCallable)
+	void AssignSkillToSlot(ER1SkillSlot Slot, FGameplayAbilitySpecHandle AbilityHandle);
+
+private:
+	UPROPERTY()
+	TMap<ER1SkillSlot, FGameplayAbilitySpecHandle> SkillSlotsMap;
+
+	// 빈 단축키를 찾아서 순서대로 꽂아주는 헬퍼 함수
+	void AutoAssignToEmptySlot(FGameplayAbilitySpecHandle NewHandle);
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -49,7 +65,7 @@ protected:
 private:
 	// 이 컴포넌트가 부착된 캐릭터의 ASC 캐싱
 	UPROPERTY()
-	TObjectPtr<class UAbilitySystemComponent> ASC;
+	TObjectPtr<class UR1AbilitySystemComponent> ASC;
 
 	// 💡 [핵심] 현재 장착 중인 장비들의 영수증을 슬롯별로 관리하는 맵(Map)
 	UPROPERTY()

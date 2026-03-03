@@ -54,10 +54,32 @@ void UR1GameplayAbility_JumpAttack::ActivateAbility(const FGameplayAbilitySpecHa
 		return;
 	}
 
+	if (JumpMontage != nullptr)
+	{
+		UAbilityTask_PlayMontageAndWait* PlayMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, JumpMontage);
+		PlayMontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnDashInterrupted);
+		PlayMontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnDashInterrupted);
+		PlayMontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnDashInterrupted);
+		PlayMontageTask->ReadyForActivation();
+	}
+	else
+	{
+		// 몽타주를 빼먹었을 경우 개발자가 알기 쉽게 빨간색 에러를 띄우고 스킬을 즉시 종료합니다.
+		UE_LOG(LogTemp, Error, TEXT("🚨 [GA_JumpAttack] 몽타주 에셋이 할당되지 않았습니다! 블루프린트를 확인하세요."));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+	}
+
 	AR1Player* Player = Cast<AR1Player>(ActorInfo->AvatarActor.Get());
 	AR1PlayerController* PC = Cast<AR1PlayerController>(Player->GetController());
 
 	CachedTarget = Cast<AR1Monster>(PC->GetHighlightActor());
+
+	if(CachedTarget == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("nullptr!"));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
 
 	// 벽 넘기 (비행 중 지형 충돌 무시)
 	Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
@@ -67,34 +89,35 @@ void UR1GameplayAbility_JumpAttack::ActivateAbility(const FGameplayAbilitySpecHa
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this, NAME_None, JumpMontage, 1.0f, NAME_None, false);
 
-	MontageTask->OnInterrupted.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashInterrupted);
-	MontageTask->OnCancelled.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashInterrupted);
-
 	MontageTask->ReadyForActivation();
 
 	// 2. 도약 (Root Motion)
-	UAbilityTask_ApplyRootMotionMoveToActorForce* DashTask = UAbilityTask_ApplyRootMotionMoveToActorForce::ApplyRootMotionMoveToActorForce(
-		this,
-		NAME_None,
-		CachedTarget,
-		FVector(100.f,0.f,0.f),
-		ERootMotionMoveToActorTargetOffsetType::AlignFromTargetToSource,
-		DashDuration,
-		nullptr,
-		nullptr,
-		false,
-		MOVE_Walking,
-		false,
-		JumpHeightCurve,
-		nullptr,
-		ERootMotionFinishVelocityMode::SetVelocity,
-		FVector::ZeroVector,
-		0.0f,
-		false
-	);
+	if (CachedTarget && CachedTarget->IsActorBeingDestroyed() == false)
+	{
+		UAbilityTask_ApplyRootMotionMoveToActorForce* DashTask = 
+			UAbilityTask_ApplyRootMotionMoveToActorForce::ApplyRootMotionMoveToActorForce(
+				this,
+				NAME_None,
+				CachedTarget,
+				CachedTarget->GetActorLocation(),
+				ERootMotionMoveToActorTargetOffsetType::AlignFromTargetToSource,
+				DashDuration,
+				nullptr,
+				nullptr,
+				false,
+				MOVE_Walking,
+				false,
+				JumpHeightCurve,
+				nullptr,
+				ERootMotionFinishVelocityMode::SetVelocity,
+				FVector::ZeroVector,
+				0.0f,
+				false
+			);
 
-	DashTask->OnFinished.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashFinished);
-	DashTask->ReadyForActivation();
+		DashTask->OnFinished.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashFinished);
+		DashTask->ReadyForActivation();
+	}
 }
 
 void UR1GameplayAbility_JumpAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -151,7 +174,7 @@ void UR1GameplayAbility_JumpAttack::OnAvatarSet(const FGameplayAbilityActorInfo*
 
 bool UR1GameplayAbility_JumpAttack::CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags) const
 {
-	Super::CheckCost(Handle, ActorInfo, OptionalRelevantTags);
+	//Super::CheckCost(Handle, ActorInfo, OptionalRelevantTags);
 
 	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
 	if (ASC)
@@ -171,7 +194,7 @@ bool UR1GameplayAbility_JumpAttack::CheckCost(const FGameplayAbilitySpecHandle H
 
 void UR1GameplayAbility_JumpAttack::ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
-	Super::ApplyCost(Handle, ActorInfo, ActivationInfo);
+	//Super::ApplyCost(Handle, ActorInfo, ActivationInfo);
 	if (CostGameplayEffectClass)
 	{
 		// 마나를 깎을 GE 명세서를 만듭니다.
