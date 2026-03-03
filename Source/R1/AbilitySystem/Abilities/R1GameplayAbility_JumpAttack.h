@@ -33,12 +33,15 @@ private:
 	float CachedSkillDamage = 0.0f;
 	float CachedSkillRange = 0.0f;
 	float CachedManaCost = 0.0f;
-public:
+private:
 	UFUNCTION()
-	void OnDashFinished(bool bDestinationReached, bool bTimedOut, FVector FinalTargetLocation);
+	void OnDashFinished();
 
 	UFUNCTION()
 	void OnDashInterrupted();
+
+	UFUNCTION()
+	void OnJumpAttackEventReceived(FGameplayEventData Payload);
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "JumpAttack")
@@ -48,7 +51,10 @@ protected:
 	TSubclassOf<class UGameplayEffect> DamageEffect;
 
 	UPROPERTY(EditAnywhere, Category = "JumpAttack")
-	float DashDuration = 1.23f; // 체공 시간 (짧을수록 빠르게 날아감)
+	float DashDuration = 0.5f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "JumpAttack")
+	FGameplayTag AttackEventTag;
 
 	UPROPERTY(EditAnywhere, Category = "JumpAttack")
 	TObjectPtr<class UCurveVector> JumpHeightCurve; // 포물선을 그리기 위한 커브 (옵션)

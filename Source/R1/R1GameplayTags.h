@@ -37,6 +37,7 @@ namespace R1GameplayTags
 
 	// Common attributes
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxHealth);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Health);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_HealthRegeneration);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MoveSpeed);
 
@@ -51,6 +52,7 @@ namespace R1GameplayTags
 	//player only
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxExp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxMana);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Mana);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_ManaRegeneration);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Level);
 
