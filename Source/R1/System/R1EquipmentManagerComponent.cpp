@@ -3,6 +3,7 @@
 
 #include "System/R1EquipmentManagerComponent.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/R1GameplayAbility.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "R1GameplayTags.h"
@@ -37,6 +38,7 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 			FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
 
 			NewHandles.AbilityHandles.Add(Handle); 
+			AutoAssignToEmptySlot(Handle);
 		}
 	}
 
@@ -110,10 +112,12 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 		}
 	}
 
-	EquippedHandlesMap.Add(EquipSlot, NewHandles);
+	EquippedHandlesMap.FindOrAdd(EquipSlot, NewHandles);
 
 	UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 완료! 스킬 %d개, 효과 %d개 적용됨"),
 		*UEnum::GetValueAsString(EquipSlot), NewHandles.AbilityHandles.Num(), NewHandles.EffectHandles.Num());
+
+
 }
 
 void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
@@ -126,6 +130,14 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 		// 2. 보관해둔 스킬 영수증을 보고 어빌리티 압수!
 		for (const FGameplayAbilitySpecHandle& AbilityHandle : FoundHandles->AbilityHandles)
 		{
+			for (auto It = SkillSlotsMap.CreateIterator(); It; ++It)
+			{
+				if (It.Value() == AbilityHandle)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("🗑️ 스킬 단축키 등록 해제: %s 슬롯 비워짐"), *UEnum::GetValueAsString(It.Key()));
+					It.RemoveCurrent();
+				}
+			}
 			ASC->ClearAbility(AbilityHandle);
 		}
 
@@ -142,13 +154,50 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 	}
 }
 
+void UR1EquipmentManagerComponent::ExecuteSkillSlot(ER1SkillSlot Slot)
+{
+	if (ASC && SkillSlotsMap.Contains(Slot))
+	{
+		FGameplayAbilitySpecHandle HandleToExecute = SkillSlotsMap[Slot];
+		if (HandleToExecute.IsValid())
+		{
+			ASC->TryActivateAbility(HandleToExecute);
+			return;
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("ℹ️ [%s] 슬롯이 비어있습니다."), *UEnum::GetValueAsString(Slot));
+}
+
+void UR1EquipmentManagerComponent::AssignSkillToSlot(ER1SkillSlot Slot, FGameplayAbilitySpecHandle AbilityHandle)
+{
+}
+
+
+void UR1EquipmentManagerComponent::AutoAssignToEmptySlot(FGameplayAbilitySpecHandle NewHandle)
+{
+	ER1SkillSlot SlotOrder[] = { ER1SkillSlot::Q, ER1SkillSlot::W, ER1SkillSlot::E, ER1SkillSlot::R };
+
+	for (ER1SkillSlot Slot : SlotOrder)
+	{
+		// 이 슬롯이 비어있거나, 등록된 핸들이 유효하지 않다면(이미 삭제된 스킬이라면)
+		if (!SkillSlotsMap.Contains(Slot) || !SkillSlotsMap[Slot].IsValid())
+		{
+			// 해당 슬롯에 등록!
+			SkillSlotsMap.Add(Slot, NewHandle);
+			UE_LOG(LogTemp, Warning, TEXT("✅ 스킬 자동 등록 완료! 슬롯: %s"), *UEnum::GetValueAsString(Slot));
+			return; // 하나 등록했으면 끝
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("⚠️ 스킬 단축키가 모두 꽉 찼습니다! (Q,W,E,R 모두 사용 중)"));
+}
 
 // Called when the game starts
 void UR1EquipmentManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
+	ASC = Cast<UR1AbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner()));
 	
 }
 

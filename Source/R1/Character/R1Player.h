@@ -17,6 +17,9 @@ class R1_API AR1Player : public AR1Character
 
 public:
 	AR1Player( );
+
+	// 🌟 [핵심] 외부(Controller 등)에서 배낭을 열어볼 수 있게 해주는 Getter 함수
+	class UR1EquipmentManagerComponent* GetEquipmentComponent() const { return EquipmentManagerComponent; }
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class USpringArmComponent> SpringArm;

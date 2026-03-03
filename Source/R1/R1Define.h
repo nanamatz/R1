@@ -3,6 +3,16 @@
 #pragma once
 
 UENUM(BlueprintType)
+enum class ER1SkillSlot : uint8
+{
+	None,
+	Q,
+	W,
+	E,
+	R
+};
+
+UENUM(BlueprintType)
 enum class ER1EquipmentSlot : uint8
 {
 	None,		// 장비 아님 (포션, 재료 등)

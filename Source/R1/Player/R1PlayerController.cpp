@@ -22,6 +22,7 @@
 #include "UI/R1HUD.h"
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
+#include "System/R1EquipmentManagerComponent.h"
 
 AR1PlayerController::AR1PlayerController()
 {
@@ -109,7 +110,7 @@ void AR1PlayerController::SetupInputComponent()
 			return;
 		}
 
-		EnhancedInputComponent->BindAction(ActionQSkill, ETriggerEvent::Triggered, this, &ThisClass::OnQSkill);
+		EnhancedInputComponent->BindAction(ActionQSkill, ETriggerEvent::Started, this, &ThisClass::OnQSkill);
 
 		auto ActionWSkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillW);
 
@@ -119,7 +120,7 @@ void AR1PlayerController::SetupInputComponent()
 			return;
 		}
 
-		EnhancedInputComponent->BindAction(ActionWSkill, ETriggerEvent::Triggered, this, &ThisClass::OnWSkill);
+		EnhancedInputComponent->BindAction(ActionWSkill, ETriggerEvent::Started, this, &ThisClass::OnWSkill);
 
 		auto ActionESkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillE);
 
@@ -129,7 +130,7 @@ void AR1PlayerController::SetupInputComponent()
 			return;
 		}
 
-		EnhancedInputComponent->BindAction(ActionESkill, ETriggerEvent::Triggered, this, &ThisClass::OnESkill);
+		EnhancedInputComponent->BindAction(ActionESkill, ETriggerEvent::Started, this, &ThisClass::OnESkill);
 
 		auto ActionRSkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillR);
 
@@ -139,7 +140,7 @@ void AR1PlayerController::SetupInputComponent()
 			return;
 		}
 
-		EnhancedInputComponent->BindAction(ActionRSkill, ETriggerEvent::Triggered, this, &ThisClass::OnRSkill);
+		EnhancedInputComponent->BindAction(ActionRSkill, ETriggerEvent::Started, this, &ThisClass::OnRSkill);
 
 	}
 	else
@@ -406,59 +407,35 @@ void AR1PlayerController::OnInventoryToggle()
 
 void AR1PlayerController::OnQSkill()
 {
-	if (!R1Player) return;
-
-	UAbilitySystemComponent* ASC = R1Player->GetAbilitySystemComponent();
-	if (!ASC) return;
-
-	// 1. 현재 장착된 장비나 스킬 매니저로부터 Q슬롯에 해당하는 'GA 클래스'를 가져옵니다.
-	// (이 함수는 질문자님의 장비 시스템 구조에 맞게 구현하시면 됩니다)
-	TSubclassOf<UGameplayAbility> QSkillClass = R1Player->GetEquippedSkillClass(EInputSlot::Q);
-
-	if (QSkillClass)
+	if (R1Player && R1Player->GetEquipmentComponent())
 	{
-		// 2. 클래스로 직접 실행 시도!
-		bool bSuccess = ASC->TryActivateAbilityByClass(QSkillClass);
-
-		if (bSuccess)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("✅ [컨트롤러] Q 스킬 직접 실행 성공!"));
-		}
-		else
-		{
-			// 실행 실패 시 (쿨타임, 마나 부족, 혹은 CanActivateAbility에서 false 반환)
-			UE_LOG(LogTemp, Error, TEXT("🚨 [컨트롤러] Q 스킬 조건 미달로 실행 실패 (마나/사거리/쿨타임 등)"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ℹ️ [컨트롤러] Q슬롯에 장착된 스킬이 없습니다."));
+		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::Q);
 	}
 }
 
 void AR1PlayerController::OnWSkill()
 {
-	UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(R1Player->GetAbilitySystemComponent());
-
-	FGameplayEventData PayloadData;
-	ASC->HandleGameplayEvent(R1GameplayTags::Input_Action_SkillW, &PayloadData);
+	if (R1Player && R1Player->GetEquipmentComponent())
+	{
+		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::W);
+	}
 }
 
 void AR1PlayerController::OnESkill()
 {
-	UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(R1Player->GetAbilitySystemComponent());
-
-	FGameplayEventData PayloadData;
-	ASC->HandleGameplayEvent(R1GameplayTags::Input_Action_SkillE, &PayloadData);
+	if (R1Player && R1Player->GetEquipmentComponent())
+	{
+		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::E);
+	}
 }
 
 
 void AR1PlayerController::OnRSkill()
 {
-	UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(R1Player->GetAbilitySystemComponent());
-
-	FGameplayEventData PayloadData;
-	ASC->HandleGameplayEvent(R1GameplayTags::Input_Action_SkillR, &PayloadData);
+	if (R1Player && R1Player->GetEquipmentComponent())
+	{
+		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::R);
+	}
 }
 
 void AR1PlayerController::OnGameMenuToggle()

@@ -9,6 +9,7 @@
 /**
  * 
  */
+class AR1Monster;
 UCLASS()
 class R1_API UR1GameplayAbility_JumpAttack : public UR1GameplayAbility
 {
@@ -40,19 +41,22 @@ public:
 	void OnDashInterrupted();
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "JumpAttack")
+	UPROPERTY(EditAnywhere, Category = "JumpAttack")
 	TObjectPtr<class UAnimMontage> JumpMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category = "JumpAttack")
+	UPROPERTY(EditAnywhere, Category = "JumpAttack")
 	TSubclassOf<class UGameplayEffect> DamageEffect;
 
-	UPROPERTY(EditDefaultsOnly, Category = "JumpAttack")
+	UPROPERTY(EditAnywhere, Category = "JumpAttack")
 	float DashDuration = 1.23f; // 체공 시간 (짧을수록 빠르게 날아감)
 
-	UPROPERTY(EditDefaultsOnly, Category = "JumpAttack")
+	UPROPERTY(EditAnywhere, Category = "JumpAttack")
 	TObjectPtr<class UCurveVector> JumpHeightCurve; // 포물선을 그리기 위한 커브 (옵션)
 
 private:
 	UPROPERTY()
-	TObjectPtr<class AR1Monster> CachedTarget;
+	TObjectPtr<AR1Monster> CachedTarget;
+
+	UPROPERTY()
+	FVector CachedTargetLocation;
 };
