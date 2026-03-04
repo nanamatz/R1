@@ -50,9 +50,4 @@ void UR1HpOrbWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 void UR1HpOrbWidget::UpdateHpOrb(float Ratio)
 {
     TargetPercent = Ratio;
-    //if (DynamicOrbMaterial)
-    //{
-    //    //DynamicOrbMaterial->SetScalarParameterValue(MaterialParamName, Ratio);
-    //    UE_LOG(LogTemp, Warning, TEXT("%f"), &Ratio);
-    //}
 }

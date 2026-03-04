@@ -25,7 +25,8 @@
 AR1Monster::AR1Monster()
 {
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
-
+	GetMesh()->CanCharacterStepUpOn = ECB_No;
+	GetCapsuleComponent()->CanCharacterStepUpOn = ECB_No;
 	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	MonsterAttributeSet = CreateDefaultSubobject<UMonsterAttributeSet>(TEXT("MonsterAttributeSet"));
 	CoreAttributeSet = CreateDefaultSubobject<UR1AttributeSet>(TEXT("CoreAttributeSet"));

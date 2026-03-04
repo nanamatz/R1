@@ -36,6 +36,8 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 
 	if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
+		SetMana(FMath::Clamp(GetMana(), 0.0f, GetMaxMana()));
+
 		AActor* AvatarActor = Data.Target.GetAvatarActor();
 		AR1Player* Player = Cast<AR1Player>(AvatarActor);
 		if (Player)

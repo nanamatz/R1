@@ -16,6 +16,7 @@
 #include "R1Define.h"
 #include "System/R1GameInstance.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UR1GameplayAbility_JumpAttack::UR1GameplayAbility_JumpAttack(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
@@ -257,6 +258,8 @@ void UR1GameplayAbility_JumpAttack::OnDashFinished()
 	}
 
 	AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor.Get());
+	Attacker->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
 	if (Attacker)
 	{
 		if (Attacker->GetCreatureState() == ECreatureState::Dead)
