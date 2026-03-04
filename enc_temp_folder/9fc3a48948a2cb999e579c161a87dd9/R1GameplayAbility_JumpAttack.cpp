@@ -166,6 +166,8 @@ void UR1GameplayAbility_JumpAttack::EndAbility(const FGameplayAbilitySpecHandle 
 	if (AR1Player* Player = Cast<AR1Player>(ActorInfo->AvatarActor.Get()))
 	{
 		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+		// 2. 캐릭터 상태 원상 복구 (죽은 게 아니라면 Idle로)
 		if (Player->GetCreatureState() != ECreatureState::Dead)
 		{
 			Player->SetCreatureState(ECreatureState::Idle);
@@ -175,7 +177,6 @@ void UR1GameplayAbility_JumpAttack::EndAbility(const FGameplayAbilitySpecHandle 
 	CachedTarget = nullptr; // 안전을 위해 포인터 비우기
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-	
 }
 
 void UR1GameplayAbility_JumpAttack::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
