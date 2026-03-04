@@ -132,6 +132,18 @@ void AR1Player::ActivateAbility(FGameplayTag AbilityTag)
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
 }
 
+void AR1Player::OnManaChanged(float Ratio)
+{
+	if (OnMpChanged.IsBound())
+	{
+		OnMpChanged.Broadcast(Ratio);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("OnMpChanged is NOT bound for actor: %s"), *GetName());
+	}
+}
+
 void AR1Player::InitExpBar()
 {
 	AR1PlayerState* PS = GetPlayerState<AR1PlayerState>();

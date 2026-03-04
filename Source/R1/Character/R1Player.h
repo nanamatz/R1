@@ -6,9 +6,8 @@
 #include "Character/R1Character.h"
 #include "R1Player.generated.h"
 
-/**
- * 
- */
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMpChangedDelegate, float, Ratio);
 
 UCLASS()
 class R1_API AR1Player : public AR1Character
@@ -50,6 +49,12 @@ public:
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
 
+public:
+
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnMpChangedDelegate OnMpChanged;
+
+	void OnManaChanged(float Ratio);
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<class UWidgetComponent> ExpBarComponent;
