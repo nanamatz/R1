@@ -2,6 +2,8 @@
 
 #pragma once
 
+
+
 UENUM(BlueprintType)
 enum class ER1SkillSlot : uint8
 {
