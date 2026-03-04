@@ -37,11 +37,11 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 	if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
 		AActor* AvatarActor = Data.Target.GetAvatarActor();
-		AR1Character* Player = Cast<AR1Character>(AvatarActor);
+		AR1Player* Player = Cast<AR1Player>(AvatarActor);
 		if (Player)
 		{
 			float Ratio = static_cast<float>(GetMana()) / GetMaxMana();
-			Player->OnHealthChanged(Ratio);
+			Player->OnManaChanged(Ratio);
 		}
 	}
 
