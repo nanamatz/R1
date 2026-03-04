@@ -38,7 +38,11 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 			FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
 
 			NewHandles.AbilityHandles.Add(Handle); 
-			AutoAssignToEmptySlot(Handle);
+
+			if (AbilityClass->GetDefaultObject<UR1GameplayAbility>()->GetSkillType() == ER1SkillType::Active)
+			{
+				AutoAssignToEmptySlot(Handle);
+			}
 		}
 	}
 

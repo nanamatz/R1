@@ -6,9 +6,13 @@
 #include "Abilities/GameplayAbility.h"
 #include "R1GameplayAbility.generated.h"
 
-/**
- * 
- */
+UENUM(BlueprintType)
+enum class ER1SkillType : uint8
+{
+	Active,
+	Passive
+};
+
 UCLASS()
 class R1_API UR1GameplayAbility : public UGameplayAbility
 {
@@ -17,4 +21,10 @@ class R1_API UR1GameplayAbility : public UGameplayAbility
 public:
 	UR1GameplayAbility(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+public:
+	ER1SkillType GetSkillType() const { return SkillType; }
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	ER1SkillType SkillType = ER1SkillType::Passive;
 };

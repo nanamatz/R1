@@ -256,7 +256,7 @@ void UR1GameplayAbility_JumpAttack::OnDashFinished()
 		return;
 	}
 
-	/*AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor.Get());
+	AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor.Get());
 	if (Attacker)
 	{
 		if (Attacker->GetCreatureState() == ECreatureState::Dead)
@@ -269,7 +269,7 @@ void UR1GameplayAbility_JumpAttack::OnDashFinished()
 			Attacker->SetCreatureState(ECreatureState::Moving);
 			UE_LOG(LogTemp, Warning, TEXT("Moving"));
 		}
-	}*/
+	}
 
 	// 능력 정상 종료
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
@@ -314,7 +314,7 @@ void UR1GameplayAbility_JumpAttack::OnJumpAttackEventReceived(FGameplayEventData
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AvatarActor, HitEventTag, PayloadData);
 		}
 
-		AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor.Get());
+		/*AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor.Get());
 		if (Attacker)
 		{
 			if (Attacker->GetCreatureState() == ECreatureState::Dead)
@@ -327,7 +327,7 @@ void UR1GameplayAbility_JumpAttack::OnJumpAttackEventReceived(FGameplayEventData
 				Attacker->SetCreatureState(ECreatureState::Moving);
 				UE_LOG(LogTemp, Warning, TEXT("Moving"));
 			}
-		}
+		}*/
 	}
 }
 
