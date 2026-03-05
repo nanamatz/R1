@@ -59,15 +59,12 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID)
 
 void AR1Door::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// 막힌 문이면 무시
 	if (bLocked || TargetNodeID == -1) return;
 
 	// 부딪힌 액터가 플레이어 캐릭터인지 확인
 	AR1Player* Player = Cast<AR1Player>(OtherActor);
 	if (Player)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[R1Door] 플레이어가 문에 닿았습니다! 향하는 방향: %d"), (int32)DoorDirection);
-
 		// 델리게이트를 통해 외부(제너레이터 등)에 알림
 		OnDoorEntered.Broadcast(DoorDirection);
 	}

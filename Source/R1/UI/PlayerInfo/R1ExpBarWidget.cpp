@@ -1,7 +1,7 @@
 
 
 
-#include "UI/R1ExpBarWidget.h"
+#include "UI/PlayerInfo/R1ExpBarWidget.h"
 #include "Player/R1PlayerState.h"
 #include "Components/ProgressBar.h"
 

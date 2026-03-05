@@ -215,7 +215,6 @@ void AR1MapGenerator::InitializeRoomPools()
 {
 	if (!GlobalAssetData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] GlobalAssetData가 할당되지 않았습니다!"));
 		return;
 	}
 
@@ -240,8 +239,6 @@ void AR1MapGenerator::InitializeRoomPools()
 					OutPool.Add(RoomData);
 				}
 			}
-
-			UE_LOG(LogTemp, Log, TEXT("[MapGenerator] '%s' 풀 로드 완료: %d개"), *Label.ToString(), OutPool.Num());
 		};
 
 	// 이제 원하는 라벨만 던져주면 끝입니다!
@@ -254,7 +251,6 @@ void AR1MapGenerator::AssignRoomTypes()
 {
 	if (StartRoomPool.IsEmpty() || CombatRoomPool.IsEmpty() || BossRoomPool.IsEmpty())
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] Room Pool이 비어있습니다. 에디터에서 PDA를 채워주세요!"));
 		return;
 	}
 
@@ -283,7 +279,6 @@ void AR1MapGenerator::AssignRoomTypes()
 	if (BossNodeID != -1)
 	{
 		GeneratedMap[BossNodeID].RoomDefinition = BossRoomPool[FMath::RandRange(0, BossRoomPool.Num() - 1)];
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 보스 방이 %d번 노드에 할당되었습니다."), BossNodeID);
 	}
 
 	// 4. 나머지 일반(Combat) 방 할당 (중복 방지 로직 적용)
@@ -295,7 +290,6 @@ void AR1MapGenerator::AssignRoomTypes()
 		// [안전장치] 풀이 비어있는지 체크 (맵의 방 개수보다 만들어둔 PDA가 적을 경우)
 		if (CombatRoomPool.IsEmpty())
 		{
-			UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 전투 방 종류(PDA)가 부족합니다! 생성할 방 개수보다 에디터에 만든 방 종류가 적습니다."));
 			break;
 		}
 
@@ -352,10 +346,7 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 
 	if (NextNodeID != -1)
 	{
-		// 이미 텔레포트 진행 중이면 중복 실행 방지
 		if (PendingNodeID != -1) return;
-
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 문 통과 감지! %d번 방에서 %d번 방으로 텔레포트를 시도합니다."), CurrentActiveNodeID, NextNodeID);
 
 		PendingNodeID = NextNodeID;
 		PendingDoorDirection = Direction;
@@ -375,19 +366,16 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 				// 방이 이미 로드되어 있다면 즉시 텔레포트 함수 호출
 				if (StreamingLevel->IsLevelLoaded())
 				{
-					UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 방이 이미 로드되어 있습니다. 즉시 텔레포트 진행!"));
 					OnTransitionRoomLoaded();
 				}
 				// 아니라면 로딩 완료 시점에 호출되도록 델리게이트 연결
 				else
 				{
-					UE_LOG(LogTemp, Log, TEXT("[MapGenerator] 방 비동기 로딩 중... 완료되면 텔레포트합니다."));
 					StreamingLevel->OnLevelLoaded.AddUniqueDynamic(this, &AR1MapGenerator::OnTransitionRoomLoaded);
 				}
 			}
 			else
 			{
-				UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 방 스폰에 실패했습니다!"));
 				PendingNodeID = -1;
 			}
 		}
@@ -396,7 +384,6 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 
 void AR1MapGenerator::OnRoomLoaded()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 0번 시작 방 로딩 완료! 플레이어를 안전하게 이동시킵니다."));
 
 	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
 	if (PlayerCharacter)
@@ -410,6 +397,13 @@ void AR1MapGenerator::OnRoomLoaded()
 	if (RoomSubsystem)
 	{
 		RoomSubsystem->MarkRoomGameplayReady(GeneratedMap[0].RoomDefinition);
+	}
+
+	UpdateMinimapState(0, -1);
+
+	if (OnMapGenerated.IsBound())
+	{
+		OnMapGenerated.Broadcast(GeneratedMap);
 	}
 
 	FTimerHandle SetupTimerHandle;
@@ -455,13 +449,40 @@ void AR1MapGenerator::OnRoomLoaded()
 				}
 				CurrentRoomManager->StartRoomCombat();
 			}
+		}), 0.5f, false);
+}
 
-		}), 0.1f, false);
+void AR1MapGenerator::UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID)
+{
+	// 1. 이전 방이 존재한다면 상태를 'Visited(방문 완료)'로 변경
+	if (GeneratedMap.IsValidIndex(PrevNodeID) && PrevNodeID != TargetNodeID)
+	{
+		GeneratedMap[PrevNodeID].MinimapState = ER1MinimapRoomState::Visited;
+	}
+
+	// 2. 새로 진입한 방을 'Current(현재 위치)'로 변경
+	if (GeneratedMap.IsValidIndex(TargetNodeID))
+	{
+		GeneratedMap[TargetNodeID].MinimapState = ER1MinimapRoomState::Current;
+
+		// 3. 진입한 방과 연결된 모든 이웃 방들을 탐색하여 'Hidden'이면 'Discovered(발견됨)'로 밝힙니다.
+		for (int32 ConnectedID : GeneratedMap[TargetNodeID].ConnectedNodeIDs)
+		{
+			if (GeneratedMap.IsValidIndex(ConnectedID))
+			{
+				if (GeneratedMap[ConnectedID].MinimapState == ER1MinimapRoomState::Hidden)
+				{
+					GeneratedMap[ConnectedID].MinimapState = ER1MinimapRoomState::Discovered;
+				}
+			}
+		}
+	}
 }
 
 void AR1MapGenerator::OnTransitionRoomLoaded()
 {
 	if (PendingNodeID == -1) return;
+
 
 	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
 
@@ -472,12 +493,13 @@ void AR1MapGenerator::OnTransitionRoomLoaded()
 
 	// 1. [수정] 자물쇠를 여기서 풀지 않고, 목적지 번호만 임시 저장합니다.
 	int32 TargetRoomID = PendingNodeID;
+	int32 PrevRoomID = CurrentActiveNodeID;
 
 	FVector NewRoomLocation = GeneratedMap[TargetRoomID].SpawnLocation;
 	ER1DoorDirection OppositeDir = GetOppositeDirection(PendingDoorDirection);
 
 	FTimerHandle TransitionTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, FTimerDelegate::CreateLambda([this, TargetRoomID, NewRoomLocation, OppositeDir]()
+	GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, FTimerDelegate::CreateLambda([this, TargetRoomID, PrevRoomID, NewRoomLocation, OppositeDir]()
 		{
 			CurrentActiveNodeID = TargetRoomID;
 			AR1Door* TargetDoorToSpawnAt = nullptr;
@@ -556,10 +578,15 @@ void AR1MapGenerator::OnTransitionRoomLoaded()
 				}
 				PlayerCharacter->GetVelocity() = FVector::ZeroVector;
 			}
+			UpdateMinimapState(CurrentActiveNodeID, PrevRoomID);
+
+			if (OnPlayerMovedRoom.IsBound())
+			{
+				OnPlayerMovedRoom.Broadcast(CurrentActiveNodeID, PrevRoomID);
+			}
 
 			PendingNodeID = -1;
 
-			// 8. 주변 방 선로딩
 			UR1RoomStreamingSubsystem* InnerRoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
 			if (InnerRoomSubsystem)
 			{
@@ -594,8 +621,6 @@ void AR1MapGenerator::OnRoomClearedCallback(int32 ClearedNodeID)
 	{
 		// 지도 데이터에 영구적으로 "클리어 됨" 도장을 찍습니다!
 		GeneratedMap[ClearedNodeID].bIsCleared = true;
-
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 수신 완료! %d번 방의 지도 데이터가 클리어 상태로 영구 저장되었습니다!"), ClearedNodeID);
 	}
 }
 

@@ -65,6 +65,18 @@ void AR1HUD::BeginPlay()
                 UE_LOG(LogTemp, Warning, TEXT("Failed to create GameMenuUIWidget"));
             }
         }
+        if (!MiniMapUIWidget)
+        {
+            MiniMapUIWidget = CreateWidget<UUserWidget>(PC, MiniMapUIWidgetClass);
+            if (MiniMapUIWidget)
+            {
+                MiniMapUIWidget->AddToViewport(20);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Failed to create GameMenuUIWidget"));
+            }
+        }
     }
 
 }

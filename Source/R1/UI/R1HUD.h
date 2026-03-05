@@ -45,6 +45,12 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UUserWidget> GameMenuUIWidgetClass;
 
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> MiniMapUIWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<UUserWidget> MiniMapUIWidget = nullptr;
+
     UPROPERTY(EditDefaultsOnly)
     TObjectPtr<UUserWidget> InventoryUIWidget = nullptr;
 

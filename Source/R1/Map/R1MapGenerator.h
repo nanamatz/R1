@@ -6,7 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "R1MapGenerator.generated.h"
 
-// 전방 선언 (헤더 꼬임 방지)
 class UR1RoomDefinitionData;
 class UR1AssetData;
 
@@ -20,7 +19,15 @@ enum class ER1DoorDirection : uint8
 	None	UMETA(DisplayName = "None")
 };
 
-// 맵의 각 방(노드) 정보를 담는 구조체
+UENUM(BlueprintType)
+enum class ER1MinimapRoomState : uint8
+{
+	Hidden,
+	Discovered,
+	Current,
+	Visited
+};
+
 USTRUCT(BlueprintType)
 struct FR1MapNode
 {
@@ -49,7 +56,13 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bIsCleared = false;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Minimap")
+	ER1MinimapRoomState MinimapState = ER1MinimapRoomState::Hidden;
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMapGeneratedSignature, const TArray<struct FR1MapNode>&, MapData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerMovedRoomSignature, int32, NewRoomNodeID, int32, PrevRoomNodeID);
 
 UCLASS()
 class R1_API AR1MapGenerator : public AActor
@@ -86,6 +99,16 @@ public:
 	// [추가] 에디터에서 UR1AssetData(예: DA_AssetData) 딱 하나만 넣어줍니다.
 	UPROPERTY(EditAnywhere, Category = "Map Generation")
 	TObjectPtr<UR1AssetData> GlobalAssetData;
+
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Map Generation")
+	FOnMapGeneratedSignature OnMapGenerated;
+
+	UPROPERTY(BlueprintAssignable, Category = "Map Generation")
+	FOnPlayerMovedRoomSignature OnPlayerMovedRoom;
+
+private:
+	void UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID);
 
 private:
 	// 내부적으로 알아서 채워 쓸 풀 (에디터 노출 안 함, 임시 보관용 Transient)
