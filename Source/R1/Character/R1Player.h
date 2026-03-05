@@ -33,6 +33,9 @@ protected:
 	virtual void InitAbilitySystem() override;
 
 protected:
+	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
+
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<class UAIPerceptionStimuliSourceComponent> StimuliSource;
 public:
