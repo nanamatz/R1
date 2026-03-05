@@ -100,6 +100,25 @@ void AR1Player::InitAbilitySystem()
 		CommonAttributeSet = PS->GetCommonAttributeSet();
 	}
 }
+void AR1Player::NotifyActorEndOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorEndOverlap(OtherActor);
+
+	// 1. 방금 내 몸에서 빠져나간 액터가 몬스터인지 확인
+	if (OtherActor && OtherActor->IsA(AR1Monster::StaticClass()))
+	{
+		// 2. 현재 내 캡슐과 겹쳐있는 '다른 몬스터'가 아직 남아있는지 검사
+		TArray<AActor*> OverlappingMobs;
+		GetCapsuleComponent()->GetOverlappingActors(OverlappingMobs, AR1Monster::StaticClass());
+
+		if (OverlappingMobs.Num() == 0)
+		{
+			// 드디어 다시 충돌을 켭니다!
+			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+			UE_LOG(LogTemp, Warning, TEXT("몬스터와 겹침이 완전히 해제되어 Block 상태로 복구되었습니다."));
+		}
+	}
+}
 // Called every frame
 void AR1Player::Tick(float DeltaTime)
 {

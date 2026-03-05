@@ -90,6 +90,7 @@ void UR1GameplayAbility_JumpAttack::ActivateAbility(const FGameplayAbilitySpecHa
 		Player->SetActorRotation(TargetRotation);
 
 		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 		Player->SetCreatureState(ECreatureState::Casting);
 		PC->ResetMovementState();
 
