@@ -1,7 +1,8 @@
 
 
 
-#include "Item/R1InventoryEntryWidget.h"
+#include "UI/Inventory/Item/R1InventoryEntryWidget.h"
+#include "UI/Inventory/Item/R1ItemDragWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/SizeBox.h"
@@ -9,7 +10,6 @@
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1ItemInstance.h"
 #include "Item/R1DragDropOperation.h"
-#include "Item/R1ItemDragWidget.h"
 
 UR1InventoryEntryWidget::UR1InventoryEntryWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

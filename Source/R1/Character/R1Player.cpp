@@ -19,7 +19,7 @@
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 
-#include "UI/R1ExpBarWidget.h"
+#include "UI/PlayerInfo/R1ExpBarWidget.h"
 #include "DataTable/CharacterStatsRow.h"
 #include "R1GameplayTags.h"
 #include "System/R1EquipmentManagerComponent.h"

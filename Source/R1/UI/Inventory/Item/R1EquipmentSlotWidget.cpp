@@ -1,13 +1,16 @@
 
 
 
-#include "Item/R1EquipmentSlotWidget.h"
-#include "Components/SizeBox.h"
-#include "Components/Image.h"
+#include "UI/Inventory/Item/R1EquipmentSlotWidget.h"
+#include "UI/Inventory/Item/R1ItemDragWidget.h"
+
 #include "Item/R1DragDropOperation.h"
 #include "Item/R1ItemInstance.h"
 #include "Item/R1InventorySubsystem.h"
-#include "Item/R1ItemDragWidget.h"
+
+#include "Components/SizeBox.h"
+#include "Components/Image.h"
+
 #include "R1Define.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 
