@@ -17,19 +17,18 @@ class R1_API UR1MinimapWidget : public UR1UserWidget
 protected:
 	// 위젯이 화면에 생성될 때 자동으로 호출되는 초기화 함수
 	virtual void NativeConstruct() override;
-	virtual void NativeDestruct() override;
-	// 🌟 에디터에서 방들을 담을 도화지 (반드시 이름 일치해야 함)
+
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UCanvasPanel> CanvasPanel_Map;
+	TObjectPtr<class UCanvasPanel> CanvasPanel_Entries;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Minimap")
 	TSubclassOf<class UR1MinimapRoomWidget> RoomWidgetClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Minimap")
-	float RoomSize = 50.0f;
-
 	UPROPERTY()
-	TMap<int32, class UR1MinimapRoomWidget*> SpawnedRoomWidgets;
+	TMap<int32, class UR1MinimapRoomWidget*> SpawnedRooms;
+
+	// 방 1개의 UI 크기
+	const float ROOM_SIZE = 75.0f;
 
 public:
 	// 맵 제너레이터의 델리게이트와 연결될 콜백 함수들
@@ -38,4 +37,10 @@ public:
 
 	UFUNCTION()
 	void OnPlayerMovedRoomCallback(int32 NewRoomNodeID, int32 PrevRoomNodeID);
+
+private:
+	void UpdateMinimapUI(int32 CurrentRoomID, AR1MapGenerator* Generator);
+
+//private:
+//	void UpdateMinimapUI(int32 CurrentRoomID, int32 PrevRoomID, AR1MapGenerator* Generator);
 };

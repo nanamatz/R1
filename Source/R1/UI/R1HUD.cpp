@@ -70,7 +70,7 @@ void AR1HUD::BeginPlay()
             MiniMapUIWidget = CreateWidget<UUserWidget>(PC, MiniMapUIWidgetClass);
             if (MiniMapUIWidget)
             {
-                MiniMapUIWidget->AddToViewport(20);
+                MiniMapUIWidget->AddToViewport(5);
             }
             else
             {

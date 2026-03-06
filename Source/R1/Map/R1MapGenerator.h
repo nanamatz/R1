@@ -107,6 +107,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Map Generation")
 	FOnPlayerMovedRoomSignature OnPlayerMovedRoom;
 
+	// 특정 방향(동서남북)에 논리적으로 연결된 방이 있는지 찾아주는 헬퍼 함수
+	int32 GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorDirection Direction);
 private:
 	void UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID);
 
@@ -135,8 +137,7 @@ private:
 	// 현재 플레이어가 위치한 방의 고유 번호 (시작은 0번)
 	int32 CurrentActiveNodeID = 0;
 
-	// 특정 방향(동서남북)에 논리적으로 연결된 방이 있는지 찾아주는 헬퍼 함수
-	int32 GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorDirection Direction);
+
 
 	// 플레이어가 문을 밟았을 때 문의 델리게이트가 호출할 콜백 함수
 	UFUNCTION()
