@@ -363,14 +363,6 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 			if (StreamingLevel)
 			{
 				// 방이 이미 로드되어 있다면 즉시 텔레포트 함수 호출
-				if (StreamingLevel->IsLevelLoaded())
-				{
-					OnTransitionRoomLoaded();
-				}
-				// 아니라면 로딩 완료 시점에 호출되도록 델리게이트 연결
-				else
-				{
-				}
 			}
 			else
 			{
@@ -438,9 +430,12 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 	}
 	Manager->StartRoomCombat();
 
-	//플레이어 텔레포트 및 UI 갱신
+	// ==========================================
+	// 🏃‍♂️ [분기 로직] 플레이어 텔레포트 및 UI 갱신
+	// ==========================================
 	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
 
+	// 👉 분기 A: 게임 시작 시 0번 방 세팅 (기존 OnRoomLoaded 역할)
 	if (MatchedNodeID == 0 && PendingNodeID == -1)
 	{
 		if (PlayerCharacter)
@@ -459,10 +454,10 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 		UpdateMinimapState(0, -1);
 		if (OnMapGenerated.IsBound())
 		{
-			OnMapGenerated.Broadcast(GeneratedMap); 
+			OnMapGenerated.Broadcast(GeneratedMap); // 미니맵에 최초 그리기 방송!
 		}
 	}
-	//문을 타고 다른 방으로 이동했을 때 세팅 
+	// 👉 분기 B: 문을 타고 다른 방으로 이동했을 때 세팅 (기존 OnTransitionRoomLoaded 역할)
 	else if (MatchedNodeID == PendingNodeID)
 	{
 		int32 PrevRoomID = CurrentActiveNodeID;
@@ -542,17 +537,6 @@ void AR1MapGenerator::OnTransitionRoomLoaded()
 	if (RoomSubsystem)
 	{
 		RoomSubsystem->MarkRoomAsLeft(GeneratedMap[CurrentActiveNodeID].RoomDefinition);
-	}
-
-	FVector NextLocation = GeneratedMap[PendingNodeID].SpawnLocation;
-
-	for (TActorIterator<ADungeonManager> ManagerIt(GetWorld()); ManagerIt; ++ManagerIt)
-	{
-		if (ManagerIt->GetActorLocation().Equals(NextLocation, 10.0f))
-		{
-			RegisterRoomManager(*ManagerIt);
-			break;
-		}
 	}
 }
 

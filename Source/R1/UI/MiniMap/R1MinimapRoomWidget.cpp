@@ -21,7 +21,10 @@ void UR1MinimapRoomWidget::UpdateRoomState(ER1MinimapRoomState NewState, ER1Room
 	case ER1MinimapRoomState::Discovered:
 		// 발견됨: 어두운 배경 텍스처 사용
 		Image_Background->SetVisibility(ESlateVisibility::Visible);
-		if (BgTexture_Discovered) Image_Background->SetBrushFromTexture(BgTexture_Discovered);
+		if (BgTexture_Discovered)
+		{
+			Image_Background->SetBrushFromTexture(BgTexture_Discovered);
+		}
 
 		if (RoomIconMap.Contains(RoomType) && RoomIconMap[RoomType] != nullptr)
 		{
@@ -33,7 +36,10 @@ void UR1MinimapRoomWidget::UpdateRoomState(ER1MinimapRoomState NewState, ER1Room
 	case ER1MinimapRoomState::Visited:
 		// 방문 완료: 중간 밝기 배경 텍스처 사용
 		Image_Background->SetVisibility(ESlateVisibility::Visible);
-		if (BgTexture_Visited) Image_Background->SetBrushFromTexture(BgTexture_Visited);
+		if (BgTexture_Visited)
+		{
+			Image_Background->SetBrushFromTexture(BgTexture_Visited);
+		}
 
 		if (RoomIconMap.Contains(RoomType) && RoomIconMap[RoomType] != nullptr)
 		{
@@ -45,13 +51,14 @@ void UR1MinimapRoomWidget::UpdateRoomState(ER1MinimapRoomState NewState, ER1Room
 	case ER1MinimapRoomState::Current:
 		// 현재 위치: 가장 밝은 배경 텍스처 사용
 		Image_Background->SetVisibility(ESlateVisibility::Visible);
-		if (BgTexture_Current) Image_Background->SetBrushFromTexture(BgTexture_Current);
-
-		// 현재 방은 플레이어 아이콘으로 덮어씌웁니다!
-		if (PlayerIconTexture)
+		if (BgTexture_Current)
+		{
+			Image_Background->SetBrushFromTexture(BgTexture_Current);
+		}
+		if (RoomIconMap.Contains(RoomType) && RoomIconMap[RoomType] != nullptr)
 		{
 			IconVisibility = ESlateVisibility::SelfHitTestInvisible;
-			Image_Icon->SetBrushFromTexture(PlayerIconTexture);
+			Image_Icon->SetBrushFromTexture(RoomIconMap[RoomType]);
 		}
 		break;
 	}

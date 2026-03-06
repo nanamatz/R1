@@ -38,9 +38,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Minimap")
 	TMap<ER1RoomContentType, TObjectPtr<UTexture2D>> RoomIconMap;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Minimap")
-	TObjectPtr<UTexture2D> PlayerIconTexture;
-
-
 };

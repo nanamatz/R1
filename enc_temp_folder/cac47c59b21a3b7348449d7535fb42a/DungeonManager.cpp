@@ -125,8 +125,6 @@ void ADungeonManager::HandleMonsterReadyToSleep(AR1Monster* DeadMonster)
 
 	DeadMonster->OnReadyToSleep.RemoveDynamic(this, &ADungeonManager::HandleMonsterReadyToSleep);
 
-	UnregisterMonster(DeadMonster, nullptr);
-
 	// 1. 게임 인스턴스에서 오브젝트 풀 서브시스템을 찾습니다.
 	if (UGameInstance* GameInstance = GetWorld()->GetGameInstance())
 	{
