@@ -6,118 +6,200 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Kismet/GameplayStatics.h"
+#include "Map/R1MapGenerator.h"
 #include "Data/R1RoomDefinitionData.h"
 
 void UR1MinimapWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (AActor* GeneratorActor = UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()))
+	if (!CanvasPanel_Entries || !RoomWidgetClass) return;
+
+	AR1MapGenerator* MapGenerator = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()));
+
+	if (!MapGenerator) return;
+	
+	MapGenerator->OnMapGenerated.AddDynamic(this, &UR1MinimapWidget::OnMapGeneratedCallback);
+	MapGenerator->OnPlayerMovedRoom.AddDynamic(this, &UR1MinimapWidget::OnPlayerMovedRoomCallback);
+	
+	if (MapGenerator->GeneratedMap.Num() > 0)
 	{
-		if (AR1MapGenerator* Generator = Cast<AR1MapGenerator>(GeneratorActor))
-		{
-			// 확성기에 함수 연결!
-			Generator->OnMapGenerated.AddDynamic(this, &UR1MinimapWidget::OnMapGeneratedCallback);
-			Generator->OnPlayerMovedRoom.AddDynamic(this, &UR1MinimapWidget::OnPlayerMovedRoomCallback);
-		}
+		OnMapGeneratedCallback(MapGenerator->GeneratedMap);
 	}
-
 }
 
-void UR1MinimapWidget::NativeDestruct()
-{
-	Super::NativeDestruct();
-	// 이 빨간 로그가 찍힌다면, 로직 문제가 아니라 위젯 자체가 강제로 암살당한 것입니다!
-	UE_LOG(LogTemp, Error, TEXT("[MinimapUI] 🚨 앗! 미니맵 위젯이 화면에서 삭제(파괴)되었습니다!! (NativeDestruct)"));
-}
 
 void UR1MinimapWidget::OnMapGeneratedCallback(const TArray<FR1MapNode>& MapData)
 {
-	//if (!CanvasPanel_Map || !RoomWidgetClass) return;
+	if (!CanvasPanel_Entries || !RoomWidgetClass) return;
 
-	//// 기존 데이터 초기화
-	////CanvasPanel_Map->ClearChildren();
-	////SpawnedRoomWidgets.Empty();
+	if (MapData.IsEmpty()) return;
 
-	//// 2. 전달받은 지도 데이터를 바탕으로 방 위젯들을 동적 생성합니다.
-	//for (const FR1MapNode& Node : MapData)
-	//{
-	//	UR1MinimapRoomWidget* RoomWidget = CreateWidget<UR1MinimapRoomWidget>(this, RoomWidgetClass);
-	//	if (RoomWidget)
-	//	{
-	//		// 캔버스에 추가
-	//		UCanvasPanelSlot* CanvasSlot = CanvasPanel_Map->AddChildToCanvas(RoomWidget);
-	//		if (CanvasSlot)
-	//		{
-	//			// 🌟 2D 그리드 좌표를 UI 픽셀 좌표로 변환 (UI는 아래로 갈수록 Y가 증가하므로 Y에 -1을 곱해 북쪽을 위로 맞춥니다)
-	//			FVector2D UIPosition(Node.GridPosition.X * RoomSize, Node.GridPosition.Y * -RoomSize);
-
-	//			CanvasSlot->SetPosition(UIPosition);
-	//			CanvasSlot->SetSize(FVector2D(RoomSize, RoomSize));
-	//			CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f)); // 중앙 정렬
-
-	//			UE_LOG(LogTemp, Log, TEXT("[MinimapUI] 방 위젯 생성 완료 - NodeID: %d, UI 좌표: X=%f, Y=%f"), Node.NodeID, UIPosition.X, UIPosition.Y);
-	//		}
-
-	//		// 방 초기 상태 설정
-	//		ER1RoomContentType RoomType = Node.RoomDefinition ? Node.RoomDefinition->RoomType : ER1RoomContentType::Combat;
-	//		RoomWidget->UpdateRoomState(Node.MinimapState, RoomType);
-
-	//		// 나중에 업데이트하기 쉽게 장부에 기록
-	//		SpawnedRoomWidgets.Add(Node.NodeID, RoomWidget);
-	//	}
-	//}
-	if (!CanvasPanel_Map || !RoomWidgetClass) return;
-
-	//CanvasPanel_Map->ClearChildren();
-	//SpawnedRoomWidgets.Empty();
-
-	for (const FR1MapNode& Node : MapData)
+	if (AActor* GeneratorActor = UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()))
 	{
-		UR1MinimapRoomWidget* RoomWidget = CreateWidget<UR1MinimapRoomWidget>(this, RoomWidgetClass);
-		if (RoomWidget)
-		{
-			UCanvasPanelSlot* CanvasSlot = CanvasPanel_Map->AddChildToCanvas(RoomWidget);
-			if (CanvasSlot)
-			{
-				// 🌟 [핵심 해결책] C++에서도 앵커를 정중앙(Center)으로 강제 고정합니다!
-				CanvasSlot->SetAnchors(FAnchors(0.5f, 0.5f));
-				CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
-
-				// 🌟 이제 (0, 0) 좌표는 도화지의 정확히 한가운데가 됩니다.
-				FVector2D UIPosition(Node.GridPosition.X * RoomSize, Node.GridPosition.Y * -RoomSize);
-
-				CanvasSlot->SetPosition(UIPosition);
-				CanvasSlot->SetAutoSize(false); // 크기를 수동으로 지정하겠다고 선언
-				CanvasSlot->SetSize(FVector2D(RoomSize, RoomSize));
-			}
-
-			// 방 상태 업데이트
-			ER1RoomContentType RoomType = Node.RoomDefinition ? Node.RoomDefinition->RoomType : ER1RoomContentType::Combat;
-			RoomWidget->UpdateRoomState(Node.MinimapState, RoomType);
-
-			SpawnedRoomWidgets.Add(Node.NodeID, RoomWidget);
-		}
+		UpdateMinimapUI(0, Cast<AR1MapGenerator>(GeneratorActor));
 	}
 }
 
 void UR1MinimapWidget::OnPlayerMovedRoomCallback(int32 NewRoomNodeID, int32 PrevRoomNodeID)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[MinimapUI] 플레이어 이동 이벤트 발생! 이전 방: %d -> 새 방: %d"), PrevRoomNodeID, NewRoomNodeID);
-	// 3. 플레이어가 이동했다면, 맵 제너레이터의 최신 데이터를 가져와 모든 방의 상태를 새로고침합니다.
 	if (AActor* GeneratorActor = UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()))
 	{
-		if (AR1MapGenerator* Generator = Cast<AR1MapGenerator>(GeneratorActor))
-		{
-			for (const FR1MapNode& Node : Generator->GeneratedMap)
-			{
-				// 장부에서 해당 방 위젯을 찾아서 최신 상태 덮어씌우기
-				if (UR1MinimapRoomWidget** FoundWidget = SpawnedRoomWidgets.Find(Node.NodeID))
-				{
-					ER1RoomContentType RoomType = Node.RoomDefinition ? Node.RoomDefinition->RoomType : ER1RoomContentType::Combat;
-					(*FoundWidget)->UpdateRoomState(Node.MinimapState, RoomType);
-				}
-			}
-		}
+		// 🌟 이동할 때는 이전 방 번호를 넘겨줍니다.
+		UpdateMinimapUI(NewRoomNodeID, Cast<AR1MapGenerator>(GeneratorActor));
 	}
 }
+
+void UR1MinimapWidget::UpdateMinimapUI(int32 CurrentRoomID, AR1MapGenerator* Generator)
+{
+	if (!CanvasPanel_Entries || !RoomWidgetClass || !Generator) return;
+	if (!Generator->GeneratedMap.IsValidIndex(CurrentRoomID)) return;
+
+	auto TrySpawnRoom = [&](int32 NodeID)
+		{
+			if (SpawnedRooms.Contains(NodeID)) return; // 이미 있으면 스킵
+
+			const FR1MapNode& Node = Generator->GeneratedMap[NodeID];
+			UR1MinimapRoomWidget* NewRoom = CreateWidget<UR1MinimapRoomWidget>(this, RoomWidgetClass);
+
+			if (NewRoom)
+			{
+				UCanvasPanelSlot* CanvasSlot = CanvasPanel_Entries->AddChildToCanvas(NewRoom);
+				if (CanvasSlot)
+				{
+					CanvasSlot->SetAnchors(FAnchors(0.5f));
+					CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+					CanvasSlot->SetAutoSize(false);
+					CanvasSlot->SetSize(FVector2D(ROOM_SIZE, ROOM_SIZE));
+
+					FVector2D UIPosition(Node.GridPosition.Y * ROOM_SIZE, Node.GridPosition.X * -ROOM_SIZE);
+					CanvasSlot->SetPosition(UIPosition);
+				}
+
+				SpawnedRooms.Add(NodeID, NewRoom);
+			}
+		};
+
+	// 제너레이터가 방금 상태를 다 갱신해 줬으니, 우리는 현재 방과 연결된 방만 화면에 생성하면 끝입니다!
+	TrySpawnRoom(CurrentRoomID);
+
+	const FR1MapNode& CurrentNode = Generator->GeneratedMap[CurrentRoomID];
+	for (int32 ConnectedID : CurrentNode.ConnectedNodeIDs)
+	{
+		TrySpawnRoom(ConnectedID);
+	}
+
+	// ==========================================
+	// ✨ 2단계: 화면에 띄워진 모든 UI의 색상 최신화
+	// ==========================================
+	for (auto& Pair : SpawnedRooms)
+	{
+		int32 NodeID = Pair.Key;
+		UR1MinimapRoomWidget* RoomWidget = Pair.Value;
+
+		// 제너레이터가 이미 UpdateMinimapState()로 바꿔둔 최신 데이터를 그대로 가져와서 꽂기만 합니다.
+		const FR1MapNode& Node = Generator->GeneratedMap[NodeID];
+		ER1RoomContentType RoomType = Node.RoomDefinition ? Node.RoomDefinition->RoomType : ER1RoomContentType::Combat;
+
+		RoomWidget->UpdateRoomState(Node.MinimapState, RoomType);
+	}
+}
+
+//void UR1MinimapWidget::UpdateMinimapUI(int32 CurrentRoomID, int32 PrevRoomID, AR1MapGenerator* Generator)
+//{
+	//if (!CanvasPanel_Entries || !RoomWidgetClass || !Generator) return;
+	//if (!Generator->GeneratedMap.IsValidIndex(CurrentRoomID)) return;
+
+	//// ==========================================
+	//// 🧠 1단계: 데이터 상태 업데이트 (State Transition)
+	//// ==========================================
+
+	//// ① 플레이어가 방금 떠난 '이전 방'은 [Visited]로 변경합니다.
+	//if (Generator->GeneratedMap.IsValidIndex(PrevRoomID))
+	//{
+	//	// 혹시라도 다른 상태를 덮어쓰지 않도록, Current였을 때만 Visited로 강등시킵니다.
+	//	if (Generator->GeneratedMap[PrevRoomID].MinimapState == ER1MinimapRoomState::Current)
+	//	{
+	//		Generator->GeneratedMap[PrevRoomID].MinimapState = ER1MinimapRoomState::Visited;
+	//	}
+	//}
+
+	//// ② 플레이어가 진입한 '현재 방'은 [Current]로 변경합니다.
+	//Generator->GeneratedMap[CurrentRoomID].MinimapState = ER1MinimapRoomState::Current;
+
+	//// ③ 현재 방의 4방향을 탐색하여 '인접한 방'들을 찾고 상태를 갱신합니다.
+	//TArray<ER1DoorDirection> Directions = { ER1DoorDirection::North, ER1DoorDirection::South, ER1DoorDirection::East, ER1DoorDirection::West };
+	//TArray<int32> AdjacentRoomIDs;
+
+	//for (ER1DoorDirection Dir : Directions)
+	//{
+	//	int32 ConnectedID = Generator->GetConnectedNodeInDirection(CurrentRoomID, Dir);
+	//	if (ConnectedID != -1)
+	//	{
+	//		AdjacentRoomIDs.Add(ConnectedID); // 인접 방 목록에 추가
+
+	//		// 인접한 방이 아직 숨겨져(Hidden) 있다면, 드디어 발견(Discovered)된 것입니다!
+	//		// (이미 Visited거나 Current인 방은 건드리지 않습니다)
+	//		if (Generator->GeneratedMap[ConnectedID].MinimapState == ER1MinimapRoomState::Hidden)
+	//		{
+	//			Generator->GeneratedMap[ConnectedID].MinimapState = ER1MinimapRoomState::Discovered;
+	//		}
+	//	}
+	//}
+
+	//// ==========================================
+	//// 🎨 2단계: UI 위젯 생성 및 배치
+	//// ==========================================
+
+	//auto TrySpawnRoom = [&](int32 NodeID)
+	//	{
+	//		if (SpawnedRooms.Contains(NodeID)) return;
+
+	//		const FR1MapNode& Node = Generator->GeneratedMap[NodeID];
+	//		UR1MinimapRoomWidget* NewRoom = CreateWidget<UR1MinimapRoomWidget>(this, RoomWidgetClass);
+
+	//		if (NewRoom)
+	//		{
+	//			UCanvasPanelSlot* CanvasSlot = CanvasPanel_Entries->AddChildToCanvas(NewRoom);
+	//			if (CanvasSlot)
+	//			{
+	//				CanvasSlot->SetAnchors(FAnchors(0.5f));
+	//				CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+	//				CanvasSlot->SetAutoSize(false);
+	//				CanvasSlot->SetSize(FVector2D(ROOM_SIZE, ROOM_SIZE));
+
+	//				FVector2D UIPosition(Node.GridPosition.Y * ROOM_SIZE, Node.GridPosition.X * -ROOM_SIZE);
+	//				CanvasSlot->SetPosition(UIPosition);
+	//			}
+
+	//			SpawnedRooms.Add(NodeID, NewRoom);
+	//		}
+	//	};
+
+	//// 현재 방의 UI를 그립니다.
+	//TrySpawnRoom(CurrentRoomID);
+
+	//// 인접한 방(Discovered)들의 UI도 미리 그려둡니다.
+	//for (int32 AdjID : AdjacentRoomIDs)
+	//{
+	//	TrySpawnRoom(AdjID);
+	//}
+
+	//// ==========================================
+	//// ✨ 3단계: 화면에 띄워진 모든 UI의 색상/상태 최신화
+	//// ==========================================
+
+	//// TMap에 저장된 모든 위젯을 순회하며, 최신화된 GeneratedMap의 상태를 주입합니다.
+	//for (auto& Pair : SpawnedRooms)
+	//{
+	//	int32 NodeID = Pair.Key;
+	//	UR1MinimapRoomWidget* RoomWidget = Pair.Value;
+
+	//	// 1단계에서 갱신한 최신 상태를 가져옵니다.
+	//	const FR1MapNode& Node = Generator->GeneratedMap[NodeID];
+	//	ER1RoomContentType RoomType = Node.RoomDefinition ? Node.RoomDefinition->RoomType : ER1RoomContentType::Combat;
+
+	//	// 🌟 여기서 WBP_MinimapRoom의 텍스처(Current, Visited, Discovered)가 교체됩니다!
+	//	RoomWidget->UpdateRoomState(Node.MinimapState, RoomType);
+	//}
+//}

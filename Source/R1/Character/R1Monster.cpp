@@ -176,11 +176,9 @@ void AR1Monster::UpdateDissolve()
 {
 	// 한 번 실행될 때마다 지워지는 양을 0.05씩(5%) 올립니다.
 	CurrentDissolve += DissolveConstant;
-	GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Yellow, FString::Printf(TEXT("Dissolve: %f"), CurrentDissolve));
 	// 리모컨의 버튼을 눌러서, 언리얼에서 만든 "DissolveAmount" 다이얼 수치를 변경합니다.
 	if (DissolveMaterial)
 	{
-		// 주의: FName 안의 이름은 언리얼 머티리얼에서 적었던 Input Name과 스펠링이 똑같아야 합니다!
 		DissolveMaterial->SetScalarParameterValue(FName("DissolveAmount"), CurrentDissolve);
 	}
 
@@ -225,7 +223,6 @@ void AR1Monster::InitAttributes()
 
 void AR1Monster::WakeUp()
 {
-	// 출근할 때, 혹시라도 돌고 있던 퇴근/디졸브 관련 타이머들을 확실히 취소합니다.
 	//GetWorldTimerManager().ClearTimer(DissolveDelayTimerHandle);
 	//GetWorldTimerManager().ClearTimer(DissolveTimerHandle);
 	// 1. 화면에 다시 보이기
