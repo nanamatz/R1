@@ -28,7 +28,7 @@ protected:
 	TMap<int32, class UR1MinimapRoomWidget*> SpawnedRooms;
 
 	// 방 1개의 UI 크기
-	const float ROOM_SIZE = 75.0f;
+	const float ROOM_SIZE = 50.0f;
 
 public:
 	// 맵 제너레이터의 델리게이트와 연결될 콜백 함수들
@@ -41,6 +41,10 @@ public:
 private:
 	void UpdateMinimapUI(int32 CurrentRoomID, AR1MapGenerator* Generator);
 
-//private:
-//	void UpdateMinimapUI(int32 CurrentRoomID, int32 PrevRoomID, AR1MapGenerator* Generator);
+private:
+	UPROPERTY()
+	FVector2D MapCenterOffset = FVector2D::ZeroVector;
+
+	// 전체 맵 데이터(바운딩 박스)를 바탕으로 중심점을 계산하는 함수
+	void CalculateMapCenterOffset(const TArray<FR1MapNode>& MapData);
 };
