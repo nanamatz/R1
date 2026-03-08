@@ -145,6 +145,28 @@ void UR1RoomStreamingSubsystem::MarkRoomAsLeft(UR1RoomDefinitionData* RoomDefini
 	}
 }
 
+void UR1RoomStreamingSubsystem::UnloadAllRooms()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// 월드에 로드되어 있는 모든 스트리밍 레벨을 순회합니다.
+	const TArray<ULevelStreaming*>& StreamingLevels = World->GetStreamingLevels();
+
+	for (ULevelStreaming* Level : StreamingLevels)
+	{
+		// 동적으로 생성된 방(ULevelStreamingDynamic)들만 골라서 파괴 지시
+		if (ULevelStreamingDynamic* DynamicLevel = Cast<ULevelStreamingDynamic>(Level))
+		{
+			DynamicLevel->SetShouldBeLoaded(false);
+			DynamicLevel->SetShouldBeVisible(false);
+			DynamicLevel->SetIsRequestingUnloadAndRemoval(true); // 메모리에서 완전히 파괴
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[RoomStreaming] 이전 층의 모든 방을 메모리에서 해제했습니다."));
+}
+
 void UR1RoomStreamingSubsystem::UnloadRoomInternal(FR1RoomRuntimeState& State)
 {
 	if (State.ThermalState == ER1RoomThermalState::Cold) return;
