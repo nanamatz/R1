@@ -32,7 +32,7 @@ protected:
 public:
 	// 에디터에서 레벨 디자이너가 이 방의 룰을 정할 수 있게 노출합니다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Setup")
-	ER1RoomClearCondition ClearCondition = ER1RoomClearCondition::KillAllMonsters;
+	ER1RoomClearCondition ClearCondition = ER1RoomClearCondition::None;
 
 	// [추가] 내가 관리하고 있는 방의 고유 번호 (제너레이터가 주입해 줄 예정)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Room State")
@@ -79,5 +79,8 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Room State")
 	TArray<class AR1Door*> RoomDoors;
 
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "Room Setup")
+	TSubclassOf<AActor> PortalClass;
 
 };

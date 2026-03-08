@@ -35,6 +35,13 @@ void UR1MinimapWidget::OnMapGeneratedCallback(const TArray<FR1MapNode>& MapData)
 
 	if (MapData.IsEmpty()) return;
 
+	if (CanvasPanel_Entries)
+	{
+		CanvasPanel_Entries->ClearChildren();
+	}
+
+	SpawnedRooms.Empty();
+
 	CalculateMapCenterOffset(MapData);
 
 	if (AActor* GeneratorActor = UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()))

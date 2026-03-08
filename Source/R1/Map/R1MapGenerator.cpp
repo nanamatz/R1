@@ -217,12 +217,20 @@ void AR1MapGenerator::InitializeRoomPools()
 		return;
 	}
 
+	// 에디터에서 세팅한 층 배열을 벗어나면 중단
+	if (!FloorSettings.IsValidIndex(CurrentFloorIndex))
+	{
+		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] %d층 세팅 데이터가 없습니다!"), CurrentFloorIndex);
+		return;
+	}
+
+	const FFloorData& CurrentFloor = FloorSettings[CurrentFloorIndex];
+
 	// 람다(Lambda) 함수를 활용해 라벨 이름만 주면 알아서 풀을 채우도록 만듭니다.
 	auto LoadPoolByLabel = [&](FName Label, TArray<UR1RoomDefinitionData*>& OutPool)
 		{
 			OutPool.Empty();
 
-			// 1. 라벨에 해당하는 에셋 목록을 글로벌 데이터에서 긁어옵니다.
 			const FAssetSet& AssetSet = GlobalAssetData->GetAssetSetByLabel(Label);
 
 			// 2. 긁어온 Soft 경로들을 순회하며 메모리에 로드(TryLoad)합니다.
@@ -241,14 +249,20 @@ void AR1MapGenerator::InitializeRoomPools()
 		};
 
 	// 이제 원하는 라벨만 던져주면 끝입니다!
-	LoadPoolByLabel(FName("Room_Start"), StartRoomPool);
-	LoadPoolByLabel(FName("Room_Combat"), CombatRoomPool);
-	LoadPoolByLabel(FName("Room_Boss"), BossRoomPool);
+	//LoadPoolByLabel(FName("Room_Start"), StartRoomPool);
+	//LoadPoolByLabel(FName("Room_Combat"), CombatRoomPool);
+	//LoadPoolByLabel(FName("Room_Boss"), BossRoomPool);
+	LoadPoolByLabel(CurrentFloor.StartRoomLabel, StartRoomPool);
+	LoadPoolByLabel(CurrentFloor.CombatRoomLabel, CombatRoomPool);
+	LoadPoolByLabel(CurrentFloor.BossRoomLabel, BossRoomPool);
+	LoadPoolByLabel(CurrentFloor.EventRoomLabel, EventRoomPool);
+	LoadPoolByLabel(CurrentFloor.TreasureRoomLabel, TreasureRoomPool);
+	LoadPoolByLabel(CurrentFloor.ShopRoomLabel, ShopRoomPool);
 }
 
 void AR1MapGenerator::AssignRoomTypes()
 {
-	if (StartRoomPool.IsEmpty() || CombatRoomPool.IsEmpty() || BossRoomPool.IsEmpty())
+	if (StartRoomPool.IsEmpty() || CombatRoomPool.IsEmpty() || BossRoomPool.IsEmpty() || EventRoomPool.IsEmpty())
 	{
 		return;
 	}
@@ -260,11 +274,15 @@ void AR1MapGenerator::AssignRoomTypes()
 	// 2. 보스 방 위치 찾기 (가장 먼 막다른 길)
 	int32 BossNodeID = -1;
 	float MaxDistance = -1.0f;
+	TArray<int32> DeadEndNodes;
+
 
 	for (int32 i = 1; i < GeneratedMap.Num(); ++i)
 	{
 		if (GeneratedMap[i].ConnectedNodeIDs.Num() == 1)
 		{
+			DeadEndNodes.Add(i);
+
 			float Dist = FVector::Dist(FVector::ZeroVector, FVector(GeneratedMap[i].GridPosition.X, GeneratedMap[i].GridPosition.Y, 0));
 			if (Dist > MaxDistance)
 			{
@@ -278,13 +296,109 @@ void AR1MapGenerator::AssignRoomTypes()
 	if (BossNodeID != -1)
 	{
 		GeneratedMap[BossNodeID].RoomDefinition = BossRoomPool[FMath::RandRange(0, BossRoomPool.Num() - 1)];
+		DeadEndNodes.RemoveSingle(BossNodeID);
 	}
+
+	// 한 층에 등장할 이벤트 방의 개수 설정
+	int32 TargetEventRoomCount = FMath::RandRange(1, 2);
+	int32 SpawnedEventRooms = 0;
+	TArray<UR1RoomDefinitionData*> SpecialRoomsToSpawn;
+
+	if (!TreasureRoomPool.IsEmpty())
+	{
+		int32 RandIdx = FMath::RandRange(0, TreasureRoomPool.Num() - 1);
+		SpecialRoomsToSpawn.Add(TreasureRoomPool[RandIdx]);
+		TreasureRoomPool.RemoveAt(RandIdx); // 중복 방지를 위해 풀에서 제거
+	}
+
+	if (!ShopRoomPool.IsEmpty())
+	{
+		int32 RandIdx = FMath::RandRange(0, ShopRoomPool.Num() - 1);
+		SpecialRoomsToSpawn.Add(ShopRoomPool[RandIdx]);
+		ShopRoomPool.RemoveAt(RandIdx); // 중복 방지를 위해 풀에서 제거
+	}
+
+	for (UR1RoomDefinitionData* SpecialRoomData : SpecialRoomsToSpawn)
+	{
+		int32 TargetNodeID = -1;
+
+		// 1순위: 남은 '막다른 길'에 우선적으로 숨겨둡니다.
+		if (DeadEndNodes.Num() > 0)
+		{
+			int32 RandDeadEndIdx = FMath::RandRange(0, DeadEndNodes.Num() - 1);
+			TargetNodeID = DeadEndNodes[RandDeadEndIdx];
+			DeadEndNodes.RemoveAt(RandDeadEndIdx); // 쓴 자리는 제외
+		}
+		// 2순위: 맵 구조상 막다른 길이 더 이상 없다면, 중간에 남은 아무 빈 방에나 배치합니다.
+		else
+		{
+			TArray<int32> AvailableNormalNodes;
+			for (int32 i = 1; i < GeneratedMap.Num(); ++i)
+			{
+				if (GeneratedMap[i].RoomDefinition == nullptr) AvailableNormalNodes.Add(i);
+			}
+
+			if (AvailableNormalNodes.Num() > 0)
+			{
+				int32 RandNormalIdx = FMath::RandRange(0, AvailableNormalNodes.Num() - 1);
+				TargetNodeID = AvailableNormalNodes[RandNormalIdx];
+			}
+		}
+
+		// 최종적으로 방 위치가 결정되었다면 데이터 주입!
+		if (TargetNodeID != -1)
+		{
+			GeneratedMap[TargetNodeID].RoomDefinition = SpecialRoomData;
+		}
+	}
+
+	//while (SpawnedEventRooms < TargetEventRoomCount && DeadEndNodes.Num() > 0 && !EventRoomPool.IsEmpty())
+	//{
+	//	// 랜덤한 막다른 길 하나 선택
+	//	int32 RandomIdx = FMath::RandRange(0, DeadEndNodes.Num() - 1);
+	//	int32 TargetNodeID = DeadEndNodes[RandomIdx];
+	//	DeadEndNodes.RemoveAt(RandomIdx); // 중복 방지
+
+	//	// 이벤트 풀에서 랜덤한 이벤트 방(상점/보물 등) 하나 꺼내서 할당
+	//	int32 EventRoomIdx = FMath::RandRange(0, EventRoomPool.Num() - 1);
+	//	GeneratedMap[TargetNodeID].RoomDefinition = EventRoomPool[EventRoomIdx];
+	//	EventRoomPool.RemoveAt(EventRoomIdx);
+
+	//	SpawnedEventRooms++;
+	//}
+
+	//// 4-2. 만약 맵 구조상 '막다른 길'이 부족하다면, 중간에 끼어있는 일반 방에라도 배치합니다.
+	//if (SpawnedEventRooms < TargetEventRoomCount)
+	//{
+	//	TArray<int32> AvailableNormalNodes;
+	//	for (int32 i = 1; i < GeneratedMap.Num(); ++i)
+	//	{
+	//		// 아직 어떤 방도 할당되지 않은(nullptr) 빈 방만 찾습니다.
+	//		if (GeneratedMap[i].RoomDefinition == nullptr)
+	//		{
+	//			AvailableNormalNodes.Add(i);
+	//		}
+	//	}
+
+	//	while (SpawnedEventRooms < TargetEventRoomCount && AvailableNormalNodes.Num() > 0 && !EventRoomPool.IsEmpty())
+	//	{
+	//		int32 RandomIdx = FMath::RandRange(0, AvailableNormalNodes.Num() - 1);
+	//		int32 TargetNodeID = AvailableNormalNodes[RandomIdx];
+	//		AvailableNormalNodes.RemoveAt(RandomIdx);
+
+	//		int32 EventRoomIdx = FMath::RandRange(0, EventRoomPool.Num() - 1);
+	//		GeneratedMap[TargetNodeID].RoomDefinition = EventRoomPool[EventRoomIdx];
+	//		EventRoomPool.RemoveAt(EventRoomIdx);
+
+	//		SpawnedEventRooms++;
+	//	}
+	//}
 
 	// 4. 나머지 일반(Combat) 방 할당 (중복 방지 로직 적용)
 	for (int32 i = 1; i < GeneratedMap.Num(); ++i)
 	{
-		// 보스 방으로 지정된 곳은 건너뜁니다.
-		if (i == BossNodeID) continue;
+
+		if (GeneratedMap[i].RoomDefinition != nullptr) continue;
 
 		// [안전장치] 풀이 비어있는지 체크 (맵의 방 개수보다 만들어둔 PDA가 적을 경우)
 		if (CombatRoomPool.IsEmpty())
@@ -504,6 +618,55 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 			InnerRoomSubsystem->QueuePreloadRooms(AdjacentRooms);
 		}
 	}
+}
+
+void AR1MapGenerator::GoToNextFloor()
+{
+	CurrentFloorIndex++;
+
+	// 마지막 층까지 깼다면 리턴 (게임 클리어)
+	if (!FloorSettings.IsValidIndex(CurrentFloorIndex))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 모든 층 클리어! 게임 엔딩!"));
+		return;
+	}
+
+	// 1. 기존에 로드된 모든 스트리밍 레벨(방) 메모리에서 날려버리기
+	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
+	if (RoomSubsystem)
+	{
+		RoomSubsystem->UnloadAllRooms();
+	}
+
+	// 2. 맵 데이터 뼈대 완전 초기화
+	GeneratedMap.Empty();
+	CurrentActiveNodeID = 0;
+	PendingNodeID = -1;
+	PendingDoorDirection = ER1DoorDirection::None;
+
+	// 3. 새로운 층 데이터 로드 및 재생성
+	InitializeRoomPools();
+	GenerateMap();
+
+	// 4. 새로운 층의 0번 방 스폰 지시
+	if (GeneratedMap.Num() > 0 && GeneratedMap[0].RoomDefinition != nullptr && RoomSubsystem)
+	{
+		ULevelStreamingDynamic* StreamingLevel = RoomSubsystem->SpawnRoomLevel(
+			GeneratedMap[0].RoomDefinition,
+			GeneratedMap[0].SpawnLocation,
+			FRotator::ZeroRotator
+		);
+
+		if (StreamingLevel)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] %d층 0번 방 스폰 지시 완료!"), CurrentFloorIndex + 1);
+		}
+	}
+}
+
+bool AR1MapGenerator::IsLastFloor() const
+{
+	return CurrentFloorIndex >= (FloorSettings.Num() - 1);
 }
 
 void AR1MapGenerator::UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID)

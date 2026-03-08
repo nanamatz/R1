@@ -118,6 +118,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
 	void MarkRoomAsLeft(UR1RoomDefinitionData* RoomDefinition);
 
+	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
+	void UnloadAllRooms();
+
 	UPROPERTY(BlueprintAssignable, Category = "Room Streaming")
 	FR1RoomStateChanged OnRoomBecameHot;
 

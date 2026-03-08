@@ -9,6 +9,30 @@
 class UR1RoomDefinitionData;
 class UR1AssetData;
 
+USTRUCT(BlueprintType)
+struct FFloorData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
+	FName StartRoomLabel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
+	FName CombatRoomLabel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
+	FName BossRoomLabel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
+	FName EventRoomLabel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
+	FName TreasureRoomLabel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
+	FName ShopRoomLabel;
+};
+
 UENUM(BlueprintType)
 enum class ER1DoorDirection : uint8
 {
@@ -107,9 +131,20 @@ public:
 	int32 GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorDirection Direction);
 
 public:
-	// 방 매니저가 스폰되고 스스로 준비를 마쳤을 때 호출할 함수
 	UFUNCTION()
 	void RegisterRoomManager(class ADungeonManager* Manager);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Generation")
+	TArray<FFloorData> FloorSettings;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Map Generation")
+	int32 CurrentFloorIndex = 0;
+
+	UFUNCTION(BlueprintCallable, Category = "Map Generation")
+	void GoToNextFloor();
+
+	UFUNCTION(BlueprintPure, Category = "Map Generation")
+	bool IsLastFloor() const;
 
 private:
 	void UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID);
@@ -124,6 +159,15 @@ private:
 
 	UPROPERTY(Transient)
 	TArray<UR1RoomDefinitionData*> BossRoomPool;
+
+	UPROPERTY(Transient)
+	TArray<UR1RoomDefinitionData*> EventRoomPool;
+
+	UPROPERTY()
+	TArray<UR1RoomDefinitionData*> TreasureRoomPool;
+
+	UPROPERTY()
+	TArray<UR1RoomDefinitionData*> ShopRoomPool;
 
 	// [추가] 맵 생성 직전에 풀을 자동으로 채우는 함수
 	void InitializeRoomPools();

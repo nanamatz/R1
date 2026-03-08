@@ -1,0 +1,41 @@
+
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "R1Portal.generated.h"
+
+class UBoxComponent;
+class UStaticMeshComponent;
+
+UCLASS()
+class R1_API AR1Portal : public AActor
+{
+	GENERATED_BODY()
+	
+public:	
+	// Sets default values for this actor's properties
+	AR1Portal();
+
+protected:
+	virtual void BeginPlay() override;
+
+public:
+	// 문의 루트 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<USceneComponent> RootComp;
+
+	// 문의 외형 (메시)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> PortalMesh;
+
+	// 플레이어 접근을 감지할 트리거 박스
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UBoxComponent> TriggerBox;
+
+private:
+	// 트리거 박스에 플레이어가 겹쳤을 때 실행될 함수
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+};
