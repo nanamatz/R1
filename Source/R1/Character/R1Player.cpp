@@ -68,9 +68,8 @@ void AR1Player::BeginPlay()
 
 	if (UR1GameInstance* R1GameInstance = GetGameInstance<UR1GameInstance>())
 	{
-		R1GameInstance->ApplyRespawnSnapshotToPlayer(this);
+		//R1GameInstance->ApplyRespawnSnapshotToPlayer(this);
 		InitExpBar();
-
 	}
 	
 	AttackRange = CommonAttributeSet->GetAttackRange();
