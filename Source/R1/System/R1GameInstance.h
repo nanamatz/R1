@@ -23,17 +23,16 @@ public:
 	virtual void Init() override;
 	virtual void Shutdown() override;
 
-	UFUNCTION(BlueprintCallable, Category = "SaveGame")
-	bool SavePlayerState(const AR1Player* Player, const FString& SlotName, int32 UserIndex = 0);
+	//UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	//bool SavePlayerState(const AR1Player* Player, const FString& SlotName, int32 UserIndex = 0);
 
-	UFUNCTION(BlueprintCallable, Category = "SaveGame")
-	bool LoadPlayerStateToPlayer(AR1Player* Player, const FString& SlotName, int32 UserIndex = 0);
+	//UFUNCTION(BlueprintCallable, Category = "SaveGame")
+	//bool LoadPlayerStateToPlayer(AR1Player* Player, const FString& SlotName, int32 UserIndex = 0);
 
-	void SaveRespawnSnapshotFromPlayer(const AR1Player* Player);
-	void ApplyRespawnSnapshotToPlayer(AR1Player* Player);
+	//void SaveRespawnSnapshotFromPlayer(const AR1Player* Player);
+	//void ApplyRespawnSnapshotToPlayer(AR1Player* Player);
 
 public:
-	// 🌟 어빌리티들이 스킬 데이터를 물어볼 때 사용할 전역(Global) 함수!
 	const FSkillDataRow* GetSkillData(FName SkillName) const;
 
 protected:
@@ -41,7 +40,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
 	TObjectPtr<class UDataTable> SkillDataTable;
 
-private:
-	static const FString RespawnSlotName;
-	static constexpr int32 RespawnUserIndex = 0;
+//private:
+//	static const FString RespawnSlotName;
+//	static constexpr int32 RespawnUserIndex = 0;
 };

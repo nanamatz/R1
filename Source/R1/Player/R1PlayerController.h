@@ -28,11 +28,11 @@ protected:
 public:
 	virtual void HandleGameplayEvent(FGameplayTag EventTag);
 	
-	UFUNCTION(BlueprintCallable, Category = "Respawn")
-	void RespawnInLevel(FName LevelName);
+	//UFUNCTION(BlueprintCallable, Category = "Respawn")
+	//void RespawnInLevel(FName LevelName);
 
-	UFUNCTION(BlueprintCallable, Category = "Respawn")
-	void RespawnCurrentLevel();
+	//UFUNCTION(BlueprintCallable, Category = "Respawn")
+	//void RespawnCurrentLevel();
 
 	void UpdateInputMode(bool bShouldUIOnly);
 

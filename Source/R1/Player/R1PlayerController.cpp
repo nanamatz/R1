@@ -493,25 +493,25 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 	//TODO
 }
 
-void AR1PlayerController::RespawnInLevel(FName LevelName)
-{
-	if (LevelName.IsNone())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("RespawnInLevel failed: LevelName is None."));
-		return;
-	}
-
-	if (UR1GameInstance* R1GameInstance = GetGameInstance<UR1GameInstance>())
-	{
-		R1GameInstance->SaveRespawnSnapshotFromPlayer(R1Player);
-	}
-
-	UGameplayStatics::OpenLevel(this, LevelName);
-}
-
-void AR1PlayerController::RespawnCurrentLevel()
-{
-	const FName CurrentLevelName = FName(*UGameplayStatics::GetCurrentLevelName(this, true));
-	RespawnInLevel(CurrentLevelName);
-}
+//void AR1PlayerController::RespawnInLevel(FName LevelName)
+//{
+//	if (LevelName.IsNone())
+//	{
+//		UE_LOG(LogTemp, Warning, TEXT("RespawnInLevel failed: LevelName is None."));
+//		return;
+//	}
+//
+//	if (UR1GameInstance* R1GameInstance = GetGameInstance<UR1GameInstance>())
+//	{
+//		R1GameInstance->SaveRespawnSnapshotFromPlayer(R1Player);
+//	}
+//
+//	UGameplayStatics::OpenLevel(this, LevelName);
+//}
+//
+//void AR1PlayerController::RespawnCurrentLevel()
+//{
+//	const FName CurrentLevelName = FName(*UGameplayStatics::GetCurrentLevelName(this, true));
+//	RespawnInLevel(CurrentLevelName);
+//}
 
