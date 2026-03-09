@@ -6,14 +6,12 @@
 #include "System/R1SaveSystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "R1GameMenuWIdget.h"
 
 void UR1MainMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	// ==========================================
-	// 1. UI 버튼들에 클릭 이벤트 바인딩
-	// ==========================================
 	if (Button_NewRun)
 	{
 		Button_NewRun->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnNewRunButtonClicked);
@@ -34,9 +32,6 @@ void UR1MainMenuWidget::NativeConstruct()
 		Button_Exit->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnExitButtonClicked);
 	}
 
-	// ==========================================
-	// 2. 세이브 여부에 따른 Continue 버튼 활성화
-	// ==========================================
 	if (UGameInstance* GameInstance = GetGameInstance())
 	{
 		if (UR1SaveSystem* SaveSystem = GameInstance->GetSubsystem<UR1SaveSystem>())
@@ -69,6 +64,8 @@ void UR1MainMenuWidget::OnNewRunButtonClicked()
 	}
 }
 
+
+
 void UR1MainMenuWidget::OnContinueButtonClicked()
 {
 	if (!GameLevelName.IsNone())
@@ -76,6 +73,8 @@ void UR1MainMenuWidget::OnContinueButtonClicked()
 		UGameplayStatics::OpenLevel(this, GameLevelName);
 	}
 }
+
+
 
 void UR1MainMenuWidget::OnOptionsButtonClicked()
 {

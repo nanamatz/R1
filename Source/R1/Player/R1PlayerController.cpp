@@ -445,29 +445,26 @@ void AR1PlayerController::OnRSkill()
 
 void AR1PlayerController::OnGameMenuToggle()
 {
+	AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
+	if (MyR1HUD)
+	{
+		MyR1HUD->ToggleGameMenu();
+	}
+
+	// 2. 현재 상태 확인 후 반전
 	bool bIsPaused = IsPaused();
-	if (bIsPaused)
-	{
-		AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
+	SetPause(!bIsPaused); // true면 false로, false면 true로!
 
-		if (MyR1HUD)
-		{
-			MyR1HUD->ToggleGameMenu();
-		}
-
-		SetPause(false);
-	}
-	else
-	{
-		AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
-
-		if (MyR1HUD)
-		{
-			MyR1HUD->ToggleGameMenu();
-		}
-
-		SetPause(true);
-	}
+	//// 3. 마우스 커서 및 입력 모드 전환
+	//if (!bIsPaused)
+	//{
+	//	// 게임 중 -> 일시정지 됨: 마우스를 켜고 UI를 클릭할 수 있게 함
+	//	SetInputMode(FInputModeGameAndUI());
+	//}
+	//else
+	//{
+	//	SetInputMode(FInputModeGameOnly());
+	//}
 
 }
 
