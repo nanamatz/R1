@@ -106,7 +106,7 @@ void ADungeonManager::CompleteRoom()
 
 			if (bIsLastFloor)
 			{
-				// TODO: 여기에 게임 클리어 UI를 띄우거나, 엔딩 씬으로 넘어가는 코드를 작성하시면 됩니다!
+				// TODO: 여기에 게임 클리어 UI를 띄우거나, 엔딩 씬으로 넘어가는 코드
 			}
 			else if (PortalClass)
 			{
@@ -121,7 +121,7 @@ void ADungeonManager::CompleteRoom()
 		OnRoomCleared.Broadcast(RoomNodeID);
 	}
 
-	// TODO
+	// TODO 보상 지급 로직
 }
 
 void ADungeonManager::StartRoomCombat()

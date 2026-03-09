@@ -248,10 +248,6 @@ void AR1MapGenerator::InitializeRoomPools()
 			}
 		};
 
-	// 이제 원하는 라벨만 던져주면 끝입니다!
-	//LoadPoolByLabel(FName("Room_Start"), StartRoomPool);
-	//LoadPoolByLabel(FName("Room_Combat"), CombatRoomPool);
-	//LoadPoolByLabel(FName("Room_Boss"), BossRoomPool);
 	LoadPoolByLabel(CurrentFloor.StartRoomLabel, StartRoomPool);
 	LoadPoolByLabel(CurrentFloor.CombatRoomLabel, CombatRoomPool);
 	LoadPoolByLabel(CurrentFloor.BossRoomLabel, BossRoomPool);
