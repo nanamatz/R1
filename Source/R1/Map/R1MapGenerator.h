@@ -129,6 +129,16 @@ public:
 
 	// 특정 방향(동서남북)에 논리적으로 연결된 방이 있는지 찾아주는 헬퍼 함수
 	int32 GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorDirection Direction);
+	int32 GetCurrentNodeID() const { return CurrentActiveNodeID; }
+
+public:
+	// 세이브 데이터로부터 맵을 복원하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Map Generation")
+	void LoadMapFromSaveData(const TArray<struct FR1MapNodeSaveData>& SavedNodes, int32 SavedFloorIndex, int32 SavedActiveNodeID);
+
+private:
+	// 라벨 이름으로 로드된 풀(Pool)에서 방 데이터를 찾아주는 도우미 함수
+	class UR1RoomDefinitionData* FindRoomDefinitionByLabel(FName Label);
 
 public:
 	UFUNCTION()

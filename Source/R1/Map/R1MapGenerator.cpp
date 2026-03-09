@@ -4,6 +4,9 @@
 
 #include "Data/R1RoomDefinitionData.h"
 #include "System/R1RoomStreamingSubsystem.h"
+#include "System/R1PlayerSaveGame.h"
+#include "System/R1SaveSystem.h"
+#include "Character/R1Player.h"
 
 #include "Engine/LevelStreamingDynamic.h"
 #include "Kismet/GameplayStatics.h"
@@ -12,6 +15,7 @@
 #include "Containers/Queue.h"
 #include "Data/R1AssetData.h" 
 #include "EngineUtils.h"
+
 
 #include "Player/R1PlayerController.h"
 
@@ -25,33 +29,29 @@ void AR1MapGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitializeRoomPools();
-	// 1. 게임이 시작되면 아이작 알고리즘으로 맵(배열 데이터)을 먼저 완성합니다.
-	GenerateMap();
+	UR1SaveSystem* SaveSystem = GetGameInstance()->GetSubsystem<UR1SaveSystem>();
 
-	// 2. 지도가 완성되었다면, 첫 번째 방(시작 방)을 실제로 스폰합니다.
-	if (GeneratedMap.Num() > 0 && GeneratedMap[0].RoomDefinition != nullptr)
+	if (SaveSystem && SaveSystem->HasSavedRun())
 	{
-		UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
-		if (RoomSubsystem)
-		{
-			// 서브시스템에 0번 방 스폰을 요청
-			ULevelStreamingDynamic* StreamingLevel = RoomSubsystem->SpawnRoomLevel(
-				GeneratedMap[0].RoomDefinition,
-				GeneratedMap[0].SpawnLocation,
-				FRotator::ZeroRotator
-			);
+		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 세이브 파일이 존재합니다. 랜덤 맵 생성을 대기하고 로드를 요청합니다."));
 
-			// 스폰 지시가 성공적으로 들어갔다면, 완료 델리게이트 연결
-			if (StreamingLevel)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 0번 방 스폰을 요청했습니다. 대기 중..."));
-			}
-		}
+		// 플레이어 캐릭터를 찾아옴
+		ACharacter* PlayerChar = UGameplayStatics::GetPlayerCharacter(this, 0);
+
+		// 서브시스템에게 맵과 스탯을 복구하라고 지시!
+		SaveSystem->LoadCurrentRun(Cast<AR1Player>(PlayerChar), this);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 맵이 생성되지 않았거나 시작 방 데이터가 없습니다!"));
+		InitializeRoomPools();
+		GenerateMap();
+
+		// 0번 방 스폰 로직 (기존 코드 유지)
+		UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
+		if (GeneratedMap.Num() > 0 && GeneratedMap[0].RoomDefinition != nullptr && RoomSubsystem)
+		{
+			RoomSubsystem->SpawnRoomLevel(GeneratedMap[0].RoomDefinition, GeneratedMap[0].SpawnLocation, FRotator::ZeroRotator);
+		}
 	}
 }
 
@@ -490,6 +490,75 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 	}
 }
 
+
+void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& SavedNodes, int32 SavedFloorIndex, int32 SavedActiveNodeID)
+{
+	CurrentFloorIndex = SavedFloorIndex;
+	CurrentActiveNodeID = SavedActiveNodeID;
+
+	// 2. 맵 데이터 뼈대 완전 초기화
+	GeneratedMap.Empty();
+
+	// 3. 현재 층수에 맞춰서 PDA로부터 풀(Pool) 로딩!
+	InitializeRoomPools();
+
+	// 4. 저장된 배열을 바탕으로 맵 데이터 재조립
+	for (const FR1MapNodeSaveData& SaveNode : SavedNodes)
+	{
+		FR1MapNode NewNode;
+		NewNode.NodeID = SaveNode.NodeID;
+		NewNode.bIsCleared = SaveNode.bIsCleared;
+		NewNode.GridPosition = SaveNode.GridPosition;
+		NewNode.ConnectedNodeIDs = SaveNode.ConnectedNodeIDs;
+
+		// 🌟 핵심: 저장된 라벨 이름으로 풀에서 실제 데이터를 찾아 끼워 넣습니다.
+		NewNode.RoomDefinition = FindRoomDefinitionByLabel(SaveNode.RoomLabel);
+
+		// 스폰 위치 재계산 (기존 방 크기 상수를 곱해줍니다. 예: 2000.0f)
+		NewNode.SpawnLocation = FVector(NewNode.SpawnLocation = FVector(
+			SaveNode.GridPosition.X * RoomSpacing,
+			SaveNode.GridPosition.Y * RoomSpacing,
+			0.0f));
+
+		GeneratedMap.Add(NewNode);
+	}
+
+	// 5. 플레이어가 껐을 때 마지막으로 있던 방(CurrentActiveNodeID) 스폰!
+	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
+	if (RoomSubsystem && GeneratedMap.IsValidIndex(CurrentActiveNodeID) && GeneratedMap[CurrentActiveNodeID].RoomDefinition != nullptr)
+	{
+		RoomSubsystem->SpawnRoomLevel(
+			GeneratedMap[CurrentActiveNodeID].RoomDefinition,
+			GeneratedMap[CurrentActiveNodeID].SpawnLocation,
+			FRotator::ZeroRotator
+		);
+
+		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 📂 %d층 %d번 방에서 이어서 시작합니다!"), CurrentFloorIndex + 1, CurrentActiveNodeID);
+	}
+}
+
+UR1RoomDefinitionData* AR1MapGenerator::FindRoomDefinitionByLabel(FName AssetName)
+{
+	if (AssetName.IsNone()) return nullptr;
+
+	// 5개의 풀을 전부 뒤져서 라벨 이름이 똑같은 방 데이터를 찾아냅니다.
+	auto SearchPool = [&](const TArray<UR1RoomDefinitionData*>& Pool) -> UR1RoomDefinitionData*
+		{
+			for (UR1RoomDefinitionData* Data : Pool)
+			{
+				if (Data && Data->GetFName() == AssetName) return Data;
+			}
+			return nullptr;
+		};
+
+	if (auto* Found = SearchPool(StartRoomPool)) return Found;
+	if (auto* Found = SearchPool(CombatRoomPool)) return Found;
+	if (auto* Found = SearchPool(BossRoomPool)) return Found;
+	if (auto* Found = SearchPool(TreasureRoomPool)) return Found;
+	if (auto* Found = SearchPool(ShopRoomPool)) return Found;
+
+	return nullptr;
+}
 
 void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 {
