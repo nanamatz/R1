@@ -64,24 +64,26 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	if (MapGenerator)
 	{
 		SaveObj->CurrentFloorIndex = MapGenerator->CurrentFloorIndex;
-		SaveObj->CurrentActiveNodeID = MapGenerator->GetCurrentNodeID();
-
+		SaveObj->CurrentActiveNodeID = MapGenerator->CurrentActiveNodeID;
+			
+		SaveObj->CurrentActiveNodeID = (MapGenerator->PendingNodeID != -1) ? MapGenerator->PendingNodeID : MapGenerator->CurrentActiveNodeID;
 		// MapGenerator가 들고 있는 무거운 GeneratedMap을 가벼운 SaveNode로 변환
 		for (const FR1MapNode& Node : MapGenerator->GeneratedMap)
 		{
 			FR1MapNodeSaveData SaveNode;
 			SaveNode.NodeID = Node.NodeID;
+			SaveNode.MinimapState = Node.MinimapState;
 			SaveNode.bIsCleared = Node.bIsCleared;
 			SaveNode.GridPosition = Node.GridPosition;
 			SaveNode.ConnectedNodeIDs = Node.ConnectedNodeIDs;
 
 			if (Node.RoomDefinition)
 			{
-				SaveNode.RoomLabel = Node.RoomDefinition->GetFName();
+				SaveNode.RoomAssetName = Node.RoomDefinition->GetFName();
 			}
 			else
 			{
-				SaveNode.RoomLabel = NAME_None;
+				SaveNode.RoomAssetName = NAME_None;
 			}
 
 			SaveObj->SavedMapNodes.Add(SaveNode);

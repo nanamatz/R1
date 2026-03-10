@@ -36,10 +36,10 @@ void AR1MapGenerator::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 세이브 파일이 존재합니다. 랜덤 맵 생성을 대기하고 로드를 요청합니다."));
 
 		// 플레이어 캐릭터를 찾아옴
-		ACharacter* PlayerChar = UGameplayStatics::GetPlayerCharacter(this, 0);
+		AR1Player* PlayerChar = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
 
 		// 서브시스템에게 맵과 스탯을 복구하라고 지시!
-		SaveSystem->LoadCurrentRun(Cast<AR1Player>(PlayerChar), this);
+		SaveSystem->LoadCurrentRun(PlayerChar, this);
 	}
 	else
 	{
@@ -208,6 +208,8 @@ void AR1MapGenerator::GenerateMap()
 	{
 		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 퍼즐 조각이 부족하거나 알고리즘 한계로 생성 실패!"));
 	}
+
+	TriggerAutoSave();
 }
 
 void AR1MapGenerator::InitializeRoomPools()
@@ -480,6 +482,7 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 				// 아니라면 로딩 완료 시점에 호출되도록 델리게이트 연결
 				else
 				{
+					StreamingLevel->OnLevelLoaded.AddDynamic(this, &AR1MapGenerator::OnTransitionRoomLoaded);
 				}
 			}
 			else
@@ -495,6 +498,7 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 {
 	CurrentFloorIndex = SavedFloorIndex;
 	CurrentActiveNodeID = SavedActiveNodeID;
+	PendingNodeID = -1; // 불러올 땐 이동 중이 아님을 명시
 
 	// 2. 맵 데이터 뼈대 완전 초기화
 	GeneratedMap.Empty();
@@ -508,32 +512,103 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 		FR1MapNode NewNode;
 		NewNode.NodeID = SaveNode.NodeID;
 		NewNode.bIsCleared = SaveNode.bIsCleared;
+		NewNode.MinimapState = SaveNode.MinimapState;
 		NewNode.GridPosition = SaveNode.GridPosition;
 		NewNode.ConnectedNodeIDs = SaveNode.ConnectedNodeIDs;
 
-		// 🌟 핵심: 저장된 라벨 이름으로 풀에서 실제 데이터를 찾아 끼워 넣습니다.
-		NewNode.RoomDefinition = FindRoomDefinitionByLabel(SaveNode.RoomLabel);
+		NewNode.RoomDefinition = FindRoomDefinitionByLabel(SaveNode.RoomAssetName);
 
-		// 스폰 위치 재계산 (기존 방 크기 상수를 곱해줍니다. 예: 2000.0f)
-		NewNode.SpawnLocation = FVector(NewNode.SpawnLocation = FVector(
+		NewNode.SpawnLocation = FVector(
 			SaveNode.GridPosition.X * RoomSpacing,
 			SaveNode.GridPosition.Y * RoomSpacing,
-			0.0f));
+			0.0f
+		);
 
 		GeneratedMap.Add(NewNode);
 	}
 
+	// 1단계: 맵 전체를 일단 짙은 안개(Hidden)로 덮어 초기화합니다.
+	for (FR1MapNode& Node : GeneratedMap)
+	{
+		Node.MinimapState = ER1MinimapRoomState::Hidden;
+	}
+
+	// 2단계: 플레이어가 현재 있는 방(Current)과 이미 클리어한 방(Visited)들의 도장을 확실하게 찍습니다.
+	for (FR1MapNode& Node : GeneratedMap)
+	{
+		if (Node.NodeID == CurrentActiveNodeID)
+		{
+			Node.MinimapState = ER1MinimapRoomState::Current;
+		}
+		else if (Node.bIsCleared)
+		{
+			Node.MinimapState = ER1MinimapRoomState::Visited;
+		}
+	}
+
+	// 3단계: 도장이 찍힌 방(Current, Visited)들을 기준으로, 연결된 모든 이웃 방의 시야를 밝힙니다(Discovered).
+	for (const FR1MapNode& Node : GeneratedMap)
+	{
+		// 이 방이 내가 서 있거나 이미 지나온 방이라면?
+		if (Node.MinimapState == ER1MinimapRoomState::Current || Node.MinimapState == ER1MinimapRoomState::Visited)
+		{
+			// 이 방과 연결된 모든 이웃 방들을 검사합니다.
+			for (int32 ConnID : Node.ConnectedNodeIDs)
+			{
+				if (GeneratedMap.IsValidIndex(ConnID))
+				{
+					// 이웃 방이 아직 안개 속(Hidden)에 있다면, 발견됨(Discovered) 상태로 바꿔줍니다!
+					if (GeneratedMap[ConnID].MinimapState == ER1MinimapRoomState::Hidden)
+					{
+						GeneratedMap[ConnID].MinimapState = ER1MinimapRoomState::Discovered;
+					}
+				}
+			}
+		}
+	}
 	// 5. 플레이어가 껐을 때 마지막으로 있던 방(CurrentActiveNodeID) 스폰!
 	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
 	if (RoomSubsystem && GeneratedMap.IsValidIndex(CurrentActiveNodeID) && GeneratedMap[CurrentActiveNodeID].RoomDefinition != nullptr)
 	{
-		RoomSubsystem->SpawnRoomLevel(
+		ULevelStreamingDynamic* StreamingLevel = RoomSubsystem->SpawnRoomLevel(
 			GeneratedMap[CurrentActiveNodeID].RoomDefinition,
 			GeneratedMap[CurrentActiveNodeID].SpawnLocation,
 			FRotator::ZeroRotator
 		);
 
+		if (StreamingLevel)
+		{
+			// 로드 완료 시 OnSavedRoomLoaded 호출
+			if (StreamingLevel->IsLevelLoaded())
+			{
+				OnSavedRoomLoaded();
+			}
+			else
+			{
+				StreamingLevel->OnLevelLoaded.AddDynamic(this, &AR1MapGenerator::OnSavedRoomLoaded);
+			}
+		}
+
 		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 📂 %d층 %d번 방에서 이어서 시작합니다!"), CurrentFloorIndex + 1, CurrentActiveNodeID);
+	}
+}
+
+void AR1MapGenerator::OnSavedRoomLoaded()
+{
+	// 1. 방금 비동기 로딩이 완료된 현재 방의 좌표를 가져옵니다.
+	FVector SavedRoomLocation = GeneratedMap[CurrentActiveNodeID].SpawnLocation;
+
+	// 2. 월드에 존재하는 모든 던전 매니저를 싹 뒤집니다.
+	for (TActorIterator<ADungeonManager> ManagerIt(GetWorld()); ManagerIt; ++ManagerIt)
+	{
+		FVector2D ManagerLoc2D(ManagerIt->GetActorLocation().X, ManagerIt->GetActorLocation().Y);
+		FVector2D SavedLoc2D(SavedRoomLocation.X, SavedRoomLocation.Y);
+
+		if (FVector2D::Distance(ManagerLoc2D, SavedLoc2D) < 100.0f)
+		{
+			RegisterRoomManager(*ManagerIt);
+			break;
+		}
 	}
 }
 
@@ -577,9 +652,6 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 
 	if (MatchedNodeID == -1) return; // 맵에 없는 유령 방이면 무시
 
-	// ==========================================
-	// 🚪 [공통 로직] 문 연결 및 전투 상태 세팅 (기존 타이머 안에 있던 코드)
-	// ==========================================
 	AR1Door* TargetDoorToSpawnAt = nullptr;
 	ER1DoorDirection OppositeDir = GetOppositeDirection(PendingDoorDirection);
 
@@ -618,24 +690,34 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 	Manager->StartRoomCombat();
 
 	//플레이어 텔레포트 및 UI 갱신
-	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
+	AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
 
-	if (MatchedNodeID == 0 && PendingNodeID == -1)
+	if (PendingNodeID == -1)
 	{
 		if (PlayerCharacter)
 		{
-			FVector SafeLocation = GeneratedMap[0].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
+			FVector SafeLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
 			PlayerCharacter->SetActorLocation(SafeLocation);
-			PlayerCharacter->GetVelocity() = FVector::ZeroVector;
 		}
 
 		UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
 		if (RoomSubsystem)
 		{
 			RoomSubsystem->MarkRoomGameplayReady(GeneratedMap[0].RoomDefinition);
+
+			TArray<UR1RoomDefinitionData*> AdjacentRooms;
+			for (int32 ConnectedID : GeneratedMap[MatchedNodeID].ConnectedNodeIDs)
+			{
+				if (GeneratedMap.IsValidIndex(ConnectedID) && GeneratedMap[ConnectedID].RoomDefinition != nullptr)
+				{
+					AdjacentRooms.Add(GeneratedMap[ConnectedID].RoomDefinition);
+				}
+			}
+			RoomSubsystem->QueuePreloadRooms(AdjacentRooms);
 		}
 
-		UpdateMinimapState(0, -1);
+		UpdateMinimapState(MatchedNodeID, -1);
+
 		if (OnMapGenerated.IsBound())
 		{
 			OnMapGenerated.Broadcast(GeneratedMap); 
@@ -736,10 +818,13 @@ bool AR1MapGenerator::IsLastFloor() const
 
 void AR1MapGenerator::UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID)
 {
-	// 1. 이전 방이 존재한다면 상태를 'Visited(방문 완료)'로 변경
-	if (GeneratedMap.IsValidIndex(PrevNodeID) && PrevNodeID != TargetNodeID)
+	for (FR1MapNode& Node : GeneratedMap)
 	{
-		GeneratedMap[PrevNodeID].MinimapState = ER1MinimapRoomState::Visited;
+		if (Node.MinimapState == ER1MinimapRoomState::Current && Node.NodeID != TargetNodeID)
+		{
+			// 클리어 여부에 따라 상태 결정 (만약 안 깬 방에서 도망쳐 나온 거라면 Discovered로 유지)
+			Node.MinimapState = Node.bIsCleared ? ER1MinimapRoomState::Visited : ER1MinimapRoomState::Discovered;
+		}
 	}
 
 	// 2. 새로 진입한 방을 'Current(현재 위치)'로 변경
@@ -776,12 +861,17 @@ void AR1MapGenerator::OnTransitionRoomLoaded()
 
 	for (TActorIterator<ADungeonManager> ManagerIt(GetWorld()); ManagerIt; ++ManagerIt)
 	{
-		if (ManagerIt->GetActorLocation().Equals(NextLocation, 10.0f))
+		FVector2D ManagerLoc2D(ManagerIt->GetActorLocation().X, ManagerIt->GetActorLocation().Y);
+		FVector2D NextLoc2D(NextLocation.X, NextLocation.Y);
+
+		if (FVector2D::Distance(ManagerLoc2D, NextLoc2D) < 100.0f)
 		{
 			RegisterRoomManager(*ManagerIt);
 			break;
 		}
 	}
+
+	TriggerAutoSave();
 }
 
 ER1DoorDirection AR1MapGenerator::GetOppositeDirection(ER1DoorDirection InDir)
@@ -802,6 +892,9 @@ void AR1MapGenerator::OnRoomClearedCallback(int32 ClearedNodeID)
 	{
 		// 지도 데이터에 영구적으로 "클리어 됨" 도장을 찍습니다!
 		GeneratedMap[ClearedNodeID].bIsCleared = true;
+
+		TriggerAutoSave();
+
 	}
 }
 
@@ -837,4 +930,31 @@ UR1RoomDefinitionData* AR1MapGenerator::PopValidRoomFromPool(TArray<class UR1Roo
 		}
 	}
 	return nullptr; // 조건에 맞는 방이 풀에 없습니다.
+}
+
+void AR1MapGenerator::TriggerAutoSave()
+{
+	if (UR1SaveSystem* SaveSystem = GetGameInstance()->GetSubsystem<UR1SaveSystem>())
+	{
+		AR1Player* PlayerChar = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
+		if (PlayerChar)
+		{
+			// 현재 플레이어 스탯과 맵 구조를 저장!
+			int32 TempActiveID = CurrentActiveNodeID;
+			if (PendingNodeID != -1)
+			{
+				CurrentActiveNodeID = PendingNodeID;
+			}
+
+			SaveSystem->SaveCurrentRun(PlayerChar, this);
+
+			CurrentActiveNodeID = TempActiveID;
+
+			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 💾 자동 저장 완료! (현재 저장된 방: %d번)"), CurrentActiveNodeID);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("[MapGenerator] ❌ 자동 저장 실패: 플레이어 캐릭터를 찾을 수 없습니다!"));
+		}
+	}
 }
