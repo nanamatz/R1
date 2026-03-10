@@ -217,6 +217,86 @@ bool UR1InventorySubsystem::UnequipItem(ER1EquipmentSlot TargetSlot)
 	return true;
 }
 
+FIntPoint UR1InventorySubsystem::GetItemPosition(UR1ItemInstance* Item) const
+{
+	if (!Item) return FIntPoint(-1, -1);
+	for (int32 Y = 0; Y < GetInventoryRows(); ++Y)
+	{
+		for (int32 X = 0; X < GetInventoryColumns(); ++X)
+		{
+			if (GridData[Y * GetInventoryColumns() + X] == Item)
+			{
+				return FIntPoint(X, Y);
+			}
+		}
+	}
+	return FIntPoint(-1, -1);
+}
+
+void UR1InventorySubsystem::ClearInventory()
+{
+	// 1. 장착된 장비 해제 (단순히 데이터만 지움, GAS 등은 밖에서 처리하거나 여기서 EquipComp를 가져와서 해제해야 함)
+	// 하지만 세이브 로드 시에는 보통 모든 장비를 해제하고 새로 장착하는 게 깔끔함.
+	
+	// EquippedItems 맵 순회하면서 GAS 해제도 필요할 수 있음
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (APawn* PlayerPawn = PC->GetPawn())
+		{
+			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
+			{
+				for (auto& Pair : EquippedItems)
+				{
+					EquipComp->UnEquipItem(Pair.Key);
+				}
+			}
+		}
+	}
+
+	EquippedItems.Empty();
+	Items.Empty();
+	for (int32 i = 0; i < GridData.Num(); ++i)
+	{
+		GridData[i] = nullptr;
+	}
+
+	OnInventoryUpdated.Broadcast();
+}
+
+void UR1InventorySubsystem::LoadItem(int32 ItemID, EItemRarity Rarity, FIntPoint Pos)
+{
+	if (!ItemDataTable) return;
+
+	TObjectPtr<UR1ItemInstance> Item = NewObject<UR1ItemInstance>(this);
+	Item->Init(ItemID, ItemDataTable);
+	Item->ItemRarity = Rarity;
+
+	Items.Add(Item);
+	AddItemToGrid(Item, Pos);
+}
+
+void UR1InventorySubsystem::LoadEquippedItem(int32 ItemID, EItemRarity Rarity, ER1EquipmentSlot Slot)
+{
+	if (!ItemDataTable) return;
+
+	TObjectPtr<UR1ItemInstance> Item = NewObject<UR1ItemInstance>(this);
+	Item->Init(ItemID, ItemDataTable);
+	Item->ItemRarity = Rarity;
+
+	EquippedItems.Add(Slot, Item);
+
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (APawn* PlayerPawn = PC->GetPawn())
+		{
+			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
+			{
+				EquipComp->EquipItem(Slot, Item->GetItemData());
+			}
+		}
+	}
+}
+
 bool UR1InventorySubsystem::FindEmptySlot(const FIntPoint& ItemSize, FIntPoint& OutPos)
 {
 	// (0, 0)부터 인벤토리 끝까지 싹 스캔합니다.

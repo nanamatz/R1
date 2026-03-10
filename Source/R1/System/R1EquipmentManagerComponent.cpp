@@ -20,6 +20,10 @@ UR1EquipmentManagerComponent::UR1EquipmentManagerComponent()
 
 void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const FR1ItemDataRow& ItemData)
 {
+	if (!ASC)
+	{
+		ASC = Cast<UR1AbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner()));
+	}
 	if (!ASC) return;
 
 	// 1. 이미 해당 슬롯에 무언가 장착되어 있다면 먼저 벗깁니다!

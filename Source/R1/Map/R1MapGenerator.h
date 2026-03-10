@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "R1Define.h"
 #include "R1MapGenerator.generated.h"
 
 class UR1RoomDefinitionData;
@@ -43,14 +44,6 @@ enum class ER1DoorDirection : uint8
 	None	UMETA(DisplayName = "None")
 };
 
-UENUM(BlueprintType)
-enum class ER1MinimapRoomState : uint8
-{
-	Hidden,
-	Discovered,
-	Current,
-	Visited
-};
 
 USTRUCT(BlueprintType)
 struct FR1MapNode
@@ -136,6 +129,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map Generation")
 	void LoadMapFromSaveData(const TArray<struct FR1MapNodeSaveData>& SavedNodes, int32 SavedFloorIndex, int32 SavedActiveNodeID);
 
+	UFUNCTION()
+	void OnSavedRoomLoaded();
 private:
 	// 라벨 이름으로 로드된 풀(Pool)에서 방 데이터를 찾아주는 도우미 함수
 	class UR1RoomDefinitionData* FindRoomDefinitionByLabel(FName Label);
@@ -189,17 +184,21 @@ private:
 	// 해당 그리드 좌표에 이미 방이 존재하는지 확인하는 헬퍼 함수
 	bool HasRoomAt(FIntPoint Pos);
 
-private:
+
 	// 현재 플레이어가 위치한 방의 고유 번호 (시작은 0번)
+public:
+
 	int32 CurrentActiveNodeID = 0;
 
+private:
 	// 플레이어가 문을 밟았을 때 문의 델리게이트가 호출할 콜백 함수
 	UFUNCTION()
 	void OnPlayerEnteredDoor(ER1DoorDirection Direction);
 
-	// [추가] 플레이어가 문을 밟고 새 방의 로딩(진동벨)을 기다리는 중인지 체크하는 변수
-	// -1 이면 대기 중이 아님을 의미합니다.
+public:
 	int32 PendingNodeID = -1;
+
+private:
 
 	// [추가] 도착지 방에서 '반대편 문'을 찾기 위해, 플레이어가 밟았던 문의 방향을 기억해둡니다.
 	ER1DoorDirection PendingDoorDirection = ER1DoorDirection::None;
@@ -222,4 +221,8 @@ private:
 
 	// 풀(Pool)에서 '우리가 원하는 방향의 문'을 가진 방을 찾아 영구적으로 빼오는 함수
 	class UR1RoomDefinitionData* PopValidRoomFromPool(TArray<class UR1RoomDefinitionData*>& Pool, ER1DoorDirection RequiredDoor);
+
+private:
+		// 세이브 서브시스템을 불러와 현재 상태를 조용히 저장하는 헬퍼 함수
+		void TriggerAutoSave();
 };

@@ -2,7 +2,14 @@
 
 #pragma once
 
-
+UENUM(BlueprintType)
+enum class ER1MinimapRoomState : uint8
+{
+	Hidden,
+	Discovered,
+	Current,
+	Visited
+};
 
 
 UENUM(BlueprintType)

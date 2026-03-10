@@ -44,17 +44,18 @@ void UR1MinimapWidget::OnMapGeneratedCallback(const TArray<FR1MapNode>& MapData)
 
 	CalculateMapCenterOffset(MapData);
 
-	if (AActor* GeneratorActor = UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()))
+	if (AR1MapGenerator* MapGenerator = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
 	{
-		UpdateMinimapUI(0, Cast<AR1MapGenerator>(GeneratorActor));
+		// 0번이 아니라, 현재 제너레이터가 들고 있는 진짜 현재 방 번호를 넘겨야 합니다 (세이브 로드 대응)
+		UpdateMinimapUI(MapGenerator->CurrentActiveNodeID, MapGenerator);
 	}
 }
 
 void UR1MinimapWidget::OnPlayerMovedRoomCallback(int32 NewRoomNodeID, int32 PrevRoomNodeID)
 {
-	if (AActor* GeneratorActor = UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()))
+	if (AR1MapGenerator* MapGenerator = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
 	{
-		UpdateMinimapUI(NewRoomNodeID, Cast<AR1MapGenerator>(GeneratorActor));
+		UpdateMinimapUI(NewRoomNodeID, MapGenerator);
 	}
 }
 
@@ -82,7 +83,6 @@ void UR1MinimapWidget::UpdateMinimapUI(int32 CurrentRoomID, AR1MapGenerator* Gen
 
 					float OffsetGridX = Node.GridPosition.X - MapCenterOffset.X;
 					float OffsetGridY = Node.GridPosition.Y - MapCenterOffset.Y;
-					//FVector2D UIPosition(Node.GridPosition.Y * ROOM_SIZE, Node.GridPosition.X * -ROOM_SIZE);
 
 					FVector2D UIPosition(OffsetGridY * ROOM_SIZE, OffsetGridX * -ROOM_SIZE);
 					CanvasSlot->SetPosition(UIPosition);
@@ -92,13 +92,14 @@ void UR1MinimapWidget::UpdateMinimapUI(int32 CurrentRoomID, AR1MapGenerator* Gen
 			}
 		};
 
-	// 제너레이터가 방금 상태를 다 갱신해 줬으니, 우리는 현재 방과 연결된 방만 화면에 생성하면 끝입니다!
-	TrySpawnRoom(CurrentRoomID);
-
-	const FR1MapNode& CurrentNode = Generator->GeneratedMap[CurrentRoomID];
-	for (int32 ConnectedID : CurrentNode.ConnectedNodeIDs)
+	// [수정 포인트] 세이브 로드 시 이미 방문했거나 발견된 방들이 많을 수 있습니다.
+	// 단순히 현재 방의 인접 방만 만드는 게 아니라, Hidden이 아닌 모든 방을 검사해서 생성해야 합니다.
+	for (const FR1MapNode& Node : Generator->GeneratedMap)
 	{
-		TrySpawnRoom(ConnectedID);
+		if (Node.MinimapState != ER1MinimapRoomState::Hidden)
+		{
+			TrySpawnRoom(Node.NodeID);
+		}
 	}
 
 	for (auto& Pair : SpawnedRooms)
@@ -106,7 +107,6 @@ void UR1MinimapWidget::UpdateMinimapUI(int32 CurrentRoomID, AR1MapGenerator* Gen
 		int32 NodeID = Pair.Key;
 		UR1MinimapRoomWidget* RoomWidget = Pair.Value;
 
-		// 제너레이터가 이미 UpdateMinimapState()로 바꿔둔 최신 데이터를 그대로 가져와서 꽂기만 합니다.
 		const FR1MapNode& Node = Generator->GeneratedMap[NodeID];
 		ER1RoomContentType RoomType = Node.RoomDefinition ? Node.RoomDefinition->RoomType : ER1RoomContentType::Combat;
 
