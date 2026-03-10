@@ -31,6 +31,36 @@ struct FR1MapNodeSaveData
 	FName RoomAssetName;
 };
 
+USTRUCT(BlueprintType)
+struct FR1ItemSaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int32 ItemID = 0;
+
+	UPROPERTY()
+	EItemRarity ItemRarity = EItemRarity::Junk;
+
+	UPROPERTY()
+	FIntPoint Position = FIntPoint(-1, -1);
+};
+
+USTRUCT(BlueprintType)
+struct FR1EquippedItemSaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int32 ItemID = 0;
+
+	UPROPERTY()
+	EItemRarity ItemRarity = EItemRarity::Junk;
+
+	UPROPERTY()
+	ER1EquipmentSlot Slot = ER1EquipmentSlot::None;
+};
+
 /**
  * 
  */
@@ -84,4 +114,11 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FR1MapNodeSaveData> SavedMapNodes;
 
+	// 인벤토리 아이템 데이터
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FR1ItemSaveData> InventoryItems;
+
+	// 장착된 아이템 데이터
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FR1EquippedItemSaveData> EquippedItems;
 };

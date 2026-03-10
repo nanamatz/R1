@@ -29,6 +29,15 @@ public:
 
 	const TArray<TObjectPtr<UR1ItemInstance>>& GetItems() { return Items; }
 
+	const TMap<ER1EquipmentSlot, TObjectPtr<UR1ItemInstance>>& GetEquippedItems() const { return EquippedItems; }
+
+	FIntPoint GetItemPosition(UR1ItemInstance* Item) const;
+
+	void ClearInventory();
+
+	void LoadItem(int32 ItemID, EItemRarity Rarity, FIntPoint Pos);
+	void LoadEquippedItem(int32 ItemID, EItemRarity Rarity, ER1EquipmentSlot Slot);
+
 	// 💡 가장 중요한 핵심 함수: 특정 위치에 아이템을 놓을 수 있는지 검사
 	bool CanAddItemAt(const FIntPoint& ItemSize, const FIntPoint& TargetPos, UR1ItemInstance* IgnoreItem = nullptr);
 

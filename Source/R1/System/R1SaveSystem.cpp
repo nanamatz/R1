@@ -15,6 +15,9 @@
 #include "Map/R1MapGenerator.h"
 #include "Data/R1RoomDefinitionData.h"
 
+#include "Item/R1InventorySubsystem.h"
+#include "Item/R1ItemInstance.h"
+
 bool UR1SaveSystem::HasSavedRun() const
 {
 	return UGameplayStatics::DoesSaveGameExist(RunSaveSlotName, RunSaveUserIndex);
@@ -65,8 +68,8 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	{
 		SaveObj->CurrentFloorIndex = MapGenerator->CurrentFloorIndex;
 		SaveObj->CurrentActiveNodeID = MapGenerator->CurrentActiveNodeID;
-			
 		SaveObj->CurrentActiveNodeID = (MapGenerator->PendingNodeID != -1) ? MapGenerator->PendingNodeID : MapGenerator->CurrentActiveNodeID;
+
 		// MapGenerator가 들고 있는 무거운 GeneratedMap을 가벼운 SaveNode로 변환
 		for (const FR1MapNode& Node : MapGenerator->GeneratedMap)
 		{
@@ -87,6 +90,39 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 			}
 
 			SaveObj->SavedMapNodes.Add(SaveNode);
+		}
+	}
+
+	// 3. 인벤토리 및 장착 아이템 저장
+	if (UWorld* World = GetWorld())
+	{
+		if (UR1InventorySubsystem* InventorySubsystem = World->GetSubsystem<UR1InventorySubsystem>())
+		{
+			// 인벤토리 아이템 저장
+			for (UR1ItemInstance* Item : InventorySubsystem->GetItems())
+			{
+				if (Item)
+				{
+					FR1ItemSaveData ItemSaveData;
+					ItemSaveData.ItemID = Item->ItemID;
+					ItemSaveData.ItemRarity = Item->ItemRarity;
+					ItemSaveData.Position = InventorySubsystem->GetItemPosition(Item);
+					SaveObj->InventoryItems.Add(ItemSaveData);
+				}
+			}
+
+			// 장착된 아이템 저장
+			for (auto& Pair : InventorySubsystem->GetEquippedItems())
+			{
+				if (Pair.Value)
+				{
+					FR1EquippedItemSaveData EquippedSaveData;
+					EquippedSaveData.ItemID = Pair.Value->ItemID;
+					EquippedSaveData.ItemRarity = Pair.Value->ItemRarity;
+					EquippedSaveData.Slot = Pair.Key;
+					SaveObj->EquippedItems.Add(EquippedSaveData);
+				}
+			}
 		}
 	}
 
@@ -129,6 +165,27 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	if (MapGenerator)
 	{
 		MapGenerator->LoadMapFromSaveData(SaveObj->SavedMapNodes, SaveObj->CurrentFloorIndex, SaveObj->CurrentActiveNodeID);
+	}
+
+	// 3. 인벤토리 및 장착 아이템 복구
+	if (UWorld* World = GetWorld())
+	{
+		if (UR1InventorySubsystem* InventorySubsystem = World->GetSubsystem<UR1InventorySubsystem>())
+		{
+			InventorySubsystem->ClearInventory();
+
+			// 인벤토리 아이템 복구
+			for (const FR1ItemSaveData& ItemSaveData : SaveObj->InventoryItems)
+			{
+				InventorySubsystem->LoadItem(ItemSaveData.ItemID, ItemSaveData.ItemRarity, ItemSaveData.Position);
+			}
+
+			// 장착 아이템 복구
+			for (const FR1EquippedItemSaveData& EquippedSaveData : SaveObj->EquippedItems)
+			{
+				InventorySubsystem->LoadEquippedItem(EquippedSaveData.ItemID, EquippedSaveData.ItemRarity, EquippedSaveData.Slot);
+			}
+		}
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("[SaveSystem] 📂 저장된 런(Run) 진행도 복구 완료!"));
