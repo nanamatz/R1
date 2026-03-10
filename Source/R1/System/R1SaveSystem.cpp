@@ -30,6 +30,15 @@ void UR1SaveSystem::DeleteSavedRun()
 		UGameplayStatics::DeleteGameInSlot(RunSaveSlotName, RunSaveUserIndex);
 		UE_LOG(LogTemp, Warning, TEXT("[SaveSystem] 💥 세이브 파일 삭제 완료! (사망 처리)"));
 	}
+
+	// 세이브 파일뿐만 아니라 현재 인메모리 상의 인벤토리 상태도 초기화
+	if (UWorld* World = GetWorld())
+	{
+		if (UR1InventorySubsystem* InventorySubsystem = World->GetSubsystem<UR1InventorySubsystem>())
+		{
+			InventorySubsystem->ClearInventory();
+		}
+	}
 }
 
 void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenerator)
