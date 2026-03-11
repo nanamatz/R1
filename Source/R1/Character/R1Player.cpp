@@ -10,8 +10,11 @@
 
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
-
+#include "Components/PostProcessComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
+
+#include "Materials/MaterialInstanceDynamic.h"
+
 #include "AbilitySystem/Attribute/PlayerAttributeSet.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 
@@ -61,6 +64,9 @@ AR1Player::AR1Player()
 	}
 
 	EquipmentManagerComponent = CreateDefaultSubobject<UR1EquipmentManagerComponent>(TEXT("EquipmentManagerComponent"));
+
+	PostProcessComp = CreateDefaultSubobject<UPostProcessComponent>(TEXT("PostProcessComp"));
+	PostProcessComp->SetupAttachment(RootComponent);
 }
 void AR1Player::BeginPlay()
 {
@@ -71,7 +77,16 @@ void AR1Player::BeginPlay()
 		//R1GameInstance->ApplyRespawnSnapshotToPlayer(this);
 		InitExpBar();
 	}
-	
+
+	if (LowHealthMaterial)
+	{
+		LowHealthMI = UMaterialInstanceDynamic::Create(LowHealthMaterial, this);
+		if (LowHealthMI)
+		{
+			PostProcessComp->AddOrUpdateBlendable(LowHealthMI, 1.0f);
+		}
+	}
+
 	AttackRange = CommonAttributeSet->GetAttackRange();
 
 }
@@ -99,6 +114,16 @@ void AR1Player::InitAbilitySystem()
 		CommonAttributeSet = PS->GetCommonAttributeSet();
 	}
 }
+
+void AR1Player::OnHealthChanged(float Ratio)
+{
+	// 부모(AR1Character)의 UI 갱신 로직 실행
+	Super::OnHealthChanged(Ratio);
+
+	// 플레이어 화면 붉어짐 효과 업데이트!
+	UpdateLowHealthEffect(Ratio);
+}
+
 void AR1Player::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorEndOverlap(OtherActor);
@@ -195,5 +220,27 @@ void AR1Player::InitAttributes()
 
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		}
+	}
+}
+
+void AR1Player::UpdateLowHealthEffect(float Ratio)
+{
+	if (!LowHealthMI) return;
+
+	if (Ratio <= 0.5f)
+	{
+		float NormalizedFactor = 1.0f - (Ratio / 0.5f);
+
+		float TargetIntensity = FMath::Pow(NormalizedFactor, 1.5f);
+
+		TargetIntensity *= 1.5f;
+
+		TargetIntensity = FMath::Clamp(TargetIntensity, 0.0f, 1.0f);
+
+		LowHealthMI->SetScalarParameterValue(TEXT("Intensity"), TargetIntensity);
+	}
+	else
+	{
+		LowHealthMI->SetScalarParameterValue(TEXT("Intensity"), 0.0f);
 	}
 }
