@@ -30,4 +30,13 @@ private:
 
 	UFUNCTION()
 	void OnExitClicked();
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Level")
+	FName TitleLevelName = TEXT("DefaultMap");
+
+	FTimerHandle TransitionTimerHandle;
+
+	void ExecuteRestart();
+	void ExecuteExit();
 };

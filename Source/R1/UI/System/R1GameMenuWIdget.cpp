@@ -6,6 +6,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "Player/R1PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Kismet/GameplayStatics.h"
 
 void UR1GameMenuWIdget::NativeConstruct()
 {
@@ -47,8 +49,17 @@ void UR1GameMenuWIdget::OnExitButtonClicked()
 	{
 		PC->SetPause(false);
 	}
+	if (APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0))
+	{
+		CameraManager->StartCameraFade(0.0f, 1.0f, 1.0f, FLinearColor::Black, false, true);
+	}
 
-	// 타이틀 맵으로 돌아가기
+	// 1초 대기 후 ExecuteExit 실행
+	GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, this, &UR1GameMenuWIdget::ExecuteExit, 1.0f, false);
+}
+
+void UR1GameMenuWIdget::ExecuteExit()
+{
 	if (!TitleLevelName.IsNone())
 	{
 		UGameplayStatics::OpenLevel(this, TitleLevelName);

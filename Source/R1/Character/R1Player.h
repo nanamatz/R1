@@ -32,6 +32,7 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void InitAbilitySystem() override;
 
+	virtual void OnHealthChanged(float Ratio) override;
 protected:
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
 
@@ -84,4 +85,21 @@ protected:
 	// 💡 캐릭터의 몸에 부착될 장비 관리자 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment")
 	TObjectPtr<class UR1EquipmentManagerComponent> EquipmentManagerComponent;
+
+protected:
+	// 화면에 필터를 씌워줄 장치
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<class UPostProcessComponent> PostProcessComp;
+
+	// 에디터에서 방금 만든 M_LowHealth_PP를 넣을 슬롯
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TObjectPtr<class UMaterialInterface> LowHealthMaterial;
+
+	// 코드로 Intensity 수치를 조절하기 위한 다이내믹 인스턴스
+	UPROPERTY()
+	TObjectPtr<class UMaterialInstanceDynamic> LowHealthMI;
+
+public:
+	// 체력 비율에 따라 화면 붉은기를 조절할 함수
+	void UpdateLowHealthEffect(float Ratio);
 };
