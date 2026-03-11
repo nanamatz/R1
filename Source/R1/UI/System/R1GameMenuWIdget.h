@@ -36,5 +36,9 @@ protected:
 
 
 	UPROPERTY(EditDefaultsOnly, Category = "Level")
-	FName TitleLevelName = TEXT("TitleMap");
+	FName TitleLevelName = TEXT("DefaultMap");
+
+protected:
+	FTimerHandle TransitionTimerHandle;
+	void ExecuteExit();
 };

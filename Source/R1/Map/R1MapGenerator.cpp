@@ -16,7 +16,7 @@
 #include "Data/R1AssetData.h" 
 #include "EngineUtils.h"
 
-
+#include "Camera/PlayerCameraManager.h" 
 #include "Player/R1PlayerController.h"
 
 
@@ -765,6 +765,11 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 			InnerRoomSubsystem->QueuePreloadRooms(AdjacentRooms);
 		}
 	}
+	//APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
+	//if (CameraManager)
+	//{
+	//	CameraManager->StartCameraFade(1.0f, 0.0f, 1.0f, FLinearColor::Black, false, false);
+	//}
 }
 
 void AR1MapGenerator::GoToNextFloor()

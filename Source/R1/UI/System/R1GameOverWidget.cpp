@@ -4,6 +4,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "System/R1SaveSystem.h"
 #include "Item/R1InventorySubsystem.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 void UR1GameOverWidget::NativeConstruct()
 {
@@ -36,10 +39,13 @@ void UR1GameOverWidget::OnRetryClicked()
 			InventorySubsystem->ClearInventory();
 			// InventorySubsystem->AddDefaultItem(); // GameMode::InitGame에서 레벨 로드 시 어차피 호출됨
 		}
+		if (APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0))
+		{
+			CameraManager->StartCameraFade(0.0f, 1.0f, 1.0f, FLinearColor::Black, false, true);
+		}
 
-		// 3. 레벨 재시작 (OpenLevel을 하면 GameMode::InitGame부터 다시 시작하여 맵이 새로 생성되고 플레이어 스탯도 초기화됨)
-		FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(World);
-		UGameplayStatics::OpenLevel(World, FName(*CurrentLevelName));
+		// 2. 1초 뒤에 ExecuteRestart 함수를 실행합니다!
+		GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, this, &UR1GameOverWidget::ExecuteRestart, 1.0f, false);
 	}
 }
 
@@ -52,7 +58,28 @@ void UR1GameOverWidget::OnExitClicked()
 		{
 			SaveSystem->DeleteSavedRun();
 		}
+	}
+	if (APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0))
+	{
+		CameraManager->StartCameraFade(0.0f, 1.0f, 1.0f, FLinearColor::Black, false, true);
+	}
 
-		UGameplayStatics::OpenLevel(World, TEXT("TitleMap"));
+	GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, this, &UR1GameOverWidget::ExecuteExit, 1.0f, false);
+}
+
+void UR1GameOverWidget::ExecuteRestart()
+{
+	if (UWorld* World = GetWorld())
+	{
+		FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(World);
+		UGameplayStatics::OpenLevel(World, FName(*CurrentLevelName));
+	}
+}
+
+void UR1GameOverWidget::ExecuteExit()
+{
+	if (!TitleLevelName.IsNone())
+	{
+		UGameplayStatics::OpenLevel(this, TitleLevelName);
 	}
 }

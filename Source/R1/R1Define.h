@@ -11,6 +11,13 @@ enum class ER1MinimapRoomState : uint8
 	Visited
 };
 
+UENUM(BlueprintType)
+enum class EMenuState : uint8
+{
+	Title,
+	MainMenu,
+	Options
+};
 
 UENUM(BlueprintType)
 enum class ER1SkillSlot : uint8
