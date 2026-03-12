@@ -3,6 +3,20 @@
 #pragma once
 
 UENUM(BlueprintType)
+enum class ER1FloorLevel : uint8
+{
+	Laboratory,
+	Factory,
+	SecurityArea,
+	RestrictedArea,
+	Robby,
+	Basement,
+	Ground,
+	EmptyHall,
+	Rooftop
+};
+
+UENUM(BlueprintType)
 enum class ER1MinimapRoomState : uint8
 {
 	Hidden,

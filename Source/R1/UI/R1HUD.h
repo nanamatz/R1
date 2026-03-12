@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+#include "R1Define.h"
 #include "R1UserWidget.h"
 #include "R1HUD.generated.h"
 
@@ -32,6 +33,17 @@ public:
     bool bIsGameOverUIVisible;
     bool bIsGameMenuUIVisible;
 
+    UPROPERTY(EditAnywhere, Category = "UI")
+    TSubclassOf<class UR1FloorGuideSceneWidget> FloorGuideSceneWidgetClass;
+
+    UPROPERTY()
+    TObjectPtr<class UR1FloorGuideSceneWidget> FloorGuideSceneWidget;
+
+    UFUNCTION()
+    void HandleMapGenerated(const TArray<struct FR1MapNode>& MapData);
+
+    UFUNCTION()
+    void HandleLoadingScreenHidden();
 protected:
     UPROPERTY(EditDefaultsOnly, Category="UI")
     TSubclassOf<UUserWidget> InventoryWidgetClass;
@@ -62,5 +74,9 @@ protected:
 
     UPROPERTY(EditDefaultsOnly)
     TObjectPtr<UUserWidget> GameMenuUIWidget = nullptr;
+
+private:
+    bool bIsFloorGuidePending = false;
+    ER1FloorLevel PendingFloorLevel;
 
 };

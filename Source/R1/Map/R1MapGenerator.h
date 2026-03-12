@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -8,7 +6,6 @@
 #include "R1MapGenerator.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMapGenerateProgress, float, CurrentProgress);
-
 class UR1RoomDefinitionData;
 class UR1AssetData;
 

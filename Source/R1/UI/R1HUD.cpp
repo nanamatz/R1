@@ -1,5 +1,9 @@
 #include "UI/R1HUD.h"
 #include "Blueprint/UserWidget.h"
+#include "UI/System/R1FloorGuideSceneWidget.h"
+#include "Map/R1MapGenerator.h"
+#include "Kismet/GameplayStatics.h"
+#include "System/R1LoadingSubSystem.h"
 
 void AR1HUD::BeginPlay()
 {
@@ -77,8 +81,49 @@ void AR1HUD::BeginPlay()
                 UE_LOG(LogTemp, Warning, TEXT("Failed to create GameMenuUIWidget"));
             }
         }
+        if (!FloorGuideSceneWidget && FloorGuideSceneWidgetClass)
+        {
+            FloorGuideSceneWidget = CreateWidget<UR1FloorGuideSceneWidget>(PC, FloorGuideSceneWidgetClass);
+            if (FloorGuideSceneWidget)
+            {
+                FloorGuideSceneWidget->AddToViewport(20);
+                FloorGuideSceneWidget->SetVisibility(ESlateVisibility::Hidden);
+            }
+        }
+        if (AR1MapGenerator* MapGen = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
+        {
+            MapGen->OnMapGenerated.AddDynamic(this, &AR1HUD::HandleMapGenerated);
+        }
+        if (UR1LoadingSubSystem* LoadingSubsystem = GetGameInstance()->GetSubsystem<UR1LoadingSubSystem>())
+        {
+            LoadingSubsystem->OnLoadingScreenHidden.AddDynamic(this, &AR1HUD::HandleLoadingScreenHidden);
+        }
     }
 
+}
+
+void AR1HUD::HandleMapGenerated(const TArray<struct FR1MapNode>& MapData)
+{
+    if (!FloorGuideSceneWidget) return;
+
+    AR1MapGenerator* MapGen = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()));
+    if (MapGen)
+    {
+        PendingFloorLevel = static_cast<ER1FloorLevel>(MapGen->CurrentFloorIndex);
+
+        bIsFloorGuidePending = true;
+    }
+}
+
+void AR1HUD::HandleLoadingScreenHidden()
+{
+    if (bIsFloorGuidePending && FloorGuideSceneWidget)
+    {
+        // 드디어 화면에 애니메이션을 띄웁니다!
+        FloorGuideSceneWidget->ShowFloorGuide(PendingFloorLevel);
+
+        bIsFloorGuidePending = false;
+    }
 }
 
 void AR1HUD::ToggleInventory()
