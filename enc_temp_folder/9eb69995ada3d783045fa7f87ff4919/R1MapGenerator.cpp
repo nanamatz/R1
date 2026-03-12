@@ -798,15 +798,6 @@ void AR1MapGenerator::GoToNextFloor()
 		return;
 	}
 
-	if (UR1LoadingSubSystem* LoadingSubsystem = GetGameInstance()->GetSubsystem<UR1LoadingSubSystem>())
-	{
-		LoadingSubsystem->ShowLoadingScreen(LoadingWidgetClass, this);
-	}
-
-	// 🌟 2. 맵 생성 시작 (10% 달성 방송)
-	HighestAchievedProgress = 0.1f;
-	OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
-
 	// 1. 기존에 로드된 모든 스트리밍 레벨(방) 메모리에서 날려버리기
 	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
 	if (RoomSubsystem)
@@ -823,9 +814,6 @@ void AR1MapGenerator::GoToNextFloor()
 	// 3. 새로운 층 데이터 로드 및 재생성
 	InitializeRoomPools();
 	GenerateMap();
-
-	HighestAchievedProgress = 0.5f;
-	OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
 
 	// 4. 새로운 층의 0번 방 스폰 지시
 	if (GeneratedMap.Num() > 0 && GeneratedMap[0].RoomDefinition != nullptr && RoomSubsystem)
