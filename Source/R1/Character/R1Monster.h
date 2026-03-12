@@ -55,6 +55,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
 	TObjectPtr<class UAnimMontage> DeathAnimMontage;
 
+	UAnimMontage* GetHitReactMontage() const { return HitReactMontage; }
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<class UAnimMontage> HitReactMontage;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TSubclassOf<class UGameplayEffect> XpEffect;
 
