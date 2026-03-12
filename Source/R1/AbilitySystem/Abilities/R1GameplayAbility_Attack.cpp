@@ -6,7 +6,6 @@
 #include "Character/R1Player.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Character/R1Character.h"
-#include "DrawDebugHelpers.h"
 #include "R1GameplayTags.h"
 
 UR1GameplayAbility_Attack::UR1GameplayAbility_Attack(const FObjectInitializer& ObjectInitializer)
@@ -253,22 +252,4 @@ void UR1GameplayAbility_Attack::CheckAndApplyDamage_Sector(const FGameplayEffect
 			}
 		}
 	}
-
-	float HalfAngleRad = FMath::DegreesToRadians(AttackRadius / 2.0f);
-	#if ENABLE_DRAW_DEBUG
-	DrawDebugCone(
-		World,
-		SourceCharacter->GetActorLocation(),             // 시작점 (캐릭터 위치)
-		SourceCharacter->GetActorForwardVector(),            // 뻗어나가는 방향 (캐릭터 정면)
-		AttackRange,             // 사거리 (부채꼴 반지름)
-		HalfAngleRad,       // 가로 벌어짐 각도 (라디안)
-		0,       // 세로 벌어짐 각도 (원뿔형이면 가로와 동일하게)
-		16,                 // 해상도 (몇 각형으로 그릴지, 16~32 추천)
-		FColor::Green,        // 색상
-		false,              // 영구 표시 여부 (false면 사라짐)
-		2.0f,               // 지속 시간 (2초 동안 보임)
-		0,                  // 우선순위
-		1.0f                // 선 두께
-	);
-	#endif
 }

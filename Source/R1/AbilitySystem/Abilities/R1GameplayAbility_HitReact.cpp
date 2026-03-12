@@ -6,6 +6,7 @@
 #include "R1GameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Character/R1Monster.h"
+#include "AbilitySystem/Attribute/R1AttributeSet.h"
 
 UR1GameplayAbility_HitReact::UR1GameplayAbility_HitReact(const FObjectInitializer& ObjectInitializer)
 {
@@ -30,17 +31,12 @@ void UR1GameplayAbility_HitReact::ActivateAbility(const FGameplayAbilitySpecHand
 		Monster->GetCharacterMovement()->StopMovementImmediately();
 	}
 
-	// OnMontageFinished 함수 안에서:
-	if (Monster && Monster->GetCharacterMovement())
-	{
-		// 애니메이션이 끝나면 원래 속도(예: 300)로 복구!
-		Monster->GetCharacterMovement()->MaxWalkSpeed = 300.f;
-	}
+	UAnimMontage* MontageToPlay = Monster->GetHitReactMontage();
 
-	if (HitMontage)
+	if (MontageToPlay)
 	{
 		// 1. 몽타주 재생 태스크 생성
-		UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, HitMontage, 1.f);
+		UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, MontageToPlay, 1.f);
 
 		// 2. 몽타주가 끝나거나, 끊기거나, 취소되었을 때 실행할 함수 연결
 		Task->OnBlendOut.AddDynamic(this, &UR1GameplayAbility_HitReact::OnMontageFinished);
@@ -64,5 +60,11 @@ void UR1GameplayAbility_HitReact::ActivateAbility(const FGameplayAbilitySpecHand
 
 void UR1GameplayAbility_HitReact::OnMontageFinished()
 {
+	AR1Monster* Monster = Cast<AR1Monster>(CurrentActorInfo->AvatarActor.Get());
+	if (Monster && Monster->GetCharacterMovement())
+	{
+		Monster->GetCharacterMovement()->MaxWalkSpeed = Monster->GetR1AttributeSet()->GetMoveSpeed();
+	}
+
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

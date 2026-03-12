@@ -18,10 +18,6 @@ public:
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
-protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TObjectPtr<class UAnimMontage> HitMontage;
-
 	// 몽타주 재생이 끝났을 때 어빌리티를 종료할 콜백 함수들
 	UFUNCTION()
 	void OnMontageFinished();
