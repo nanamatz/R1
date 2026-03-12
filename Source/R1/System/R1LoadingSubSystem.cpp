@@ -64,6 +64,11 @@ void UR1LoadingSubSystem::HideLoadingScreen()
 	{
 		CamManager->StartCameraFade(1.0f, 0.0f, 1.0f, FLinearColor::Black, false, false);
 	}
+
+	if (OnLoadingScreenHidden.IsBound())
+	{
+		OnLoadingScreenHidden.Broadcast();
+	}
 }
 
 void UR1LoadingSubSystem::OnVisualsCompleted()

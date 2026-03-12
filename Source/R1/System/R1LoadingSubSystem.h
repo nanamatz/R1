@@ -6,6 +6,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "R1LoadingSubSystem.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLoadingScreenHiddenSignature);
 class UR1ProgressWidget;
 class AR1MapGenerator;
 /**
@@ -36,4 +37,9 @@ public:
 
 	UFUNCTION()
 	void OnVisualsCompleted();
+
+public:
+	// 🌟 로딩 화면이 사라질 때 울릴 방송
+	UPROPERTY(BlueprintAssignable)
+	FOnLoadingScreenHiddenSignature OnLoadingScreenHidden;
 };
