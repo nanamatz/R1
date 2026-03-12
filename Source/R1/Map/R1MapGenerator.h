@@ -7,6 +7,8 @@
 #include "R1Define.h"
 #include "R1MapGenerator.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMapGenerateProgress, float, CurrentProgress);
+
 class UR1RoomDefinitionData;
 class UR1AssetData;
 
@@ -223,6 +225,20 @@ private:
 	class UR1RoomDefinitionData* PopValidRoomFromPool(TArray<class UR1RoomDefinitionData*>& Pool, ER1DoorDirection RequiredDoor);
 
 private:
-		// 세이브 서브시스템을 불러와 현재 상태를 조용히 저장하는 헬퍼 함수
-		void TriggerAutoSave();
+	// 세이브 서브시스템을 불러와 현재 상태를 조용히 저장하는 헬퍼 함수
+	void TriggerAutoSave();
+
+public:
+	// 🌟 2. 외부에서 구독할 수 있는 방송국 안테나를 설치합니다.
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnMapGenerateProgress OnGenerateProgressUpdated;
+
+protected:
+	// 뒤로 가는 현상을 막기 위한 변수
+	float HighestAchievedProgress = 0.0f;
+
+public:
+	// 위젯 클래스 하나만 에디터에서 받도록 남겨둡니다. (UI 인스턴스 변수는 삭제!)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UR1LoadingScreenWidget> LoadingWidgetClass;
 };
