@@ -16,9 +16,9 @@
 #include "Data/R1AssetData.h" 
 #include "EngineUtils.h"
 
-#include "Camera/PlayerCameraManager.h" 
 #include "Player/R1PlayerController.h"
-
+#include "System/R1LoadingSubSystem.h"
+#include "UI/System/R1LoadingScreenWidget.h"
 
 AR1MapGenerator::AR1MapGenerator()
 {
@@ -28,6 +28,11 @@ AR1MapGenerator::AR1MapGenerator()
 void AR1MapGenerator::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (UR1LoadingSubSystem* LoadingSubsystem = GetGameInstance()->GetSubsystem<UR1LoadingSubSystem>())
+	{
+		LoadingSubsystem->ShowLoadingScreen(LoadingWidgetClass, this);
+	}
 
 	UR1SaveSystem* SaveSystem = GetGameInstance()->GetSubsystem<UR1SaveSystem>();
 
@@ -43,8 +48,14 @@ void AR1MapGenerator::BeginPlay()
 	}
 	else
 	{
+		HighestAchievedProgress = 0.1f;
+		OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
+
 		InitializeRoomPools();
 		GenerateMap();
+
+		HighestAchievedProgress = 0.5f;
+		OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
 
 		// 0번 방 스폰 로직 (기존 코드 유지)
 		UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
@@ -698,6 +709,14 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 		{
 			FVector SafeLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
 			PlayerCharacter->SetActorLocation(SafeLocation);
+
+			HighestAchievedProgress = 1.0f;
+			OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
+
+			if (OnMapGenerated.IsBound())
+			{
+				OnMapGenerated.Broadcast(GeneratedMap);
+			}
 		}
 
 		UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
@@ -765,11 +784,7 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 			InnerRoomSubsystem->QueuePreloadRooms(AdjacentRooms);
 		}
 	}
-	//APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
-	//if (CameraManager)
-	//{
-	//	CameraManager->StartCameraFade(1.0f, 0.0f, 1.0f, FLinearColor::Black, false, false);
-	//}
+	
 }
 
 void AR1MapGenerator::GoToNextFloor()
