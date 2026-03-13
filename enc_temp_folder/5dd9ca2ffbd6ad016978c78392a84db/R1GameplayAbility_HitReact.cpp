@@ -24,13 +24,6 @@ void UR1GameplayAbility_HitReact::ActivateAbility(const FGameplayAbilitySpecHand
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	AR1Monster* Monster = Cast<AR1Monster>(ActorInfo->AvatarActor.Get());
-
-	if (Monster && Monster->GetCreatureState() == ECreatureState::Dead)
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-		return;
-	}
-
 	if (Monster && Monster->GetCharacterMovement())
 	{
 		// 피격 중에는 못 움직이게 이동 속도를 0으로! (기존 속도는 어딘가에 저장해두는 것이 좋습니다)

@@ -153,7 +153,7 @@ void AR1Monster::OnDead(const TObjectPtr<class AR1Character> Attacker)
 	CurrentDissolve = 0.0f;
 
 	//GetWorldTimerManager().SetTimer(DissolveTimerHandle, this, &AR1Monster::UpdateDissolve, 0.01f, true);
-	GetWorldTimerManager().SetTimer(DissolveDelayTimerHandle, this, &AR1Monster::StartDissolve, 2.0f, false);
+	GetWorldTimerManager().SetTimer(DissolveDelayTimerHandle, this, &AR1Monster::StartDissolve, 5.0f, false);
 }
 
 void AR1Monster::InitializeWithManager(ADungeonManager* InManager)

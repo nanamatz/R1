@@ -96,4 +96,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Pool")
 	virtual void GoToSleep();
+
+protected:
+	// 에디터에서 이 몬스터가 사용할 비헤이비어 트리를 할당할 수 있게 뚫어줍니다.
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	TObjectPtr<class UBehaviorTree> DefaultBehaviorTree;
+
+public:
+	// 컨트롤러가 가져갈 수 있게 Getter 함수 제공
+	class UBehaviorTree* GetBehaviorTree() const { return DefaultBehaviorTree; }
 };
