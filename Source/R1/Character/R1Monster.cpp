@@ -44,6 +44,7 @@ AR1Monster::AR1Monster()
 		HpBarComponent->SetRelativeLocation(FVector(0, 0, 120));
 	}
 
+
 	Tags.Add(FName("Enemy"));
 }
 
