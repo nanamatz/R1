@@ -12,6 +12,7 @@
 #include "AbilitySystem/Attribute/MonsterAttributeSet.h"
 
 #include "Character/R1Player.h"
+#include "Character/R1Monster.h"
 
 AR1AIController::AR1AIController(const FObjectInitializer& ObjectInitializer)
 {
@@ -39,6 +40,21 @@ AR1AIController::AR1AIController(const FObjectInitializer& ObjectInitializer)
 void AR1AIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+
+	AR1Monster* Monster = Cast<AR1Monster>(InPawn);
+	if (Monster)
+	{
+		UBehaviorTree* BTAsset = Monster->GetBehaviorTree();
+		if (BTAsset)
+		{
+			// 트리가 있다면 블랙보드를 초기화하고 트리를 가동시킵니다.
+			RunBehaviorTree(BTAsset);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("몬스터(%s)에 할당된 비헤이비어 트리가 없습니다!"), *Monster->GetName());
+		}
+	}
 
 	// 2. 델리게이트 바인딩 (이벤트 연결)
 	if (AIPerception)

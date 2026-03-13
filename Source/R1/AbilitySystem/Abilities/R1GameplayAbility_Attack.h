@@ -30,13 +30,13 @@ protected:
 	// [설정] 애니메이션에서 보낼 이벤트 태그 (예: Event.Montage.Hit)
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Damage")
 	FGameplayTag AttackEventTag;
+
+	UFUNCTION()
+	virtual void OnMontageEnded();
+
+	UFUNCTION()
+	virtual void OnAttackEventReceived(FGameplayEventData Payload);
+
 private:
 	void CheckAndApplyDamage_Sector(const FGameplayEffectSpecHandle& SpecHandle,AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC);
-
-private:
-	UFUNCTION()
-	void OnMontageEnded();
-
-	UFUNCTION()
-	void OnAttackEventReceived(FGameplayEventData Payload);
 };
