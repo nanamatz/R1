@@ -8,6 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "AbilitySystem/Attribute/MonsterAttributeSet.h"
+#include "Components/CapsuleComponent.h"
 
 UBTDecorator_CanAttack::UBTDecorator_CanAttack()
 {
@@ -41,12 +42,23 @@ bool UBTDecorator_CanAttack::CalculateRawConditionValue(UBehaviorTreeComponent& 
 
 	float AttackRange = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
 
-	if (Target->GetDistanceTo(ControllingPawn) > AttackRange)
+	// 캡슐 반지름을 고려한 정확한 거리 계산
+	float Distance = Target->GetDistanceTo(ControllingPawn);
+	
+	if (ACharacter* MyChar = Cast<ACharacter>(ControllingPawn))
+	{
+		Distance -= MyChar->GetCapsuleComponent()->GetScaledCapsuleRadius();
+	}
+	if (ACharacter* TargetChar = Cast<ACharacter>(Target))
+	{
+		Distance -= TargetChar->GetCapsuleComponent()->GetScaledCapsuleRadius();
+	}
+
+	if (Distance > AttackRange)
 	{
 		return false;
 	}
 
-	// [추가] 각도 체크 로직 (예: 정면 기준 좌우 60도, 총 120도 안에 있어야 공격 가능)
 	FVector DirectionToTarget = (Target->GetActorLocation() - ControllingPawn->GetActorLocation()).GetSafeNormal();
 	float DotResult = FVector::DotProduct(ControllingPawn->GetActorForwardVector(), DirectionToTarget);
 

@@ -19,7 +19,7 @@ bool UBTDecorator_HasSight::CalculateRawConditionValue(UBehaviorTreeComponent& O
 	if (!ControllingPawn || !Target) return false;
 
 	// 몬스터 눈 위치(보통 머리나 액터 중심)에서 타겟을 향해 레이저(LineTrace)를 쏩니다.
-	FVector StartLocation = ControllingPawn->GetActorLocation();
+	FVector StartLocation = ControllingPawn->GetActorLocation() + 50.f;
 	FVector EndLocation = Target->GetActorLocation();
 
 	FHitResult HitResult;

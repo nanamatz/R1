@@ -22,5 +22,5 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "AI")
-	float RangeBuffer = 0.9f;
+	float RangeBuffer = 0.7f;
 };

@@ -4,23 +4,21 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 AR1Projectile::AR1Projectile()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
-	SphereComponent->SetSphereRadius(20.f);
+	SphereComponent->SetSphereRadius(30.f);
 	SphereComponent->SetCollisionProfileName(TEXT("MonsterProjectile"));
 	SetRootComponent(SphereComponent);
 
-	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
-	StaticMeshComponent->SetupAttachment(RootComponent);
-
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->UpdatedComponent = SphereComponent;
-	ProjectileMovement->InitialSpeed = 1500.f;
-	ProjectileMovement->MaxSpeed = 1500.f;
+	ProjectileMovement->InitialSpeed = 500.f;
+	ProjectileMovement->MaxSpeed = 500.f;
 	ProjectileMovement->ProjectileGravityScale = 0.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 }
@@ -31,7 +29,17 @@ void AR1Projectile::BeginPlay()
 	
 	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AR1Projectile::OnOverlap);
 	SphereComponent->OnComponentHit.AddDynamic(this, &AR1Projectile::OnSphereHit);
-	SetLifeSpan(5.0f);
+	SetLifeSpan(3.0f);
+}
+
+void AR1Projectile::Destroyed()
+{
+	if (ImpactEffect)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, GetActorLocation(), GetActorRotation());
+	}
+
+	Super::Destroy();
 }
 
 void AR1Projectile::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -46,6 +54,7 @@ void AR1Projectile::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 				SourceASC->ApplyGameplayEffectSpecToTarget(*DamageSpecHandle.Data.Get(), TargetASC);
 			}
 		}
+
 		Destroy();
 	}
 }

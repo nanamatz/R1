@@ -18,6 +18,7 @@ public:
 	UBTTask_MoveAway();
 
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 protected:
 	// 얼마나 멀리 도망갈 것인지 (에디터에서 수정 가능)

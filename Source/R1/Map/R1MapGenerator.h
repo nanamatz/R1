@@ -221,10 +221,11 @@ private:
 	// 풀(Pool)에서 '우리가 원하는 방향의 문'을 가진 방을 찾아 영구적으로 빼오는 함수
 	class UR1RoomDefinitionData* PopValidRoomFromPool(TArray<class UR1RoomDefinitionData*>& Pool, ER1DoorDirection RequiredDoor);
 
-private:
+public:
 	// 세이브 서브시스템을 불러와 현재 상태를 조용히 저장하는 헬퍼 함수
 	void TriggerAutoSave();
 
+private:
 	UFUNCTION()
 	void InitializeMap();
 

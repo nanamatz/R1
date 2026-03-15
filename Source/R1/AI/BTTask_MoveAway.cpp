@@ -6,10 +6,15 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "NavigationSystem.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Character/R1Character.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "Navigation/PathFollowingComponent.h"
 
 UBTTask_MoveAway::UBTTask_MoveAway()
 {
 	NodeName = TEXT("Move Away From Target");
+	bNotifyTick = true;
 }
 
 EBTNodeResult::Type UBTTask_MoveAway::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -22,21 +27,59 @@ EBTNodeResult::Type UBTTask_MoveAway::ExecuteTask(UBehaviorTreeComponent& OwnerC
 
 	if (!ControllingPawn || !Target) return EBTNodeResult::Failed;
 
+	// 동적으로 도망갈 위치 계산
+	float FinalFleeTargetDistance = FleeDistance;
+	if (AR1Character* SourceCharacter = Cast<AR1Character>(ControllingPawn))
+	{
+		if (UAbilitySystemComponent* ASC = SourceCharacter->GetAbilitySystemComponent())
+		{
+			float AttackRange = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
+			FinalFleeTargetDistance = AttackRange * 0.5f;
+		}
+	}
+
+	float CurrentDistance = ControllingPawn->GetDistanceTo(Target);
+	float DistanceToMove = FinalFleeTargetDistance - CurrentDistance;
+
+	// 이미 충분히 멀다면 성공
+	if (DistanceToMove <= 0) return EBTNodeResult::Succeeded;
+
 	// 1. 타겟으로부터 나를 향하는 '반대 방향' 벡터를 구합니다.
 	FVector DirectionAway = (ControllingPawn->GetActorLocation() - Target->GetActorLocation()).GetSafeNormal();
 
-	// 2. 그 방향으로 FleeDistance 만큼 떨어진 목표 지점을 계산합니다.
-	FVector FleeLocation = ControllingPawn->GetActorLocation() + (DirectionAway * FleeDistance);
+	// 2. 그 방향으로 계산된 만큼 떨어진 목표 지점을 계산합니다.
+	FVector FleeLocation = ControllingPawn->GetActorLocation() + (DirectionAway * DistanceToMove);
 
 	// 3. 네비게이션 시스템을 이용해 목표 지점 근처의 '이동 가능한' 안전한 좌표를 찾습니다.
 	UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
 	FNavLocation SafeLocation;
-	if (NavSystem && NavSystem->GetRandomPointInNavigableRadius(FleeLocation, 200.0f, SafeLocation))
+	if (NavSystem && NavSystem->GetRandomPointInNavigableRadius(FleeLocation, 150.0f, SafeLocation))
 	{
 		// 4. 안전한 곳으로 도망갑니다!
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(AIC, SafeLocation.Location);
-		return EBTNodeResult::Succeeded;
+		EPathFollowingRequestResult::Type Result = AIC->MoveToLocation(SafeLocation.Location, 50.0f);
+		if (Result == EPathFollowingRequestResult::AlreadyAtGoal)
+		{
+			return EBTNodeResult::Succeeded;
+		}
+		return EBTNodeResult::InProgress;
 	}
 
 	return EBTNodeResult::Failed; // 도망갈 곳이 없으면(구석에 몰리면) 실패
+}
+
+void UBTTask_MoveAway::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+{
+	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
+
+	AR1AIController* AIC = Cast<AR1AIController>(OwnerComp.GetAIOwner());
+	if (!AIC)
+	{
+		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+		return;
+	}
+
+	if (AIC->GetMoveStatus() == EPathFollowingStatus::Idle)
+	{
+		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+	}
 }
