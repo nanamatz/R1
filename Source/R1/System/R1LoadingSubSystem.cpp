@@ -11,7 +11,6 @@ void UR1LoadingSubSystem::ShowLoadingScreen(TSubclassOf<UR1LoadingScreenWidget> 
 {
 	if (!WidgetClass) return;
 
-	// 1. 위젯이 없다면 생성하고, 뷰포트 최상단(999)에 띄웁니다.
 	if (!LoadingWidget)
 	{
 		LoadingWidget = CreateWidget<UR1LoadingScreenWidget>(GetWorld(), WidgetClass);
@@ -34,6 +33,7 @@ void UR1LoadingSubSystem::ShowLoadingScreen(TSubclassOf<UR1LoadingScreenWidget> 
 		MapGenerator->OnGenerateProgressUpdated.RemoveDynamic(this, &UR1LoadingSubSystem::OnProgressUpdated);
 		MapGenerator->OnGenerateProgressUpdated.AddDynamic(this, &UR1LoadingSubSystem::OnProgressUpdated);
 	}
+	
 }
 
 void UR1LoadingSubSystem::OnProgressUpdated(float CurrentProgress)
@@ -42,14 +42,6 @@ void UR1LoadingSubSystem::OnProgressUpdated(float CurrentProgress)
 	{
 		LoadingWidget->SetProgress(CurrentProgress);
 	}
-
-	//// 2. 진행률이 100% (1.0f)에 도달했다면?
-	//if (CurrentProgress >= 1.0f)
-	//{
-	//	// 유저가 100%를 눈으로 확인할 수 있게 0.5초 뒤에 화면을 걷어냅니다.
-	//	FTimerHandle TimerHandle;
-	//	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UR1LoadingSubSystem::HideLoadingScreen, 0.5f, false);
-	//}
 }
 
 void UR1LoadingSubSystem::HideLoadingScreen()
