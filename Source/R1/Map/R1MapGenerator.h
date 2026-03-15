@@ -225,6 +225,9 @@ private:
 	// 세이브 서브시스템을 불러와 현재 상태를 조용히 저장하는 헬퍼 함수
 	void TriggerAutoSave();
 
+	UFUNCTION()
+	void InitializeMap();
+
 public:
 	// 🌟 2. 외부에서 구독할 수 있는 방송국 안테나를 설치합니다.
 	UPROPERTY(BlueprintAssignable, Category = "Events")

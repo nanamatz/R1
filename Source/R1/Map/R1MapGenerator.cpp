@@ -34,6 +34,13 @@ void AR1MapGenerator::BeginPlay()
 		LoadingSubsystem->ShowLoadingScreen(LoadingWidgetClass, this);
 	}
 
+	// 델리게이트 방식으로 다음 틱에 실행되도록 예약합니다.
+	// 이렇게 하면 이번 프레임의 마지막에 슬레이트(UI)가 화면에 그려질 기회를 얻게 됩니다.
+	GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &AR1MapGenerator::InitializeMap));
+}
+
+void AR1MapGenerator::InitializeMap()
+{
 	UR1SaveSystem* SaveSystem = GetGameInstance()->GetSubsystem<UR1SaveSystem>();
 
 	if (SaveSystem && SaveSystem->HasSavedRun())

@@ -6,7 +6,6 @@
 #include "Map/R1MapGenerator.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/System/R1LoadingScreenWidget.h"
-#include "Player/R1MainMenuController.h"
 
 void UR1LoadingSubSystem::ShowLoadingScreen(TSubclassOf<UR1LoadingScreenWidget> WidgetClass, AR1MapGenerator* MapGenerator)
 {
