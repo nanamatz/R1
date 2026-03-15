@@ -194,6 +194,9 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 			{
 				InventorySubsystem->LoadEquippedItem(EquippedSaveData.ItemID, EquippedSaveData.ItemRarity, EquippedSaveData.Slot);
 			}
+
+			// 💡 로딩이 끝났음을 UI에 알려서 인벤토리/장비창을 갱신하게 만듭니다!
+			InventorySubsystem->OnInventoryUpdated.Broadcast();
 		}
 	}
 

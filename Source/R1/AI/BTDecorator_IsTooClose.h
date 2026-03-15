@@ -21,5 +21,8 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "AI")
-	float TooCloseDistance = 300.0f; // 이 거리보다 가까우면 true 반환 (도망침)
+	float TooCloseDistance = 150.0f; // 기본값을 낮춤 (사거리보다 확실히 작아야 함)
+
+	UPROPERTY(EditAnywhere, Category = "AI")
+	float SafeDistanceBuffer = 50.0f; // 도망친 후 멈출 때 여유분
 };

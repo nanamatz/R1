@@ -15,5 +15,7 @@ class R1_API UR1GameplayAbility_RangedAttack : public UR1GameplayAbility_Attack
 
 protected:
     virtual void OnAttackEventReceived(FGameplayEventData Payload) override;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
+	TObjectPtr<class UParticleSystem> FiredEffect;
 };

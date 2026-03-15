@@ -3,6 +3,7 @@
 #include "Object/R1Projectile.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 void UR1GameplayAbility_RangedAttack::OnAttackEventReceived(FGameplayEventData Payload)
 {
@@ -33,6 +34,11 @@ void UR1GameplayAbility_RangedAttack::OnAttackEventReceived(FGameplayEventData P
         MuzzleRotation, 
         SpawnParams
     );
+
+    if (FiredEffect)
+    {
+        UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), FiredEffect, MuzzleLocation, MuzzleRotation);
+    }
 
     if (Projectile)
     {

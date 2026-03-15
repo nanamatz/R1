@@ -28,8 +28,6 @@ EBTNodeResult::Type UBTTask_DefaultAttack::ExecuteTask(UBehaviorTreeComponent& O
 
         Monster->ActivateAbility(R1GameplayTags::Ability_Attack);
 
-        //Monster->DefaultAttack();
-
         return EBTNodeResult::Succeeded;
     }
     return EBTNodeResult::Failed;

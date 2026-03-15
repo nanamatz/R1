@@ -201,6 +201,17 @@ bool UR1InventorySubsystem::UnequipItem(ER1EquipmentSlot TargetSlot)
 	// 인벤토리로 다시 넣음 (나중에는 빈 1칸, 2x3칸 등을 찾아서 넣는 로직이 들어가야 함)
 	Items.Add(ItemToUnequip);
 
+	// 💡 만약 이 아이템이 그리드(GridData) 어디에도 속해있지 않다면, 빈자리를 찾아 넣어줍니다.
+	// (단순 변심으로 인한 해제나, 스왑 시 위치를 지정받지 못한 경우 대비)
+	if (GetItemPosition(ItemToUnequip) == FIntPoint(-1, -1))
+	{
+		FIntPoint EmptyPos;
+		if (FindEmptySlot(ItemToUnequip->GetItemSize(), EmptyPos))
+		{
+			AddItemToGrid(ItemToUnequip, EmptyPos);
+		}
+	}
+
 	OnInventoryUpdated.Broadcast();
 
 	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())

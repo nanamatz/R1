@@ -7,7 +7,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Player/R1PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
-#include "Kismet/GameplayStatics.h"
+#include "Map/R1MapGenerator.h"
+#include "EngineUtils.h"
 
 void UR1GameMenuWIdget::NativeConstruct()
 {
@@ -44,6 +45,13 @@ void UR1GameMenuWIdget::OnOptionsButtonClicked()
 
 void UR1GameMenuWIdget::OnExitButtonClicked()
 {
+	// 0. 나가기 전에 현재 상태를 자동 저장!
+	for (TActorIterator<AR1MapGenerator> It(GetWorld()); It; ++It)
+	{
+		It->TriggerAutoSave();
+		break;
+	}
+
 	APlayerController* PC = GetOwningPlayer();
 	if (PC)
 	{
