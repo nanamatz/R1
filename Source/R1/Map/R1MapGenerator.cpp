@@ -814,6 +814,8 @@ void AR1MapGenerator::GoToNextFloor()
 	HighestAchievedProgress = 0.1f;
 	OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
 
+
+
 	// 1. 기존에 로드된 모든 스트리밍 레벨(방) 메모리에서 날려버리기
 	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
 	if (RoomSubsystem)

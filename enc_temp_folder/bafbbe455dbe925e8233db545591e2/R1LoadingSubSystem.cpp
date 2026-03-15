@@ -47,7 +47,7 @@ void UR1LoadingSubSystem::ShowLoadingScreen(TSubclassOf<UR1LoadingScreenWidget> 
 				R1PC->ResetMovementState();
 
 				// 2. 입력 모드를 'UI 전용(UI Only)'으로 바꿔서 월드 클릭(이동/공격)을 원천 차단합니다!
-				//R1PC->UpdateInputMode(true);
+				R1PC->UpdateInputMode(true);
 
 				// (선택) 만약 UI 전용 모드로도 불안하다면, 엔진 기본 함수로 입력을 아예 막아버릴 수도 있습니다.
 				R1PC->DisableInput(R1PC);
@@ -80,9 +80,10 @@ void UR1LoadingSubSystem::HideLoadingScreen()
 			if (AR1PlayerController* R1PC = Cast<AR1PlayerController>(PC))
 			{
 				// 1. 로딩이 끝났으니 다시 '게임 및 UI(Game And UI)' 모드로 돌려놓아 이동/공격을 허용합니다!
-				//R1PC->UpdateInputMode(false);
+				R1PC->UpdateInputMode(false);
 
-				 R1PC->EnableInput(R1PC);
+				// (선택) 위에서 DisableInput을 쓰셨다면 여기서 다시 켜줍니다.
+				// R1PC->EnableInput(R1PC);
 			}
 		}
 	}

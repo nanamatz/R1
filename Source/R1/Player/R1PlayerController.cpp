@@ -295,11 +295,11 @@ void AR1PlayerController::ChaseTargetAndAttack()
 
 		if (Direction.Length() < R1Player->AttackRange && TargetAttackActor)
 		{
+			StopMovement();
+
 			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
-			
-			UE_LOG(LogTemp,Warning,TEXT("Attack Count : %d"),++AttackCount);
-			
-			TargetActor = HighlightActor;
+						
+			//TargetActor = HighlightActor;
 		}
 		else
 		{
