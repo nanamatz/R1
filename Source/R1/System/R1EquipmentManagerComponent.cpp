@@ -7,6 +7,7 @@
 #include "AbilitySystem/Abilities/R1GameplayAbility.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "R1GameplayTags.h"
+#include "Data/R1ItemAssetData.h"
 
 // Sets default values for this component's properties
 UR1EquipmentManagerComponent::UR1EquipmentManagerComponent()
@@ -18,15 +19,15 @@ UR1EquipmentManagerComponent::UR1EquipmentManagerComponent()
 	// ...
 }
 
-void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const FR1ItemDataRow& ItemData)
+void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1ItemAssetData* ItemData)
 {
 	if (!ASC)
 	{
 		ASC = Cast<UR1AbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner()));
 	}
-	if (!ASC) return;
 
-	// 1. 이미 해당 슬롯에 무언가 장착되어 있다면 먼저 벗깁니다!
+	if (!ASC || !ItemData) return;
+
 	if (EquippedHandlesMap.Contains(EquipSlot))
 	{
 		UnEquipItem(EquipSlot);
@@ -34,14 +35,14 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 
 	FR1EquipmentActiveHandles NewHandles;
 
-	for (const TSubclassOf<UR1GameplayAbility>& AbilityClass : ItemData.GrantedAbilities)
+	for (const TSubclassOf<UR1GameplayAbility>& AbilityClass : ItemData->GrantedAbilities)
 	{
 		if (AbilityClass)
 		{
 			FGameplayAbilitySpec Spec(AbilityClass, 1, INDEX_NONE, GetOwner());
 			FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
 
-			NewHandles.AbilityHandles.Add(Handle); 
+			NewHandles.AbilityHandles.Add(Handle);
 
 			if (AbilityClass->GetDefaultObject<UR1GameplayAbility>()->GetSkillType() == ER1SkillType::Active)
 			{
@@ -50,7 +51,7 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 		}
 	}
 
-	for (const TSubclassOf<UGameplayEffect>& EffectClass : ItemData.GrantedEffects)
+	for (const TSubclassOf<UGameplayEffect>& EffectClass : ItemData->GrantedEffects)
 	{
 		if (EffectClass)
 		{
@@ -61,25 +62,23 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 			if (SpecHandle.IsValid())
 			{
 				FActiveGameplayEffectHandle ActiveGEHandle = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-
 				NewHandles.EffectHandles.Add(ActiveGEHandle);
 			}
 		}
 	}
 
-	if (ItemData.EquipStatEffect)
+	if (ItemData->EquipStatEffect)
 	{
 		FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
 		ContextHandle.AddInstigator(GetOwner(), GetOwner());
 
-		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(ItemData.EquipStatEffect, 1.0f, ContextHandle);
+		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(ItemData->EquipStatEffect, 1.0f, ContextHandle);
 
 		if (SpecHandle.IsValid())
 		{
 			static TArray<FGameplayTag> AddStatTags = {
 				R1GameplayTags::Data_Attribute_WeaponDamage,
 				R1GameplayTags::Data_Attribute_EquipDefence,
-
 				R1GameplayTags::Data_Attribute_MaxHealth,
 				R1GameplayTags::Data_Attribute_MaxMana,
 				R1GameplayTags::Data_Attribute_MoveSpeed
@@ -94,9 +93,8 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 
 			for (const FGameplayTag& Tag : AddStatTags)
 			{
-				float StatValue = 0.0f; 
-
-				if (const float* FoundValue = ItemData.StatModifiers.Find(Tag))
+				float StatValue = 0.0f;
+				if (const float* FoundValue = ItemData->StatModifiers.Find(Tag))
 				{
 					StatValue = *FoundValue;
 				}
@@ -105,9 +103,8 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 
 			for (const FGameplayTag& Tag : MultiplyStatTags)
 			{
-				float StatValue = 1.0f; 
-
-				if (const float* FoundValue = ItemData.StatModifiers.Find(Tag))
+				float StatValue = 1.0f;
+				if (const float* FoundValue = ItemData->StatModifiers.Find(Tag))
 				{
 					StatValue = *FoundValue;
 				}
@@ -115,7 +112,6 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 			}
 
 			FActiveGameplayEffectHandle ActiveGEHandle = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-
 			NewHandles.EffectHandles.Add(ActiveGEHandle);
 		}
 	}
@@ -124,8 +120,6 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, const F
 
 	UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 완료! 스킬 %d개, 효과 %d개 적용됨"),
 		*UEnum::GetValueAsString(EquipSlot), NewHandles.AbilityHandles.Num(), NewHandles.EffectHandles.Num());
-
-
 }
 
 void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)

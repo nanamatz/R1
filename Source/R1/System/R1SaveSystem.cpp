@@ -110,10 +110,10 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 			// 인벤토리 아이템 저장
 			for (UR1ItemInstance* Item : InventorySubsystem->GetItems())
 			{
-				if (Item)
+				if (Item && Item->GetItemData())
 				{
 					FR1ItemSaveData ItemSaveData;
-					ItemSaveData.ItemID = Item->ItemID;
+					ItemSaveData.ItemData = Item->GetItemData();
 					ItemSaveData.ItemRarity = Item->ItemRarity;
 					ItemSaveData.Position = InventorySubsystem->GetItemPosition(Item);
 					SaveObj->InventoryItems.Add(ItemSaveData);
@@ -123,10 +123,10 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 			// 장착된 아이템 저장
 			for (auto& Pair : InventorySubsystem->GetEquippedItems())
 			{
-				if (Pair.Value)
+				if (Pair.Value && Pair.Value->GetItemData())
 				{
 					FR1EquippedItemSaveData EquippedSaveData;
-					EquippedSaveData.ItemID = Pair.Value->ItemID;
+					EquippedSaveData.ItemData = Pair.Value->GetItemData();
 					EquippedSaveData.ItemRarity = Pair.Value->ItemRarity;
 					EquippedSaveData.Slot = Pair.Key;
 					SaveObj->EquippedItems.Add(EquippedSaveData);
@@ -186,13 +186,19 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 			// 인벤토리 아이템 복구
 			for (const FR1ItemSaveData& ItemSaveData : SaveObj->InventoryItems)
 			{
-				InventorySubsystem->LoadItem(ItemSaveData.ItemID, ItemSaveData.ItemRarity, ItemSaveData.Position);
+				if (UR1ItemAssetData* ResolvedData = ItemSaveData.ItemData.LoadSynchronous())
+				{
+					InventorySubsystem->LoadItem(ResolvedData, ItemSaveData.ItemRarity, ItemSaveData.Position);
+				}
 			}
 
 			// 장착 아이템 복구
 			for (const FR1EquippedItemSaveData& EquippedSaveData : SaveObj->EquippedItems)
 			{
-				InventorySubsystem->LoadEquippedItem(EquippedSaveData.ItemID, EquippedSaveData.ItemRarity, EquippedSaveData.Slot);
+				if (UR1ItemAssetData* ResolvedData = EquippedSaveData.ItemData.LoadSynchronous())
+				{
+					InventorySubsystem->LoadEquippedItem(ResolvedData, EquippedSaveData.ItemRarity, EquippedSaveData.Slot);
+				}
 			}
 
 			// 💡 로딩이 끝났음을 UI에 알려서 인벤토리/장비창을 갱신하게 만듭니다!

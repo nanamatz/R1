@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "R1Define.h"
+#include "Data/R1ItemAssetData.h"
 #include "R1InventorySubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
@@ -25,8 +25,6 @@ public:
 
 	const TArray<TObjectPtr<UR1ItemInstance>>& GetGridData() const { return GridData; }
 
-	void AddDefaultItem();
-
 	const TArray<TObjectPtr<UR1ItemInstance>>& GetItems() { return Items; }
 
 	const TMap<ER1EquipmentSlot, TObjectPtr<UR1ItemInstance>>& GetEquippedItems() const { return EquippedItems; }
@@ -34,9 +32,6 @@ public:
 	FIntPoint GetItemPosition(UR1ItemInstance* Item) const;
 
 	void ClearInventory();
-
-	void LoadItem(int32 ItemID, EItemRarity Rarity, FIntPoint Pos);
-	void LoadEquippedItem(int32 ItemID, EItemRarity Rarity, ER1EquipmentSlot Slot);
 
 	// 💡 가장 중요한 핵심 함수: 특정 위치에 아이템을 놓을 수 있는지 검사
 	bool CanAddItemAt(const FIntPoint& ItemSize, const FIntPoint& TargetPos, UR1ItemInstance* IgnoreItem = nullptr);
@@ -60,7 +55,7 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnInventoryUpdated OnInventoryUpdated;
 
-protected:
+public:
 	// 전체 그리드를 1차원 배열로 관리 (크기: Columns * Rows)
 	// 비어있으면 nullptr, 누군가 차지하고 있으면 그 아이템의 포인터가 들어감
 	UPROPERTY()
@@ -75,9 +70,13 @@ protected:
 	TMap <ER1EquipmentSlot, TObjectPtr<UR1ItemInstance>> EquippedItems;
 
 public:
-	// 헤더 파일에 데이터 테이블 변수 추가
-	UPROPERTY()
-	TObjectPtr<UDataTable> ItemDataTable;
+	// 🌟 외부에서(예: 루팅할 때) 쉽게 아이템을 넣을 수 있는 만능 함수 추가
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool AddItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common);
+
+	// 🌟 세이브/로드 시 숫자 ID 대신 데이터 에셋 포인터를 받도록 수정
+	void LoadItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos);
+	void LoadEquippedItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity, ER1EquipmentSlot Slot);
 
 public:
 	// 💡 아이템 크기에 맞는 빈 공간을 찾아 좌표를 반환해 주는 함수
