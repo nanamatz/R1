@@ -20,6 +20,7 @@
 #include "Data/R1InputData.h"
 #include "R1GameplayTags.h"
 #include "UI/R1HUD.h"
+#include "Object/R1ItemActor.h"
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "System/R1EquipmentManagerComponent.h"
@@ -281,10 +282,13 @@ void AR1PlayerController::ChaseTargetAndAttack()
 	{
 		return;
 	}
+	
+	if(bMousePressed == false)
+	{
+		return;
+	}
 
-
-
-	if (TargetActor && bMousePressed)
+	if (TargetActor)
 	{
 		FVector Direction = TargetActor->GetActorLocation() - R1Player->GetActorLocation();
 
@@ -308,7 +312,24 @@ void AR1PlayerController::ChaseTargetAndAttack()
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
 	}
-	
+	else if (AR1ItemActor* TargetItem = Cast<AR1ItemActor>(TargetActor))
+	{
+		FVector Direction = TargetItem->GetActorLocation() - R1Player->GetActorLocation();
+
+		if (Direction.Length() < 150.0f)
+		{
+			StopMovement();
+			bMousePressed = false;
+
+			TargetItem->OnLootAttempted(R1Player);
+			TargetActor = nullptr;
+		}
+		else
+		{
+			CacheDestination = TargetItem->GetActorLocation();
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+		}
+	}
 	
 }
 
@@ -454,18 +475,6 @@ void AR1PlayerController::OnGameMenuToggle()
 	// 2. 현재 상태 확인 후 반전
 	bool bIsPaused = IsPaused();
 	SetPause(!bIsPaused); // true면 false로, false면 true로!
-
-	//// 3. 마우스 커서 및 입력 모드 전환
-	//if (!bIsPaused)
-	//{
-	//	// 게임 중 -> 일시정지 됨: 마우스를 켜고 UI를 클릭할 수 있게 함
-	//	SetInputMode(FInputModeGameAndUI());
-	//}
-	//else
-	//{
-	//	SetInputMode(FInputModeGameOnly());
-	//}
-
 }
 
 void AR1PlayerController::UpdateInputMode(bool bShouldUIOnly)
@@ -489,26 +498,4 @@ void AR1PlayerController::HandleGameplayEvent(FGameplayTag EventTag)
 {
 	//TODO
 }
-
-//void AR1PlayerController::RespawnInLevel(FName LevelName)
-//{
-//	if (LevelName.IsNone())
-//	{
-//		UE_LOG(LogTemp, Warning, TEXT("RespawnInLevel failed: LevelName is None."));
-//		return;
-//	}
-//
-//	if (UR1GameInstance* R1GameInstance = GetGameInstance<UR1GameInstance>())
-//	{
-//		R1GameInstance->SaveRespawnSnapshotFromPlayer(R1Player);
-//	}
-//
-//	UGameplayStatics::OpenLevel(this, LevelName);
-//}
-//
-//void AR1PlayerController::RespawnCurrentLevel()
-//{
-//	const FName CurrentLevelName = FName(*UGameplayStatics::GetCurrentLevelName(this, true));
-//	RespawnInLevel(CurrentLevelName);
-//}
 

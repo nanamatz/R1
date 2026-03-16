@@ -4,16 +4,34 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Data/R1ItemAssetData.h"
 #include "DungeonManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRoomClearedDelegate, int32, ClearedNodeID);
+
+USTRUCT(BlueprintType)
+struct FR1LootPoolItem
+{
+	GENERATED_BODY()
+
+	// 🌟 숫자 ID 대신 데이터 에셋 자체를 직접 연결합니다! (드래그 앤 드롭 가능)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
+	TObjectPtr<UR1ItemAssetData> ItemData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
+	EItemRarity ItemRarity = EItemRarity::Common;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
+	float DropWeight = 100.0f;
+};
 
 UENUM(BlueprintType)
 enum class ER1RoomClearCondition : uint8
 {
 	None			UMETA(DisplayName = "조건 없음 (항상 열림)"),
 	KillAllMonsters UMETA(DisplayName = "모든 몬스터 처치"),
-	KillBoss		UMETA(DisplayName = "보스 처치")
+	KillBoss		UMETA(DisplayName = "보스 처치"),
+	Treasure		UMETA(DisplayName = "보물방 (자동 클리어)")
 };
 
 UCLASS()
@@ -83,4 +101,22 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Room Setup")
 	TSubclassOf<AActor> PortalClass;
 
+protected:
+	// 🌟 에디터에서 맘대로 추가/수정할 수 있는 방 클리어 보상 풀
+	UPROPERTY(EditAnywhere, Category = "Loot")
+	TObjectPtr<class UR1ItemPoolData> RoomClearLootPool;
+
+	UPROPERTY(EditAnywhere, Category = "Loot", meta = (ClampMin = "0.0", ClampMax = "100.0"))
+	float RoomClearDropChance = 30.0f;
+
+	// 스폰할 아이템 액터의 클래스 정보 (블루프린트에서 BP_ItemActor를 넣어줍니다)
+	UPROPERTY(EditAnywhere, Category = "Loot")
+	TSubclassOf<class AR1ItemActor> ItemActorClass;
+
+	// 방 클리어 시 아이템 스폰 함수
+	void SpawnRoomClearReward();
+
+public:
+	// 🌟 맵 제너레이터가 방을 스폰한 직후 호출해 줄 초기화 함수
+	void InitializeRoomData(class UR1RoomDefinitionData* RoomData);
 };

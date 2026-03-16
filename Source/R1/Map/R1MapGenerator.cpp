@@ -14,6 +14,7 @@
 
 #include "Containers/Queue.h"
 #include "Data/R1AssetData.h" 
+#include "Data/R1RoomDefinitionData.h"
 #include "EngineUtils.h"
 
 #include "Player/R1PlayerController.h"
@@ -670,6 +671,11 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 
 	if (MatchedNodeID == -1) return; // 맵에 없는 유령 방이면 무시
 
+	if (GeneratedMap[MatchedNodeID].RoomDefinition)
+	{
+		Manager->InitializeRoomData(GeneratedMap[MatchedNodeID].RoomDefinition);
+	}
+
 	AR1Door* TargetDoorToSpawnAt = nullptr;
 	ER1DoorDirection OppositeDir = GetOppositeDirection(PendingDoorDirection);
 
@@ -704,8 +710,15 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 	else
 	{
 		Manager->LockRoomDoors();
+		if (Manager->ClearCondition == ER1RoomClearCondition::Treasure)
+		{
+			Manager->CompleteRoom(); // 팡! 하고 아이템 드랍
+		}
+		else
+		{
+			Manager->StartRoomCombat();
+		}
 	}
-	Manager->StartRoomCombat();
 
 	//플레이어 텔레포트 및 UI 갱신
 	AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
@@ -991,11 +1004,11 @@ void AR1MapGenerator::TriggerAutoSave()
 
 			CurrentActiveNodeID = TempActiveID;
 
-			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 💾 자동 저장 완료! (현재 저장된 방: %d번)"), CurrentActiveNodeID);
+			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 자동 저장 완료! (현재 저장된 방: %d번)"), CurrentActiveNodeID);
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("[MapGenerator] ❌ 자동 저장 실패: 플레이어 캐릭터를 찾을 수 없습니다!"));
+			UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 자동 저장 실패: 플레이어 캐릭터를 찾을 수 없습니다!"));
 		}
 	}
 }

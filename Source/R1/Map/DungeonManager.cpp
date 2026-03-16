@@ -10,12 +10,36 @@
 #include "Character/R1Monster.h"
 #include "R1MapGenerator.h"
 #include "Kismet/GameplayStatics.h"
+#include "Object/R1ItemActor.h"
+#include "Data/R1ItemPoolData.h"
+#include "Data/R1RoomDefinitionData.h"
+#include "Math/UnrealMathUtility.h"
+//#include "UObject/ConstructorHelpers.h" // 🌟 경로 탐색기 헤더 추가
 
 // Sets default values
 ADungeonManager::ADungeonManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+
+	static ConstructorHelpers::FObjectFinder<UR1ItemPoolData> DefaultLootPoolRef(TEXT("/Script/R1.R1ItemPoolData'/Game/Data/PDA_DropItemPool.PDA_DropItemPool'"));
+
+	if (DefaultLootPoolRef.Succeeded())
+	{
+		// 경로에서 에셋을 성공적으로 찾았다면 내 변수에 쏙 넣어줍니다!
+		RoomClearLootPool = DefaultLootPoolRef.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[DungeonManager] 기본 루트 풀 에셋을 찾을 수 없습니다! 경로를 확인하세요."));
+	}
+
+	static ConstructorHelpers::FClassFinder<AR1ItemActor> ItemActorClassRef(TEXT("/Script/Engine.Blueprint'/Game/Blueprints/Item/BP_ItemActor.BP_ItemActor_C'"));
+
+	if (ItemActorClassRef.Succeeded())
+	{
+		ItemActorClass = ItemActorClassRef.Class;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -23,10 +47,10 @@ void ADungeonManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (ClearCondition == ER1RoomClearCondition::None)
-	{
-		CompleteRoom();
-	}
+	//if (ClearCondition == ER1RoomClearCondition::None)
+	//{
+	//	CompleteRoom();
+	//}
 
 	if (AActor* GeneratorActor = UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()))
 	{
@@ -95,7 +119,6 @@ void ADungeonManager::CompleteRoom()
 
 	UnlockRoomDoors();
 
-	// 🌟 [추가] 보스 방이고, 포탈 클래스가 세팅되어 있다면 방 중앙에 소환!
 	if (ClearCondition == ER1RoomClearCondition::KillBoss)
 	{
 		bool bIsLastFloor = false;
@@ -121,7 +144,7 @@ void ADungeonManager::CompleteRoom()
 		OnRoomCleared.Broadcast(RoomNodeID);
 	}
 
-	// TODO 보상 지급 로직
+	SpawnRoomClearReward();
 }
 
 void ADungeonManager::StartRoomCombat()
@@ -159,4 +182,101 @@ void ADungeonManager::HandleMonsterReadyToSleep(AR1Monster* DeadMonster)
 			UE_LOG(LogTemp, Log, TEXT("[DungeonManager] 몬스터를 성공적으로 창고에 반환했습니다: %s"), *DeadMonster->GetName());
 		}
 	}
+}
+
+void ADungeonManager::SpawnRoomClearReward()
+{
+	// 1. 방어 코드: 루팅 풀 에셋이 안 꽂혀있거나, 풀 안에 아이템이 0개면 패스!
+	if (!RoomClearLootPool || RoomClearLootPool->DropItems.Num() == 0 || !ItemActorClass)
+	{
+		return;
+	}
+
+	if (ClearCondition == ER1RoomClearCondition::None)
+	{
+		return;
+	}
+
+	// 🌟 확률 체크 (0~100 사이의 난수가 DropChance보다 작을 때만 드랍)
+	float DropRoll = FMath::FRandRange(0.0f, 100.0f);
+	if (DropRoll > RoomClearDropChance)
+	{
+		UE_LOG(LogTemp, Log, TEXT("방 클리어 보상 드랍 실패 (확률: %.1f%%, 결과: %.1f)"), RoomClearDropChance, DropRoll);
+		return;
+	}
+
+	// 2. 가중치 기반 확률 계산 (이제 아이템 에셋에서 가중치를 직접 물어봅니다)
+	float TotalWeight = 0.0f;
+	for (UR1ItemAssetData* ItemData : RoomClearLootPool->DropItems)
+	{
+		if (ItemData)
+		{
+			TotalWeight += ItemData->GetDropWeight(); // 🌟 아이템의 희귀도별 가중치 합산
+		}
+	}
+
+	float RandomValue = FMath::FRandRange(0.0f, TotalWeight);
+	float AccumulatedWeight = 0.0f;
+
+	UR1ItemAssetData* SelectedItem = nullptr;
+
+	for (UR1ItemAssetData* ItemData : RoomClearLootPool->DropItems)
+	{
+		if (!ItemData) continue;
+
+		AccumulatedWeight += ItemData->GetDropWeight();
+		if (RandomValue <= AccumulatedWeight)
+		{
+			SelectedItem = ItemData;
+			break;
+		}
+	}
+
+	if (!SelectedItem) return;
+
+	// 3. 월드에 스폰!
+	FVector SpawnLocation = GetActorLocation() + FVector(0.0f, 0.0f, 150.0f);
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	AR1ItemActor* DroppedItem = GetWorld()->SpawnActor<AR1ItemActor>(ItemActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+
+	if (DroppedItem)
+	{
+		// 🌟 희귀도 정보도 아이템 에셋이 들고 있으므로 그대로 던져줍니다.
+		DroppedItem->InitItem(SelectedItem, SelectedItem->ItemRarity);
+
+		UE_LOG(LogTemp, Warning, TEXT("방 클리어 보상 드랍! [%s] (가중치: %.0f)"),
+			*SelectedItem->ItemName.ToString(), SelectedItem->GetDropWeight());
+	}
+}
+
+void ADungeonManager::InitializeRoomData(UR1RoomDefinitionData* RoomData)
+{
+	if (!RoomData) return;
+
+	// 🌟 1. 룸 데이터에서 정의된 보상 풀을 내 보상 풀로 덮어씌웁니다!
+	RoomClearLootPool = RoomData->RoomClearLootPool;
+	RoomClearDropChance = RoomData->RoomClearDropChance;
+
+	// 2. (보너스) 방 타입에 따라 클리어 조건도 자동으로 맞춰줄 수 있습니다.
+	if (RoomData->RoomType == ER1RoomContentType::Boss)
+	{
+		ClearCondition = ER1RoomClearCondition::KillBoss;
+	}
+	else if (RoomData->RoomType == ER1RoomContentType::Start)
+	{
+		ClearCondition = ER1RoomClearCondition::None;
+	}
+	else if (RoomData->RoomType == ER1RoomContentType::Treasure)
+	{
+		ClearCondition = ER1RoomClearCondition::Treasure;
+	}
+	else
+	{
+		ClearCondition = ER1RoomClearCondition::KillAllMonsters;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[DungeonManager] 방 데이터 주입 완료! 보상 풀: %s"),
+		RoomClearLootPool ? *RoomClearLootPool->GetName() : TEXT("없음"));
 }

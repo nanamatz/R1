@@ -6,7 +6,6 @@
 #include "Components/ActorComponent.h"
 #include "GameplayEffectTypes.h"
 #include "GameplayAbilitySpecHandle.h"
-#include "DataTable/R1ItemDataRow.h"
 #include "R1Define.h"
 #include "R1EquipmentManagerComponent.generated.h"
 
@@ -38,7 +37,7 @@ public:
 	UR1EquipmentManagerComponent();
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	void EquipItem(ER1EquipmentSlot EquipSlot, const FR1ItemDataRow& ItemData);
+	void EquipItem(ER1EquipmentSlot EquipSlot, class UR1ItemAssetData* ItemData);
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void UnEquipItem(ER1EquipmentSlot EquipSlot);

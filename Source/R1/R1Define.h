@@ -3,6 +3,15 @@
 #pragma once
 
 UENUM(BlueprintType)
+enum class ER1ItemType : uint8
+{
+	None		UMETA(DisplayName = "없음"),
+	Equipment	UMETA(DisplayName = "장비"),
+	Consumable	UMETA(DisplayName = "소모품"),
+	Material	UMETA(DisplayName = "재료")
+};
+
+UENUM(BlueprintType)
 enum class ER1FloorLevel : uint8
 {
 	Laboratory,
@@ -68,14 +77,11 @@ enum class ECreatureState: uint8
 UENUM(BlueprintType)
 enum class EItemRarity : uint8
 {
-	Junk,
-	Poor,
 	Common,
 	Uncommon,
 	Rare,
 	Epic,
 	Legendary,
-	Unique,
 
 	Count	UMETA(Hidden)
 };

@@ -10,16 +10,6 @@ void UR1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	GridData.Init(nullptr, GetInventoryColumns() * GetInventoryRows());
-
-	// 💡 서브시스템 시작할 때 딱 한 번 로드!
-	// (경로는 본인의 프로젝트 경로로 꼭 수정하세요!)
-	FString Path = TEXT("/Script/Engine.DataTable'/Game/DataTable/DT_ItemDataTable.DT_ItemDataTable'");
-	ItemDataTable = LoadObject<UDataTable>(nullptr, *Path);
-
-	if (!ItemDataTable)
-	{
-		UE_LOG(LogTemp, Error, TEXT("서브시스템 초기화 실패: 데이터 테이블을 못 찾았습니다!"));
-	}
 }
 
 void UR1InventorySubsystem::Deinitialize()
@@ -27,62 +17,6 @@ void UR1InventorySubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-void UR1InventorySubsystem::AddDefaultItem()
-{
-	if (!ItemDataTable) return;
-
-	TObjectPtr<UR1ItemInstance> TestHelemt = NewObject<UR1ItemInstance>(this);
-	TestHelemt->Init(1, ItemDataTable);
-	Items.Add(TestHelemt);
-
-	TObjectPtr<UR1ItemInstance> TestWeapon = NewObject<UR1ItemInstance>(this);
-	TestWeapon->Init(2, ItemDataTable);
-	Items.Add(TestWeapon);
-
-	TObjectPtr<UR1ItemInstance> TestArmor = NewObject<UR1ItemInstance>(this);
-	TestArmor->Init(3, ItemDataTable);
-	Items.Add(TestArmor);
-
-	TObjectPtr<UR1ItemInstance> TestGlove = NewObject<UR1ItemInstance>(this);
-	TestGlove->Init(4, ItemDataTable);
-	Items.Add(TestGlove);
-
-	TObjectPtr<UR1ItemInstance> TestBoots = NewObject<UR1ItemInstance>(this);
-	TestBoots->Init(5, ItemDataTable);
-	Items.Add(TestBoots);
-
-	TObjectPtr<UR1ItemInstance> TestRing = NewObject<UR1ItemInstance>(this);
-	TestRing->Init(6, ItemDataTable);
-	Items.Add(TestRing);
-
-	TObjectPtr<UR1ItemInstance> TestRing2 = NewObject<UR1ItemInstance>(this);
-	TestRing2->Init(6, ItemDataTable);
-	Items.Add(TestRing2);
-
-	TObjectPtr<UR1ItemInstance> TestPotion = NewObject<UR1ItemInstance>(this);
-	TestPotion->Init(7, ItemDataTable);
-	Items.Add(TestPotion);
-
-	for (UR1ItemInstance* Item : Items)
-	{
-		if (!Item) continue;
-
-		FIntPoint EmptyPos;
-
-		// 💡 1. 우리가 만든 도우미 함수에게 "이 아이템 크기 들어갈 빈자리 좀 찾아와!" 라고 시킵니다.
-		if (FindEmptySlot(Item->GetItemSize(), EmptyPos))
-		{
-			// 2. 빈자리를 찾았다면 그 위치에 알박기!
-			AddItemToGrid(Item, EmptyPos);
-		}
-		else
-		{
-			// 3. 만약 Y축 끝까지 다 뒤졌는데도 자리가 없다면? (인벤토리 풀 상태)
-			UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 차서 임시 아이템(ID: %d)을 배치하지 못했습니다!"), Item->ItemID);
-		}
-	}
-	OnInventoryUpdated.Broadcast();
-}
 
 bool UR1InventorySubsystem::CanAddItemAt(const FIntPoint& ItemSize, const FIntPoint& TargetPos, UR1ItemInstance* IgnoreItem)
 {
@@ -177,16 +111,14 @@ bool UR1InventorySubsystem::EquipItem(UR1ItemInstance* ItemToEquip, ER1Equipment
 	{
 		if (APawn* PlayerPawn = PC->GetPawn())
 		{
-			// 플레이어 몸에 붙어있는 장비 관리자 컴포넌트를 찾습니다.
 			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
 			{
-				// 아이템 인스턴스 안에 있는 데이터 행(Row)을 컴포넌트에게 넘겨줍니다!
+				// 🌟 주의: 이전에는 FR1ItemDataRow를 넘겼지만, 이제는 UR1ItemAssetData* 를 넘깁니다!
 				EquipComp->EquipItem(TargetSlot, ItemToEquip->GetItemData());
 			}
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("장비 장착 완료: 슬롯 %d"), (int32)TargetSlot);
 	return true;
 }
 
@@ -274,25 +206,46 @@ void UR1InventorySubsystem::ClearInventory()
 	OnInventoryUpdated.Broadcast();
 }
 
-void UR1InventorySubsystem::LoadItem(int32 ItemID, EItemRarity Rarity, FIntPoint Pos)
+bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Rarity)
 {
-	if (!ItemDataTable) return;
+	if (!InItemData) return false;
+
+	UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(this);
+	NewItem->Init(InItemData, Rarity);
+
+	FIntPoint EmptyPos;
+
+	// 빈자리 찾기
+	if (FindEmptySlot(NewItem->GetItemSize(), EmptyPos))
+	{
+		Items.Add(NewItem);
+		AddItemToGrid(NewItem, EmptyPos);
+		OnInventoryUpdated.Broadcast();
+		return true; // 추가 성공!
+	}
+
+	// 빈자리가 없다면 쓰레기통으로
+	NewItem->MarkAsGarbage();
+	return false; // 추가 실패!
+}
+
+void UR1InventorySubsystem::LoadItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos)
+{
+	if (!InItemData) return;
 
 	TObjectPtr<UR1ItemInstance> Item = NewObject<UR1ItemInstance>(this);
-	Item->Init(ItemID, ItemDataTable);
-	Item->ItemRarity = Rarity;
+	Item->Init(InItemData, Rarity);
 
 	Items.Add(Item);
 	AddItemToGrid(Item, Pos);
 }
 
-void UR1InventorySubsystem::LoadEquippedItem(int32 ItemID, EItemRarity Rarity, ER1EquipmentSlot Slot)
+void UR1InventorySubsystem::LoadEquippedItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, ER1EquipmentSlot Slot)
 {
-	if (!ItemDataTable) return;
+	if (!InItemData) return;
 
 	TObjectPtr<UR1ItemInstance> Item = NewObject<UR1ItemInstance>(this);
-	Item->Init(ItemID, ItemDataTable);
-	Item->ItemRarity = Rarity;
+	Item->Init(InItemData, Rarity);
 
 	EquippedItems.Add(Slot, Item);
 
@@ -302,6 +255,7 @@ void UR1InventorySubsystem::LoadEquippedItem(int32 ItemID, EItemRarity Rarity, E
 		{
 			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
 			{
+				// 여기서도 데이터 에셋 포인터를 넘겨줍니다.
 				EquipComp->EquipItem(Slot, Item->GetItemData());
 			}
 		}

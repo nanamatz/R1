@@ -36,13 +36,13 @@ struct FR1ItemSaveData
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
-	int32 ItemID = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSoftObjectPtr<class UR1ItemAssetData> ItemData;
 
-	UPROPERTY()
-	EItemRarity ItemRarity = EItemRarity::Junk;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EItemRarity ItemRarity = EItemRarity::Common;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FIntPoint Position = FIntPoint(-1, -1);
 };
 
@@ -51,13 +51,13 @@ struct FR1EquippedItemSaveData
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
-	int32 ItemID = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSoftObjectPtr<class UR1ItemAssetData> ItemData;
 
-	UPROPERTY()
-	EItemRarity ItemRarity = EItemRarity::Junk;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EItemRarity ItemRarity = EItemRarity::Common;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ER1EquipmentSlot Slot = ER1EquipmentSlot::None;
 };
 

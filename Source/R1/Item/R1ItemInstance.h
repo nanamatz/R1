@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "R1Define.h"
-#include "DataTable/R1ItemDataRow.h"
+#include "Data/R1ItemAssetData.h"
 #include "R1ItemInstance.generated.h"
 
 /**
@@ -22,34 +22,28 @@ public:
 //	void Init(int32 InItemID, FIntPoint InItemSize = FIntPoint(1, 1), ER1EquipmentSlot InEquipSlot = ER1EquipmentSlot::None);
 
 public:
-	// 💡 이제 복잡한 매개변수 없이 ItemID 하나만 받아서, 데이터 테이블을 뒤져 스스로 세팅하도록 변경합니다.
-	void Init(int32 InItemID, UDataTable* InDataTable);
+	// 💡 이제 복잡한 매개변수나 데이터 테이블 ID 대신, 데이터 에셋(UR1ItemAssetData)을 직접 받아 초기화합니다.
+void Init(class UR1ItemAssetData* InItemData, EItemRarity InRarity = EItemRarity::Common); 
 
 public:
-	// 아이템 고유 ID (데이터 테이블의 Row를 찾거나 세이브/로드할 때 사용)
 	UPROPERTY(BlueprintReadOnly, Category = "Item")
-	int32 ItemID = 0;
+	TObjectPtr<class UR1ItemAssetData> ItemData;
 
-	// 인게임에서 변할 수 있는 데이터 (예: 드랍 시 무작위로 정해지는 희귀도, 강화 수치 등)
 	UPROPERTY(BlueprintReadOnly, Category = "Item")
-	EItemRarity ItemRarity = EItemRarity::Junk;
-
-	// 💡 GAS 장착 해제용 영수증 (장착 해제 시 스킬/스탯을 회수하기 위해 저장)
+	EItemRarity ItemRarity = EItemRarity::Common;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Item")
-	FR1ItemDataRow GetItemData() const { return *CachedItemData; }
+	UR1ItemAssetData* GetItemData() const { return ItemData; }
+
+	// 2. 사이즈 반환 (안전하게 조건문 유지)
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	FIntPoint GetItemSize() const { return ItemData ? ItemData->ItemSize : FIntPoint(1, 1); }
+
+	// 3. 🌟 배열(TArray) 반환 시 주의점: nullptr 대신 빈 배열 'TArray<ER1EquipmentSlot>()'을 반환해야 합니다!
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	TArray<ER1EquipmentSlot> GetEquipSlot() const { return ItemData ? ItemData->EquipSlots : TArray<ER1EquipmentSlot>(); }
 
 	UFUNCTION(BlueprintCallable, Category = "Item")
-	FIntPoint GetItemSize() const { return CachedItemData->ItemSize; }
-
-	UFUNCTION(BlueprintCallable, Category = "Item")
-	TArray<ER1EquipmentSlot> GetEquipSlot() const { return CachedItemData->EquipSlots; }
-
-	UFUNCTION(BlueprintCallable, Category = "Item")
-	UTexture2D* GetItemIcon() const { return CachedItemData->ItemIcon; }
-
-private:
-	
-	FR1ItemDataRow* CachedItemData = nullptr;
+	UTexture2D* GetItemIcon() const { return ItemData ? ItemData->ItemIcon : nullptr; }
 };
