@@ -1,6 +1,3 @@
-
-
-
 #include "Object/R1ItemActor.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -10,6 +7,7 @@
 #include "Item/R1ItemInstance.h"
 #include "Item/R1InventorySubsystem.h"
 #include "Data/R1ItemAssetData.h"
+#include "Item/R1ItemTooltip.h"
 
 AR1ItemActor::AR1ItemActor()
 {
@@ -80,11 +78,19 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity)
 	ItemData = InItemData;
 	ItemRarity = InRarity;
 
-	if (ItemData)
+	if (ItemData && TooltipWidget)
 	{
 		if (ItemData->ItemMesh && MeshComp)
 		{
 			MeshComp->SetStaticMesh(ItemData->ItemMesh);
+		}
+
+		UR1ItemTooltip* TooltipUI = Cast<UR1ItemTooltip>(TooltipWidget->GetUserWidgetObject());
+
+		if (TooltipUI)
+		{
+			// 데이터 에셋에 있는 아이템 이름을 UI로 쏴줍니다!
+			TooltipUI->SetItemNameText(FText::FromName(ItemData->ItemName));
 		}
 	}
 	else
