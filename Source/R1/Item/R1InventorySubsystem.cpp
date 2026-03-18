@@ -4,7 +4,7 @@
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1ItemInstance.h"
 #include "System/R1EquipmentManagerComponent.h"
-
+#include "Data/R1ItemAssetData.h"
 
 void UR1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -84,77 +84,95 @@ void UR1InventorySubsystem::MoveItemInGrid(UR1ItemInstance* Item, FIntPoint OldP
 	AddItemToGrid(Item, NewPos);
 }
 
+UR1EquipmentManagerComponent* UR1InventorySubsystem::GetEquipmentManager() const
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			if (APawn* PlayerPawn = PC->GetPawn())
+			{
+				return PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>();
+			}
+		}
+	}
+	return nullptr;
+}
+
+UR1ItemInstance* UR1InventorySubsystem::CreateItemInstance(UR1ItemAssetData* InItemData, EItemRarity Rarity)
+{
+	if (!InItemData) return nullptr;
+	UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(this);
+	NewItem->Init(InItemData, Rarity);
+	return NewItem;
+}
+
 bool UR1InventorySubsystem::EquipItem(UR1ItemInstance* ItemToEquip, ER1EquipmentSlot SpecificSlot)
 {
 	if (!ItemToEquip) return false;
 
 	ER1EquipmentSlot TargetSlot = (SpecificSlot != ER1EquipmentSlot::None) ? SpecificSlot : ItemToEquip->GetEquipSlot()[0];
-
 	if (TargetSlot == ER1EquipmentSlot::None) return false;
 
-	// 1. 만약 해당 부위에 이미 낀 장비가 있다면? -> 뺀다 (스왑 처리)
-	if (EquippedItems.Contains(TargetSlot))
+	// 💡 1. 현재 인벤토리 그리드에 있다면 제거
+	FIntPoint CurrentPos = GetItemPosition(ItemToEquip);
+	if (CurrentPos != FIntPoint(-1, -1))
 	{
-		UnequipItem(TargetSlot);
+		RemoveItemFromGrid(ItemToEquip, CurrentPos);
 	}
 
-	// 2. 인벤토리 목록에서 아이템 제거
+	// 💡 2. 해당 슬롯에 이미 아이템이 있다면 해제 (순서: 내가 먼저 빠지고 얘가 들어가야 빈자리 활용 가능)
+	if (EquippedItems.Contains(TargetSlot))
+	{
+		UnequipItem(TargetSlot, CurrentPos); // 💡 스왑 시 내가 있던 자리를 선호
+	}
+
 	Items.Remove(ItemToEquip);
-
-	// 3. 장비창(Map)에 등록
 	EquippedItems.Add(TargetSlot, ItemToEquip);
-
-	// 4. UI 갱신 알림!
 	OnInventoryUpdated.Broadcast();
 
-	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	// 🌟 도우미 함수 적용으로 확 줄어든 코드!
+	if (UR1EquipmentManagerComponent* EquipComp = GetEquipmentManager())
 	{
-		if (APawn* PlayerPawn = PC->GetPawn())
-		{
-			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
-			{
-				// 🌟 주의: 이전에는 FR1ItemDataRow를 넘겼지만, 이제는 UR1ItemAssetData* 를 넘깁니다!
-				EquipComp->EquipItem(TargetSlot, ItemToEquip->GetItemData());
-			}
-		}
+		EquipComp->EquipItem(TargetSlot, ItemToEquip->GetItemData());
 	}
 
 	return true;
 }
 
-bool UR1InventorySubsystem::UnequipItem(ER1EquipmentSlot TargetSlot)
+bool UR1InventorySubsystem::UnequipItem(ER1EquipmentSlot TargetSlot, FIntPoint PreferredPos)
 {
 	if (!EquippedItems.Contains(TargetSlot)) return false;
 
-	// 장착된 아이템을 빼서
 	UR1ItemInstance* ItemToUnequip = EquippedItems[TargetSlot];
 	EquippedItems.Remove(TargetSlot);
-
-	// 인벤토리로 다시 넣음 (나중에는 빈 1칸, 2x3칸 등을 찾아서 넣는 로직이 들어가야 함)
 	Items.Add(ItemToUnequip);
 
-	// 💡 만약 이 아이템이 그리드(GridData) 어디에도 속해있지 않다면, 빈자리를 찾아 넣어줍니다.
-	// (단순 변심으로 인한 해제나, 스왑 시 위치를 지정받지 못한 경우 대비)
-	if (GetItemPosition(ItemToUnequip) == FIntPoint(-1, -1))
+	// 💡 1. 선호되는 좌표가 있고, 거기에 놓을 수 있다면 알박기!
+	if (PreferredPos != FIntPoint(-1, -1) && CanAddItemAt(ItemToUnequip->GetItemSize(), PreferredPos))
 	{
+		AddItemToGrid(ItemToUnequip, PreferredPos);
+	}
+	else
+	{
+		// 💡 2. 그렇지 않다면 빈 공간을 찾아 자동으로 배치
 		FIntPoint EmptyPos;
 		if (FindEmptySlot(ItemToUnequip->GetItemSize(), EmptyPos))
 		{
 			AddItemToGrid(ItemToUnequip, EmptyPos);
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("인벤토리에 빈 공간이 없어 장비를 바닥에 버리거나 보관할 수 없습니다. (현재는 그냥 Items에만 추가)"));
+		}
 	}
 
 	OnInventoryUpdated.Broadcast();
 
-	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	// 🌟 도우미 함수 적용
+	if (UR1EquipmentManagerComponent* EquipComp = GetEquipmentManager())
 	{
-		if (APawn* PlayerPawn = PC->GetPawn())
-		{
-			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
-			{
-				EquipComp->UnEquipItem(TargetSlot);
-			}
-		}
+		EquipComp->UnEquipItem(TargetSlot);
 	}
 
 	return true;
@@ -178,21 +196,11 @@ FIntPoint UR1InventorySubsystem::GetItemPosition(UR1ItemInstance* Item) const
 
 void UR1InventorySubsystem::ClearInventory()
 {
-	// 1. 장착된 장비 해제 (단순히 데이터만 지움, GAS 등은 밖에서 처리하거나 여기서 EquipComp를 가져와서 해제해야 함)
-	// 하지만 세이브 로드 시에는 보통 모든 장비를 해제하고 새로 장착하는 게 깔끔함.
-	
-	// EquippedItems 맵 순회하면서 GAS 해제도 필요할 수 있음
-	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	if (UR1EquipmentManagerComponent* EquipComp = GetEquipmentManager())
 	{
-		if (APawn* PlayerPawn = PC->GetPawn())
+		for (auto& Pair : EquippedItems)
 		{
-			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
-			{
-				for (auto& Pair : EquippedItems)
-				{
-					EquipComp->UnEquipItem(Pair.Key);
-				}
-			}
+			EquipComp->UnEquipItem(Pair.Key);
 		}
 	}
 
@@ -208,56 +216,43 @@ void UR1InventorySubsystem::ClearInventory()
 
 bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Rarity)
 {
-	if (!InItemData) return false;
-
-	UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(this);
-	NewItem->Init(InItemData, Rarity);
+	// 🌟 도우미 함수 적용
+	UR1ItemInstance* NewItem = CreateItemInstance(InItemData, Rarity);
+	if (!NewItem) return false;
 
 	FIntPoint EmptyPos;
-
-	// 빈자리 찾기
 	if (FindEmptySlot(NewItem->GetItemSize(), EmptyPos))
 	{
 		Items.Add(NewItem);
 		AddItemToGrid(NewItem, EmptyPos);
 		OnInventoryUpdated.Broadcast();
-		return true; // 추가 성공!
+		return true;
 	}
 
-	// 빈자리가 없다면 쓰레기통으로
 	NewItem->MarkAsGarbage();
-	return false; // 추가 실패!
+	return false;
 }
 
 void UR1InventorySubsystem::LoadItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos)
 {
-	if (!InItemData) return;
-
-	TObjectPtr<UR1ItemInstance> Item = NewObject<UR1ItemInstance>(this);
-	Item->Init(InItemData, Rarity);
-
-	Items.Add(Item);
-	AddItemToGrid(Item, Pos);
+	// 🌟 도우미 함수 적용
+	if (UR1ItemInstance* Item = CreateItemInstance(InItemData, Rarity))
+	{
+		Items.Add(Item);
+		AddItemToGrid(Item, Pos);
+	}
 }
 
 void UR1InventorySubsystem::LoadEquippedItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, ER1EquipmentSlot Slot)
 {
-	if (!InItemData) return;
-
-	TObjectPtr<UR1ItemInstance> Item = NewObject<UR1ItemInstance>(this);
-	Item->Init(InItemData, Rarity);
-
-	EquippedItems.Add(Slot, Item);
-
-	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	// 🌟 도우미 함수 1, 2 동시 적용
+	if (UR1ItemInstance* Item = CreateItemInstance(InItemData, Rarity))
 	{
-		if (APawn* PlayerPawn = PC->GetPawn())
+		EquippedItems.Add(Slot, Item);
+
+		if (UR1EquipmentManagerComponent* EquipComp = GetEquipmentManager())
 		{
-			if (UR1EquipmentManagerComponent* EquipComp = PlayerPawn->FindComponentByClass<UR1EquipmentManagerComponent>())
-			{
-				// 여기서도 데이터 에셋 포인터를 넘겨줍니다.
-				EquipComp->EquipItem(Slot, Item->GetItemData());
-			}
+			EquipComp->EquipItem(Slot, Item->GetItemData());
 		}
 	}
 }

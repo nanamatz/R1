@@ -27,12 +27,6 @@ protected:
 	virtual void PlayerTick(float DeltaTime) override;
 public:
 	virtual void HandleGameplayEvent(FGameplayTag EventTag);
-	
-	//UFUNCTION(BlueprintCallable, Category = "Respawn")
-	//void RespawnInLevel(FName LevelName);
-
-	//UFUNCTION(BlueprintCallable, Category = "Respawn")
-	//void RespawnCurrentLevel();
 
 	void UpdateInputMode(bool bShouldUIOnly);
 
@@ -70,6 +64,15 @@ public:
 	AR1Character* GetHighlightActor();
 
 public:
+	// UI에서 아이템을 월드로 드래그 앤 드롭 했을 때 호출할 함수
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	void DropItemToWorld(class UR1ItemInstance* ItemToDrop);
+
+	// 스폰할 아이템 액터 클래스 (블루프린트에서 BP_ItemActor 꽂아주기)
+	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	TSubclassOf<class AR1ItemActor> ItemActorClass;
+
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	float ShortPressThreshold = 0.3;
 
@@ -85,10 +88,10 @@ private:
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class AR1Character> TargetActor;
+	TObjectPtr<AActor> TargetActor;
 
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class AR1Character> HighlightActor;
+	TObjectPtr<AActor> HighlightActor;
 
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AR1Player> R1Player;
