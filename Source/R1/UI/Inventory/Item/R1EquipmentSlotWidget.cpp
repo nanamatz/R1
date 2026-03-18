@@ -52,6 +52,8 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 {
 	Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 
+	Image_Background->SetColorAndOpacity(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+
 	UR1DragDropOperation* DragDropOp = Cast<UR1DragDropOperation>(InOperation);
 	if (!DragDropOp || !DragDropOp->ItemInstance) return false;
 
@@ -65,15 +67,7 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 	UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (InventorySubsystem)
 	{
-		UR1ItemInstance* OldEquippedItem = EquippedItem;
-		InventorySubsystem->RemoveItemFromGrid(DragDropOp->ItemInstance, DragDropOp->FromItemSlotPos);
-
-		if (OldEquippedItem != nullptr)
-		{
-			InventorySubsystem->AddItemToGrid(OldEquippedItem, DragDropOp->FromItemSlotPos);
-		}
-
-		// 💡 장착 실행! (내가 올려놓은 이 UI의 슬롯 타입으로 강제 지정)
+		// 💡 서브시스템의 EquipItem이 그리드 제거와 스왑을 모두 책임집니다!
 		InventorySubsystem->EquipItem(DragDropOp->ItemInstance, EquipmentSlotType);
 
 		return true;
@@ -99,24 +93,10 @@ FReply UR1EquipmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeomet
 		UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 		if (Inventory)
 		{
-			FIntPoint EmptyPos;
+			// 💡 서브시스템의 UnequipItem이 자동으로 빈 자리를 찾아 그리드에 넣어줍니다.
+			Inventory->UnequipItem(EquipmentSlotType);
 
-			// 인벤토리에 이 장비가 들어갈 빈 공간이 있는지 확인
-			if (Inventory->FindEmptySlot(EquippedItem->GetItemSize(), EmptyPos))
-			{
-				UR1ItemInstance* ItemToMove = EquippedItem;
-				// 장비 해제 후 그리드에 넣기
-				Inventory->UnequipItem(EquipmentSlotType);
-				Inventory->AddItemToGrid(ItemToMove, EmptyPos);
-
-				// UI 새로고침!
-				Inventory->OnInventoryUpdated.Broadcast();
-				return FReply::Handled();
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("인벤토리에 장비를 벗어둘 공간이 부족합니다!"));
-			}
+			return FReply::Handled();
 		}
 	}
 	return Reply;
@@ -172,6 +152,36 @@ void UR1EquipmentSlotWidget::NativeConstruct()
 
 	// 2. UI가 처음 생성될 때, 이미 장착된 템이 있는지 확인하고 그리기
 	RefreshSlotUI();
+}
+
+bool UR1EquipmentSlotWidget::NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+	Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
+
+	UR1DragDropOperation* DragDropOp = Cast<UR1DragDropOperation>(InOperation);
+	if (!DragDropOp || !DragDropOp->ItemInstance) return false;
+
+	// 💡 내가 속한 부위와 이 아이템의 부위가 일치하는가?
+	if (DragDropOp->ItemInstance->GetEquipSlot().Contains(EquipmentSlotType))
+	{
+		// 초록색 (알파값 0.5로 반투명하게)
+		Image_Background->SetColorAndOpacity(FLinearColor(0.0f, 1.0f, 0.0f, 0.5f));
+	}
+	else
+	{
+		// 빨간색 
+		Image_Background->SetColorAndOpacity(FLinearColor(1.0f, 0.0f, 0.0f, 0.5f));
+	}
+
+	return true;
+}
+
+void UR1EquipmentSlotWidget::NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
+
+	// 🌟 마우스가 벗어나면 다시 원래 색(흰색)으로 복구
+	Image_Background->SetColorAndOpacity(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
 }
 
 void UR1EquipmentSlotWidget::RefreshSlotUI()

@@ -1,6 +1,3 @@
-
-
-
 #include "Player/R1PlayerController.h"
 #include "Character/R1Player.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
@@ -16,6 +13,10 @@
 
 #include "System/R1AssetManager.h"
 #include "System/R1GameInstance.h"
+#include "System/R1EquipmentManagerComponent.h"
+
+#include "Item/R1InventorySubsystem.h"
+#include "Item/R1ItemInstance.h"
 
 #include "Data/R1InputData.h"
 #include "R1GameplayTags.h"
@@ -23,7 +24,6 @@
 #include "Object/R1ItemActor.h"
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
-#include "System/R1EquipmentManagerComponent.h"
 
 AR1PlayerController::AR1PlayerController()
 {
@@ -245,8 +245,46 @@ void AR1PlayerController::TickCursorTrace()
 
 	SwitchCursorType(OutCursorHit);
 
-	AR1Character* LocalHighlightActor = Cast<AR1Character>(OutCursorHit.GetActor());
-	if (LocalHighlightActor == nullptr)
+	AActor* LocalHighlightActor = OutCursorHit.GetActor();
+
+	// 🌟 1. 이 액터가 우리가 상호작용할 수 있는 대상인가? (인터페이스 상속 여부로 확인!)
+		// (질문자님 말씀대로 HitActor->ActorHasTag(FName("Enemy")) || HitActor->ActorHasTag(FName("Item")) 로 하셔도 완벽합니다!)
+	IR1HighlightInterface* HighlightableActor = Cast<IR1HighlightInterface>(LocalHighlightActor);
+
+	if (HighlightableActor)
+	{
+		// 마우스 아래에 몬스터나 아이템이 있다!
+		if (HighlightActor != LocalHighlightActor)
+		{
+			// 예전 타겟은 불 끄기
+			if (IR1HighlightInterface* OldHighlight = Cast<IR1HighlightInterface>(HighlightActor))
+			{
+				OldHighlight->UnHighlight();
+			}
+
+			// 새 타겟 불 켜기
+			HighlightableActor->Highlight();
+
+			// 🌟 타겟 갱신 (진짜 타겟만 들어옵니다)
+			HighlightActor = LocalHighlightActor;
+		}
+	}
+	else
+	{
+		// 🌟 2. 마우스 아래에 맨땅(Floor)이나 벽이 있다!
+		if (HighlightActor)
+		{
+			// 불 끄고
+			if (IR1HighlightInterface* OldHighlight = Cast<IR1HighlightInterface>(HighlightActor))
+			{
+				OldHighlight->UnHighlight();
+			}
+			// 🌟 타겟을 완전히 비워버립니다! (이제 땅을 클릭해도 TargetActor에 안 들어갑니다)
+			HighlightActor = nullptr;
+		}
+	}
+
+	/*if (LocalHighlightActor == nullptr)
 	{
 		if (HighlightActor)
 		{
@@ -268,7 +306,7 @@ void AR1PlayerController::TickCursorTrace()
 			LocalHighlightActor->Highlight();
 		}
 	}
-	HighlightActor = LocalHighlightActor;
+	HighlightActor = LocalHighlightActor;*/
 }
 
 void AR1PlayerController::ChaseTargetAndAttack()
@@ -288,27 +326,26 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		return;
 	}
 
-	if (TargetActor)
+	TargetAttackActor = Cast<AR1Character>(TargetActor);
+	
+	if (TargetAttackActor)  // ← null 체크 추가
 	{
-		FVector Direction = TargetActor->GetActorLocation() - R1Player->GetActorLocation();
+		FVector Direction = TargetAttackActor->GetActorLocation() - R1Player->GetActorLocation();
 
-		TargetAttackActor = TargetActor;
-
-		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetAttackActor->GetActorLocation());
+		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(
+			R1Player->GetActorLocation(), 
+			TargetAttackActor->GetActorLocation()
+		);
 		R1Player->SetActorRotation(Rotation);
 
-		if (Direction.Length() < R1Player->AttackRange && TargetAttackActor)
+		if (Direction.Length() < R1Player->AttackRange)
 		{
 			StopMovement();
-
 			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
-						
-			//TargetActor = HighlightActor;
 		}
 		else
 		{
-			//too far you should move
-			CacheDestination = TargetActor->GetActorLocation();
+			CacheDestination = TargetAttackActor->GetActorLocation();
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
 	}
@@ -421,6 +458,48 @@ AR1Character* AR1PlayerController::GetHighlightActor()
 	return nullptr;
 }
 
+void AR1PlayerController::DropItemToWorld(UR1ItemInstance* ItemToDrop, ER1EquipmentSlot FromEquipSlot)
+{
+	if (!ItemToDrop || !R1Player || !ItemActorClass) return;
+
+	UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+	if (!InvenSubsys) return;
+
+	FVector SpawnLoc = R1Player->GetActorLocation() + FVector(0.f,0.f,50.f);
+
+	// 2. 월드에 아이템 액터 스폰!
+	FActorSpawnParameters SpawnParams;
+	AR1ItemActor* DroppedItem = GetWorld()->SpawnActor<AR1ItemActor>(ItemActorClass, SpawnLoc, FRotator::ZeroRotator, SpawnParams);
+
+	if (DroppedItem)
+	{
+		// 3. 인스턴스가 들고 있던 정보 그대로 전달
+		DroppedItem->InitItem(ItemToDrop->GetItemData(), ItemToDrop->ItemRarity);
+
+		if (FromEquipSlot != ER1EquipmentSlot::None)
+		{
+			// A. 장비창에서 밖으로 바로 던진 경우!
+			InvenSubsys->EquippedItems.Remove(FromEquipSlot); // 서브시스템 데이터 삭제
+
+			// GAS(스킬, 스탯) 버프 회수
+			if (UR1EquipmentManagerComponent* EquipComp = R1Player->FindComponentByClass<UR1EquipmentManagerComponent>())
+			{
+				EquipComp->UnEquipItem(FromEquipSlot);
+			}
+		}
+		else
+		{
+			// B. 인벤토리에서 밖으로 던진 경우!
+			InvenSubsys->Items.Remove(ItemToDrop);
+			InvenSubsys->RemoveItemFromGrid(ItemToDrop, InvenSubsys->GetItemPosition(ItemToDrop));
+		}
+
+		InvenSubsys->OnInventoryUpdated.Broadcast();
+
+		UE_LOG(LogTemp, Warning, TEXT("아이템을 월드에 버렸습니다!"));
+	}
+}
+
 void AR1PlayerController::OnInventoryToggle()
 {
 	AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
@@ -434,7 +513,7 @@ void AR1PlayerController::OnQSkill()
 {
 	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)
 	{
-		R1Player->CombatTarget = HighlightActor;
+		R1Player->CombatTarget = Cast<AR1Character>(HighlightActor);
 		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::Q);
 	}
 }

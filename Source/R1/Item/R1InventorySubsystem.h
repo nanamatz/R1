@@ -45,12 +45,19 @@ public:
 	void RemoveItemFromGrid(UR1ItemInstance* Item, const FIntPoint& Pos);
 	void MoveItemInGrid( UR1ItemInstance* Item, FIntPoint OldPos, FIntPoint NewPos);
 
+protected:
+	// 🌟 중복 제거용 도우미 함수 1: 장비 매니저 컴포넌트 가져오기
+	class UR1EquipmentManagerComponent* GetEquipmentManager() const;
+
+	// 🌟 중복 제거용 도우미 함수 2: 아이템 인스턴스 생성하기
+	class UR1ItemInstance* CreateItemInstance(class UR1ItemAssetData* InItemData, EItemRarity Rarity);
+
 public:
 	// 아이템을 인벤토리에서 장비창으로 이동
 	bool EquipItem(UR1ItemInstance* ItemToEquip, ER1EquipmentSlot SpecificSlot = ER1EquipmentSlot::None);
 
 	// 장비를 해제하여 다시 인벤토리로 이동
-	bool UnequipItem(ER1EquipmentSlot TargetSlot);
+	bool UnequipItem(ER1EquipmentSlot TargetSlot, FIntPoint PreferredPos = FIntPoint(-1, -1));
 
 	UPROPERTY(BlueprintAssignable)
 	FOnInventoryUpdated OnInventoryUpdated;

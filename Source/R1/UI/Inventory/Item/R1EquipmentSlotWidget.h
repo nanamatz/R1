@@ -31,7 +31,8 @@ protected:
 
 protected:
 	virtual void NativeConstruct() override;
-
+	virtual bool NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+	virtual void NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 public:
 	// 💡 데이터가 변할 때마다 이 슬롯을 새로 그릴 함수
 	UFUNCTION()

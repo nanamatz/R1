@@ -123,31 +123,8 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 					TargetSlot = CompatibleSlots[0];
 				}
 
-				// 기존에 끼고 있던 아이템 백업
-				UR1ItemInstance* OldEquippedItem = Inventory->GetEquippedItem(TargetSlot);
-
-				// 내 자리 비우기
-				Inventory->RemoveItemFromGrid(ItemInstance, ItemSlotPos);
-
-				// 결정된 슬롯에 장착!
+				// 💡 서브시스템의 EquipItem이 그리드 제거와 스왑을 모두 책임지도록 변경!
 				Inventory->EquipItem(ItemInstance, TargetSlot);
-
-				// 스왑된 기존 장비가 있다면 빈자리 찾아 넣기
-				if (OldEquippedItem)
-				{
-					if (Inventory->CanAddItemAt(OldEquippedItem->GetItemSize(), ItemSlotPos))
-					{
-						Inventory->AddItemToGrid(OldEquippedItem, ItemSlotPos);
-					}
-					else
-					{
-						FIntPoint EmptyPos;
-						if (Inventory->FindEmptySlot(OldEquippedItem->GetItemSize(), EmptyPos))
-						{
-							Inventory->AddItemToGrid(OldEquippedItem, EmptyPos);
-						}
-					}
-				}
 
 				Inventory->OnInventoryUpdated.Broadcast();
 				return FReply::Handled();

@@ -5,16 +5,26 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "R1Define.h"
+#include "Interface/R1HighlightInterface.h"
 #include "R1ItemActor.generated.h"
 
 UCLASS()
-class R1_API AR1ItemActor : public AActor
+class R1_API AR1ItemActor : public AActor, public IR1HighlightInterface
 {
 	GENERATED_BODY()
 public:
 	AR1ItemActor();
 protected:
 	virtual void BeginPlay() override;
+
+public:
+	virtual void Highlight() override;
+	virtual void UnHighlight() override;
+
+public:
+	// 🌟 머리 위에 아이템 이름을 띄워줄 UI 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<class UWidgetComponent> TooltipWidget;
 
 public:
 	// 던전 매니저가 이 아이템을 스폰한 직후 호출해 줄 초기화 함수
@@ -39,4 +49,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Item")
 	EItemRarity ItemRarity = EItemRarity::Common;
 
+protected:
+	bool bHighlighted = false;
 };

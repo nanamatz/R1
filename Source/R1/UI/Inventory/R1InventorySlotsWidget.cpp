@@ -64,26 +64,79 @@ bool UR1InventorySlotsWidget::NativeOnDragOver(const FGeometry& InGeometry, cons
 	Super::NativeOnDragOver(InGeometry, InDragDropEvent, InOperation);
 
 	UR1DragDropOperation* DragDrop = Cast<UR1DragDropOperation>(InOperation);
-	if (DragDrop == nullptr)
+	if (DragDrop == nullptr) return false;
+
+	FVector2D MouseWidgetPos = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+
+	// 1. 드래그 중 마우스가 밖으로 나가면 하이라이트를 지움
+	float GridMaxWidth = X_COUNT * Item::UnitInventorySlotSize.X;
+	float GridMaxHeight = Y_COUNT * Item::UnitInventorySlotSize.Y;
+	if (MouseWidgetPos.X < 0 || MouseWidgetPos.X >= GridMaxWidth ||
+		MouseWidgetPos.Y < 0 || MouseWidgetPos.Y >= GridMaxHeight)
 	{
+		FinishDrag(); // 밖으로 나가면 모든 색상 초기화!
 		return false;
 	}
 
-	FVector2D MouseWidgetPos = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
 	FVector2D ToWidgetPos = MouseWidgetPos - DragDrop->DeltaWidgetPos;
-	FIntPoint ToSlotPos = FIntPoint(ToWidgetPos.X / Item::UnitInventorySlotSize.X, ToWidgetPos.Y / Item::UnitInventorySlotSize.Y);
+	int32 TargetX = FMath::FloorToInt(ToWidgetPos.X / Item::UnitInventorySlotSize.X);
+	int32 TargetY = FMath::FloorToInt(ToWidgetPos.Y / Item::UnitInventorySlotSize.Y);
 
+	FIntPoint ItemSize = DragDrop->ItemInstance->GetItemSize();
+	TargetX = FMath::Clamp(TargetX, 0, X_COUNT - ItemSize.X);
+	TargetY = FMath::Clamp(TargetY, 0, Y_COUNT - ItemSize.Y);
 
-	if (PreDragOverSlotPos == ToSlotPos)
-	{
-		return true;
-	}
+	FIntPoint ToSlotPos = FIntPoint(TargetX, TargetY);
 
+	// 최적화: 마우스가 멈춰있거나 같은 칸 안에서만 움직일 땐 연산 생략
+	if (PreDragOverSlotPos == ToSlotPos) return true;
 	PreDragOverSlotPos = ToSlotPos;
 
-	// (선택 사항) 여기에 마우스가 올라간 위치가 빨간색/초록색으로 빛나는 로직을 추가할 수 있습니다.
+	// ----------------------------------------------------------------------
+	// 🌟 2. 하이라이트 칠하기 로직 시작
+	// ----------------------------------------------------------------------
 
-	return false;
+	// A. 일단 모든 슬롯의 상태를 노멀(투명)로 초기화합니다.
+	for (UR1InventroySlotWidget* CurrentSlot : SlotWidgets)
+	{
+		if (CurrentSlot) CurrentSlot->SetSlotState(ESlotHoverState::Normal);
+	}
+
+	// B. 배치 가능 여부(초록/빨강) 검사
+	UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+	if (Inventory && DragDrop->ItemInstance)
+	{
+		bool bCanAdd = false;
+		if (DragDrop->FromEquipmentSlot != ER1EquipmentSlot::None)
+		{
+			bCanAdd = Inventory->CanAddItemAt(ItemSize, ToSlotPos);
+		}
+		else
+		{
+			bCanAdd = Inventory->CanAddItemAt(ItemSize, ToSlotPos, DragDrop->ItemInstance);
+		}
+
+		ESlotHoverState State = bCanAdd ? ESlotHoverState::Valid : ESlotHoverState::Invalid;
+		// C. 아이템 크기만큼 반복문을 돌면서 해당 칸들을 색칠합니다.
+		for (int32 Y = 0; Y < ItemSize.Y; ++Y)
+		{
+			for (int32 X = 0; X < ItemSize.X; ++X)
+			{
+				int32 DrawX = ToSlotPos.X + X;
+				int32 DrawY = ToSlotPos.Y + Y;
+
+				if (DrawX >= 0 && DrawX < X_COUNT && DrawY >= 0 && DrawY < Y_COUNT)
+				{
+					int32 Index = DrawY * X_COUNT + DrawX;
+					if (SlotWidgets.IsValidIndex(Index) && SlotWidgets[Index])
+					{
+						SlotWidgets[Index]->SetSlotState(State);
+					}
+				}
+			}
+		}
+	}
+	return true;
 }
 
 void UR1InventorySlotsWidget::NativeOnDragLeave(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
@@ -104,15 +157,33 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 	}
 
 	FVector2D MouseWidgetPos = InGeometry.AbsoluteToLocal(InDragDropEvent.GetScreenSpacePosition());
+
+	// ----------------------------------------------------------------------
+	// 🌟 1. [핵심] 마우스 포인터 자체가 인벤토리 그리드 바깥으로 나갔는가? (월드 드랍 판정)
+	float GridMaxWidth = X_COUNT * Item::UnitInventorySlotSize.X;
+	float GridMaxHeight = Y_COUNT * Item::UnitInventorySlotSize.Y;
+
+	if (MouseWidgetPos.X < 0 || MouseWidgetPos.X >= GridMaxWidth ||
+		MouseWidgetPos.Y < 0 || MouseWidgetPos.Y >= GridMaxHeight)
+	{
+		// 마우스가 화면 밖(허공)에 있으므로 바탕화면 위젯으로 이벤트를 넘겨 바닥에 버리게 합니다.
+		return false;
+	}
+
+	// 🌟 2. 마우스가 인벤토리 '안'에 있다면, 아이템의 좌상단(Top-Left) 좌표 계산
 	FVector2D ToWidgetPos = MouseWidgetPos - DragDrop->DeltaWidgetPos;
-	//FIntPoint ToItemSlotPos = FIntPoint(ToWidgetPos.X / Item::UnitInventorySlotSize.X, ToWidgetPos.Y / Item::UnitInventorySlotSize.Y);
-	// 💡 Tip: 화면 밖으로 드래그했을 때 음수가 나오거나 배열을 벗어나는 것을 막기 위해 Clamp를 써주면 안전합니다.
-	int32 TargetX = FMath::Clamp(FMath::FloorToInt(ToWidgetPos.X / Item::UnitInventorySlotSize.X), 0, X_COUNT - 1);
-	int32 TargetY = FMath::Clamp(FMath::FloorToInt(ToWidgetPos.Y / Item::UnitInventorySlotSize.Y), 0, Y_COUNT - 1);
+	int32 TargetX = FMath::FloorToInt(ToWidgetPos.X / Item::UnitInventorySlotSize.X);
+	int32 TargetY = FMath::FloorToInt(ToWidgetPos.Y / Item::UnitInventorySlotSize.Y);
+
+	// 🌟 3. [보정] 아이템이 인벤토리 벽을 뚫고 나가지 않게 강제로 안으로 밀어넣기! (Clamp 부활)
+	// 예: 2x3 무기를 맨 오른쪽 끝에 놓으려 하면, X좌표를 8로 고정해서 안전하게 안착시킴
+	FIntPoint ItemSize = DragDrop->ItemInstance->GetItemSize();
+	TargetX = FMath::Clamp(TargetX, 0, X_COUNT - ItemSize.X);
+	TargetY = FMath::Clamp(TargetY, 0, Y_COUNT - ItemSize.Y);
+
 	FIntPoint ToItemSlotPos = FIntPoint(TargetX, TargetY);
 
-	// 제자리에 놨으면 아무 일도 안 일어남
-	if (DragDrop->FromItemSlotPos == ToItemSlotPos)
+	if (DragDrop->FromEquipmentSlot == ER1EquipmentSlot::None && DragDrop->FromItemSlotPos == ToItemSlotPos)
 	{
 		return false;
 	}
@@ -127,14 +198,9 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 			// 인벤토리 바닥에 놓을 자리가 있는지 검사
 			if (Inventory->CanAddItemAt(DragDrop->ItemInstance->GetItemSize(), ToItemSlotPos))
 			{
-				// 1. 서브시스템에서 장비 해제 (EquippedItems에서 빼고 Items 배열에 넣음)
-				Inventory->UnequipItem(DragDrop->FromEquipmentSlot);
+				// 💡 서브시스템의 UnequipItem에 정확한 목표 위치를 전달! (내부에서 Items 추가, 그리드 알박기, 브로드캐스트까지 완료)
+				Inventory->UnequipItem(DragDrop->FromEquipmentSlot, ToItemSlotPos);
 
-				// 2. 마우스가 올려진 정확한 위치(GridData)에 알박기!
-				Inventory->AddItemToGrid(DragDrop->ItemInstance, ToItemSlotPos);
-
-				// 3. 갱신 알림! (인벤토리와 장비창 UI 둘 다 알아서 새로고침 됨)
-				Inventory->OnInventoryUpdated.Broadcast();
 				return true;
 			}
 			else
@@ -165,6 +231,15 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 void UR1InventorySlotsWidget::FinishDrag()
 {
 	PreDragOverSlotPos = FIntPoint(-1, -1);
+
+	// 🌟 드롭하거나 밖으로 나갈 때 잔상이 남지 않도록 무조건 초기화
+	for (UR1InventroySlotWidget* CurrentSlot : SlotWidgets)
+	{
+		if (CurrentSlot)
+		{
+			CurrentSlot->SetSlotState(ESlotHoverState::Normal);
+		}
+	}
 }
 
 void UR1InventorySlotsWidget::OnInventoryEntryChanged(const FIntPoint& InItemSlotPos, TObjectPtr<UR1ItemInstance> Item)
