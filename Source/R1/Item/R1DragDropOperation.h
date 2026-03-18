@@ -25,8 +25,9 @@ public:
 	ER1EquipmentSlot FromEquipmentSlot = ER1EquipmentSlot::None;
 
 public:
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "DragDrop")
 	TObjectPtr<UR1ItemInstance> ItemInstance;
 
+	UPROPERTY(BlueprintReadOnly, Category = "DragDrop")
 	FVector2D DeltaWidgetPos = FVector2D::ZeroVector;
 };

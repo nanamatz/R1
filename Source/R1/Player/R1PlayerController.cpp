@@ -13,6 +13,8 @@
 
 #include "System/R1AssetManager.h"
 #include "System/R1GameInstance.h"
+#include "System/R1EquipmentManagerComponent.h"
+
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1ItemInstance.h"
 
@@ -22,7 +24,6 @@
 #include "Object/R1ItemActor.h"
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
-#include "System/R1EquipmentManagerComponent.h"
 
 AR1PlayerController::AR1PlayerController()
 {
@@ -457,7 +458,7 @@ AR1Character* AR1PlayerController::GetHighlightActor()
 	return nullptr;
 }
 
-void AR1PlayerController::DropItemToWorld(UR1ItemInstance* ItemToDrop)
+void AR1PlayerController::DropItemToWorld(UR1ItemInstance* ItemToDrop, ER1EquipmentSlot FromEquipSlot)
 {
 	if (!ItemToDrop || !R1Player || !ItemActorClass) return;
 
@@ -475,16 +476,22 @@ void AR1PlayerController::DropItemToWorld(UR1ItemInstance* ItemToDrop)
 		// 3. 인스턴스가 들고 있던 정보 그대로 전달
 		DroppedItem->InitItem(ItemToDrop->GetItemData(), ItemToDrop->ItemRarity);
 
-		// 4. 인벤토리나 장비창에서 실제 아이템 데이터 삭제
-		if (InvenSubsys->GetItemPosition(ItemToDrop) != FIntPoint(-1, -1))
+		if (FromEquipSlot != ER1EquipmentSlot::None)
 		{
-			// 인벤토리에서 버림
-			InvenSubsys->Items.Remove(ItemToDrop);
-			InvenSubsys->RemoveItemFromGrid(ItemToDrop, InvenSubsys->GetItemPosition(ItemToDrop));
+			// A. 장비창에서 밖으로 바로 던진 경우!
+			InvenSubsys->EquippedItems.Remove(FromEquipSlot); // 서브시스템 데이터 삭제
+
+			// GAS(스킬, 스탯) 버프 회수
+			if (UR1EquipmentManagerComponent* EquipComp = R1Player->FindComponentByClass<UR1EquipmentManagerComponent>())
+			{
+				EquipComp->UnEquipItem(FromEquipSlot);
+			}
 		}
 		else
 		{
-			// (장비창에서 직접 버렸을 경우를 대비한 로직 추가 필요시 여기에 작성)
+			// B. 인벤토리에서 밖으로 던진 경우!
+			InvenSubsys->Items.Remove(ItemToDrop);
+			InvenSubsys->RemoveItemFromGrid(ItemToDrop, InvenSubsys->GetItemPosition(ItemToDrop));
 		}
 
 		InvenSubsys->OnInventoryUpdated.Broadcast();

@@ -66,7 +66,7 @@ public:
 public:
 	// UI에서 아이템을 월드로 드래그 앤 드롭 했을 때 호출할 함수
 	UFUNCTION(BlueprintCallable, Category = "Item")
-	void DropItemToWorld(class UR1ItemInstance* ItemToDrop);
+	void DropItemToWorld(class UR1ItemInstance* ItemToDrop, ER1EquipmentSlot FromEquipSlot = ER1EquipmentSlot::None);
 
 	// 스폰할 아이템 액터 클래스 (블루프린트에서 BP_ItemActor 꽂아주기)
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
