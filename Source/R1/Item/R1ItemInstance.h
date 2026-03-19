@@ -33,6 +33,11 @@ public:
 	EItemRarity ItemRarity = EItemRarity::Common;
 
 public:
+	// 🌟 이 아이템이 현재 몇 개 겹쳐져 있는지 (기본값 1)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
+	int32 ItemCount = 1;
+
+public:
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UR1ItemAssetData* GetItemData() const { return ItemData; }
 

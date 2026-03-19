@@ -198,29 +198,7 @@ void AR1MapGenerator::GenerateMap()
 	// 3. 루프 종료 후, 가장 멀리 있는 방을 보스 방으로 교체
 	if (bMapGeneratedSuccessfully)
 	{
-		int32 BossNodeID = -1;
-		float MaxDistance = -1.0f;
-
-		for (int32 i = 1; i < GeneratedMap.Num(); ++i)
-		{
-			if (GeneratedMap[i].ConnectedNodeIDs.Num() == 1) // 막다른 길
-			{
-				float Dist = FVector::Dist(FVector::ZeroVector, FVector(GeneratedMap[i].GridPosition.X, GeneratedMap[i].GridPosition.Y, 0));
-				if (Dist > MaxDistance)
-				{
-					MaxDistance = Dist;
-					BossNodeID = i;
-				}
-			}
-		}
-
-		if (BossNodeID != -1 && BossRoomPool.Num() > 0)
-		{
-			// (주의: 완벽한 퍼즐을 위해선 보스 방도 문의 방향이 맞아야 합니다.
-			// 지금은 심플하게 덮어씌웁니다. 보스 방 PDA는 모든 방향의 문(N,S,E,W)을 들고 있게 세팅하는 것이 안전합니다.)
-			GeneratedMap[BossNodeID].RoomDefinition = BossRoomPool[FMath::RandRange(0, BossRoomPool.Num() - 1)];
-		}
-
+		AssignRoomTypes();
 		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 합리적인 퍼즐 맞추기로 %d개의 방 지도 생성이 완료되었습니다!"), GeneratedMap.Num());
 	}
 	else
@@ -272,21 +250,28 @@ void AR1MapGenerator::InitializeRoomPools()
 	LoadPoolByLabel(CurrentFloor.StartRoomLabel, StartRoomPool);
 	LoadPoolByLabel(CurrentFloor.CombatRoomLabel, CombatRoomPool);
 	LoadPoolByLabel(CurrentFloor.BossRoomLabel, BossRoomPool);
-	LoadPoolByLabel(CurrentFloor.EventRoomLabel, EventRoomPool);
 	LoadPoolByLabel(CurrentFloor.TreasureRoomLabel, TreasureRoomPool);
 	LoadPoolByLabel(CurrentFloor.ShopRoomLabel, ShopRoomPool);
+	LoadPoolByLabel(CurrentFloor.RefreshRoomLabel, RefreshRoomPool);
+
+
+	UE_LOG(LogTemp, Warning, TEXT("====================================="));
+	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 📦 %d층 방 데이터 로드 결과"), CurrentFloorIndex + 1);
+	UE_LOG(LogTemp, Warning, TEXT(" - 시작 방: %d개"), StartRoomPool.Num());
+	UE_LOG(LogTemp, Warning, TEXT(" - 전투 방: %d개"), CombatRoomPool.Num());
+	UE_LOG(LogTemp, Warning, TEXT(" - 보스 방: %d개"), BossRoomPool.Num());
+	UE_LOG(LogTemp, Warning, TEXT(" - 보물 방: %d개"), TreasureRoomPool.Num());
+	UE_LOG(LogTemp, Warning, TEXT(" - 상점 방: %d개"), ShopRoomPool.Num());
+	UE_LOG(LogTemp, Warning, TEXT(" - 회복 방: %d개"), RefreshRoomPool.Num());
+	UE_LOG(LogTemp, Warning, TEXT("====================================="));
 }
 
 void AR1MapGenerator::AssignRoomTypes()
 {
-	if (StartRoomPool.IsEmpty() || CombatRoomPool.IsEmpty() || BossRoomPool.IsEmpty() || EventRoomPool.IsEmpty())
+	if (BossRoomPool.IsEmpty())
 	{
 		return;
 	}
-
-	// 1. 시작 방 할당 (0번 방)
-	GeneratedMap[0].RoomDefinition = StartRoomPool[FMath::RandRange(0, StartRoomPool.Num() - 1)];
-	GeneratedMap[0].bIsCleared = true;
 
 	// 2. 보스 방 위치 찾기 (가장 먼 막다른 길)
 	int32 BossNodeID = -1;
@@ -316,37 +301,146 @@ void AR1MapGenerator::AssignRoomTypes()
 		DeadEndNodes.RemoveSingle(BossNodeID);
 	}
 
-	// 한 층에 등장할 이벤트 방의 개수 설정
-	int32 TargetEventRoomCount = FMath::RandRange(1, 2);
-	int32 SpawnedEventRooms = 0;
+	//// 한 층에 등장할 이벤트 방의 개수 설정
+	//int32 TargetEventRoomCount = FMath::RandRange(1, 2);
+	//int32 SpawnedEventRooms = 0;
+	//TArray<UR1RoomDefinitionData*> SpecialRoomsToSpawn;
+
+	//if (!TreasureRoomPool.IsEmpty())
+	//{
+	//	int32 RandIdx = FMath::RandRange(0, TreasureRoomPool.Num() - 1);
+	//	SpecialRoomsToSpawn.Add(TreasureRoomPool[RandIdx]);
+	//	TreasureRoomPool.RemoveAt(RandIdx); // 중복 방지를 위해 풀에서 제거
+	//}
+
+	//if (!ShopRoomPool.IsEmpty())
+	//{
+	//	int32 RandIdx = FMath::RandRange(0, ShopRoomPool.Num() - 1);
+	//	SpecialRoomsToSpawn.Add(ShopRoomPool[RandIdx]);
+	//	ShopRoomPool.RemoveAt(RandIdx); // 중복 방지를 위해 풀에서 제거
+	//}
+
+	//for (UR1RoomDefinitionData* SpecialRoomData : SpecialRoomsToSpawn)
+	//{
+	//	int32 TargetNodeID = -1;
+
+	//	// 1순위: 남은 '막다른 길'에 우선적으로 숨겨둡니다.
+	//	if (DeadEndNodes.Num() > 0)
+	//	{
+	//		int32 RandDeadEndIdx = FMath::RandRange(0, DeadEndNodes.Num() - 1);
+	//		TargetNodeID = DeadEndNodes[RandDeadEndIdx];
+	//		DeadEndNodes.RemoveAt(RandDeadEndIdx); // 쓴 자리는 제외
+	//	}
+	//	// 2순위: 맵 구조상 막다른 길이 더 이상 없다면, 중간에 남은 아무 빈 방에나 배치합니다.
+	//	else
+	//	{
+	//		TArray<int32> AvailableNormalNodes;
+	//		for (int32 i = 1; i < GeneratedMap.Num(); ++i)
+	//		{
+	//			if (GeneratedMap[i].RoomDefinition == nullptr) AvailableNormalNodes.Add(i);
+	//		}
+
+	//		if (AvailableNormalNodes.Num() > 0)
+	//		{
+	//			int32 RandNormalIdx = FMath::RandRange(0, AvailableNormalNodes.Num() - 1);
+	//			TargetNodeID = AvailableNormalNodes[RandNormalIdx];
+	//		}
+	//	}
+
+	//	// 최종적으로 방 위치가 결정되었다면 데이터 주입!
+	//	if (TargetNodeID != -1)
+	//	{
+	//		GeneratedMap[TargetNodeID].RoomDefinition = SpecialRoomData;
+
+	//		if (SpecialRoomData->RoomType == ER1RoomContentType::Treasure)
+	//		{
+	//			GeneratedMap[TargetNodeID].bIsCleared = true;
+	//		}
+	//	}
+	//}
+	TArray<ER1RoomContentType> AvailableSpecialTypes;
+
+	// 각 풀이 비어있지 않다면, "이 방 타입은 이번 층에 등장할 자격이 있음"을 배열에 등록
+	if (!TreasureRoomPool.IsEmpty()) AvailableSpecialTypes.Add(ER1RoomContentType::Treasure);
+	if (!ShopRoomPool.IsEmpty())     AvailableSpecialTypes.Add(ER1RoomContentType::Shop);
+	if (!RefreshRoomPool.IsEmpty())  AvailableSpecialTypes.Add(ER1RoomContentType::Refresh); 
+
 	TArray<UR1RoomDefinitionData*> SpecialRoomsToSpawn;
 
-	if (!TreasureRoomPool.IsEmpty())
+	if (AvailableSpecialTypes.Num() > 0)
 	{
-		int32 RandIdx = FMath::RandRange(0, TreasureRoomPool.Num() - 1);
-		SpecialRoomsToSpawn.Add(TreasureRoomPool[RandIdx]);
-		TreasureRoomPool.RemoveAt(RandIdx); // 중복 방지를 위해 풀에서 제거
+		// 2. 등장 자격을 얻은 방 타입들을 무작위로 섞습니다. (Shuffle)
+		for (int32 i = AvailableSpecialTypes.Num() - 1; i > 0; i--)
+		{
+			AvailableSpecialTypes.Swap(i, FMath::RandRange(0, i));
+		}
+
+		// 3. 이번 층에 등장할 특수 방의 개수를 정합니다 (1~3개)
+		int32 NumSpecialRoomsToSpawn = FMath::RandRange(1, 3);
+		NumSpecialRoomsToSpawn = FMath::Min(NumSpecialRoomsToSpawn, AvailableSpecialTypes.Num());
+
+
+		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 🎲 랜덤 특수 방 %d개 스폰 결정!"), NumSpecialRoomsToSpawn);
+
+
+		// 4. 섞인 순서대로 결정된 개수만큼 풀에서 방을 딱 하나씩만 빼옵니다.
+		for (int32 i = 0; i < NumSpecialRoomsToSpawn; ++i)
+		{
+			ER1RoomContentType SelectedType = AvailableSpecialTypes[i];
+
+			if (SelectedType == ER1RoomContentType::Treasure)
+			{
+				int32 RandIdx = FMath::RandRange(0, TreasureRoomPool.Num() - 1);
+				SpecialRoomsToSpawn.Add(TreasureRoomPool[RandIdx]);
+				TreasureRoomPool.RemoveAt(RandIdx);
+			}
+			else if (SelectedType == ER1RoomContentType::Shop)
+			{
+				int32 RandIdx = FMath::RandRange(0, ShopRoomPool.Num() - 1);
+				SpecialRoomsToSpawn.Add(ShopRoomPool[RandIdx]);
+				ShopRoomPool.RemoveAt(RandIdx);
+			}
+			else if (SelectedType == ER1RoomContentType::Refresh)
+			{
+				int32 RandIdx = FMath::RandRange(0, RefreshRoomPool.Num() - 1);
+				SpecialRoomsToSpawn.Add(RefreshRoomPool[RandIdx]);
+				RefreshRoomPool.RemoveAt(RandIdx);
+			}
+
+			if(SelectedType == ER1RoomContentType::Treasure)
+			{
+				UE_LOG(LogTemp, Warning, TEXT(" - 보물 방 당첨!"));
+			}
+			else if (SelectedType == ER1RoomContentType::Shop)
+			{
+				UE_LOG(LogTemp, Warning, TEXT(" - 상점 방 당첨!"));
+			}
+			else if (SelectedType == ER1RoomContentType::Refresh)
+			{
+				UE_LOG(LogTemp, Warning, TEXT(" - 회복 방 당첨!"));
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] ❌ 사용 가능한 특수 방 풀이 전부 0개입니다!"));
 	}
 
-	if (!ShopRoomPool.IsEmpty())
-	{
-		int32 RandIdx = FMath::RandRange(0, ShopRoomPool.Num() - 1);
-		SpecialRoomsToSpawn.Add(ShopRoomPool[RandIdx]);
-		ShopRoomPool.RemoveAt(RandIdx); // 중복 방지를 위해 풀에서 제거
-	}
-
+	// -------------------------------------------------------------------
+	// 🌟 5. 뽑아온 특수 방들을 맵 빈자리에 꽂아 넣습니다!
+	// -------------------------------------------------------------------
 	for (UR1RoomDefinitionData* SpecialRoomData : SpecialRoomsToSpawn)
 	{
 		int32 TargetNodeID = -1;
 
-		// 1순위: 남은 '막다른 길'에 우선적으로 숨겨둡니다.
+		// 1순위: 남은 '막다른 길(DeadEnd)'에 우선적으로 숨겨둡니다.
 		if (DeadEndNodes.Num() > 0)
 		{
 			int32 RandDeadEndIdx = FMath::RandRange(0, DeadEndNodes.Num() - 1);
 			TargetNodeID = DeadEndNodes[RandDeadEndIdx];
-			DeadEndNodes.RemoveAt(RandDeadEndIdx); // 쓴 자리는 제외
+			DeadEndNodes.RemoveAt(RandDeadEndIdx);
 		}
-		// 2순위: 맵 구조상 막다른 길이 더 이상 없다면, 중간에 남은 아무 빈 방에나 배치합니다.
+		// 2순위: 막다른 길이 부족하면, 일반 방 빈자리에 배치
 		else
 		{
 			TArray<int32> AvailableNormalNodes;
@@ -362,55 +456,20 @@ void AR1MapGenerator::AssignRoomTypes()
 			}
 		}
 
-		// 최종적으로 방 위치가 결정되었다면 데이터 주입!
+		// 6. 데이터 주입 및 강제 클리어 처리
 		if (TargetNodeID != -1)
 		{
 			GeneratedMap[TargetNodeID].RoomDefinition = SpecialRoomData;
+
+			// 방 타입이 전투가 없는 타입이라면 무조건 클리어 상태로 만듦
+			if (SpecialRoomData->RoomType == ER1RoomContentType::Treasure ||
+				SpecialRoomData->RoomType == ER1RoomContentType::Shop ||
+				SpecialRoomData->RoomType == ER1RoomContentType::Refresh)
+			{
+				GeneratedMap[TargetNodeID].bIsCleared = true;
+			}
 		}
 	}
-
-	//while (SpawnedEventRooms < TargetEventRoomCount && DeadEndNodes.Num() > 0 && !EventRoomPool.IsEmpty())
-	//{
-	//	// 랜덤한 막다른 길 하나 선택
-	//	int32 RandomIdx = FMath::RandRange(0, DeadEndNodes.Num() - 1);
-	//	int32 TargetNodeID = DeadEndNodes[RandomIdx];
-	//	DeadEndNodes.RemoveAt(RandomIdx); // 중복 방지
-
-	//	// 이벤트 풀에서 랜덤한 이벤트 방(상점/보물 등) 하나 꺼내서 할당
-	//	int32 EventRoomIdx = FMath::RandRange(0, EventRoomPool.Num() - 1);
-	//	GeneratedMap[TargetNodeID].RoomDefinition = EventRoomPool[EventRoomIdx];
-	//	EventRoomPool.RemoveAt(EventRoomIdx);
-
-	//	SpawnedEventRooms++;
-	//}
-
-	//// 4-2. 만약 맵 구조상 '막다른 길'이 부족하다면, 중간에 끼어있는 일반 방에라도 배치합니다.
-	//if (SpawnedEventRooms < TargetEventRoomCount)
-	//{
-	//	TArray<int32> AvailableNormalNodes;
-	//	for (int32 i = 1; i < GeneratedMap.Num(); ++i)
-	//	{
-	//		// 아직 어떤 방도 할당되지 않은(nullptr) 빈 방만 찾습니다.
-	//		if (GeneratedMap[i].RoomDefinition == nullptr)
-	//		{
-	//			AvailableNormalNodes.Add(i);
-	//		}
-	//	}
-
-	//	while (SpawnedEventRooms < TargetEventRoomCount && AvailableNormalNodes.Num() > 0 && !EventRoomPool.IsEmpty())
-	//	{
-	//		int32 RandomIdx = FMath::RandRange(0, AvailableNormalNodes.Num() - 1);
-	//		int32 TargetNodeID = AvailableNormalNodes[RandomIdx];
-	//		AvailableNormalNodes.RemoveAt(RandomIdx);
-
-	//		int32 EventRoomIdx = FMath::RandRange(0, EventRoomPool.Num() - 1);
-	//		GeneratedMap[TargetNodeID].RoomDefinition = EventRoomPool[EventRoomIdx];
-	//		EventRoomPool.RemoveAt(EventRoomIdx);
-
-	//		SpawnedEventRooms++;
-	//	}
-	//}
-
 	// 4. 나머지 일반(Combat) 방 할당 (중복 방지 로직 적용)
 	for (int32 i = 1; i < GeneratedMap.Num(); ++i)
 	{
@@ -477,6 +536,12 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 	if (NextNodeID != -1)
 	{
 		if (PendingNodeID != -1) return;
+
+		if (GeneratedMap[NextNodeID].RoomDefinition &&
+			GeneratedMap[NextNodeID].RoomDefinition->RoomType == ER1RoomContentType::Treasure)
+		{
+			GeneratedMap[NextNodeID].bIsTreasureUnlocked = true;
+		}
 
 		PendingNodeID = NextNodeID;
 		PendingDoorDirection = Direction;
@@ -689,6 +754,17 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 
 		int32 TargetNode = GetConnectedNodeInDirection(MatchedNodeID, Door->DoorDirection);
 		Door->SetupDoorConnection(TargetNode);
+
+		if (TargetNode != -1 && GeneratedMap[TargetNode].RoomDefinition)
+		{
+			if (GeneratedMap[TargetNode].RoomDefinition->RoomType == ER1RoomContentType::Treasure)
+			{
+				if (!GeneratedMap[TargetNode].bIsTreasureUnlocked)
+				{
+					Door->SetKeyLocked(true);
+				}
+			}
+		}
 
 		if (TargetNode != -1)
 		{
