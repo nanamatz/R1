@@ -99,4 +99,7 @@ public:
 		}
 		return nullptr;
 	}
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool ConsumeKeyItem();
 };

@@ -5,10 +5,10 @@
 UENUM(BlueprintType)
 enum class ER1ItemType : uint8
 {
-	None		UMETA(DisplayName = "없음"),
 	Equipment	UMETA(DisplayName = "장비"),
 	Consumable	UMETA(DisplayName = "소모품"),
-	Material	UMETA(DisplayName = "재료")
+	Material	UMETA(DisplayName = "재료"),
+	Key
 };
 
 UENUM(BlueprintType)

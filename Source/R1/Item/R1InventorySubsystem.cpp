@@ -277,3 +277,31 @@ bool UR1InventorySubsystem::FindEmptySlot(const FIntPoint& ItemSize, FIntPoint& 
 	UE_LOG(LogTemp, Error, TEXT("인벤토리 꽉 찼음"));
 	return false; 
 }
+
+bool UR1InventorySubsystem::ConsumeKeyItem()
+{
+	for (UR1ItemInstance* Item : Items)
+	{
+		if (Item && Item->GetItemData())
+		{
+			// (팁: "Key"나 "열쇠"라는 이름이 들어간 아이템을 열쇠로 취급합니다. 데이터에 맞게 수정 가능)
+			FString NameStr = Item->GetItemData()->ItemName.ToString();
+			if (Item->GetItemData()->ItemType == ER1ItemType::Key) // 이름으로 찾는 게 아니라 다른 방법을 사용하고 싶음)
+			{
+				Item->ItemCount--; // 개수 1개 차감
+
+				if (Item->ItemCount <= 0)
+				{
+					// 개수가 0이 되면 인벤토리에서 완전히 삭제
+					FIntPoint ItemPos = GetItemPosition(Item);
+					RemoveItemFromGrid(Item, ItemPos);
+					Items.Remove(Item);
+				}
+
+				OnInventoryUpdated.Broadcast(); // UI 갱신
+				return true; // 소모 성공
+			}
+		}
+	}
+	return false; // 인벤토리에 열쇠가 없음
+}

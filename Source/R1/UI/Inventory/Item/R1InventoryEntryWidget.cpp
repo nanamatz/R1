@@ -53,8 +53,10 @@ void UR1InventoryEntryWidget::Init(UR1InventorySlotsWidget* InSlotsWidget, UR1It
 void UR1InventoryEntryWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-
-	Text_Count->SetText(FText::GetEmpty());	//별도의 함수로 빼는 게 좋음
+	if (Text_Count)
+	{
+		RefreshItemCount(ItemCount);
+	}
 
 	if (Image_Hover)
 	{
@@ -177,6 +179,9 @@ void UR1InventoryEntryWidget::RefreshWidgetOpacity(bool bClearVisible)
 void UR1InventoryEntryWidget::RefreshItemCount(int32 NewItemCount)
 {
 	ItemCount = NewItemCount;
-	Text_Count->SetText((ItemCount >= 2) ? FText::AsNumber(ItemCount) : FText::GetEmpty());
+	if (Text_Count)
+	{
+		Text_Count->SetText((ItemCount >= 2) ? FText::AsNumber(ItemCount) : FText::GetEmpty());
+	}
 }
 

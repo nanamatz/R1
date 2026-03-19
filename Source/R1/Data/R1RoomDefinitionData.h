@@ -9,11 +9,14 @@
 UENUM(BlueprintType)
 enum class ER1RoomContentType : uint8
 {
+	None,
 	Start,
 	Combat,
 	Event,
 	Boss,
-	Treasure
+	Treasure,
+	Shop,
+	Refresh
 };
 
 UCLASS(BlueprintType)

@@ -5,6 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Character/R1Player.h"
+#include "Item/R1InventorySubsystem.h"
 
 // Sets default values
 AR1Door::AR1Door()
@@ -61,11 +62,33 @@ void AR1Door::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 {
 	if (bLocked || TargetNodeID == -1) return;
 
-	// 부딪힌 액터가 플레이어 캐릭터인지 확인
 	AR1Player* Player = Cast<AR1Player>(OtherActor);
 	if (Player)
 	{
-		// 델리게이트를 통해 외부(제너레이터 등)에 알림
+		// 🌟 [추가된 로직] 열쇠가 필요한 보물방 문일 때
+		if (bRequiresKey)
+		{
+			UR1InventorySubsystem* Inven = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+
+			// 인벤토리를 뒤져서 열쇠 1개를 성공적으로 깎았다면?
+			if (Inven && Inven->ConsumeKeyItem())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("열쇠를 소모하여 보물방 문을 열었습니다!"));
+				bRequiresKey = false;
+				bLocked = false;
+				OnDoorEntered.Broadcast(DoorDirection); // 문 열림!
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("열쇠가 부족합니다!"));
+			}
+			return; // 열쇠 검사를 했으면 여기서 함수 종료
+		}
+
+		// 전투 중이라 잠긴 일반 문일 때
+		if (bLocked) return;
+
+		// 정상적으로 들어갈 수 있는 문일 때
 		OnDoorEntered.Broadcast(DoorDirection);
 	}
 }
@@ -84,5 +107,14 @@ void AR1Door::SetLocked(bool bIsLocked)
 		// 문을 여는 로직 (예: 충돌 비활성화, 머티리얼 변경 등)
 		//DoorMesh->SetCollisionProfileName(TEXT("NoCollision"));
 		// TODO: 철창이 올라가거나 '초록색 빛'으로 변경
+	}
+}
+
+void AR1Door::SetKeyLocked(bool bNeedsKey)
+{
+	bRequiresKey = bNeedsKey;
+	if (bRequiresKey)
+	{
+		bLocked = true; // 열쇠가 필요하면 기본적으로 잠금 상태!
 	}
 }

@@ -24,13 +24,13 @@ struct FFloorData
 	FName BossRoomLabel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
-	FName EventRoomLabel;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
 	FName TreasureRoomLabel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
 	FName ShopRoomLabel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Settings")
+	FName RefreshRoomLabel;
 };
 
 UENUM(BlueprintType)
@@ -72,6 +72,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bIsCleared = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bIsTreasureUnlocked = false;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Minimap")
 	ER1MinimapRoomState MinimapState = ER1MinimapRoomState::Hidden;
@@ -173,7 +176,9 @@ private:
 	UPROPERTY()
 	TArray<UR1RoomDefinitionData*> ShopRoomPool;
 
-	// [추가] 맵 생성 직전에 풀을 자동으로 채우는 함수
+	UPROPERTY()
+	TArray<UR1RoomDefinitionData*> RefreshRoomPool;
+
 	void InitializeRoomPools();
 
 private:
