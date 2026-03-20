@@ -474,7 +474,7 @@ void AR1PlayerController::DropItemToWorld(UR1ItemInstance* ItemToDrop, ER1Equipm
 	if (DroppedItem)
 	{
 		// 3. 인스턴스가 들고 있던 정보 그대로 전달
-		DroppedItem->InitItem(ItemToDrop->GetItemData(), ItemToDrop->ItemRarity);
+		DroppedItem->InitItem(ItemToDrop->GetItemData(), ItemToDrop->ItemRarity,ItemToDrop->ItemCount);
 
 		if (FromEquipSlot != ER1EquipmentSlot::None)
 		{

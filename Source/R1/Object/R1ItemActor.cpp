@@ -2,6 +2,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Components/TextBlock.h"
 
 #include "Character/R1Player.h"
 #include "Item/R1ItemInstance.h"
@@ -11,8 +12,7 @@
 
 AR1ItemActor::AR1ItemActor()
 {
-	PrimaryActorTick.bCanEverTick = true;
-
+	PrimaryActorTick.bCanEverTick = false;
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	RootComponent = SphereComp;
 	SphereComp->SetSphereRadius(50.0f);
@@ -72,11 +72,12 @@ void AR1ItemActor::UnHighlight()
 	bHighlighted = false;
 }
 
-void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity)
+void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, int32 InCount)
 {
 	// 🌟 데이터 테이블 검색 로직 전부 삭제! 던져준 에셋을 그대로 씁니다.
 	ItemData = InItemData;
 	ItemRarity = InRarity;
+	ItemCount = InCount;
 
 	if (ItemData && TooltipWidget)
 	{
@@ -90,7 +91,7 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity)
 		if (TooltipUI)
 		{
 			// 데이터 에셋에 있는 아이템 이름을 UI로 쏴줍니다!
-			TooltipUI->SetItemInfo(FText::FromName(ItemData->ItemName), ItemRarity);
+			TooltipUI->SetItemInfo(FText::FromName(ItemData->ItemName), ItemRarity, ItemCount, ItemData->ItemType);
 		}
 	}
 	else
@@ -104,7 +105,7 @@ void AR1ItemActor::OnLootAttempted(AR1Player* Looter)
 	if (!Looter || !ItemData) return;
 
 	UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
-	if (InvenSubsys && InvenSubsys->AddItem(ItemData, ItemRarity))
+	if (InvenSubsys && InvenSubsys->AddItem(ItemData, ItemRarity,ItemCount))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("아이템 획득: %s"), *ItemData->ItemName.ToString());
 		Destroy();

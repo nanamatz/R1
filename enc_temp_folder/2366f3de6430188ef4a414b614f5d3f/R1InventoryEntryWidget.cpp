@@ -180,7 +180,6 @@ void UR1InventoryEntryWidget::RefreshWidgetOpacity(bool bClearVisible)
 void UR1InventoryEntryWidget::RefreshItemCount(int32 NewItemCount)
 {
 	ItemCount = NewItemCount;
-
 	if (Text_Count)
 	{
 		Text_Count->SetText((ItemCount >= 2) ? FText::AsNumber(ItemCount) : FText::GetEmpty());

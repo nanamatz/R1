@@ -79,7 +79,7 @@ public:
 public:
 	// 🌟 외부에서(예: 루팅할 때) 쉽게 아이템을 넣을 수 있는 만능 함수 추가
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool AddItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common);
+	bool AddItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common, int32 Count = 1);
 
 	// 🌟 세이브/로드 시 숫자 ID 대신 데이터 에셋 포인터를 받도록 수정
 	void LoadItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos);

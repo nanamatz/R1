@@ -214,15 +214,15 @@ void UR1InventorySubsystem::ClearInventory()
 	OnInventoryUpdated.Broadcast();
 }
 
-bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Rarity,int32 InCount)
+bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Rarity,int32 Count)
 {
-	if (!InItemData || InCount <= 0) return false;
+	if (!InItemData) return false;
 
-	bool bIsStackable = (InItemData->ItemType == ER1ItemType::Consumable) || (InItemData->ItemType == ER1ItemType::Key);
-	int32 RemainingCount = InCount;
+	bool bIsStackable = true;
 
 	if (bIsStackable)
 	{
+		int32 RemainingCount = Count;
 		int32 MaxStack = 999; // 최대 겹치기 개수
 
 		for (UR1ItemInstance* ExistingItem : Items)
@@ -252,17 +252,14 @@ bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Ra
 
 		// 겹치기를 다 했는데도 개수가 남았다면 (예: 기존 슬롯이 999개라 꽉 참)
 		// 남은 개수만큼 새로운 칸에 넣어야 하므로 Count를 남은 개수로 갱신합니다.
-		InCount = RemainingCount;
+		Count = RemainingCount;
 	}
 
 	UR1ItemInstance* NewItem = CreateItemInstance(InItemData, Rarity);
-	if (!bIsStackable)
-	{
-		RemainingCount = 1; // 장비는 강제로 1개로 고정!
-	}
+
 	if (!NewItem) return false;
 
-	NewItem->ItemCount = RemainingCount;
+	NewItem->ItemCount = Count;
 
 	FIntPoint EmptyPos;
 	if (FindEmptySlot(NewItem->GetItemSize(), EmptyPos))

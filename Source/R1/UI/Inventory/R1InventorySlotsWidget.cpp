@@ -282,8 +282,7 @@ void UR1InventorySlotsWidget::OnInventoryEntryChanged(const FIntPoint& InItemSlo
 		CanvasPanelSlot->SetAutoSize(true);
 		CanvasPanelSlot->SetPosition(FVector2D(InItemSlotPos.X * 50, InItemSlotPos.Y * 50));
 
-		//TODO
-		EntryWidget->Init(this, Item, 1);
+		EntryWidget->Init(this, Item, Item->ItemCount);
 	}
 }
 
