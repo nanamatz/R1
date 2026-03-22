@@ -58,7 +58,10 @@ public:
 
 	// (이전 답변에서 정의한 열거형)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
-	ER1ItemType ItemType = ER1ItemType::Equipment;
+	ER1ItemType ItemType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
+	int32 BaseValue = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	TArray<ER1EquipmentSlot> EquipSlots;

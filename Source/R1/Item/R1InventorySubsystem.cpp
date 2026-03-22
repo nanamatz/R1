@@ -214,11 +214,55 @@ void UR1InventorySubsystem::ClearInventory()
 	OnInventoryUpdated.Broadcast();
 }
 
-bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Rarity)
+bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Rarity,int32 InCount)
 {
-	// 🌟 도우미 함수 적용
+	if (!InItemData || InCount <= 0) return false;
+
+	bool bIsStackable = (InItemData->ItemType == ER1ItemType::Consumable) || (InItemData->ItemType == ER1ItemType::Key);
+	int32 RemainingCount = InCount;
+
+	if (bIsStackable)
+	{
+		int32 MaxStack = 999; // 최대 겹치기 개수
+
+		for (UR1ItemInstance* ExistingItem : Items)
+		{
+			// 가방에서 나랑 완전히 똑같은 종류의 아이템을 찾았다면?
+			if (ExistingItem && ExistingItem->GetItemData() == InItemData && ExistingItem->ItemRarity == Rarity)
+			{
+				// 그리고 그 칸이 아직 999개가 안 돼서 여유 공간이 있다면?
+				if (ExistingItem->ItemCount < MaxStack)
+				{
+					// 남은 공간만큼 꽉꽉 채워 넣습니다.
+					int32 SpaceLeft = MaxStack - ExistingItem->ItemCount;
+					int32 AmountToAdd = FMath::Min(RemainingCount, SpaceLeft);
+
+					ExistingItem->ItemCount += AmountToAdd;
+					RemainingCount -= AmountToAdd;
+
+					// 전부 다 겹쳐서 남은 아이템이 0개가 되었다면?
+					if (RemainingCount <= 0)
+					{
+						OnInventoryUpdated.Broadcast();
+						return true; // 🌟 새 칸을 차지할 필요 없이 여기서 즉시 종료!
+					}
+				}
+			}
+		}
+
+		// 겹치기를 다 했는데도 개수가 남았다면 (예: 기존 슬롯이 999개라 꽉 참)
+		// 남은 개수만큼 새로운 칸에 넣어야 하므로 Count를 남은 개수로 갱신합니다.
+		InCount = RemainingCount;
+	}
+
 	UR1ItemInstance* NewItem = CreateItemInstance(InItemData, Rarity);
+	if (!bIsStackable)
+	{
+		RemainingCount = 1; // 장비는 강제로 1개로 고정!
+	}
 	if (!NewItem) return false;
+
+	NewItem->ItemCount = RemainingCount;
 
 	FIntPoint EmptyPos;
 	if (FindEmptySlot(NewItem->GetItemSize(), EmptyPos))
@@ -304,4 +348,68 @@ bool UR1InventorySubsystem::ConsumeKeyItem()
 		}
 	}
 	return false; // 인벤토리에 열쇠가 없음
+}
+
+void UR1InventorySubsystem::AddGold(int32 Amount)
+{
+	if (Amount <= 0) return;
+
+	Gold += Amount;
+	OnGoldChanged.Broadcast(Gold);
+}
+
+bool UR1InventorySubsystem::ConsumeGold(int32 Amount)
+{
+	if (Amount <= 0 || Gold < Amount) return false;
+
+	Gold -= Amount;
+	OnGoldChanged.Broadcast(Gold);
+	return true;
+}
+
+void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
+{
+	if (!Item || !Item->GetItemData()) return;
+
+	// 판매 가격: 30% 할인 (70% 가격), 최소 1골드 보장
+	int32 UnitValue = Item->GetItemData()->BaseValue;
+	int32 SaleValue = FMath::Max(1, FMath::FloorToInt(UnitValue * 0.7f)) * Quantity;
+	
+	AddGold(SaleValue);
+
+	// 아이템 개수 차감
+	Item->ItemCount -= Quantity;
+
+	if (Item->ItemCount <= 0)
+	{
+		// 인벤토리에서 완전히 제거
+		FIntPoint ItemPos = GetItemPosition(Item);
+		if (ItemPos != FIntPoint(-1, -1))
+		{
+			RemoveItemFromGrid(Item, ItemPos);
+		}
+		Items.Remove(Item);
+	}
+
+	OnInventoryUpdated.Broadcast();
+}
+
+bool UR1InventorySubsystem::BuyItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, int32 Count)
+{
+	if (!InItemData) return false;
+
+	int32 Price = InItemData->BaseValue * Count;
+	if (Gold < Price)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("골드 부족: 필요 %d, 현재 %d"), Price, Gold);
+		return false;
+	}
+
+	if (AddItem(InItemData, Rarity, Count))
+	{
+		ConsumeGold(Price);
+		return true;
+	}
+
+	return false;
 }

@@ -5,12 +5,19 @@
 #include "Components/TextBlock.h"
 #include "R1Define.h"
 
-void UR1ItemTooltip::SetItemInfo(const FText& InName, EItemRarity InRarity)
+void UR1ItemTooltip::SetItemInfo(const FText& InName, EItemRarity InRarity,int32 ItemCount, ER1ItemType InItemType)
 {
 	if (!Text_ItemName) return;
 
+	FString DisplayName = InName.ToString();
+
+	if ((InItemType == ER1ItemType::Consumable || InItemType == ER1ItemType::Key) && ItemCount >= 2)
+	{
+		DisplayName = FString::Printf(TEXT("%s (%d)"), *DisplayName, ItemCount);
+	}
+
 	// 1. 이름 텍스트 적용
-	Text_ItemName->SetText(InName);
+	Text_ItemName->SetText(FText::FromString(DisplayName));
 
 	// 2. 희귀도별 색상 판별 (기본값은 일반 등급의 흰색/밝은 회색)
 	FSlateColor TextColor = FSlateColor(FLinearColor(0.9f, 0.9f, 0.9f));

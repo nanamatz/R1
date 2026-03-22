@@ -28,7 +28,7 @@ public:
 
 public:
 	// 던전 매니저가 이 아이템을 스폰한 직후 호출해 줄 초기화 함수
-	void InitItem(class UR1ItemAssetData* InItemData, EItemRarity InRarity); // (추가)
+	void InitItem(class UR1ItemAssetData* InItemData, EItemRarity InRarity, int32 InCount = 1); // (추가)
 
 	// 플레이어가 다가와서 루팅(줍기)을 시도할 때 호출할 함수
 	void OnLootAttempted(class AR1Player* Looter);
@@ -37,6 +37,9 @@ public:
 	// 마우스 클릭 및 상호작용 범위를 감지할 콜리전
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<class USphereComponent> SphereComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
+	int32 ItemCount = 1;
 
 	// 아이템의 3D 외형
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

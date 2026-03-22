@@ -8,6 +8,7 @@
 #include "R1InventorySubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
 class UR1ItemInstance;
 
 /**
@@ -62,6 +63,30 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnInventoryUpdated OnInventoryUpdated;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnGoldChanged OnGoldChanged;
+
+public:
+	// 골드 관리 함수
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	int32 GetGold() const { return Gold; }
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	void AddGold(int32 Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	bool ConsumeGold(int32 Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void SellItem(UR1ItemInstance* Item, int32 Quantity = 1);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool BuyItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common, int32 Count = 1);
+
+protected:
+	UPROPERTY()
+	int32 Gold = 0;
+
 public:
 	// 전체 그리드를 1차원 배열로 관리 (크기: Columns * Rows)
 	// 비어있으면 nullptr, 누군가 차지하고 있으면 그 아이템의 포인터가 들어감
@@ -79,7 +104,7 @@ public:
 public:
 	// 🌟 외부에서(예: 루팅할 때) 쉽게 아이템을 넣을 수 있는 만능 함수 추가
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool AddItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common);
+	bool AddItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common, int32 Count = 1);
 
 	// 🌟 세이브/로드 시 숫자 ID 대신 데이터 에셋 포인터를 받도록 수정
 	void LoadItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos);

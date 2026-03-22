@@ -51,4 +51,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UTexture2D* GetItemIcon() const { return ItemData ? ItemData->ItemIcon : nullptr; }
+
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	int32 GetTotalValue() const { return ItemData ? ItemData->BaseValue * ItemCount : 0; }
 };
