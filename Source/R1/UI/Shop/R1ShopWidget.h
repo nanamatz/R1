@@ -6,9 +6,10 @@
 #include "UI/R1UserWidget.h"
 #include "R1ShopWidget.generated.h"
 
-class UR1ShopSlotWidget;
+class UR1ShopGridWidget;
 class UCommonTextBlock;
-class UR1ItemAssetData;
+class UR1ItemInstance;
+class UCommonButtonBase;
 
 /**
  * 
@@ -19,7 +20,7 @@ class R1_API UR1ShopWidget : public UR1UserWidget
 	GENERATED_BODY()
 
 public:
-	void SetShopItems(const TArray<UR1ItemAssetData*>& Items);
+	void SetShopItems(const TArray<UR1ItemInstance*>& Items);
 
 protected:
 	virtual void NativeConstruct() override;
@@ -32,13 +33,7 @@ protected:
 
 protected:
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UR1ShopSlotWidget> ShopSlot_0;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UR1ShopSlotWidget> ShopSlot_1;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UR1ShopSlotWidget> ShopSlot_2;
+	TObjectPtr<UR1ShopGridWidget> ShopGrid;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> Text_CurrentGold;
