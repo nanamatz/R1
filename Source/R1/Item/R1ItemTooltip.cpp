@@ -4,8 +4,9 @@
 #include "Item/R1ItemTooltip.h"
 #include "Components/TextBlock.h"
 #include "R1Define.h"
+#include "Item/R1InventorySubsystem.h"
 
-void UR1ItemTooltip::SetItemInfo(const FText& InName, EItemRarity InRarity,int32 ItemCount, ER1ItemType InItemType)
+void UR1ItemTooltip::SetItemInfo(const FText& InName, EItemRarity InRarity,int32 ItemCount, ER1ItemType InItemType, int32 BaseValue, bool bIsPlayerInventoryItem)
 {
 	if (!Text_ItemName) return;
 

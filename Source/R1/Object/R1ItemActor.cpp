@@ -91,7 +91,7 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 		if (TooltipUI)
 		{
 			// 데이터 에셋에 있는 아이템 이름을 UI로 쏴줍니다!
-			TooltipUI->SetItemInfo(FText::FromName(ItemData->ItemName), ItemRarity, ItemCount, ItemData->ItemType);
+			TooltipUI->SetItemInfo(FText::FromName(ItemData->ItemName), ItemRarity, ItemCount, ItemData->ItemType, ItemData->BaseValue, false);
 		}
 	}
 	else

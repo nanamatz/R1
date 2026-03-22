@@ -16,7 +16,7 @@ class R1_API UR1ItemTooltip : public UR1UserWidget
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Tooltip")
-	void SetItemInfo(const FText& InName, EItemRarity InRarity,int32 ItemCount, ER1ItemType InItemType);
+	void SetItemInfo(const FText& InName, EItemRarity InRarity,int32 ItemCount, ER1ItemType InItemType, int32 BaseValue = 0, bool bIsPlayerInventoryItem = true);
 
 protected:
 	UPROPERTY(meta = (BindWidget))

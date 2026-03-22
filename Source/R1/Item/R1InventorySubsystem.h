@@ -8,6 +8,7 @@
 #include "R1InventorySubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
 class UR1ItemInstance;
 
 /**
@@ -45,6 +46,11 @@ public:
 	void RemoveItemFromGrid(UR1ItemInstance* Item, const FIntPoint& Pos);
 	void MoveItemInGrid( UR1ItemInstance* Item, FIntPoint OldPos, FIntPoint NewPos);
 
+public:
+	// 인벤토리에서 특정 아이템 인스턴스를 완전히 제거하는 범용 함수
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool RemoveItem(UR1ItemInstance* ItemToRemove);
+
 protected:
 	// 🌟 중복 제거용 도우미 함수 1: 장비 매니저 컴포넌트 가져오기
 	class UR1EquipmentManagerComponent* GetEquipmentManager() const;
@@ -62,7 +68,34 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnInventoryUpdated OnInventoryUpdated;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnGoldChanged OnGoldChanged;
+
 public:
+	// 골드 관리 함수
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	int32 GetGold() const { return Gold; }
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	void AddGold(int32 Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	bool ConsumeGold(int32 Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void SellItem(UR1ItemInstance* Item, int32 Quantity = 1);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool BuyItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common, int32 Count = 1);
+
+public:
+	UPROPERTY()
+	int32 Gold = 0;
+
+public:
+	UPROPERTY(BlueprintReadWrite, Category = "Inventory|Shop")
+	bool bIsShopOpen = false;
+
 	// 전체 그리드를 1차원 배열로 관리 (크기: Columns * Rows)
 	// 비어있으면 nullptr, 누군가 차지하고 있으면 그 아이템의 포인터가 들어감
 	UPROPERTY()

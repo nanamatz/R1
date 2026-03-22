@@ -5,6 +5,7 @@
 #include "Item/R1ItemInstance.h"
 #include "System/R1EquipmentManagerComponent.h"
 #include "Data/R1ItemAssetData.h"
+#include "Object/R1ItemActor.h"
 
 void UR1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -82,6 +83,32 @@ void UR1InventorySubsystem::MoveItemInGrid(UR1ItemInstance* Item, FIntPoint OldP
 {
 	RemoveItemFromGrid(Item, OldPos);
 	AddItemToGrid(Item, NewPos);
+}
+
+bool UR1InventorySubsystem::RemoveItem(UR1ItemInstance* ItemToRemove)
+{
+	if (!ItemToRemove) return false;
+
+	// 1. 그리드에서 아이템의 위치를 찾습니다.
+	FIntPoint ItemPos = GetItemPosition(ItemToRemove);
+
+	// 2. 그리드 좌표가 유효하다면 그리드 점유를 해제합니다.
+	if (ItemPos != FIntPoint(-1, -1))
+	{
+		RemoveItemFromGrid(ItemToRemove, ItemPos);
+	}
+
+	// 3. 인벤토리 목록 배열에서 아이템을 최종 삭제합니다.
+	int32 RemovedCount = Items.Remove(ItemToRemove);
+
+	// 삭제가 성공적으로 이루어졌다면 UI 갱신 방송
+	if (RemovedCount > 0)
+	{
+		OnInventoryUpdated.Broadcast();
+		return true;
+	}
+
+	return false;
 }
 
 UR1EquipmentManagerComponent* UR1InventorySubsystem::GetEquipmentManager() const
@@ -228,7 +255,7 @@ bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Ra
 		for (UR1ItemInstance* ExistingItem : Items)
 		{
 			// 가방에서 나랑 완전히 똑같은 종류의 아이템을 찾았다면?
-			if (ExistingItem && ExistingItem->GetItemData() == InItemData)
+			if (ExistingItem && ExistingItem->GetItemData() == InItemData && ExistingItem->ItemRarity == Rarity)
 			{
 				// 그리고 그 칸이 아직 999개가 안 돼서 여유 공간이 있다면?
 				if (ExistingItem->ItemCount < MaxStack)
@@ -348,4 +375,99 @@ bool UR1InventorySubsystem::ConsumeKeyItem()
 		}
 	}
 	return false; // 인벤토리에 열쇠가 없음
+}
+
+void UR1InventorySubsystem::AddGold(int32 Amount)
+{
+	if (Amount <= 0) return;
+
+	Gold += Amount;
+	OnGoldChanged.Broadcast(Gold);
+}
+
+bool UR1InventorySubsystem::ConsumeGold(int32 Amount)
+{
+	if (Amount <= 0 || Gold < Amount) return false;
+
+	Gold -= Amount;
+	OnGoldChanged.Broadcast(Gold);
+	return true;
+}
+
+void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
+{
+	if (!Item || !Item->GetItemData()) return;
+
+	// 판매 가격: 30% 할인 (70% 가격), 최소 1골드 보장
+	int32 UnitValue = Item->GetItemData()->BaseValue;
+	int32 SaleValue = FMath::Max(1, FMath::FloorToInt(UnitValue * 0.7f)) * Quantity;
+	
+	AddGold(SaleValue);
+
+	// 아이템 개수 차감
+	Item->ItemCount -= Quantity;
+
+	if (Item->ItemCount <= 0)
+	{
+		// 인벤토리에서 완전히 제거
+		FIntPoint ItemPos = GetItemPosition(Item);
+		if (ItemPos != FIntPoint(-1, -1))
+		{
+			RemoveItemFromGrid(Item, ItemPos);
+		}
+		Items.Remove(Item);
+	}
+
+	OnInventoryUpdated.Broadcast();
+}
+
+bool UR1InventorySubsystem::BuyItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, int32 Count)
+{
+	if (!InItemData || Count <= 0) return false;
+
+	int32 Price = InItemData->BaseValue * Count;
+
+	if (Gold < Price)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("골드 부족: 필요 %d, 현재 %d"), Price, Gold);
+		return false;
+	}
+	ConsumeGold(Price);
+
+	if (AddItem(InItemData, Rarity, Count))
+	{
+		return true;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 찼습니다! 아이템을 발밑에 떨어뜨립니다."));
+
+	if (UWorld* World = GetWorld())
+	{
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			if (APawn* PlayerPawn = PC->GetPawn())
+			{
+				// 플레이어의 현재 위치를 가져옵니다.
+				FVector SpawnLocation = PlayerPawn->GetActorLocation();
+
+				// 발밑 주변에 겹치지 않게 무작위로 흩뿌려지도록 오프셋을 줍니다 (반경 100 범위)
+				SpawnLocation.X += FMath::RandRange(-100.0f, 100.0f);
+				SpawnLocation.Y += FMath::RandRange(-100.0f, 100.0f);
+				SpawnLocation.Z += 50.0f; // 바닥에 파묻히지 않게 Z축 살짝 띄움
+
+				FRotator SpawnRotation = FRotator::ZeroRotator;
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+				// AR1ItemActor 스폰
+				AR1ItemActor* DroppedItemActor = World->SpawnActor<AR1ItemActor>(AR1ItemActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+
+				if (DroppedItemActor)
+				{
+					// 스폰된 아이템 액터에 데이터를 주입하여 시각화 및 루팅 가능 상태로 만듭니다.
+					DroppedItemActor->InitItem(InItemData, Rarity, Count);
+				}
+			}
+		}
+	}
+	return true;
 }

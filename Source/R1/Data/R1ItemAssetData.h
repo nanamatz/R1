@@ -60,6 +60,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
 	ER1ItemType ItemType;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
+	int32 BaseValue = 0;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	TArray<ER1EquipmentSlot> EquipSlots;
 
