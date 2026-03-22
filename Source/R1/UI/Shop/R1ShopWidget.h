@@ -7,9 +7,9 @@
 #include "R1ShopWidget.generated.h"
 
 class UR1ShopGridWidget;
-class UCommonTextBlock;
+class UTextBlock;
 class UR1ItemInstance;
-class UCommonButtonBase;
+class UButton;
 
 /**
  * 
@@ -36,8 +36,8 @@ protected:
 	TObjectPtr<UR1ShopGridWidget> ShopGrid;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> Text_CurrentGold;
+	TObjectPtr<UTextBlock> Text_CurrentGold;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonButtonBase> Button_Close;
+	TObjectPtr<UButton> Button_Close;
 };

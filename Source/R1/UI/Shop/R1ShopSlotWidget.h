@@ -8,8 +8,8 @@
 
 class UR1ItemAssetData;
 class UImage;
-class UCommonTextBlock;
-class UCommonButtonBase;
+class UTextBlock;
+class UButton;
 
 /**
  * 
@@ -33,19 +33,19 @@ protected:
 	TObjectPtr<UImage> Icon_Item;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> Text_ItemName;
+	TObjectPtr<UTextBlock> Text_ItemName;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> Text_Rarity;
+	TObjectPtr<UTextBlock> Text_Rarity;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_RarityBG;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> Text_Price;
+	TObjectPtr<UTextBlock> Text_Price;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonButtonBase> Button_Buy;
+	TObjectPtr<UButton> Button_Buy;
 
 private:
 	UPROPERTY()

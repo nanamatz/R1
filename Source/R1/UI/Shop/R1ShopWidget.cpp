@@ -1,8 +1,8 @@
 #include "UI/Shop/R1ShopWidget.h"
 #include "UI/Shop/R1ShopGridWidget.h"
 #include "Item/R1InventorySubsystem.h"
-#include "CommonTextBlock.h"
-#include "CommonButtonBase.h"
+#include "Components/TextBlock.h"
+#include "Components/Button.h"
 
 void UR1ShopWidget::NativeConstruct()
 {
@@ -22,7 +22,7 @@ void UR1ShopWidget::NativeConstruct()
 
 	if (Button_Close)
 	{
-		Button_Close->OnClicked().AddUObject(this, &UR1ShopWidget::OnCloseButtonClicked);
+		Button_Close->OnClicked.AddDynamic(this, &UR1ShopWidget::OnCloseButtonClicked);
 	}
 }
 

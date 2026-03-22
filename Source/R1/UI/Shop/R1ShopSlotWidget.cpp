@@ -1,10 +1,9 @@
-
 #include "UI/Shop/R1ShopSlotWidget.h"
 #include "Item/R1InventorySubsystem.h"
 #include "Data/R1ItemAssetData.h"
 #include "Components/Image.h"
-#include "CommonTextBlock.h"
-#include "CommonButtonBase.h"
+#include "Components/TextBlock.h"
+#include "Components/Button.h"
 
 void UR1ShopSlotWidget::NativeConstruct()
 {
@@ -12,7 +11,7 @@ void UR1ShopSlotWidget::NativeConstruct()
 
 	if (Button_Buy)
 	{
-		Button_Buy->OnClicked().AddUObject(this, &UR1ShopSlotWidget::OnBuyButtonClicked);
+		Button_Buy->OnClicked.AddDynamic(this, &UR1ShopSlotWidget::OnBuyButtonClicked);
 	}
 }
 
