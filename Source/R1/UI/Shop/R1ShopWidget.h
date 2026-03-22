@@ -27,6 +27,9 @@ protected:
 	UFUNCTION()
 	void UpdateGoldDisplay(int32 NewGold);
 
+	UFUNCTION()
+	void OnCloseButtonClicked();
+
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UR1ShopSlotWidget> ShopSlot_0;
@@ -39,4 +42,7 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> Text_CurrentGold;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCommonButtonBase> Button_Close;
 };

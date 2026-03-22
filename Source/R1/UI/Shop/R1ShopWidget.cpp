@@ -4,6 +4,8 @@
 #include "Item/R1InventorySubsystem.h"
 #include "CommonTextBlock.h"
 
+#include "CommonButtonBase.h"
+
 void UR1ShopWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -18,6 +20,11 @@ void UR1ShopWidget::NativeConstruct()
 			// 골드 변경 시 콜백 등록
 			InventorySubsystem->OnGoldChanged.AddDynamic(this, &UR1ShopWidget::UpdateGoldDisplay);
 		}
+	}
+
+	if (Button_Close)
+	{
+		Button_Close->OnClicked().AddUObject(this, &UR1ShopWidget::OnCloseButtonClicked);
 	}
 }
 
@@ -45,4 +52,16 @@ void UR1ShopWidget::UpdateGoldDisplay(int32 NewGold)
 	{
 		Text_CurrentGold->SetText(FText::AsNumber(NewGold));
 	}
+}
+
+void UR1ShopWidget::OnCloseButtonClicked()
+{
+	if (APlayerController* PC = GetOwningPlayer())
+	{
+		FInputModeGameOnly InputMode;
+		PC->SetInputMode(InputMode);
+		PC->bShowMouseCursor = false;
+	}
+
+	RemoveFromParent();
 }
