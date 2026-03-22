@@ -88,6 +88,9 @@ protected:
 	int32 Gold = 0;
 
 public:
+	UPROPERTY(BlueprintReadWrite, Category = "Inventory|Shop")
+	bool bIsShopOpen = false;
+
 	// 전체 그리드를 1차원 배열로 관리 (크기: Columns * Rows)
 	// 비어있으면 nullptr, 누군가 차지하고 있으면 그 아이템의 포인터가 들어감
 	UPROPERTY()
