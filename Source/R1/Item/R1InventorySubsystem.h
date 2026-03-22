@@ -8,6 +8,7 @@
 #include "R1InventorySubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
 class UR1ItemInstance;
 
 /**
@@ -61,6 +62,30 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnInventoryUpdated OnInventoryUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnGoldChanged OnGoldChanged;
+
+public:
+	// 골드 관리 함수
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	int32 GetGold() const { return Gold; }
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	void AddGold(int32 Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	bool ConsumeGold(int32 Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void SellItem(UR1ItemInstance* Item, int32 Quantity = 1);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool BuyItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common, int32 Count = 1);
+
+protected:
+	UPROPERTY()
+	int32 Gold = 0;
 
 public:
 	// 전체 그리드를 1차원 배열로 관리 (크기: Columns * Rows)
