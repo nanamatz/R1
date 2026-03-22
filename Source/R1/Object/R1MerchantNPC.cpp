@@ -2,7 +2,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Data/R1ItemAssetData.h"
 #include "Data/R1ItemPoolData.h"
-#include "UI/R1HUD.h"
+#include "Item/R1ItemInstance.h"
+#include "UI/R1HUD.h" 
 #include "Kismet/GameplayStatics.h"
 
 AR1MerchantNPC::AR1MerchantNPC()
@@ -45,51 +46,26 @@ void AR1MerchantNPC::UnHighlight()
 	}
 }
 
-#include "UI/Shop/R1ShopWidget.h"
-#include "Blueprint/UserWidget.h"
-
-#include "Item/R1ItemInstance.h"
-#include "Item/R1InventorySubsystem.h"
-
 void AR1MerchantNPC::OpenShop()
 {
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PC) return;
 
-	if (!ShopWidgetClass)
+	// 🌟 내가 UI를 직접 만들지 않고, HUD를 찾아서 "나랑 거래할 창을 열어줘!" 라고 요청합니다.
+	if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ShopWidgetClass is not set on Merchant NPC"));
-		return;
+		HUD->OpenShopUI(this);
 	}
+}
 
-	if (!ShopWidget)
+bool AR1MerchantNPC::RemoveItemFromSale(UR1ItemInstance* ItemToRemove)
+{
+	if (ItemsForSale.Contains(ItemToRemove))
 	{
-		ShopWidget = CreateWidget<UR1ShopWidget>(PC, ShopWidgetClass);
+		ItemsForSale.Remove(ItemToRemove);
+		return true;
 	}
-
-	if (ShopWidget)
-	{
-		ShopWidget->SetShopItems(ItemsForSale);
-		if (!ShopWidget->IsInViewport())
-		{
-			if (UWorld* World = GetWorld())
-			{
-				if (UR1InventorySubsystem* InventorySubsystem = World->GetSubsystem<UR1InventorySubsystem>())
-				{
-					InventorySubsystem->bIsShopOpen = true;
-				}
-			}
-
-			ShopWidget->AddToViewport();
-			
-			// 인풋 모드 변경 및 마우스 커서 표시
-			FInputModeGameAndUI InputMode;
-			InputMode.SetWidgetToFocus(ShopWidget->TakeWidget());
-			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-			PC->SetInputMode(InputMode);
-			PC->bShowMouseCursor = true;
-		}
-	}
+	return false;
 }
 
 void AR1MerchantNPC::GenerateShopItems()

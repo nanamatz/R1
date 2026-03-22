@@ -4,6 +4,9 @@
 #include "Map/R1MapGenerator.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/R1LoadingSubSystem.h"
+#include "Item/R1InventorySubsystem.h"
+#include "Object/R1MerchantNPC.h"
+#include "UI/Shop/R1ShopWidget.h"
 
 void AR1HUD::BeginPlay()
 {
@@ -123,6 +126,70 @@ void AR1HUD::HandleLoadingScreenHidden()
         FloorGuideSceneWidget->ShowFloorGuide(PendingFloorLevel);
 
         bIsFloorGuidePending = false;
+    }
+}
+
+void AR1HUD::OpenShopUI(AR1MerchantNPC* MerchantNPC)
+{
+    if (!MerchantNPC || !ShopWidgetClass) return;
+
+    APlayerController* PC = GetOwningPlayerController();
+    if (!PC) return;
+
+    // 1. 위젯이 없다면 생성
+    if (!ShopSceneWidget)
+    {
+        ShopSceneWidget = CreateWidget<UUserWidget>(PC, ShopWidgetClass);
+    }
+
+    if(!ShopWidget)
+    {
+        ShopWidget = Cast<UR1ShopWidget>(ShopSceneWidget);
+	}
+
+    // 2. 위젯 띄우기 및 데이터 전달
+    if (ShopWidget && !ShopWidget->IsInViewport())
+    {
+        // 우리가 열심히 만든 슬롯 그리드 갱신 함수를 여기서 호출!
+        // (ShopWidget 내부에서 자신이 가지고 있는 ShopSlotsWidget의 InitShopGrid를 호출하도록 연결해야 합니다)
+        ShopWidget->InitShop(MerchantNPC);
+
+        ShopWidget->AddToViewport();
+
+        // 서브시스템 상태 업데이트
+        if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
+        {
+            InvenSubsys->bIsShopOpen = true;
+        }
+
+        // 인풋 모드 변경 (UI 중심)
+        FInputModeGameAndUI InputMode;
+        InputMode.SetWidgetToFocus(ShopWidget->TakeWidget());
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+        PC->SetInputMode(InputMode);
+        PC->bShowMouseCursor = true;
+    }
+}
+
+void AR1HUD::CloseShopUI()
+{
+    if (ShopWidget && ShopWidget->IsInViewport())
+    {
+        ShopWidget->RemoveFromParent();
+
+        if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
+        {
+            InvenSubsys->bIsShopOpen = false;
+        }
+
+        APlayerController* PC = GetOwningPlayerController();
+        if (PC)
+        {
+            // 게임 전용 모드로 복구
+            FInputModeGameOnly InputMode;
+            PC->SetInputMode(InputMode);
+            PC->bShowMouseCursor = false;
+        }
     }
 }
 

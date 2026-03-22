@@ -5,6 +5,7 @@
 #include "Item/R1ItemInstance.h"
 #include "System/R1EquipmentManagerComponent.h"
 #include "Data/R1ItemAssetData.h"
+#include "Object/R1ItemActor.h"
 
 void UR1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -82,6 +83,32 @@ void UR1InventorySubsystem::MoveItemInGrid(UR1ItemInstance* Item, FIntPoint OldP
 {
 	RemoveItemFromGrid(Item, OldPos);
 	AddItemToGrid(Item, NewPos);
+}
+
+bool UR1InventorySubsystem::RemoveItem(UR1ItemInstance* ItemToRemove)
+{
+	if (!ItemToRemove) return false;
+
+	// 1. 그리드에서 아이템의 위치를 찾습니다.
+	FIntPoint ItemPos = GetItemPosition(ItemToRemove);
+
+	// 2. 그리드 좌표가 유효하다면 그리드 점유를 해제합니다.
+	if (ItemPos != FIntPoint(-1, -1))
+	{
+		RemoveItemFromGrid(ItemToRemove, ItemPos);
+	}
+
+	// 3. 인벤토리 목록 배열에서 아이템을 최종 삭제합니다.
+	int32 RemovedCount = Items.Remove(ItemToRemove);
+
+	// 삭제가 성공적으로 이루어졌다면 UI 갱신 방송
+	if (RemovedCount > 0)
+	{
+		OnInventoryUpdated.Broadcast();
+		return true;
+	}
+
+	return false;
 }
 
 UR1EquipmentManagerComponent* UR1InventorySubsystem::GetEquipmentManager() const
@@ -396,20 +423,51 @@ void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
 
 bool UR1InventorySubsystem::BuyItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, int32 Count)
 {
-	if (!InItemData) return false;
+	if (!InItemData || Count <= 0) return false;
 
 	int32 Price = InItemData->BaseValue * Count;
+
 	if (Gold < Price)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("골드 부족: 필요 %d, 현재 %d"), Price, Gold);
 		return false;
 	}
+	ConsumeGold(Price);
 
 	if (AddItem(InItemData, Rarity, Count))
 	{
-		ConsumeGold(Price);
 		return true;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 찼습니다! 아이템을 발밑에 떨어뜨립니다."));
 
-	return false;
+	if (UWorld* World = GetWorld())
+	{
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			if (APawn* PlayerPawn = PC->GetPawn())
+			{
+				// 플레이어의 현재 위치를 가져옵니다.
+				FVector SpawnLocation = PlayerPawn->GetActorLocation();
+
+				// 발밑 주변에 겹치지 않게 무작위로 흩뿌려지도록 오프셋을 줍니다 (반경 100 범위)
+				SpawnLocation.X += FMath::RandRange(-100.0f, 100.0f);
+				SpawnLocation.Y += FMath::RandRange(-100.0f, 100.0f);
+				SpawnLocation.Z += 50.0f; // 바닥에 파묻히지 않게 Z축 살짝 띄움
+
+				FRotator SpawnRotation = FRotator::ZeroRotator;
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+				// AR1ItemActor 스폰
+				AR1ItemActor* DroppedItemActor = World->SpawnActor<AR1ItemActor>(AR1ItemActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+
+				if (DroppedItemActor)
+				{
+					// 스폰된 아이템 액터에 데이터를 주입하여 시각화 및 루팅 가능 상태로 만듭니다.
+					DroppedItemActor->InitItem(InItemData, Rarity, Count);
+				}
+			}
+		}
+	}
+	return true;
 }

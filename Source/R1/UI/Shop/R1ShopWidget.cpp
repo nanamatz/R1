@@ -1,63 +1,45 @@
+
+
+
 #include "UI/Shop/R1ShopWidget.h"
-#include "UI/Shop/R1ShopGridWidget.h"
-#include "Item/R1InventorySubsystem.h"
-#include "Components/TextBlock.h"
+#include "UI/Shop/R1ShopSlotsWidget.h"
 #include "Components/Button.h"
+#include "Object/R1MerchantNPC.h"
+#include "UI/R1HUD.h"
+#include "Kismet/GameplayStatics.h"
+
+UR1ShopWidget::UR1ShopWidget(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+
+}
+
+void UR1ShopWidget::InitShop(AR1MerchantNPC* InNPC)
+{
+	if (!InNPC || !ShopSlotsWidget) return;
+
+	// 자식 위젯인 6x3 그리드에게 NPC 데이터를 넘겨서 아이템을 그리게 합니다.
+	ShopSlotsWidget->InitShopGrid(InNPC);
+}
 
 void UR1ShopWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (UWorld* World = GetWorld())
-	{
-		if (UR1InventorySubsystem* InventorySubsystem = World->GetSubsystem<UR1InventorySubsystem>())
-		{
-			// 초기 골드 표시
-			UpdateGoldDisplay(InventorySubsystem->GetGold());
-
-			// 골드 변경 시 콜백 등록
-			InventorySubsystem->OnGoldChanged.AddDynamic(this, &UR1ShopWidget::UpdateGoldDisplay);
-		}
-	}
-
 	if (Button_Close)
 	{
-		Button_Close->OnClicked.AddDynamic(this, &UR1ShopWidget::OnCloseButtonClicked);
-	}
-}
-
-void UR1ShopWidget::SetShopItems(const TArray<UR1ItemInstance*>& Items)
-{
-	if (ShopGrid)
-	{
-		ShopGrid->InitShopGrid(Items);
-	}
-}
-
-void UR1ShopWidget::UpdateGoldDisplay(int32 NewGold)
-{
-	if (Text_CurrentGold)
-	{
-		Text_CurrentGold->SetText(FText::AsNumber(NewGold));
+		Button_Close->OnClicked.AddUniqueDynamic(this, &UR1ShopWidget::OnCloseButtonClicked);
 	}
 }
 
 void UR1ShopWidget::OnCloseButtonClicked()
 {
-	if (UWorld* World = GetWorld())
-	{
-		if (UR1InventorySubsystem* InventorySubsystem = World->GetSubsystem<UR1InventorySubsystem>())
-		{
-			InventorySubsystem->bIsShopOpen = false;
-		}
-	}
+	APlayerController* PC = GetOwningPlayer();
+	if (!PC) return;
 
-	if (APlayerController* PC = GetOwningPlayer())
+	// HUD를 찾아 상점 닫기 로직을 실행합니다.
+	if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
 	{
-		FInputModeGameOnly InputMode;
-		PC->SetInputMode(InputMode);
-		PC->bShowMouseCursor = false;
+		HUD->CloseShopUI();
 	}
-
-	RemoveFromParent();
 }

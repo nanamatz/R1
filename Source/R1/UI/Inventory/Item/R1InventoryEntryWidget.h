@@ -26,7 +26,7 @@ public:
 	UR1InventoryEntryWidget(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 public:
-	void Init(UR1InventorySlotsWidget* InSlotsWidget, UR1ItemInstance* InItemInstance, int32 InItemCount);
+	void Init(UR1UserWidget* InSlotsWidget, UR1ItemInstance* InItemInstance, int32 InItemCount);
 
 public:
 	virtual void NativeConstruct() override;
@@ -39,6 +39,9 @@ public:
 
 	void RefreshWidgetOpacity(bool bClearVisible);
 	void RefreshItemCount(int32 NewItemCount);
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UR1InventoryItemTooltipWidget> TooltipClass;
 private:
 	FIntPoint CachedFromSlotPos = FIntPoint::ZeroValue;
 	FVector2D CachedDeltaWidgetPos = FVector2D::ZeroVector;
@@ -46,7 +49,7 @@ private:
 
 protected:
 	UPROPERTY()
-	TObjectPtr<UR1InventorySlotsWidget> SlotsWidget;
+	TObjectPtr<UR1UserWidget> SlotsWidget;
 
 	UPROPERTY()
 	TObjectPtr<UR1ItemInstance> ItemInstance;

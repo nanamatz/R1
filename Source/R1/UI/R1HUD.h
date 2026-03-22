@@ -44,7 +44,27 @@ public:
 
     UFUNCTION()
     void HandleLoadingScreenHidden();
+
+public:
+    // NPC가 호출할 상점 오픈 함수
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    void OpenShopUI(class AR1MerchantNPC* MerchantNPC);
+
+    // 상점 닫기 함수 (UI의 닫기 버튼이나 ESC 키로 호출)
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    void CloseShopUI();
+
 protected:
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> ShopWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<UUserWidget> ShopSceneWidget = nullptr;
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<class UR1ShopWidget> ShopWidget = nullptr;
+protected:
+
     UPROPERTY(EditDefaultsOnly, Category="UI")
     TSubclassOf<UUserWidget> InventoryWidgetClass;
 

@@ -3,13 +3,16 @@
 
 #include "UI/Inventory/Item/R1InventoryEntryWidget.h"
 #include "UI/Inventory/Item/R1ItemDragWidget.h"
+#include "UI/Inventory/R1InventorySlotsWidget.h"
+
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/SizeBox.h"
-#include "UI/Inventory/R1InventorySlotsWidget.h"
+
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1ItemInstance.h"
 #include "Item/R1DragDropOperation.h"
+#include "Item/R1InventoryItemTooltipWidget.h"
 
 UR1InventoryEntryWidget::UR1InventoryEntryWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -21,7 +24,7 @@ UR1InventoryEntryWidget::UR1InventoryEntryWidget(const FObjectInitializer& Objec
 	}
 }
 
-void UR1InventoryEntryWidget::Init(UR1InventorySlotsWidget* InSlotsWidget, UR1ItemInstance* InItemInstance, int32 InItemCount)
+void UR1InventoryEntryWidget::Init(UR1UserWidget* InSlotsWidget, UR1ItemInstance* InItemInstance, int32 InItemCount)
 {
 	SlotsWidget = InSlotsWidget;
 	ItemInstance = InItemInstance;
@@ -47,6 +50,22 @@ void UR1InventoryEntryWidget::Init(UR1InventorySlotsWidget* InSlotsWidget, UR1It
 	if (Image_Hover && !IsHovered())
 	{
 		Image_Hover->SetRenderOpacity(0.f);
+	}
+
+	if (ItemInstance && TooltipClass)
+	{
+		UR1InventoryItemTooltipWidget* TooltipWidget = CreateWidget<UR1InventoryItemTooltipWidget>(this, TooltipClass);
+		if (TooltipWidget)
+		{
+			UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+			// 내 인벤토리에 좌표가 없다면(-1, -1) 상점 아이템으로 판별!
+			bool bIsShopItem = (Inventory && Inventory->GetItemPosition(ItemInstance) == FIntPoint(-1, -1));
+
+			TooltipWidget->SetupTooltip(ItemInstance, bIsShopItem);
+
+			// 마우스를 올리면 자동으로 이 툴팁이 뜨게 만듭니다.
+			SetToolTip(TooltipWidget);
+		}
 	}
 }
 
@@ -85,7 +104,6 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 
 	const FVector2D UnitSlotSize = FVector2D(Item::UnitInventorySlotSize);
 
-	//마우스 커서 위치에 따라 변환 및 계산
 	FVector2D MouseWidgetPos = SlotsWidget->GetCachedGeometry().AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
 	FVector2D ItemWidgetPos = SlotsWidget->GetCachedGeometry().AbsoluteToLocal(InGeometry.LocalToAbsolute(UnitSlotSize / 2.f));
 	FIntPoint ItemSlotPos = FIntPoint(ItemWidgetPos.X / UnitSlotSize.X, ItemWidgetPos.Y / UnitSlotSize.Y);
@@ -97,40 +115,57 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 	{
 		return Reply.DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
 	}
-	// 💡 2. 우클릭 (추가: 빠른 장착)
+	// 💡 2. 우클릭 분기 (거래 및 빠른 장착)
 	else if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
 	{
-		TArray<ER1EquipmentSlot> CompatibleSlots = ItemInstance->GetEquipSlot();
-
-		// 장착 가능한 부위가 하나라도 있다면
-		if (CompatibleSlots.Num() > 0)
+		UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+		if (Inventory)
 		{
-			UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
-			if (Inventory)
+			bool bIsShopItem = (Inventory->GetItemPosition(ItemInstance) == FIntPoint(-1, -1));
+
+			// 🌟 A. [상점 -> 내 가방] 우클릭 시 즉시 구매!
+			if (bIsShopItem && Inventory->bIsShopOpen)
 			{
-				ER1EquipmentSlot TargetSlot = ER1EquipmentSlot::None;
-
-				// 💡 1. 호환되는 슬롯들 중에 "비어있는" 슬롯을 우선적으로 찾습니다.
-				for (ER1EquipmentSlot EnableSlot : CompatibleSlots)
-				{
-					if (Inventory->GetEquippedItem(EnableSlot) == nullptr)
-					{
-						TargetSlot = EnableSlot;
-						break; // 빈자리 발견! 루프 종료
-					}
-				}
-
-				// 💡 2. 만약 호환 슬롯이 모두 꽉 차 있다면? -> 그냥 배열의 첫 번째 슬롯(주력 슬롯)을 덮어씌움!
-				if (TargetSlot == ER1EquipmentSlot::None)
-				{
-					TargetSlot = CompatibleSlots[0];
-				}
-
-				// 💡 서브시스템의 EquipItem이 그리드 제거와 스왑을 모두 책임지도록 변경!
-				Inventory->EquipItem(ItemInstance, TargetSlot);
-
-				Inventory->OnInventoryUpdated.Broadcast();
+				Inventory->BuyItem(ItemInstance->GetItemData(), ItemInstance->ItemRarity, ItemInstance->ItemCount);
+				// (필요하다면 여기서 상인 NPC의 ItemsForSale 배열에서 아이템을 지우는 로직을 호출할 수 있습니다)
 				return FReply::Handled();
+			}
+
+			// 🌟 B. [내 가방 -> 상점] Shift + 우클릭 시 즉시 판매!
+			if (!bIsShopItem && Inventory->bIsShopOpen && InMouseEvent.IsShiftDown())
+			{
+				Inventory->SellItem(ItemInstance, ItemInstance->ItemCount);
+				return FReply::Handled();
+			}
+
+			// 🌟 C. 기존 로직: 내 가방에 있는 아이템을 우클릭했을 때 (빠른 장착)
+			if (!bIsShopItem && !InMouseEvent.IsShiftDown())
+			{
+				TArray<ER1EquipmentSlot> CompatibleSlots = ItemInstance->GetEquipSlot();
+
+				if (CompatibleSlots.Num() > 0)
+				{
+					ER1EquipmentSlot TargetSlot = ER1EquipmentSlot::None;
+
+					for (ER1EquipmentSlot EnableSlot : CompatibleSlots)
+					{
+						if (Inventory->GetEquippedItem(EnableSlot) == nullptr)
+						{
+							TargetSlot = EnableSlot;
+							break;
+						}
+					}
+
+					if (TargetSlot == ER1EquipmentSlot::None)
+					{
+						TargetSlot = CompatibleSlots[0];
+					}
+
+					Inventory->EquipItem(ItemInstance, TargetSlot);
+					Inventory->OnInventoryUpdated.Broadcast();
+					return FReply::Handled();
+				}
+				// 장비가 아니라 포션 같은 소모품이라면 여기에 Consume 로직을 덧붙이면 됩니다!
 			}
 		}
 	}

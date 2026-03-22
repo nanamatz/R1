@@ -13,7 +13,7 @@ void UR1MainMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	bIsFocusable = true;
+	SetIsFocusable(true);
 
 	if (Button_NewRun)
 	{

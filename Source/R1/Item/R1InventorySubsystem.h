@@ -46,6 +46,11 @@ public:
 	void RemoveItemFromGrid(UR1ItemInstance* Item, const FIntPoint& Pos);
 	void MoveItemInGrid( UR1ItemInstance* Item, FIntPoint OldPos, FIntPoint NewPos);
 
+public:
+	// 인벤토리에서 특정 아이템 인스턴스를 완전히 제거하는 범용 함수
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool RemoveItem(UR1ItemInstance* ItemToRemove);
+
 protected:
 	// 🌟 중복 제거용 도우미 함수 1: 장비 매니저 컴포넌트 가져오기
 	class UR1EquipmentManagerComponent* GetEquipmentManager() const;
@@ -83,7 +88,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool BuyItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common, int32 Count = 1);
 
-protected:
+public:
 	UPROPERTY()
 	int32 Gold = 0;
 

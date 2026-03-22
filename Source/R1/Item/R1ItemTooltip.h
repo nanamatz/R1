@@ -21,7 +21,4 @@ public:
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UTextBlock> Text_ItemName;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UTextBlock> Text_Price;
 };
