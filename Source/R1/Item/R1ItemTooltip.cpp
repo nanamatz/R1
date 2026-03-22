@@ -4,8 +4,9 @@
 #include "Item/R1ItemTooltip.h"
 #include "Components/TextBlock.h"
 #include "R1Define.h"
+#include "Item/R1InventorySubsystem.h"
 
-void UR1ItemTooltip::SetItemInfo(const FText& InName, EItemRarity InRarity,int32 ItemCount, ER1ItemType InItemType)
+void UR1ItemTooltip::SetItemInfo(const FText& InName, EItemRarity InRarity,int32 ItemCount, ER1ItemType InItemType, int32 BaseValue, bool bIsPlayerInventoryItem)
 {
 	if (!Text_ItemName) return;
 
@@ -49,4 +50,23 @@ void UR1ItemTooltip::SetItemInfo(const FText& InName, EItemRarity InRarity,int32
 
 	// 3. 텍스트 블록에 색상 적용!
 	Text_ItemName->SetColorAndOpacity(TextColor);
+
+	if (Text_Price)
+	{
+		int32 DisplayPrice = BaseValue;
+		if (bIsPlayerInventoryItem)
+		{
+			if (UWorld* World = GetWorld())
+			{
+				if (UR1InventorySubsystem* InventorySubsystem = World->GetSubsystem<UR1InventorySubsystem>())
+				{
+					if (InventorySubsystem->bIsShopOpen)
+					{
+						DisplayPrice = FMath::Max(1, FMath::FloorToInt(BaseValue * 0.7f));
+					}
+				}
+			}
+		}
+		Text_Price->SetText(FText::AsNumber(DisplayPrice));
+	}
 }
