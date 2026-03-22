@@ -29,7 +29,7 @@ public:
 	void OpenShop();
 
 	UFUNCTION(BlueprintCallable, Category = "Merchant")
-	const TArray<UR1ItemAssetData*>& GetItemsForSale() const { return ItemsForSale; }
+	const TArray<UR1ItemInstance*>& GetItemsForSale() const { return ItemsForSale; }
 
 protected:
 	void GenerateShopItems();
@@ -43,7 +43,7 @@ protected:
 
 	// 상인이 팔 아이템들 (3개 고정)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Merchant")
-	TArray<TObjectPtr<UR1ItemAssetData>> ItemsForSale;
+	TArray<TObjectPtr<class UR1ItemInstance>> ItemsForSale;
 
 	// 아이템을 뽑아올 풀 (에디터에서 할당)
 	UPROPERTY(EditAnywhere, Category = "Merchant")

@@ -48,6 +48,9 @@ void AR1MerchantNPC::UnHighlight()
 #include "UI/Shop/R1ShopWidget.h"
 #include "Blueprint/UserWidget.h"
 
+#include "Item/R1ItemInstance.h"
+#include "Item/R1InventorySubsystem.h"
+
 void AR1MerchantNPC::OpenShop()
 {
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -69,6 +72,14 @@ void AR1MerchantNPC::OpenShop()
 		ShopWidget->SetShopItems(ItemsForSale);
 		if (!ShopWidget->IsInViewport())
 		{
+			if (UWorld* World = GetWorld())
+			{
+				if (UR1InventorySubsystem* InventorySubsystem = World->GetSubsystem<UR1InventorySubsystem>())
+				{
+					InventorySubsystem->bIsShopOpen = true;
+				}
+			}
+
 			ShopWidget->AddToViewport();
 			
 			// 인풋 모드 변경 및 마우스 커서 표시
@@ -99,7 +110,15 @@ void AR1MerchantNPC::GenerateShopItems()
 	while (ItemsForSale.Num() < TargetCount)
 	{
 		int32 RandomIndex = FMath::RandRange(0, AvailablePool.Num() - 1);
-		ItemsForSale.Add(AvailablePool[RandomIndex]);
+		UR1ItemAssetData* ChosenData = AvailablePool[RandomIndex];
+
+		if (ChosenData)
+		{
+			UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(this);
+			NewItem->Init(ChosenData, ChosenData->ItemRarity);
+			NewItem->ItemCount = 1; // 기본 1개로 고정
+			ItemsForSale.Add(NewItem);
+		}
 		
 		// 중복 방지를 위해 뽑은 아이템은 풀에서 제거
 		AvailablePool.RemoveAt(RandomIndex);
