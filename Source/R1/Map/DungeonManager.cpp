@@ -21,36 +21,12 @@ ADungeonManager::ADungeonManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-
-	static ConstructorHelpers::FObjectFinder<UR1ItemPoolData> DefaultLootPoolRef(TEXT("/Script/R1.R1ItemPoolData'/Game/Data/PDA_DropItemPool.PDA_DropItemPool'"));
-
-	if (DefaultLootPoolRef.Succeeded())
-	{
-		// 경로에서 에셋을 성공적으로 찾았다면 내 변수에 쏙 넣어줍니다!
-		RoomClearLootPool = DefaultLootPoolRef.Object;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[DungeonManager] 기본 루트 풀 에셋을 찾을 수 없습니다! 경로를 확인하세요."));
-	}
-
-	static ConstructorHelpers::FClassFinder<AR1ItemActor> ItemActorClassRef(TEXT("/Script/Engine.Blueprint'/Game/Blueprints/Item/BP_ItemActor.BP_ItemActor_C'"));
-
-	if (ItemActorClassRef.Succeeded())
-	{
-		ItemActorClass = ItemActorClassRef.Class;
-	}
 }
 
 // Called when the game starts or when spawned
 void ADungeonManager::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//if (ClearCondition == ER1RoomClearCondition::None)
-	//{
-	//	CompleteRoom();
-	//}
 
 	if (AActor* GeneratorActor = UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()))
 	{

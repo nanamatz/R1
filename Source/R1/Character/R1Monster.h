@@ -87,6 +87,24 @@ protected:
 
 	void UpdateDissolve();
 
+protected:
+	// 🌟 언리얼 에디터에서 방금 만든 BP_GoldActor를 할당할 수 있는 변수 추가!
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward")
+	TSubclassOf<class AR1GoldActor> GoldActorClass;
+
+	UFUNCTION(BlueprintCallable, Category = "Reward")
+	virtual void DropGold();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward")
+	float GoldDropChance = 0.7f; // 70% 확률로 골드 드랍
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward")
+	int32 MinGoldDrop = 15; // 최소 골드 드랍량
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward")
+	int32 MaxGoldDrop = 400; // 최대 골드 드랍량
+
+	virtual void RewardExperience(const TObjectPtr<class AR1Character> Attacker);
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnMonsterReadyToSleep OnReadyToSleep;

@@ -55,15 +55,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Door Logic")
 	void SetupDoorConnection(int32 InTargetNodeID);
 
-private:
-	// 트리거 박스에 플레이어가 겹쳤을 때 실행될 함수
-	UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
 public:
 	// 문의 잠금 상태를 변경하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Door Logic")
 	void SetLocked(bool bIsLocked);
+
+	virtual void Interact_Implementation(class AR1PlayerController* Interactor) override;
 
 	// 현재 문이 잠겨있는지 여부 (블루프린트에서 머티리얼을 바꿀 때 쓸 수 있게 ReadOnly로 둡니다)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door Logic")

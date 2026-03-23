@@ -46,9 +46,6 @@ public:
     UFUNCTION()
     void HandleLoadingScreenHidden();
 
-    // UI 상태에 따라 입력 모드를 통합 관리합니다.
-    void UpdateInputModeByUIState();
-
 public:
     // NPC가 호출할 상점 오픈 함수
     UFUNCTION(BlueprintCallable, Category = "UI")

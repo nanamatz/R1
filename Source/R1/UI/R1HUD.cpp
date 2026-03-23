@@ -158,42 +158,6 @@ void AR1HUD::HandleLoadingScreenHidden()
     }
 }
 
-void AR1HUD::UpdateInputModeByUIState()
-{
-    APlayerController* PC = GetOwningPlayerController();
-    if (!PC) return;
-
-    // 인벤토리나 상점, 게임 메뉴 중 하나라도 열려있으면 GameAndUI 모드
-    bool bAnyUIVisible = bIsInventoryUIVisible || bIsShopUIVisible || bIsGameOverUIVisible || bIsGameMenuUIVisible;
-
-    if (bAnyUIVisible)
-    {
-        FInputModeGameAndUI InputMode;
-        InputMode.SetHideCursorDuringCapture(false);
-        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-        
-        // 상점이 열려있으면 상점 위젯에 포커스
-        if (bIsShopUIVisible && ShopSceneWidget)
-        {
-            InputMode.SetWidgetToFocus(ShopSceneWidget->TakeWidget());
-        }
-        else if (bIsInventoryUIVisible && InventoryUIWidget)
-        {
-            InputMode.SetWidgetToFocus(InventoryUIWidget->TakeWidget());
-        }
-
-        PC->SetInputMode(InputMode);
-        PC->bShowMouseCursor = true;
-    }
-    else
-    {
-        // 모두 닫혔으면 GameOnly 모드로 복구
-        FInputModeGameOnly InputMode;
-        PC->SetInputMode(InputMode);
-        PC->bShowMouseCursor = false;
-    }
-}
-
 void AR1HUD::OpenShopUI(AR1MerchantNPC* MerchantNPC)
 {
     if (!MerchantNPC || !ShopSceneWidget || !ShopWidget) return;
@@ -218,7 +182,6 @@ void AR1HUD::OpenShopUI(AR1MerchantNPC* MerchantNPC)
             InvenSubsys->bIsShopOpen = true;
         }
 
-        UpdateInputModeByUIState();
     }
 }
 
@@ -234,7 +197,6 @@ void AR1HUD::CloseShopUI()
             InvenSubsys->bIsShopOpen = false;
         }
 
-        UpdateInputModeByUIState();
     }
 }
 
@@ -253,7 +215,6 @@ void AR1HUD::ToggleInventory()
 		bIsInventoryUIVisible = true;
     }
 
-    UpdateInputModeByUIState();
 }
 
 void AR1HUD::UpdateGameOverUI()
@@ -270,7 +231,6 @@ void AR1HUD::UpdateGameOverUI()
         GameOverUIWidget->SetVisibility(ESlateVisibility::Visible);
         bIsGameOverUIVisible = true;
     }
-    UpdateInputModeByUIState();
 }
 
 void AR1HUD::ToggleGameMenu()
@@ -287,7 +247,6 @@ void AR1HUD::ToggleGameMenu()
         GameMenuUIWidget->SetVisibility(ESlateVisibility::Visible);
         bIsGameMenuUIVisible = true;
     }
-    UpdateInputModeByUIState();
 }
 
 

@@ -20,6 +20,7 @@ public:
 	// Sets default values for this actor's properties
 	AR1Portal();
 
+	virtual void Interact_Implementation(class AR1PlayerController* Interactor) override;
 protected:
 	virtual void BeginPlay() override;
 	virtual void Highlight() override;
@@ -38,9 +39,4 @@ public:
 	// 플레이어 접근을 감지할 트리거 박스
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UBoxComponent> TriggerBox;
-
-private:
-	// 트리거 박스에 플레이어가 겹쳤을 때 실행될 함수
-	UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };
