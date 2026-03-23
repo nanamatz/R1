@@ -23,6 +23,7 @@ public:
 	virtual void UnHighlight() override;
 
 	virtual void Interact_Implementation(class AR1PlayerController* Interactor) override;
+
 	virtual UPrimitiveComponent* GetInteractTrigger() override;
 public:
 	// 🌟 머리 위에 아이템 이름을 띄워줄 UI 컴포넌트

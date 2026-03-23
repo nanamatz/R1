@@ -20,6 +20,7 @@
 #include "DataTable/CharacterStatsRow.h"
 #include "TimerManager.h"
 #include "R1GameplayTags.h"
+#include "Object/R1GoldActor.h"
 
 
 AR1Monster::AR1Monster()
@@ -101,7 +102,7 @@ void AR1Monster::ActivateAbility(FGameplayTag AbilityTag)
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
 }
 
-void AR1Monster::OnDead(const TObjectPtr<class AR1Character> Attacker)
+void AR1Monster::OnDead(const TObjectPtr<AR1Character> Attacker)
 {
 	Super::OnDead(Attacker);
 
@@ -134,26 +135,10 @@ void AR1Monster::OnDead(const TObjectPtr<class AR1Character> Attacker)
 		HpBarComponent->SetHiddenInGame(true);
 	}
 
-	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Attacker);
-
-	// 2. 내(몬스터) ASC도 필요합니다.
-	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponent();
-
-	if (TargetASC && SourceASC && XpEffect) // RewardExpGEClass는 블루프린트에서 할당해둔 GE 클래스
-	{
-		// 3. GE Spec(명세서)을 만듭니다. (내가 저격수고, 타겟에게 쏠 총알을 만드는 과정)
-		FGameplayEffectContextHandle ContextHandle = SourceASC->MakeEffectContext();
-		ContextHandle.AddInstigator(this, this); // 이 경험치의 출처는 나(몬스터)야!
-
-		FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(XpEffect, 1.0f, ContextHandle);
-
-		// 4. 플레이어에게 GE를 적용합니다!
-		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-	}
+	RewardExperience(Attacker);
+	DropGold();
 
 	CurrentDissolve = 0.0f;
-
-	//GetWorldTimerManager().SetTimer(DissolveTimerHandle, this, &AR1Monster::UpdateDissolve, 0.01f, true);
 	GetWorldTimerManager().SetTimer(DissolveDelayTimerHandle, this, &AR1Monster::StartDissolve, 2.0f, false);
 }
 
@@ -197,6 +182,34 @@ void AR1Monster::UpdateDissolve()
 	}
 }
 
+void AR1Monster::DropGold()
+{
+	if (!GoldActorClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("몬스터 블루프린트에 GoldActorClass가 할당되지 않았습니다!"));
+		return;
+	}
+
+	if (FMath::RandRange(0.0f, 1.0f) < 0.7f)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+		FVector SpawnLocation = GetActorLocation();
+		FRotator SpawnRotation = FRotator::ZeroRotator;
+
+		// 🌟 C++ StaticClass가 아니라, 블루프린트가 할당된 'GoldActorClass'를 스폰합니다!
+		AR1GoldActor* DroppedGold = GetWorld()->SpawnActor<AR1GoldActor>(GoldActorClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+		if (DroppedGold)
+		{
+			int32 FinalAmount = FMath::RandRange(MinGoldDrop, MaxGoldDrop);
+
+			DroppedGold->SetGoldAmount(FinalAmount);
+		}
+	}
+}
+
 void AR1Monster::InitAttributes()
 {
 	// 1. 부모 함수 호출 (체력, 공격력 세팅)
@@ -219,6 +232,27 @@ void AR1Monster::InitAttributes()
 
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		}
+	}
+}
+
+void AR1Monster::RewardExperience(const TObjectPtr<class AR1Character> Attacker)
+{
+	if (!Attacker) return;
+
+	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Attacker);
+	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponent();
+
+	// RewardExpGEClass(XpEffect)가 블루프린트에서 잘 할당되어 있는지 확인 후 적용
+	if (TargetASC && SourceASC && XpEffect)
+	{
+		// GE Spec(명세서) 생성
+		FGameplayEffectContextHandle ContextHandle = SourceASC->MakeEffectContext();
+		ContextHandle.AddInstigator(this, this); // 경험치의 출처 설정
+
+		FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(XpEffect, 1.0f, ContextHandle);
+
+		// 플레이어에게 경험치 GE 적용
+		TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 }
 

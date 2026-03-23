@@ -355,11 +355,9 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		}
 		if (bIsInRange)
 		{
-			StopMovement();
-			bMousePressed = false;
-
-			IR1InteractionInterface::Execute_Interact(TargetActor, this);
-			TargetActor = nullptr;
+			AActor* InteractTarget = TargetActor;  // 포인터 저장
+			ResetMovementState();
+			IR1InteractionInterface::Execute_Interact(InteractTarget, this);  // 저장된 포인터 사용
 		}
 		else
 		{

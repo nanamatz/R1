@@ -1,10 +1,8 @@
-
-
-
 #include "UI/Inventory/R1InventoryMainWidget.h"
 #include "Item/R1DragDropOperation.h"
 #include "Item/R1ItemInstance.h"
 #include "Player/R1PlayerController.h"
+
 
 bool UR1InventoryMainWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
@@ -32,3 +30,4 @@ bool UR1InventoryMainWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 
 	return false;
 }
+

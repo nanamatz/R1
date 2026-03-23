@@ -1,0 +1,28 @@
+
+
+
+#include "UI/Inventory/R1InventoryWidget.h"
+#include "Components/TextBlock.h"
+#include "Item/R1InventorySubsystem.h"
+
+void UR1InventoryWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	
+	if (UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
+	{
+		// 🌟 1. 유저님이 이미 만들어두신 방송국(OnGoldChanged)에 수신기(UpdateGoldUI)를 연결!
+		Inventory->OnGoldChanged.AddDynamic(this, &UR1InventoryWidget::UpdateGoldUI);
+
+		// 🌟 2. 위젯이 처음 열릴 때 현재 골드량으로 초기 텍스트 세팅
+		UpdateGoldUI(Inventory->GetGold());
+	}
+}
+
+void UR1InventoryWidget::UpdateGoldUI(int32 NewGold)
+{
+	if (Text_Gold)
+	{
+		Text_Gold->SetText(FText::AsNumber(NewGold));
+	}
+}

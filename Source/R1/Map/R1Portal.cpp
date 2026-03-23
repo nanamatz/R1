@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Character/R1Player.h"
 #include "Map/R1MapGenerator.h"
+#include "Player/R1PlayerController.h"
 
 // Sets default values
 AR1Portal::AR1Portal()
@@ -23,7 +24,19 @@ AR1Portal::AR1Portal()
 
 	// 2. 트리거 박스 충돌 설정 (플레이어만 감지하도록)
 	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
-	TriggerBox->SetBoxExtent(FVector(100.0f, 100.0f, 50.0f)); // 적당한 크기로 조절
+	TriggerBox->SetBoxExtent(FVector(200.0f, 200.0f, 100.0f)); // 적당한 크기로 조절
+}
+
+void AR1Portal::Interact_Implementation(AR1PlayerController* Interactor)
+{
+	if (!Interactor) return;
+
+	// 바로 다음 층으로 이동!
+	if (AR1MapGenerator* Generator = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
+	{
+		Generator->GoToNextFloor();
+		Destroy();
+	}
 }
 
 // Called when the game starts or when spawned
@@ -57,20 +70,6 @@ void AR1Portal::UnHighlight()
 UPrimitiveComponent* AR1Portal::GetInteractTrigger()
 {
 	return TriggerBox;
-}
-
-void AR1Portal::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	// 겹친 액터가 플레이어인지 확인
-	AR1Player* Player = Cast<AR1Player>(OtherActor);
-	if (Player)
-	{
-		if (AR1MapGenerator* Generator = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
-		{
-			Generator->GoToNextFloor();
-			Destroy();
-		}
-	}
 }
 
 
