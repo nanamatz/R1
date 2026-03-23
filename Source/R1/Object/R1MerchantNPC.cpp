@@ -1,10 +1,12 @@
 #include "Object/R1MerchantNPC.h"
-#include "Components/StaticMeshComponent.h"
 #include "Data/R1ItemAssetData.h"
 #include "Data/R1ItemPoolData.h"
 #include "Item/R1ItemInstance.h"
 #include "UI/R1HUD.h" 
 #include "Kismet/GameplayStatics.h"
+#include "Player/R1PlayerController.h"
+#include "Components/BoxComponent.h"
+#include "Components/StaticMeshComponent.h"
 
 AR1MerchantNPC::AR1MerchantNPC()
 {
@@ -16,8 +18,11 @@ AR1MerchantNPC::AR1MerchantNPC()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	MeshComp->SetupAttachment(RootComp);
 	MeshComp->SetCollisionProfileName(TEXT("BlockAll"));
-	
-	// 상호작용 커서를 위해 태그 추가
+
+	InteractTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractTrigger"));
+	InteractTrigger->SetupAttachment(RootComp);
+	InteractTrigger->SetCollisionProfileName(TEXT("Trigger")); // 오버랩만 감지하는 프로필
+
 	Tags.Add(FName("Interactable"));
 }
 
@@ -46,12 +51,23 @@ void AR1MerchantNPC::UnHighlight()
 	}
 }
 
+void AR1MerchantNPC::Interact_Implementation(AR1PlayerController* Interactor)
+{
+	if (!Interactor) return;
+
+	OpenShop();
+}
+
+UPrimitiveComponent* AR1MerchantNPC::GetInteractTrigger()
+{
+	return InteractTrigger;
+}
+
 void AR1MerchantNPC::OpenShop()
 {
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PC) return;
 
-	// 🌟 내가 UI를 직접 만들지 않고, HUD를 찾아서 "나랑 거래할 창을 열어줘!" 라고 요청합니다.
 	if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
 	{
 		HUD->OpenShopUI(this);
@@ -80,8 +96,7 @@ void AR1MerchantNPC::GenerateShopItems()
 
 	TArray<TObjectPtr<UR1ItemAssetData>> AvailablePool = ItemPool->DropItems;
 	
-	// 3개를 뽑습니다 (풀이 3개보다 작으면 있는 만큼만)
-	int32 TargetCount = FMath::Min(3, AvailablePool.Num());
+	int32 TargetCount = FMath::Min(CuratedItemCounts, AvailablePool.Num());
 
 	while (ItemsForSale.Num() < TargetCount)
 	{

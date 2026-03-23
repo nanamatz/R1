@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Map/R1MapGenerator.h"
+#include "Interface/R1HighlightInterface.h"
+#include "Interface/R1InteractionInterface.h"
 #include "R1Door.generated.h"
 
 class UBoxComponent;
@@ -13,7 +15,7 @@ class UStaticMeshComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDoorEnteredSignature, ER1DoorDirection, DoorDirection);
 
 UCLASS()
-class R1_API AR1Door : public AActor
+class R1_API AR1Door : public AActor, public IR1HighlightInterface, public IR1InteractionInterface
 {
 	GENERATED_BODY()
 public:
@@ -21,7 +23,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	virtual void Highlight() override;
+	virtual void UnHighlight() override;
+	virtual UPrimitiveComponent* GetInteractTrigger() override;
 public:
 	// 문의 루트 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

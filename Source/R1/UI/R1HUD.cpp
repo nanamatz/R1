@@ -7,6 +7,7 @@
 #include "Item/R1InventorySubsystem.h"
 #include "Object/R1MerchantNPC.h"
 #include "UI/Shop/R1ShopWidget.h"
+#include "Blueprint/WidgetTree.h"
 
 void AR1HUD::BeginPlay()
 {
@@ -16,6 +17,11 @@ void AR1HUD::BeginPlay()
     APlayerController* PC = GetOwningPlayerController();
     if (PC)
     {
+        bIsInventoryUIVisible = false;
+        bIsShopUIVisible = false;
+        bIsGameOverUIVisible = false;
+        bIsGameMenuUIVisible = false;
+
         if (!InventoryUIWidget)
         {
             InventoryUIWidget = CreateWidget<UUserWidget>(PC, InventoryWidgetClass);
@@ -93,6 +99,29 @@ void AR1HUD::BeginPlay()
                 FloorGuideSceneWidget->SetVisibility(ESlateVisibility::Hidden);
             }
         }
+        if (!ShopSceneWidget && ShopWidgetClass)
+        {
+            ShopSceneWidget = CreateWidget<UUserWidget>(PC, ShopWidgetClass);
+            if (ShopSceneWidget)
+            {
+                // 🌟 껍데기 안을 뒤져서 알맹이(UR1ShopWidget)를 찾아 캐싱해둡니다!
+                ShopSceneWidget->WidgetTree->ForEachWidget([this](UWidget* ChildWidget)
+                    {
+                        if (UR1ShopWidget* FoundWidget = Cast<UR1ShopWidget>(ChildWidget))
+                        {
+                            ShopWidget = FoundWidget;
+                        }
+                    });
+
+                if (!ShopWidget)
+                {
+                    UE_LOG(LogTemp, Error, TEXT("ShopSceneWidget 내부에 UR1ShopWidget 자식이 없습니다!"));
+                }
+
+                ShopSceneWidget->AddToViewport(10); // 인벤토리와 동일한 Z-Order 적용
+                ShopSceneWidget->SetVisibility(ESlateVisibility::Hidden); // 미리 숨겨둠
+            }
+        }
         if (AR1MapGenerator* MapGen = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
         {
             MapGen->OnMapGenerated.AddDynamic(this, &AR1HUD::HandleMapGenerated);
@@ -129,67 +158,83 @@ void AR1HUD::HandleLoadingScreenHidden()
     }
 }
 
+void AR1HUD::UpdateInputModeByUIState()
+{
+    APlayerController* PC = GetOwningPlayerController();
+    if (!PC) return;
+
+    // 인벤토리나 상점, 게임 메뉴 중 하나라도 열려있으면 GameAndUI 모드
+    bool bAnyUIVisible = bIsInventoryUIVisible || bIsShopUIVisible || bIsGameOverUIVisible || bIsGameMenuUIVisible;
+
+    if (bAnyUIVisible)
+    {
+        FInputModeGameAndUI InputMode;
+        InputMode.SetHideCursorDuringCapture(false);
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+        
+        // 상점이 열려있으면 상점 위젯에 포커스
+        if (bIsShopUIVisible && ShopSceneWidget)
+        {
+            InputMode.SetWidgetToFocus(ShopSceneWidget->TakeWidget());
+        }
+        else if (bIsInventoryUIVisible && InventoryUIWidget)
+        {
+            InputMode.SetWidgetToFocus(InventoryUIWidget->TakeWidget());
+        }
+
+        PC->SetInputMode(InputMode);
+        PC->bShowMouseCursor = true;
+    }
+    else
+    {
+        // 모두 닫혔으면 GameOnly 모드로 복구
+        FInputModeGameOnly InputMode;
+        PC->SetInputMode(InputMode);
+        PC->bShowMouseCursor = false;
+    }
+}
+
 void AR1HUD::OpenShopUI(AR1MerchantNPC* MerchantNPC)
 {
-    if (!MerchantNPC || !ShopWidgetClass) return;
+    if (!MerchantNPC || !ShopSceneWidget || !ShopWidget) return;
 
     APlayerController* PC = GetOwningPlayerController();
     if (!PC) return;
 
-    // 1. 위젯이 없다면 생성
-    if (!ShopSceneWidget)
+    if (!bIsShopUIVisible)
     {
-        ShopSceneWidget = CreateWidget<UUserWidget>(PC, ShopWidgetClass);
-    }
-
-    if(!ShopWidget)
-    {
-        ShopWidget = Cast<UR1ShopWidget>(ShopSceneWidget);
-	}
-
-    // 2. 위젯 띄우기 및 데이터 전달
-    if (ShopWidget && !ShopWidget->IsInViewport())
-    {
-        // 우리가 열심히 만든 슬롯 그리드 갱신 함수를 여기서 호출!
-        // (ShopWidget 내부에서 자신이 가지고 있는 ShopSlotsWidget의 InitShopGrid를 호출하도록 연결해야 합니다)
         ShopWidget->InitShop(MerchantNPC);
+        ShopSceneWidget->SetVisibility(ESlateVisibility::Visible);
+        bIsShopUIVisible = true;
 
-        ShopWidget->AddToViewport();
+        // 🌟 상점이 열릴 때 인벤토리도 함께 엽니다.
+        if (!bIsInventoryUIVisible)
+        {
+            ToggleInventory();
+        }
 
-        // 서브시스템 상태 업데이트
         if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
         {
             InvenSubsys->bIsShopOpen = true;
         }
 
-        // 인풋 모드 변경 (UI 중심)
-        FInputModeGameAndUI InputMode;
-        InputMode.SetWidgetToFocus(ShopWidget->TakeWidget());
-        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-        PC->SetInputMode(InputMode);
-        PC->bShowMouseCursor = true;
+        UpdateInputModeByUIState();
     }
 }
 
 void AR1HUD::CloseShopUI()
 {
-    if (ShopWidget && ShopWidget->IsInViewport())
+    if (ShopSceneWidget && bIsShopUIVisible)
     {
-        ShopWidget->RemoveFromParent();
+        ShopSceneWidget->SetVisibility(ESlateVisibility::Hidden);
+        bIsShopUIVisible = false;
 
         if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
         {
             InvenSubsys->bIsShopOpen = false;
         }
 
-        APlayerController* PC = GetOwningPlayerController();
-        if (PC)
-        {
-            // 게임 전용 모드로 복구
-            FInputModeGameOnly InputMode;
-            PC->SetInputMode(InputMode);
-            PC->bShowMouseCursor = false;
-        }
+        UpdateInputModeByUIState();
     }
 }
 
@@ -207,6 +252,8 @@ void AR1HUD::ToggleInventory()
         InventoryUIWidget->SetVisibility(ESlateVisibility::Visible);
 		bIsInventoryUIVisible = true;
     }
+
+    UpdateInputModeByUIState();
 }
 
 void AR1HUD::UpdateGameOverUI()
@@ -223,6 +270,7 @@ void AR1HUD::UpdateGameOverUI()
         GameOverUIWidget->SetVisibility(ESlateVisibility::Visible);
         bIsGameOverUIVisible = true;
     }
+    UpdateInputModeByUIState();
 }
 
 void AR1HUD::ToggleGameMenu()
@@ -239,6 +287,7 @@ void AR1HUD::ToggleGameMenu()
         GameMenuUIWidget->SetVisibility(ESlateVisibility::Visible);
         bIsGameMenuUIVisible = true;
     }
+    UpdateInputModeByUIState();
 }
 
 

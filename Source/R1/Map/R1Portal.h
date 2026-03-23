@@ -4,13 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Interface/R1HighlightInterface.h"
+#include "Interface/R1InteractionInterface.h"
 #include "R1Portal.generated.h"
 
 class UBoxComponent;
 class UStaticMeshComponent;
 
 UCLASS()
-class R1_API AR1Portal : public AActor
+class R1_API AR1Portal : public AActor, public IR1HighlightInterface, public IR1InteractionInterface
 {
 	GENERATED_BODY()
 	
@@ -20,6 +22,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Highlight() override;
+	virtual void UnHighlight() override;
+	virtual UPrimitiveComponent* GetInteractTrigger() override;
 
 public:
 	// 문의 루트 컴포넌트

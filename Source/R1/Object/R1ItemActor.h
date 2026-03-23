@@ -6,10 +6,11 @@
 #include "GameFramework/Actor.h"
 #include "R1Define.h"
 #include "Interface/R1HighlightInterface.h"
+#include "Interface/R1InteractionInterface.h"
 #include "R1ItemActor.generated.h"
 
 UCLASS()
-class R1_API AR1ItemActor : public AActor, public IR1HighlightInterface
+class R1_API AR1ItemActor : public AActor, public IR1HighlightInterface, public IR1InteractionInterface
 {
 	GENERATED_BODY()
 public:
@@ -21,6 +22,8 @@ public:
 	virtual void Highlight() override;
 	virtual void UnHighlight() override;
 
+	virtual void Interact_Implementation(class AR1PlayerController* Interactor) override;
+	virtual UPrimitiveComponent* GetInteractTrigger() override;
 public:
 	// 🌟 머리 위에 아이템 이름을 띄워줄 UI 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
