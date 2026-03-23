@@ -10,6 +10,8 @@
 #include "Data/R1ItemAssetData.h"
 #include "Item/R1ItemTooltip.h"
 
+#include "Player/R1PlayerController.h"
+
 AR1ItemActor::AR1ItemActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -70,6 +72,23 @@ void AR1ItemActor::UnHighlight()
 	}
 
 	bHighlighted = false;
+}
+
+void AR1ItemActor::Interact_Implementation(AR1PlayerController* Interactor)
+{
+	if (!Interactor) return;
+
+	// 매개변수로 받은 플레이어 컨트롤러가 현재 조종 중인 캐릭터(Pawn)를 가져옵니다.
+	if (AR1Player* PlayerCharacter = Cast<AR1Player>(Interactor->GetPawn()))
+	{
+		// 기존에 잘 만들어두신 루팅(획득) 함수를 그대로 호출!
+		OnLootAttempted(PlayerCharacter);
+	}
+}
+
+UPrimitiveComponent* AR1ItemActor::GetInteractTrigger()
+{
+	return SphereComp;
 }
 
 void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, int32 InCount)

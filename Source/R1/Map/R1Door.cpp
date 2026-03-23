@@ -39,6 +39,28 @@ void AR1Door::BeginPlay()
 	}
 }
 
+void AR1Door::Highlight()
+{
+	if (DoorMesh)
+	{
+		DoorMesh->SetRenderCustomDepth(true);
+		DoorMesh->SetCustomDepthStencilValue(252); // 하이라이트 색상 설정 (프로젝트 설정에 따라 다름)
+	}
+}
+
+void AR1Door::UnHighlight()
+{
+	if (DoorMesh)
+	{
+		DoorMesh->SetRenderCustomDepth(false);
+	}
+}
+
+UPrimitiveComponent* AR1Door::GetInteractTrigger()
+{
+	return TriggerBox;
+}
+
 void AR1Door::SetupDoorConnection(int32 InTargetNodeID)
 {
 	TargetNodeID = InTargetNodeID;

@@ -60,9 +60,8 @@ protected:
 	TObjectPtr<UCanvasPanel> CanvasPanel_Entries;
 
 private:
-	// 💡 상점은 6 x 3 고정 크기입니다!
-	int32 X_COUNT = 6;
-	int32 Y_COUNT = 3;
+	int32 X_COUNT = 10;
+	int32 Y_COUNT = 5;
 
 	UPROPERTY()
 	TObjectPtr<AR1MerchantNPC> CurrentNPC;

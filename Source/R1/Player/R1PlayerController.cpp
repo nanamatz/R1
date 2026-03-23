@@ -17,12 +17,12 @@
 
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1ItemInstance.h"
+#include "Object/R1ItemActor.h"
 
 #include "Data/R1InputData.h"
 #include "R1GameplayTags.h"
 #include "UI/R1HUD.h"
-#include "Object/R1ItemActor.h"
-
+#include "Interface/R1InteractionInterface.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 
 AR1PlayerController::AR1PlayerController()
@@ -246,9 +246,6 @@ void AR1PlayerController::TickCursorTrace()
 	SwitchCursorType(OutCursorHit);
 
 	AActor* LocalHighlightActor = OutCursorHit.GetActor();
-
-	// 🌟 1. 이 액터가 우리가 상호작용할 수 있는 대상인가? (인터페이스 상속 여부로 확인!)
-		// (질문자님 말씀대로 HitActor->ActorHasTag(FName("Enemy")) || HitActor->ActorHasTag(FName("Item")) 로 하셔도 완벽합니다!)
 	IR1HighlightInterface* HighlightableActor = Cast<IR1HighlightInterface>(LocalHighlightActor);
 
 	if (HighlightableActor)
@@ -283,30 +280,6 @@ void AR1PlayerController::TickCursorTrace()
 			HighlightActor = nullptr;
 		}
 	}
-
-	/*if (LocalHighlightActor == nullptr)
-	{
-		if (HighlightActor)
-		{
-			HighlightActor->UnHighlight();
-		}
-	}
-	else
-	{
-		if (HighlightActor)
-		{
-			if (HighlightActor != LocalHighlightActor)
-			{
-				HighlightActor->UnHighlight();
-				LocalHighlightActor->Highlight();
-			}
-		}
-		else
-		{
-			LocalHighlightActor->Highlight();
-		}
-	}
-	HighlightActor = LocalHighlightActor;*/
 }
 
 void AR1PlayerController::ChaseTargetAndAttack()
@@ -328,7 +301,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 
 	TargetAttackActor = Cast<AR1Character>(TargetActor);
 	
-	if (TargetAttackActor)  // ← null 체크 추가
+	if (TargetAttackActor)
 	{
 		FVector Direction = TargetAttackActor->GetActorLocation() - R1Player->GetActorLocation();
 
@@ -349,25 +322,52 @@ void AR1PlayerController::ChaseTargetAndAttack()
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
 	}
-	else if (AR1ItemActor* TargetItem = Cast<AR1ItemActor>(TargetActor))
+	// 🌟 2. 몬스터가 아니라면, 상호작용 가능한 대상(인터페이스 보유)인지 확인!
+	else if (IR1InteractionInterface* InteractableTarget = Cast<IR1InteractionInterface>(TargetActor))
 	{
-		FVector Direction = TargetItem->GetActorLocation() - R1Player->GetActorLocation();
+		bool bIsInRange = false;
 
-		if (Direction.Length() < 150.0f)
+		UPrimitiveComponent* TriggerComp = InteractableTarget->GetInteractTrigger();
+
+		if (TriggerComp)
+		{
+			// 💡 1순위 검사: 플레이어의 캡슐이 대상의 트리거 컴포넌트와 물리적으로 겹쳐있는가? (Lyra 표준 방식)
+			bIsInRange = TriggerComp->IsOverlappingActor(R1Player);
+
+			// 💡 2순위 보정: 길찾기(NavMesh) 오차로 인해 아주 미세하게 트리거 테두리 밖에 멈추는 현상 방지용 (테두리 20.0f 이내 허용)
+			if (!bIsInRange)
+			{
+				FVector ClosestPoint = TriggerComp->Bounds.GetBox().GetClosestPointTo(R1Player->GetActorLocation());
+				if (FVector::Dist2D(R1Player->GetActorLocation(), ClosestPoint) < 20.0f)
+				{
+					bIsInRange = true;
+				}
+			}
+		}
+		else
+		{
+			// 트리거 컴포넌트를 세팅하지 않은 액터를 위한 예비(Fallback) 로직
+			FVector ClosestPoint = TargetActor->GetComponentsBoundingBox().GetClosestPointTo(R1Player->GetActorLocation());
+			if (FVector::Dist2D(R1Player->GetActorLocation(), ClosestPoint) < 80.0f)
+			{
+				bIsInRange = true;
+			}
+		}
+		if (bIsInRange)
 		{
 			StopMovement();
 			bMousePressed = false;
 
-			TargetItem->OnLootAttempted(R1Player);
+			IR1InteractionInterface::Execute_Interact(TargetActor, this);
 			TargetActor = nullptr;
 		}
 		else
 		{
-			CacheDestination = TargetItem->GetActorLocation();
+			// 아직 범위 밖이라면 트리거 중심을 향해 계속 이동
+			CacheDestination = TargetActor->GetActorLocation();
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
 	}
-	
 }
 
 void AR1PlayerController::SwitchCursorType(FHitResult& OutHit)

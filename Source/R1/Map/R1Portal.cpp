@@ -37,6 +37,28 @@ void AR1Portal::BeginPlay()
 	}
 }
 
+void AR1Portal::Highlight()
+{
+	if (PortalMesh)
+	{
+		PortalMesh->SetRenderCustomDepth(true);
+		PortalMesh->SetCustomDepthStencilValue(252); // 하이라이트 색상 설정 (프로젝트 설정에 따라 다름)
+	}
+}
+
+void AR1Portal::UnHighlight()
+{
+	if (PortalMesh)
+	{
+		PortalMesh->SetRenderCustomDepth(false);
+	}
+}
+
+UPrimitiveComponent* AR1Portal::GetInteractTrigger()
+{
+	return TriggerBox;
+}
+
 void AR1Portal::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// 겹친 액터가 플레이어인지 확인

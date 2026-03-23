@@ -3,14 +3,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interface/R1HighlightInterface.h"
+#include "Interface/R1InteractionInterface.h"
 #include "R1MerchantNPC.generated.h"
 
 class UR1ItemAssetData;
 class UR1ItemPoolData;
 class UR1ItemInstance;
+class UBoxComponent;
 
 UCLASS()
-class R1_API AR1MerchantNPC : public AActor, public IR1HighlightInterface
+class R1_API AR1MerchantNPC : public AActor, public IR1HighlightInterface, public IR1InteractionInterface
 {
 	GENERATED_BODY()
 	
@@ -24,6 +26,8 @@ public:
 	// IR1HighlightInterface 구현
 	virtual void Highlight() override;
 	virtual void UnHighlight() override;
+	virtual void Interact_Implementation(class AR1PlayerController* Interactor) override;
+	virtual UPrimitiveComponent* GetInteractTrigger() override;
 
 	// 상호작용 함수
 	UFUNCTION(BlueprintCallable, Category = "Merchant")
@@ -46,6 +50,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Merchant")
 	TObjectPtr<UStaticMeshComponent> MeshComp;
 
+	UPROPERTY(VisibleAnywhere, Category = "Merchant")
+	TObjectPtr<UBoxComponent> InteractTrigger;
+
 	// 상인이 팔 아이템들 (3개 고정)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Merchant")
 	TArray<TObjectPtr<UR1ItemInstance>> ItemsForSale;
@@ -53,4 +60,7 @@ protected:
 	// 아이템을 뽑아올 풀 (에디터에서 할당)
 	UPROPERTY(EditAnywhere, Category = "Merchant")
 	TObjectPtr<UR1ItemPoolData> ItemPool;
+private:
+	UPROPERTY(EditAnywhere)
+	int32 CuratedItemCounts = 5;
 };

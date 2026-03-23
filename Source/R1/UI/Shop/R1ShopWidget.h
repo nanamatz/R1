@@ -26,6 +26,7 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 	// 닫기 버튼 클릭 시 호출
 	UFUNCTION()
@@ -37,4 +38,6 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> Button_Close;
+
+
 };

@@ -32,6 +32,15 @@ void UR1ShopWidget::NativeConstruct()
 	}
 }
 
+FReply UR1ShopWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+
+	// 🌟 좌클릭이나 우클릭 시 여기서 이벤트를 '소모(Handled)'하여 
+	// 마우스 클릭이 게임 월드(PlayerController)로 넘어가는 것을 완벽히 막습니다!
+	return FReply::Handled();
+}
+
 void UR1ShopWidget::OnCloseButtonClicked()
 {
 	APlayerController* PC = GetOwningPlayer();

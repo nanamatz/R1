@@ -29,30 +29,32 @@ void UR1ShopSlotsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (!GridPanel_Slots || !SlotWidgetClass) return;
+	if (!GridPanel_Slots || !SlotWidgetClass || !CanvasPanel_Entries || !EntryWidgetClass) return;
 
-	GridPanel_Slots->ClearChildren();
-	SlotWidgets.Empty();
+	//GridPanel_Slots->ClearChildren();
+	//SlotWidgets.Empty();
 
-	// 1. 6x3 사이즈의 빈 슬롯 배경을 생성하여 UniformGridPanel에 채워 넣습니다.
+	SlotWidgets.SetNum(X_COUNT * Y_COUNT);
+	EntryWidgets.SetNum(X_COUNT * Y_COUNT);
+
 	for (int32 y = 0; y < Y_COUNT; ++y)
 	{
 		for (int32 x = 0; x < X_COUNT; ++x)
 		{
-			UR1InventroySlotWidget* NewSlot = CreateWidget<UR1InventroySlotWidget>(this, SlotWidgetClass);
-			if (NewSlot)
+			int32 index = y * X_COUNT + x;
+
+			// 🌟 수정 1: this 대신 GetOwningPlayer()를 사용하여 DPI 스케일링 문제를 차단합니다.
+			UR1InventroySlotWidget* SlotWidget = CreateWidget<UR1InventroySlotWidget>(GetOwningPlayer(), SlotWidgetClass);
+			if (SlotWidget == nullptr)
 			{
-				// UniformGridPanel에 자식으로 추가하고 반환된 Slot 객체를 통해 행/열을 지정합니다.
-				UUniformGridSlot* GridSlot = GridPanel_Slots->AddChildToUniformGrid(NewSlot);
-				if (GridSlot)
-				{
-					GridSlot->SetRow(y);
-					GridSlot->SetColumn(x);
-				}
-				SlotWidgets.Add(NewSlot);
+				continue;
 			}
+			SlotWidgets[index] = SlotWidget;
+
+			GridPanel_Slots->AddChildToUniformGrid(SlotWidget, y, x);
 		}
 	}
+	RefreshShopUI();
 }
 
 bool UR1ShopSlotsWidget::NativeOnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
@@ -112,11 +114,11 @@ void UR1ShopSlotsWidget::RefreshShopUI()
 	if (!CurrentNPC || !CanvasPanel_Entries || !EntryWidgetClass) return;
 
 	CanvasPanel_Entries->ClearChildren();
-	EntryWidgets.Empty();
 
-	const float SlotPixelSize = Item::UnitInventorySlotSize.X; // 🌟 유저님의 유닛 슬롯 사이즈 사용
+	// 🌟 [수정 1] 인벤토리와 동일하게 EntryWidgets 배열을 그리드 크기만큼 꽉 채워서 초기화
+	EntryWidgets.Init(nullptr, X_COUNT * Y_COUNT);
 
-	// 💡 상점 내 빈칸 배치를 위한 임시 1차원 배열(그리드 맵)을 생성합니다.
+	// 상점 내 빈칸 배치를 위한 임시 1차원 배열(그리드 맵)
 	TArray<bool> ShopGridMap;
 	ShopGridMap.Init(false, X_COUNT * Y_COUNT);
 
@@ -124,64 +126,69 @@ void UR1ShopSlotsWidget::RefreshShopUI()
 	{
 		if (!ShopItem) continue;
 
-		UR1InventoryEntryWidget* NewEntry = CreateWidget<UR1InventoryEntryWidget>(this, EntryWidgetClass);
-		if (NewEntry)
+		FIntPoint ItemSize = ShopItem->GetItemSize();
+		FIntPoint FoundPos(0, 0);
+		bool bFound = false;
+
+		// --- [빈 공간 찾는 테트리스 로직 유지] ---
+		for (int32 y = 0; y <= Y_COUNT - ItemSize.Y; ++y)
 		{
-			NewEntry->Init(this, ShopItem, ShopItem->ItemCount);
-
-			UCanvasPanelSlot* CanvasSlot = CanvasPanel_Entries->AddChildToCanvas(NewEntry);
-			if (CanvasSlot)
+			for (int32 x = 0; x <= X_COUNT - ItemSize.X; ++x)
 			{
-				CanvasSlot->SetAutoSize(true);
-
-				// 🌟 빈 칸(테트리스 공간) 찾기 로직
-				FIntPoint ItemSize = ShopItem->GetItemSize();
-				FIntPoint FoundPos(0, 0);
-				bool bFound = false;
-
-				for (int32 y = 0; y <= Y_COUNT - ItemSize.Y; ++y)
+				bool bCanFit = true;
+				for (int32 iy = 0; iy < ItemSize.Y; ++iy)
 				{
-					for (int32 x = 0; x <= X_COUNT - ItemSize.X; ++x)
+					for (int32 ix = 0; ix < ItemSize.X; ++ix)
 					{
-						bool bCanFit = true;
-						// 해당 좌표에 아이템 사이즈만큼 빈 공간이 있는지 검사
-						for (int32 iy = 0; iy < ItemSize.Y; ++iy)
+						if (ShopGridMap[(y + iy) * X_COUNT + (x + ix)])
 						{
-							for (int32 ix = 0; ix < ItemSize.X; ++ix)
-							{
-								if (ShopGridMap[(y + iy) * X_COUNT + (x + ix)])
-								{
-									bCanFit = false;
-									break;
-								}
-							}
-							if (!bCanFit) break;
-						}
-
-						// 빈 공간을 찾았다면 해당 구역을 '점유 상태'로 마킹하고 좌표를 기록
-						if (bCanFit)
-						{
-							for (int32 iy = 0; iy < ItemSize.Y; ++iy)
-							{
-								for (int32 ix = 0; ix < ItemSize.X; ++ix)
-								{
-									ShopGridMap[(y + iy) * X_COUNT + (x + ix)] = true;
-								}
-							}
-							FoundPos = FIntPoint(x, y);
-							bFound = true;
-							break;
+							bCanFit = false; break;
 						}
 					}
-					if (bFound) break;
+					if (!bCanFit) break;
 				}
 
-				// 찾은 빈칸 좌표를 픽셀 단위로 변환하여 캔버스에 배치합니다.
-				FVector2D ItemPixelPos(FoundPos.X * SlotPixelSize, FoundPos.Y * SlotPixelSize);
-				CanvasSlot->SetPosition(ItemPixelPos);
+				if (bCanFit)
+				{
+					for (int32 iy = 0; iy < ItemSize.Y; ++iy)
+					{
+						for (int32 ix = 0; ix < ItemSize.X; ++ix)
+						{
+							ShopGridMap[(y + iy) * X_COUNT + (x + ix)] = true;
+						}
+					}
+					FoundPos = FIntPoint(x, y);
+					bFound = true;
+					break;
+				}
 			}
+			if (bFound) break;
+		}
+		// ----------------------------------------
 
-			EntryWidgets.Add(NewEntry);
+		// 자리(FoundPos)를 찾았다면, 인벤토리와 100% 동일한 방식으로 위젯을 생성하고 부착합니다.
+		if (bFound)
+		{
+			// 🌟 [수정 2] this 대신 GetOwningPlayer() 사용
+			UR1InventoryEntryWidget* NewEntry = CreateWidget<UR1InventoryEntryWidget>(GetOwningPlayer(), EntryWidgetClass);
+			if (NewEntry)
+			{
+				// 🌟 [수정 3] .Add()가 아니라 인벤토리처럼 정확한 인덱스에 할당!
+				int32 SlotIndex = FoundPos.Y * X_COUNT + FoundPos.X;
+				EntryWidgets[SlotIndex] = NewEntry;
+
+				UCanvasPanelSlot* CanvasSlot = CanvasPanel_Entries->AddChildToCanvas(NewEntry);
+				if (CanvasSlot)
+				{
+					// 인벤토리의 OnInventoryEntryChanged 로직과 완벽하게 동일!
+					CanvasSlot->SetAutoSize(true);
+
+					// 🌟 [수정 4] SlotPixelSize 변수 대신, 인벤토리와 동일하게 하드코딩 50을 곱함!
+					CanvasSlot->SetPosition(FVector2D(FoundPos.X * 50.0f, FoundPos.Y * 50.0f));
+				}
+
+				NewEntry->Init(this, ShopItem, ShopItem->ItemCount);
+			}
 		}
 	}
 }
