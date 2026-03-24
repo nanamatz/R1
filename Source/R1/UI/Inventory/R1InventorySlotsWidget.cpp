@@ -193,75 +193,15 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 	UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (Inventory)
 	{
-		// [신규 분기] 🌟 외부(상점)에서 드래그 해온 경우 판별
-		// 내 그리드 좌표에도 없고(-1, -1), 내 장비창에서도 오지 않았다면 상점 물건입니다.
 		bool bIsFromShop = (Inventory->GetItemPosition(DragDrop->ItemInstance) == FIntPoint(-1, -1) && DragDrop->FromEquipmentSlot == ER1EquipmentSlot::None);
-
 		if (bIsFromShop && Inventory->bIsShopOpen)
 		{
-			UR1ItemAssetData* Data = DragDrop->ItemInstance->GetItemData();
-			int32 Price = Data->BaseValue * DragDrop->ItemInstance->ItemCount;
-
-			// 1. 지갑 확인
-			if (Inventory->Gold < Price)
+			if (Inventory->BuyItemAt(DragDrop->ItemInstance, ToItemSlotPos))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("골드가 부족하여 아이템을 구매할 수 없습니다. 필요: %d, 보유: %d"), Price, Inventory->Gold);
-				return false;
-			}
-
-			// 2. 선 결제 진행 (돈부터 뺍니다)
-			Inventory->ConsumeGold(Price);
-			UE_LOG(LogTemp, Log, TEXT("상점 아이템 구매! (-%d 골드)"), Price);
-
-			// 3. 드롭한 위치(ToItemSlotPos)에 자리가 있는지 최우선 확인
-			if (Inventory->CanAddItemAt(ItemSize, ToItemSlotPos))
-			{
-				Inventory->Items.Add(DragDrop->ItemInstance);
-				Inventory->AddItemToGrid(DragDrop->ItemInstance, ToItemSlotPos);
-				Inventory->OnInventoryUpdated.Broadcast();
 				return true;
 			}
-			else
-			{
-				// 4. 예외 처리 1: 드롭한 위치에 자리가 없다면, 가방 내 다른 빈 공간을 찾아본다.
-				FIntPoint EmptyPos;
-				if (Inventory->FindEmptySlot(ItemSize, EmptyPos))
-				{
-					Inventory->Items.Add(DragDrop->ItemInstance);
-					Inventory->AddItemToGrid(DragDrop->ItemInstance, EmptyPos);
-					Inventory->OnInventoryUpdated.Broadcast();
-					UE_LOG(LogTemp, Warning, TEXT("지정한 위치에 자리가 없어 빈 공간에 자동으로 넣었습니다."));
-					return true;
-				}
-				else
-				{
-					// 5. 예외 처리 2: 가방 전체가 꽉 찼다면 발밑에 드롭 (월드 스폰)
-					UE_LOG(LogTemp, Warning, TEXT("인벤토리가 완전히 꽉 찼습니다! 아이템을 발밑에 떨어뜨립니다."));
-
-					if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
-					{
-						if (APawn* PlayerPawn = PC->GetPawn())
-						{
-							FVector SpawnLocation = PlayerPawn->GetActorLocation();
-							SpawnLocation.X += FMath::RandRange(-100.0f, 100.0f);
-							SpawnLocation.Y += FMath::RandRange(-100.0f, 100.0f);
-							SpawnLocation.Z += 50.0f;
-
-							FActorSpawnParameters SpawnParams;
-							SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-							AR1ItemActor* DroppedItemActor = GetWorld()->SpawnActor<AR1ItemActor>(AR1ItemActor::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnParams);
-							if (DroppedItemActor)
-							{
-								DroppedItemActor->InitItem(Data, DragDrop->ItemInstance->ItemRarity, DragDrop->ItemInstance->ItemCount);
-							}
-						}
-					}
-					return true; // 어쨌든 유저가 돈을 내고 소유권이 넘어왔으므로 거래 자체는 true 반환
-				}
-			}
+			return false;
 		}
-		// 💡 기존 로직: 장비창에서 드래그 해온 경우 (장착 해제)
 		else if (DragDrop->FromEquipmentSlot != ER1EquipmentSlot::None)
 		{
 			if (Inventory->CanAddItemAt(ItemSize, ToItemSlotPos))

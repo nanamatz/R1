@@ -191,8 +191,8 @@ void UR1ShopSlotsWidget::RefreshShopUI()
 					// 인벤토리의 OnInventoryEntryChanged 로직과 완벽하게 동일!
 					CanvasSlot->SetAutoSize(true);
 
-					// 🌟 [수정 4] SlotPixelSize 변수 대신, 인벤토리와 동일하게 하드코딩 50을 곱함!
-					CanvasSlot->SetPosition(FVector2D(FoundPos.X * 50.0f, FoundPos.Y * 50.0f));
+					//CanvasSlot->SetPosition(FVector2D(FoundPos.X * 50.0f, FoundPos.Y * 50.0f));
+					CanvasSlot->SetPosition(FVector2D(FoundPos.X, FoundPos.Y) * Item::UnitInventorySlotSize);
 				}
 
 				NewEntry->Init(this, ShopItem, ShopItem->ItemCount);

@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -88,8 +86,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void SellItem(UR1ItemInstance* Item, int32 Quantity = 1);
 
+	// 1. 좌표 없이 호출할 때 (자동으로 빈칸 찾기용)
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool AddItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common, int32 Count = 1);
+
+	// 2. 좌표를 지정해서 호출할 때 (드래그 앤 드롭용) - 내부 처리용이므로 UFUNCTION 제외 가능
+	bool AddItemAt(class UR1ItemAssetData* InItemData, EItemRarity Rarity, int32 InCount, FIntPoint PreferredPos);
+
+	// BuyItem도 동일하게 구성
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool BuyItem(class UR1ItemInstance* ItemToBuy);
+
+	bool BuyItemAt(class UR1ItemInstance* ItemToBuy, FIntPoint PreferredPos);
 
 public:
 	UPROPERTY()
@@ -115,16 +123,11 @@ public:
 	TMap <ER1EquipmentSlot, TObjectPtr<UR1ItemInstance>> EquippedItems;
 
 public:
-	// 🌟 외부에서(예: 루팅할 때) 쉽게 아이템을 넣을 수 있는 만능 함수 추가
-	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool AddItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common, int32 Count = 1);
 
-	// 🌟 세이브/로드 시 숫자 ID 대신 데이터 에셋 포인터를 받도록 수정
 	void LoadItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos);
 	void LoadEquippedItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity, ER1EquipmentSlot Slot);
 
 public:
-	// 💡 아이템 크기에 맞는 빈 공간을 찾아 좌표를 반환해 주는 함수
 	bool FindEmptySlot(const FIntPoint& ItemSize, FIntPoint& OutPos);
 
 public:

@@ -242,7 +242,12 @@ void UR1InventorySubsystem::ClearInventory()
 	OnInventoryUpdated.Broadcast();
 }
 
-bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Rarity,int32 InCount)
+bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, int32 InCount)
+{
+	return AddItemAt(InItemData, Rarity, InCount, FIntPoint(-1, -1));
+}
+
+bool UR1InventorySubsystem::AddItemAt(UR1ItemAssetData* InItemData, EItemRarity Rarity, int32 InCount, FIntPoint PreferredPos)
 {
 	if (!InItemData || InCount <= 0) return false;
 
@@ -292,6 +297,16 @@ bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Ra
 
 	NewItem->ItemCount = RemainingCount;
 
+	// 사용자가 원하는 위치가 있고, 거기에 넣을 수 있다면 무조건 1순위로 넣는다!
+	if (PreferredPos != FIntPoint(-1, -1) && CanAddItemAt(NewItem->GetItemSize(), PreferredPos))
+	{
+		Items.Add(NewItem);
+		AddItemToGrid(NewItem, PreferredPos);
+		OnInventoryUpdated.Broadcast();
+		return true;
+	}
+
+	// 원하는 위치에 못 넣거나(막힘), 지정된 위치가 없다면 기존처럼 빈 공간을 찾아 넣는다.
 	FIntPoint EmptyPos;
 	if (FindEmptySlot(NewItem->GetItemSize(), EmptyPos))
 	{
@@ -303,6 +318,75 @@ bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Ra
 
 	NewItem->MarkAsGarbage();
 	return false;
+}
+
+bool UR1InventorySubsystem::BuyItem(UR1ItemInstance* ItemToBuy)
+{
+	return BuyItemAt(ItemToBuy, FIntPoint(-1, -1));
+}
+
+bool UR1InventorySubsystem::BuyItemAt(UR1ItemInstance* ItemToBuy, FIntPoint PreferredPos)
+{
+	if (!ItemToBuy || !ItemToBuy->GetItemData()) return false;
+
+	int32 Price = ItemToBuy->GetItemData()->BaseValue * ItemToBuy->ItemCount;
+
+
+	if (Gold < Price)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("골드 부족: 필요 %d, 현재 %d"), Price, Gold);
+		return false;
+	}
+	ConsumeGold(Price);
+
+	if (CurrentMerchantNPC)
+	{
+		CurrentMerchantNPC->RemoveItemFromSale(ItemToBuy);
+	}
+
+	OnShopUpdated.Broadcast();
+
+	if (AddItemAt(ItemToBuy->GetItemData(), ItemToBuy->ItemRarity, ItemToBuy->ItemCount, PreferredPos))
+	{
+		return true;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 찼습니다! 아이템을 발밑에 떨어뜨립니다."));
+
+	if (UWorld* World = GetWorld())
+	{
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			if (APawn* PlayerPawn = PC->GetPawn())
+			{
+				// 플레이어의 현재 위치를 가져옵니다.
+				FVector SpawnLocation = PlayerPawn->GetActorLocation();
+
+				// 발밑 주변에 겹치지 않게 무작위로 흩뿌려지도록 오프셋을 줍니다 (반경 100 범위)
+				SpawnLocation.X += FMath::RandRange(-100.0f, 100.0f);
+				SpawnLocation.Y += FMath::RandRange(-100.0f, 100.0f);
+				SpawnLocation.Z += 50.0f; // 바닥에 파묻히지 않게 Z축 살짝 띄움
+
+				FRotator SpawnRotation = FRotator::ZeroRotator;
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+				UClass* ItemActorClass = StaticLoadClass(AR1ItemActor::StaticClass(), nullptr, TEXT("/Script/Engine.Blueprint'/Game/Blueprints/Interactable/BP_ItemActor.BP_ItemActor_C'"));
+				if (ItemActorClass)
+				{
+					AR1ItemActor* DroppedItemActor = World->SpawnActor<AR1ItemActor>(ItemActorClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+					if (DroppedItemActor)
+					{
+						// 스폰된 아이템 액터에 데이터를 주입하여 시각화 및 루팅 가능 상태로 만듭니다.
+						DroppedItemActor->InitItem(ItemToBuy->GetItemData(), ItemToBuy->ItemRarity, ItemToBuy->ItemCount);
+					}
+				}
+
+			}
+		}
+	}
+	return true;
 }
 
 void UR1InventorySubsystem::LoadItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos)
@@ -401,7 +485,7 @@ void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
 
 	int32 UnitValue = Item->GetItemData()->BaseValue;
 	int32 SaleValue = FMath::Max(1, FMath::FloorToInt(UnitValue * 0.7f)) * Quantity;
-	
+
 	AddGold(SaleValue);
 
 	// 아이템 개수 차감
@@ -419,68 +503,4 @@ void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
 	}
 
 	OnInventoryUpdated.Broadcast();
-}
-
-bool UR1InventorySubsystem::BuyItem(UR1ItemInstance* ItemToBuy)
-{
-	if (!ItemToBuy || !ItemToBuy->GetItemData()) return false;
-
-	int32 Price = ItemToBuy->GetItemData()->BaseValue * ItemToBuy->ItemCount;
-
-
-	if (Gold < Price)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("골드 부족: 필요 %d, 현재 %d"), Price, Gold);
-		return false;
-	}
-	ConsumeGold(Price);
-
-	if (CurrentMerchantNPC)
-	{
-		CurrentMerchantNPC->RemoveItemFromSale(ItemToBuy);
-	}
-
-	OnShopUpdated.Broadcast();
-
-	if (AddItem(ItemToBuy->GetItemData(), ItemToBuy->ItemRarity, ItemToBuy->ItemCount))
-	{
-		return true;
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 찼습니다! 아이템을 발밑에 떨어뜨립니다."));
-
-	if (UWorld* World = GetWorld())
-	{
-		if (APlayerController* PC = World->GetFirstPlayerController())
-		{
-			if (APawn* PlayerPawn = PC->GetPawn())
-			{
-				// 플레이어의 현재 위치를 가져옵니다.
-				FVector SpawnLocation = PlayerPawn->GetActorLocation();
-
-				// 발밑 주변에 겹치지 않게 무작위로 흩뿌려지도록 오프셋을 줍니다 (반경 100 범위)
-				SpawnLocation.X += FMath::RandRange(-100.0f, 100.0f);
-				SpawnLocation.Y += FMath::RandRange(-100.0f, 100.0f);
-				SpawnLocation.Z += 50.0f; // 바닥에 파묻히지 않게 Z축 살짝 띄움
-
-				FRotator SpawnRotation = FRotator::ZeroRotator;
-				FActorSpawnParameters SpawnParams;
-				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-				UClass* ItemActorClass = StaticLoadClass(AR1ItemActor::StaticClass(), nullptr, TEXT("/Script/Engine.Blueprint'/Game/Blueprints/Interactable/BP_ItemActor.BP_ItemActor_C'"));
-				if (ItemActorClass)
-				{
-					AR1ItemActor* DroppedItemActor = World->SpawnActor<AR1ItemActor>(ItemActorClass, SpawnLocation, SpawnRotation, SpawnParams);
-
-					if (DroppedItemActor)
-					{
-						// 스폰된 아이템 액터에 데이터를 주입하여 시각화 및 루팅 가능 상태로 만듭니다.
-						DroppedItemActor->InitItem(ItemToBuy->GetItemData(), ItemToBuy->ItemRarity, ItemToBuy->ItemCount);
-					}
-				}
-
-			}
-		}
-	}
-	return true;
 }
