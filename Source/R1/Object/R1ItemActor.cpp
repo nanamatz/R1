@@ -118,7 +118,7 @@ void AR1ItemActor::OnLootAttempted(AR1Player* Looter)
 	if (!Looter || !ItemData) return;
 
 	UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
-	if (InvenSubsys && InvenSubsys->AddItem(ItemData, ItemRarity,ItemCount))
+	if (InvenSubsys && InvenSubsys->AddItemAt(ItemData, ItemRarity,ItemCount, FIntPoint(-1, -1)))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("아이템 획득: %s"), *ItemData->ItemName.ToString());
 		Destroy();
