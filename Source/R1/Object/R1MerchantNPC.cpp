@@ -2,6 +2,7 @@
 #include "Data/R1ItemAssetData.h"
 #include "Data/R1ItemPoolData.h"
 #include "Item/R1ItemInstance.h"
+#include "Character/R1Player.h"
 #include "UI/R1HUD.h" 
 #include "Kismet/GameplayStatics.h"
 #include "Player/R1PlayerController.h"
@@ -32,6 +33,29 @@ void AR1MerchantNPC::BeginPlay()
 
 	// 스폰 시점에 아이템을 딱 한 번만 생성해서 고정합니다.
 	GenerateShopItems();
+
+	if (InteractTrigger)
+	{
+		InteractTrigger->OnComponentEndOverlap.AddDynamic(this, &AR1MerchantNPC::OnInteractTriggerEndOverlap);
+	}
+}
+
+void AR1MerchantNPC::OnInteractTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	// 1. 범위를 벗어난 대상이 플레이어인지 확인합니다.
+	if (AR1Player* Player = Cast<AR1Player>(OtherActor))
+	{
+		// 2. 플레이어의 컨트롤러를 통해 HUD에 접근합니다.
+		if (AR1PlayerController* PC = Cast<AR1PlayerController>(Player->GetController()))
+		{
+			if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
+			{
+				HUD->CloseShopUI();
+
+				UE_LOG(LogTemp, Log, TEXT("플레이어가 상점 범위를 벗어나 UI를 닫습니다."));
+			}
+		}
+	}
 }
 
 void AR1MerchantNPC::Highlight()

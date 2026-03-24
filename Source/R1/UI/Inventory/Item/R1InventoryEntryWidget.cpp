@@ -126,7 +126,7 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 			// 🌟 A. [상점 -> 내 가방] 우클릭 시 즉시 구매!
 			if (bIsShopItem && Inventory->bIsShopOpen)
 			{
-				Inventory->BuyItem(ItemInstance->GetItemData(), ItemInstance->ItemRarity, ItemInstance->ItemCount);
+				Inventory->BuyItem(ItemInstance);
 				// (필요하다면 여기서 상인 NPC의 ItemsForSale 배열에서 아이템을 지우는 로직을 호출할 수 있습니다)
 				return FReply::Handled();
 			}

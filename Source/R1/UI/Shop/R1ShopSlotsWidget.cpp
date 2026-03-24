@@ -22,6 +22,14 @@ UR1ShopSlotsWidget::UR1ShopSlotsWidget(const FObjectInitializer& ObjectInitializ
 void UR1ShopSlotsWidget::InitShopGrid(AR1MerchantNPC* InNPC)
 {
 	CurrentNPC = InNPC;
+
+	if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
+	{
+		// NPC를 여러 번 클릭했을 때 중복으로 연결되는 것을 방지하기 위해 한 번 끊고 다시 연결합니다.
+		InvenSubsys->OnShopUpdated.RemoveDynamic(this, &UR1ShopSlotsWidget::RefreshShopUI);
+		InvenSubsys->OnShopUpdated.AddDynamic(this, &UR1ShopSlotsWidget::RefreshShopUI);
+	}
+
 	RefreshShopUI();
 }
 

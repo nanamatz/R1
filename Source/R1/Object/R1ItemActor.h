@@ -36,7 +36,8 @@ public:
 
 	// 플레이어가 다가와서 루팅(줍기)을 시도할 때 호출할 함수
 	void OnLootAttempted(class AR1Player* Looter);
-
+protected:
+	void UpdateTooltipUI();
 public:
 	// 마우스 클릭 및 상호작용 범위를 감지할 콜리전
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

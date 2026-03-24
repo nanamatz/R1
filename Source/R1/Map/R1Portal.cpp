@@ -44,10 +44,6 @@ void AR1Portal::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (TriggerBox)
-	{
-		TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AR1Portal::OnOverlapBegin);
-	}
 }
 
 void AR1Portal::Highlight()
