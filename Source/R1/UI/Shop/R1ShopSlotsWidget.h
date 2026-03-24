@@ -38,6 +38,7 @@ protected:
 
 private:
 	// 화면을 갱신하는 함수 (NPC의 현재 ShopInventory를 다시 그림)
+	UFUNCTION()
 	void RefreshShopUI();
 
 protected:

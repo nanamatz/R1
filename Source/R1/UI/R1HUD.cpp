@@ -118,8 +118,8 @@ void AR1HUD::BeginPlay()
                     UE_LOG(LogTemp, Error, TEXT("ShopSceneWidget 내부에 UR1ShopWidget 자식이 없습니다!"));
                 }
 
-                ShopSceneWidget->AddToViewport(10); // 인벤토리와 동일한 Z-Order 적용
-                ShopSceneWidget->SetVisibility(ESlateVisibility::Hidden); // 미리 숨겨둠
+                ShopSceneWidget->AddToViewport(10);
+                ShopSceneWidget->SetVisibility(ESlateVisibility::Hidden);
             }
         }
         if (AR1MapGenerator* MapGen = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
@@ -171,15 +171,10 @@ void AR1HUD::OpenShopUI(AR1MerchantNPC* MerchantNPC)
         ShopSceneWidget->SetVisibility(ESlateVisibility::Visible);
         bIsShopUIVisible = true;
 
-        // 🌟 상점이 열릴 때 인벤토리도 함께 엽니다.
-        if (!bIsInventoryUIVisible)
-        {
-            ToggleInventory();
-        }
-
         if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
         {
             InvenSubsys->bIsShopOpen = true;
+            InvenSubsys->CurrentMerchantNPC = MerchantNPC;
         }
 
     }
@@ -195,6 +190,7 @@ void AR1HUD::CloseShopUI()
         if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
         {
             InvenSubsys->bIsShopOpen = false;
+            InvenSubsys->CurrentMerchantNPC = nullptr;
         }
 
     }
@@ -203,6 +199,15 @@ void AR1HUD::CloseShopUI()
 void AR1HUD::ToggleInventory()
 {
     if (!InventoryWidgetClass || !InventoryUIWidget) return;
+
+    if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
+    {
+        if (InvenSubsys->bIsShopOpen)
+        {
+            CloseShopUI();
+            return;
+        }
+    }
 
     if (bIsInventoryUIVisible)
     {

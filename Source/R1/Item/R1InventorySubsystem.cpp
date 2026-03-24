@@ -6,6 +6,7 @@
 #include "System/R1EquipmentManagerComponent.h"
 #include "Data/R1ItemAssetData.h"
 #include "Object/R1ItemActor.h"
+#include "Object/R1MerchantNPC.h"
 
 void UR1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -398,7 +399,6 @@ void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
 {
 	if (!Item || !Item->GetItemData()) return;
 
-	// 판매 가격: 30% 할인 (70% 가격), 최소 1골드 보장
 	int32 UnitValue = Item->GetItemData()->BaseValue;
 	int32 SaleValue = FMath::Max(1, FMath::FloorToInt(UnitValue * 0.7f)) * Quantity;
 	
@@ -421,11 +421,12 @@ void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
 	OnInventoryUpdated.Broadcast();
 }
 
-bool UR1InventorySubsystem::BuyItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, int32 Count)
+bool UR1InventorySubsystem::BuyItem(UR1ItemInstance* ItemToBuy)
 {
-	if (!InItemData || Count <= 0) return false;
+	if (!ItemToBuy || !ItemToBuy->GetItemData()) return false;
 
-	int32 Price = InItemData->BaseValue * Count;
+	int32 Price = ItemToBuy->GetItemData()->BaseValue * ItemToBuy->ItemCount;
+
 
 	if (Gold < Price)
 	{
@@ -434,10 +435,18 @@ bool UR1InventorySubsystem::BuyItem(UR1ItemAssetData* InItemData, EItemRarity Ra
 	}
 	ConsumeGold(Price);
 
-	if (AddItem(InItemData, Rarity, Count))
+	if (CurrentMerchantNPC)
+	{
+		CurrentMerchantNPC->RemoveItemFromSale(ItemToBuy);
+	}
+
+	OnShopUpdated.Broadcast();
+
+	if (AddItem(ItemToBuy->GetItemData(), ItemToBuy->ItemRarity, ItemToBuy->ItemCount))
 	{
 		return true;
 	}
+
 	UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 찼습니다! 아이템을 발밑에 떨어뜨립니다."));
 
 	if (UWorld* World = GetWorld())
@@ -458,14 +467,18 @@ bool UR1InventorySubsystem::BuyItem(UR1ItemAssetData* InItemData, EItemRarity Ra
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-				// AR1ItemActor 스폰
-				AR1ItemActor* DroppedItemActor = World->SpawnActor<AR1ItemActor>(AR1ItemActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
-
-				if (DroppedItemActor)
+				UClass* ItemActorClass = StaticLoadClass(AR1ItemActor::StaticClass(), nullptr, TEXT("/Script/Engine.Blueprint'/Game/Blueprints/Interactable/BP_ItemActor.BP_ItemActor_C'"));
+				if (ItemActorClass)
 				{
-					// 스폰된 아이템 액터에 데이터를 주입하여 시각화 및 루팅 가능 상태로 만듭니다.
-					DroppedItemActor->InitItem(InItemData, Rarity, Count);
+					AR1ItemActor* DroppedItemActor = World->SpawnActor<AR1ItemActor>(ItemActorClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+					if (DroppedItemActor)
+					{
+						// 스폰된 아이템 액터에 데이터를 주입하여 시각화 및 루팅 가능 상태로 만듭니다.
+						DroppedItemActor->InitItem(ItemToBuy->GetItemData(), ItemToBuy->ItemRarity, ItemToBuy->ItemCount);
+					}
 				}
+
 			}
 		}
 	}

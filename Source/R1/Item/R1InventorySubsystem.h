@@ -8,6 +8,7 @@
 #include "R1InventorySubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShopUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
 class UR1ItemInstance;
 
@@ -71,31 +72,35 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnGoldChanged OnGoldChanged;
 
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
+	FOnShopUpdated OnShopUpdated;
 public:
 	// 골드 관리 함수
-	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	int32 GetGold() const { return Gold; }
 
-	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void AddGold(int32 Amount);
 
-	UFUNCTION(BlueprintCallable, Category = "Inventory|Gold")
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool ConsumeGold(int32 Amount);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void SellItem(UR1ItemInstance* Item, int32 Quantity = 1);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool BuyItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity = EItemRarity::Common, int32 Count = 1);
+	bool BuyItem(class UR1ItemInstance* ItemToBuy);
 
 public:
 	UPROPERTY()
 	int32 Gold = 0;
 
 public:
-	UPROPERTY(BlueprintReadWrite, Category = "Inventory|Shop")
+	UPROPERTY(BlueprintReadWrite, Category = "Inventory")
 	bool bIsShopOpen = false;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Inventory")
+	TObjectPtr<class AR1MerchantNPC> CurrentMerchantNPC;
 	// 전체 그리드를 1차원 배열로 관리 (크기: Columns * Rows)
 	// 비어있으면 nullptr, 누군가 차지하고 있으면 그 아이템의 포인터가 들어감
 	UPROPERTY()

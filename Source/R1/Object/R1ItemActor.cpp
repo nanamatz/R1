@@ -40,7 +40,7 @@ AR1ItemActor::AR1ItemActor()
 void AR1ItemActor::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 }
 
 void AR1ItemActor::Highlight()
@@ -104,19 +104,13 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 		{
 			MeshComp->SetStaticMesh(ItemData->ItemMesh);
 		}
-
-		UR1ItemTooltip* TooltipUI = Cast<UR1ItemTooltip>(TooltipWidget->GetUserWidgetObject());
-
-		if (TooltipUI)
-		{
-			// 데이터 에셋에 있는 아이템 이름을 UI로 쏴줍니다!
-			TooltipUI->SetItemInfo(FText::FromName(ItemData->ItemName), ItemRarity, ItemCount, ItemData->ItemType, ItemData->BaseValue, false);
-		}
 	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("ItemActor: 전달받은 ItemData가 Null입니다!"));
 	}
+
+	UpdateTooltipUI();
 }
 
 void AR1ItemActor::OnLootAttempted(AR1Player* Looter)
@@ -132,5 +126,33 @@ void AR1ItemActor::OnLootAttempted(AR1Player* Looter)
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("인벤토리가 가득 차서 먹을 수 없습니다!"));
+	}
+}
+
+void AR1ItemActor::UpdateTooltipUI()
+{
+	if (!TooltipWidget) return;
+
+	// 🌟 1. UI 알맹이가 생성 대기 중이라면, 지금 당장 만들라고 강제!
+	if (!TooltipWidget->GetUserWidgetObject())
+	{
+		TooltipWidget->InitWidget();
+	}
+
+	// 🌟 2. 안전하게 가져와서 데이터 주입
+	if (UR1ItemTooltip* Tooltip = Cast<UR1ItemTooltip>(TooltipWidget->GetUserWidgetObject()))
+	{
+		if (ItemData)
+		{
+			// 유저님의 완벽한 툴팁 포맷팅 함수 재활용
+			Tooltip->SetItemInfo(
+				FText::FromName(ItemData->ItemName),
+				ItemRarity,
+				ItemCount,
+				ItemData->ItemType,
+				ItemData->BaseValue,
+				false
+			);
+		}
 	}
 }
