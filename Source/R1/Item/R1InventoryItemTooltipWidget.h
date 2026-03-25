@@ -39,10 +39,17 @@ protected:
 	TObjectPtr<UTextBlock> Text_EquipSlotType;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> Text_Stats;
+	TObjectPtr<UTextBlock> Text_Price;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> Text_Price;
+	TObjectPtr<UTextBlock> Text_Skill;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UVerticalBox> VerticalBox_Stats;
+
+	// 에디터에서 방금 만든 Row 위젯 클래스를 할당할 변수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UR1StatRowWidget> StatRowClass;
 private:
 	FString GetStatNameByTag(const FGameplayTag& Tag);
 };

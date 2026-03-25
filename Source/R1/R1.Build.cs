@@ -28,7 +28,8 @@ public class R1 : ModuleRules
 			"Niagara",
             "Slate", 
 			"SlateCore",
-            "UMG"
+            "UMG",
+			"DeveloperSettings"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] 

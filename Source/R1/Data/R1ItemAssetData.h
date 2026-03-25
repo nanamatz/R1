@@ -64,7 +64,7 @@ public:
 	int32 BaseValue = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic", meta = (MultiLine = true))
-	FText ItemDescription;
+	TArray<FText> EffectDescriptions;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	TArray<ER1EquipmentSlot> EquipSlots;
