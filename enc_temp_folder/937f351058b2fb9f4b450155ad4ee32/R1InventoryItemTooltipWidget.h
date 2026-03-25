@@ -42,7 +42,16 @@ protected:
 	TObjectPtr<UTextBlock> Text_Stats;
 
 	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_Description;
+
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> Text_Price;
 private:
+	// Enum을 텍스트로 변환하는 헬퍼 함수들
+	FText GetItemTypeText(ER1ItemType ItemType);
+	FText GetEquipSlotText(ER1EquipmentSlot EquipSlot);
+	FSlateColor GetRarityColor(EItemRarity Rarity);
+	FText GetRarityText(EItemRarity Rarity);
+
 	FString GetStatNameByTag(const FGameplayTag& Tag);
 };

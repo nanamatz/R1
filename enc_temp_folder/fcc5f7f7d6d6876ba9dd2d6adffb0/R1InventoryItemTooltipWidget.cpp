@@ -105,16 +105,83 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 		}
 	}
 
+	// 6. 아이템 설명 (데이터가 없으면 압축)
+	if (Text_Description)
+	{
+		if (!Data->ItemDescription.IsEmpty())
+		{
+			Text_Description->SetText(Data->ItemDescription);
+			Text_Description->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			Text_Description->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
+
 	// 7. 가격 표시 (상점과 인벤토리의 문맥 차이 적용)
 	if (Text_Price)
 	{
 		int32 DisplayPrice = bIsShopContext ? (Data->BaseValue * ItemInstance->ItemCount) : (FMath::Max(1, FMath::FloorToInt(Data->BaseValue * 0.7f)) * ItemInstance->ItemCount);
 
-		FString ContextPrefix = TEXT("가격: ");
+		FString ContextPrefix = bIsShopContext ? TEXT("가격: ") : TEXT("가격: ");
 		FString FinalPriceText = FString::Printf(TEXT("%s%d"), *ContextPrefix, DisplayPrice);
 
 		Text_Price->SetText(FText::FromString(FinalPriceText));
 	}
+}
+
+FText UR1InventoryItemTooltipWidget::GetItemTypeText(ER1ItemType ItemType)
+{
+	switch (ItemType)
+	{
+	case ER1ItemType::Equipment: return FText::FromString(TEXT("장비: "));
+	case ER1ItemType::Consumable: return FText::FromString(TEXT("소모품"));
+	case ER1ItemType::Material: return FText::FromString(TEXT("재료"));
+	case ER1ItemType::Key: return FText::FromString(TEXT("열쇠"));
+	}
+	return FText::GetEmpty();
+}
+
+FText UR1InventoryItemTooltipWidget::GetEquipSlotText(ER1EquipmentSlot EquipSlot)
+{
+	switch (EquipSlot)
+	{
+	case ER1EquipmentSlot::Weapon: return FText::FromString(TEXT("무기"));
+	case ER1EquipmentSlot::Helmet: return FText::FromString(TEXT("머리"));
+	case ER1EquipmentSlot::Armor: return FText::FromString(TEXT("갑옷"));
+	case ER1EquipmentSlot::Glove: return FText::FromString(TEXT("장갑"));
+	case ER1EquipmentSlot::Ring1:
+	case ER1EquipmentSlot::Ring2: return FText::FromString(TEXT("반지"));
+	case ER1EquipmentSlot::Boots: return FText::FromString(TEXT("신발"));
+	}
+	return FText::GetEmpty();
+}
+
+FSlateColor UR1InventoryItemTooltipWidget::GetRarityColor(EItemRarity Rarity)
+{
+	switch (Rarity)
+	{
+	case EItemRarity::Common: return FSlateColor(FLinearColor(0.8f, 0.8f, 0.8f));
+	case EItemRarity::Uncommon: return FSlateColor(FLinearColor(0.1f, 0.8f, 0.1f));
+	case EItemRarity::Rare: return FSlateColor(FLinearColor(0.0f, 0.5f, 1.0f));
+	case EItemRarity::Epic: return FSlateColor(FLinearColor(0.7f, 0.0f, 1.0f));
+	case EItemRarity::Legendary: return FSlateColor(FLinearColor(1.0f, 0.5f, 0.0f));
+	}
+	return FSlateColor(FLinearColor(0.8f, 0.8f, 0.8f));
+}
+
+FText UR1InventoryItemTooltipWidget::GetRarityText(EItemRarity Rarity)
+{
+	switch (Rarity)
+	{
+	case EItemRarity::Common: return FText::FromString(TEXT("일반"));
+	case EItemRarity::Uncommon: return FText::FromString(TEXT("고급"));
+	case EItemRarity::Rare: return FText::FromString(TEXT("희귀"));
+	case EItemRarity::Epic: return FText::FromString(TEXT("영웅"));
+	case EItemRarity::Legendary: return FText::FromString(TEXT("전설"));
+	}
+	return FText::GetEmpty();
 }
 
 FString UR1InventoryItemTooltipWidget::GetStatNameByTag(const FGameplayTag& Tag)
