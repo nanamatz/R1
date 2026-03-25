@@ -7,6 +7,7 @@
 #include "Item/R1DragDropOperation.h"
 #include "Item/R1ItemInstance.h"
 #include "Item/R1InventorySubsystem.h"
+#include "Item/R1InventoryItemTooltipWidget.h"
 
 #include "Components/SizeBox.h"
 #include "Components/Image.h"
@@ -206,6 +207,17 @@ void UR1EquipmentSlotWidget::RefreshSlotUI()
 			Image_BGIcon->SetVisibility(ESlateVisibility::Hidden);
 			Image_BGIcon->SetRenderOpacity(0.f);
 		}
+
+		if (TooltipClass)
+		{
+			UR1InventoryItemTooltipWidget* TooltipWidget = CreateWidget<UR1InventoryItemTooltipWidget>(this, TooltipClass);
+			if (TooltipWidget)
+			{
+				// 상점이 아니고(false), 장착 중(true)이라고 알려줍니다.
+				TooltipWidget->SetupTooltip(EquippedItem, false, true);
+				SetToolTip(TooltipWidget);
+			}
+		}
 	}
 	else
 	{
@@ -216,5 +228,7 @@ void UR1EquipmentSlotWidget::RefreshSlotUI()
 
 		Image_BGIcon->SetRenderOpacity(1.0f);
 		Image_BGIcon->SetVisibility(ESlateVisibility::Visible);
+
+		SetToolTip(nullptr);
 	}
 }

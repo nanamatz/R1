@@ -38,6 +38,11 @@ public:
 	UFUNCTION()
 	void RefreshSlotUI();
 
+protected:
+	// 🌟 에디터에서 툴팁 위젯 클래스를 할당할 수 있게 해주는 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UR1InventoryItemTooltipWidget> TooltipClass;
+
 public:
 	// 💡 에디터에서 이 슬롯이 어떤 부위인지 설정할 수 있게 합니다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")

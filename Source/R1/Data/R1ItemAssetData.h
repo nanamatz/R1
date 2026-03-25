@@ -63,10 +63,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
 	int32 BaseValue = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic", meta = (MultiLine = true))
+	FText ItemDescription;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	TArray<ER1EquipmentSlot> EquipSlots;
 
 public:
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS")
 	TSubclassOf<UGameplayEffect> EquipStatEffect;
 
