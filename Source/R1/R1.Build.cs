@@ -26,7 +26,9 @@ public class R1 : ModuleRules
             "NavigationSystem",
 			"AIModule",
 			"Niagara",
-			"UMG"
+            "Slate", 
+			"SlateCore",
+            "UMG"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] 
