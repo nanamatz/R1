@@ -39,7 +39,7 @@ FText UR1ItemFunctionLibrary::GetItemTypeText(ER1ItemType ItemType)
 {
 	switch (ItemType)
 	{
-	case ER1ItemType::Equipment: return FText::FromString(TEXT("장비"));
+	case ER1ItemType::Equipment: return FText::FromString(TEXT("장비: "));
 	case ER1ItemType::Consumable: return FText::FromString(TEXT("소모품"));
 	case ER1ItemType::Material: return FText::FromString(TEXT("재료"));
 	case ER1ItemType::Key: return FText::FromString(TEXT("열쇠"));
@@ -52,7 +52,7 @@ FText UR1ItemFunctionLibrary::GetEquipSlotText(ER1EquipmentSlot EquipSlot)
 	switch (EquipSlot)
 	{
 	case ER1EquipmentSlot::Weapon: return FText::FromString(TEXT("무기"));
-	case ER1EquipmentSlot::Helmet: return FText::FromString(TEXT("머리"));
+	case ER1EquipmentSlot::Helmet: return FText::FromString(TEXT("투구"));
 	case ER1EquipmentSlot::Armor: return FText::FromString(TEXT("갑옷"));
 	case ER1EquipmentSlot::Glove: return FText::FromString(TEXT("장갑"));
 	case ER1EquipmentSlot::Ring1:

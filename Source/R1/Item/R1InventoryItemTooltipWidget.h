@@ -39,19 +39,17 @@ protected:
 	TObjectPtr<UTextBlock> Text_EquipSlotType;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> Text_Stats;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> Text_Description;
-
-	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> Text_Price;
-private:
-	// Enum을 텍스트로 변환하는 헬퍼 함수들
-	FText GetItemTypeText(ER1ItemType ItemType);
-	FText GetEquipSlotText(ER1EquipmentSlot EquipSlot);
-	FSlateColor GetRarityColor(EItemRarity Rarity);
-	FText GetRarityText(EItemRarity Rarity);
 
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_Skill;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UVerticalBox> VerticalBox_Stats;
+
+	// 에디터에서 방금 만든 Row 위젯 클래스를 할당할 변수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UR1StatRowWidget> StatRowClass;
+private:
 	FString GetStatNameByTag(const FGameplayTag& Tag);
 };

@@ -27,4 +27,7 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	ER1SkillType SkillType = ER1SkillType::Passive;
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tooltip", meta = (MultiLine = true))
+	FText AbilityDescription;
 };

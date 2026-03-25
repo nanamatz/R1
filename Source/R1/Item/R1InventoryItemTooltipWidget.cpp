@@ -3,10 +3,14 @@
 
 #include "Item/R1InventoryItemTooltipWidget.h"
 #include "Components/TextBlock.h"
+#include "Components/VerticalBox.h"
 #include "Item/R1ItemInstance.h"
 #include "Data/R1ItemAssetData.h"
 #include "R1GameplayTags.h"
 #include "Library/R1ItemFunctionLibrary.h"
+#include "AbilitySystem/Abilities/R1GameplayAbility.h"
+#include "UI/Inventory/Item/R1StatRowWidget.h"
+#include "System/R1StatUISettings.h"
 
 void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, bool bIsShopContext, bool bIsEquipped)
 {
@@ -60,62 +64,99 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 		}
 	}
 
-	// 5. 아이템 스펙 (StatModifiers TMap 순회, 없으면 압축)
-	if (Text_Stats)
+	if (VerticalBox_Stats)
 	{
-		if (Data->StatModifiers.Num() > 0)
+		VerticalBox_Stats->ClearChildren(); // 이전 데이터 비우기
+
+		if (Data->StatModifiers.Num() > 0 && StatRowClass)
 		{
-			FString StatsString = TEXT("");
+			// 프로젝트 세팅 데이터 로드
+			const UR1StatUISettings* StatSettings = GetDefault<UR1StatUISettings>();
 
 			for (const auto& ModifierPair : Data->StatModifiers)
 			{
 				FGameplayTag Tag = ModifierPair.Key;
 				float StatValue = ModifierPair.Value;
 
-				FString StatName = GetStatNameByTag(Tag);
-				FString DisplayString;
+				FString StatNameStr = TEXT("알 수 없는 스탯");
+				UTexture2D* StatIcon = nullptr;
 
-				// Multiplier(증폭) 태그는 퍼센트로 처리하는 디테일
-				if (Tag.GetTagName().ToString().Contains(TEXT("Multiplier")))
+				// 태그 검색 및 매핑
+				if (const FR1StatUIInfo* FoundInfo = StatSettings->StatUIMap.Find(Tag))
 				{
-					int32 PercentValue = FMath::RoundToInt(StatValue * 100.0f);
-					FString Sign = (PercentValue > 0) ? TEXT("+") : TEXT("");
-					DisplayString = FString::Printf(TEXT("%s%d%%"), *Sign, PercentValue);
+					StatNameStr = FoundInfo->StatName.ToString();
+					StatIcon = FoundInfo->StatIcon;
 				}
 				else
 				{
-					int32 IntValue = FMath::RoundToInt(StatValue);
-					FString Sign = (IntValue > 0) ? TEXT("+") : TEXT("");
-					DisplayString = FString::Printf(TEXT("%s%d"), *Sign, IntValue);
+					StatNameStr = Tag.GetTagName().ToString().Replace(TEXT("Data.Attribute."), TEXT(""));
 				}
 
-				// 예: "최대 체력 +100\n"
-				StatsString += FString::Printf(TEXT("%s %s\n"), *StatName, *DisplayString);
+				FString ValueString = TEXT("");
+
+				// 🌟 Ability면 수치 텍스트를 비워둡니다.
+				if (!Tag.GetTagName().ToString().Contains(TEXT("Ability")))
+				{
+					if (Tag.GetTagName().ToString().Contains(TEXT("Multiplier")))
+					{
+						int32 PercentValue = FMath::RoundToInt(StatValue * 100.0f);
+						ValueString = FString::Printf(TEXT("%d%%"), PercentValue);
+					}
+					else
+					{
+						int32 IntValue = FMath::RoundToInt(StatValue);
+						ValueString = FString::Printf(TEXT("%d"), IntValue);
+					}
+				}
+
+				// Row 위젯 생성 및 수직 박스에 추가
+				UR1StatRowWidget* StatRow = CreateWidget<UR1StatRowWidget>(this, StatRowClass);
+				if (StatRow)
+				{
+					StatRow->InitStatRow(StatIcon, StatNameStr,ValueString);
+					VerticalBox_Stats->AddChildToVerticalBox(StatRow);
+				}
 			}
 
-			// 마지막 줄바꿈(\n) 제거
-			StatsString = StatsString.TrimEnd();
-
-			Text_Stats->SetText(FText::FromString(StatsString));
-			Text_Stats->SetVisibility(ESlateVisibility::Visible);
+			VerticalBox_Stats->SetVisibility(ESlateVisibility::Visible);
 		}
 		else
 		{
-			Text_Stats->SetVisibility(ESlateVisibility::Collapsed);
+			VerticalBox_Stats->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
-
-	// 6. 아이템 설명 (데이터가 없으면 압축)
-	if (Text_Description)
+	if (Text_Skill)
 	{
-		if (!Data->ItemDescription.IsEmpty())
+		if (Data->GrantedAbilities.Num() > 0)
 		{
-			Text_Description->SetText(Data->ItemDescription);
-			Text_Description->SetVisibility(ESlateVisibility::Visible);
+			FString AbilityString = TEXT("[부여 능력]\n");
+
+			// 배열에 들어있는 클래스(TSubclassOf)들을 순회합니다.
+			for (const TSubclassOf<UR1GameplayAbility>& AbilityClass : Data->GrantedAbilities)
+			{
+				if (AbilityClass)
+				{
+					// 🌟 핵심: 클래스를 스폰하지 않고, 메모리에 떠 있는 기본값(CDO) 껍데기만 쏙 가져옵니다!
+					const UR1GameplayAbility* DefaultAbility = AbilityClass.GetDefaultObject();
+
+					// 설명이 적혀있을 때만 추가
+					if (DefaultAbility && !DefaultAbility->AbilityDescription.IsEmpty())
+					{
+						AbilityString += FString::Printf(TEXT("%s\n"), *DefaultAbility->AbilityDescription.ToString());
+					}
+				}
+			}
+
+			// 맨 마지막 줄바꿈 제거
+			AbilityString = AbilityString.TrimEnd();
+
+			Text_Skill->SetText(FText::FromString(AbilityString));
+			Text_Skill->SetJustification(ETextJustify::Center); 
+			Text_Skill->SetVisibility(ESlateVisibility::Visible);
 		}
 		else
 		{
-			Text_Description->SetVisibility(ESlateVisibility::Collapsed);
+			Text_Skill->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
 
@@ -124,64 +165,10 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 	{
 		int32 DisplayPrice = bIsShopContext ? (Data->BaseValue * ItemInstance->ItemCount) : (FMath::Max(1, FMath::FloorToInt(Data->BaseValue * 0.7f)) * ItemInstance->ItemCount);
 
-		FString ContextPrefix = bIsShopContext ? TEXT("가격: ") : TEXT("가격: ");
-		FString FinalPriceText = FString::Printf(TEXT("%s%d"), *ContextPrefix, DisplayPrice);
+		FString FinalPriceText = FString::Printf(TEXT("%d"), DisplayPrice);
 
 		Text_Price->SetText(FText::FromString(FinalPriceText));
 	}
-}
-
-FText UR1InventoryItemTooltipWidget::GetItemTypeText(ER1ItemType ItemType)
-{
-	switch (ItemType)
-	{
-	case ER1ItemType::Equipment: return FText::FromString(TEXT("장비: "));
-	case ER1ItemType::Consumable: return FText::FromString(TEXT("소모품"));
-	case ER1ItemType::Material: return FText::FromString(TEXT("재료"));
-	case ER1ItemType::Key: return FText::FromString(TEXT("열쇠"));
-	}
-	return FText::GetEmpty();
-}
-
-FText UR1InventoryItemTooltipWidget::GetEquipSlotText(ER1EquipmentSlot EquipSlot)
-{
-	switch (EquipSlot)
-	{
-	case ER1EquipmentSlot::Weapon: return FText::FromString(TEXT("무기"));
-	case ER1EquipmentSlot::Helmet: return FText::FromString(TEXT("머리"));
-	case ER1EquipmentSlot::Armor: return FText::FromString(TEXT("갑옷"));
-	case ER1EquipmentSlot::Glove: return FText::FromString(TEXT("장갑"));
-	case ER1EquipmentSlot::Ring1:
-	case ER1EquipmentSlot::Ring2: return FText::FromString(TEXT("반지"));
-	case ER1EquipmentSlot::Boots: return FText::FromString(TEXT("신발"));
-	}
-	return FText::GetEmpty();
-}
-
-FSlateColor UR1InventoryItemTooltipWidget::GetRarityColor(EItemRarity Rarity)
-{
-	switch (Rarity)
-	{
-	case EItemRarity::Common: return FSlateColor(FLinearColor(0.8f, 0.8f, 0.8f));
-	case EItemRarity::Uncommon: return FSlateColor(FLinearColor(0.1f, 0.8f, 0.1f));
-	case EItemRarity::Rare: return FSlateColor(FLinearColor(0.0f, 0.5f, 1.0f));
-	case EItemRarity::Epic: return FSlateColor(FLinearColor(0.7f, 0.0f, 1.0f));
-	case EItemRarity::Legendary: return FSlateColor(FLinearColor(1.0f, 0.5f, 0.0f));
-	}
-	return FSlateColor(FLinearColor(0.8f, 0.8f, 0.8f));
-}
-
-FText UR1InventoryItemTooltipWidget::GetRarityText(EItemRarity Rarity)
-{
-	switch (Rarity)
-	{
-	case EItemRarity::Common: return FText::FromString(TEXT("일반"));
-	case EItemRarity::Uncommon: return FText::FromString(TEXT("고급"));
-	case EItemRarity::Rare: return FText::FromString(TEXT("희귀"));
-	case EItemRarity::Epic: return FText::FromString(TEXT("영웅"));
-	case EItemRarity::Legendary: return FText::FromString(TEXT("전설"));
-	}
-	return FText::GetEmpty();
 }
 
 FString UR1InventoryItemTooltipWidget::GetStatNameByTag(const FGameplayTag& Tag)
