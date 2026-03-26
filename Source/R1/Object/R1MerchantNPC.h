@@ -10,6 +10,7 @@ class UR1ItemAssetData;
 class UR1ItemPoolData;
 class UR1ItemInstance;
 class UBoxComponent;
+class UR1NPCPoolData;
 
 UCLASS()
 class R1_API AR1MerchantNPC : public AActor, public IR1HighlightInterface, public IR1InteractionInterface
@@ -42,6 +43,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Merchant")
 	bool RemoveItemFromSale(UR1ItemInstance* ItemToRemove);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop Info")
+	TObjectPtr<class UR1NPCPoolData> NPCPool;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shop Info")
+	TObjectPtr<class UR1ShopNPCData> CurrentNPCData;
+
+private:
+	// 스폰 시 신분을 랜덤으로 배정하는 함수
+	void AssignNPCIdentity();
 protected:
 	void GenerateShopItems();
 

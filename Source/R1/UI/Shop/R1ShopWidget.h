@@ -23,7 +23,7 @@ public:
 	// HUD에서 호출하여 상점 데이터를 주입합니다.
 	UFUNCTION(BlueprintCallable, Category = "Shop")
 	void InitShop(AR1MerchantNPC* InNPC);
-
+	void InitShopNPC(class UR1ShopNPCData* NPCData);
 protected:
 	virtual void NativeConstruct() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -38,6 +38,11 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> Button_Close;
+	UPROPERTY(meta = (BindWidget))
 
+	TObjectPtr<class UImage> Image_NPC_Portrait;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> Text_ShopNPC;
 
 };

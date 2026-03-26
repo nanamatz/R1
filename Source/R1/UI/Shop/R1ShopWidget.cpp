@@ -4,9 +4,12 @@
 #include "UI/Shop/R1ShopWidget.h"
 #include "UI/Shop/R1ShopSlotsWidget.h"
 #include "Components/Button.h"
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
 #include "Object/R1MerchantNPC.h"
 #include "UI/R1HUD.h"
 #include "Kismet/GameplayStatics.h"
+#include "Data/R1ShopNPCData.h"
 
 UR1ShopWidget::UR1ShopWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -19,6 +22,38 @@ void UR1ShopWidget::InitShop(AR1MerchantNPC* InNPC)
 	if (!InNPC || !ShopSlotsWidget) return;
 
 	ShopSlotsWidget->InitShopGrid(InNPC);
+
+	if (InNPC->CurrentNPCData)
+	{
+		InitShopNPC(InNPC->CurrentNPCData);
+	}
+}
+
+void UR1ShopWidget::InitShopNPC(UR1ShopNPCData* NPCData)
+{
+	if (!NPCData) return;
+
+	// 1. 이름 세팅
+	if (Text_ShopNPC)
+	{
+		Text_ShopNPC->SetText(NPCData->NPCName);
+	}
+
+	// 2. 초상화 세팅
+	if (Image_NPC_Portrait)
+	{
+		if (NPCData->NPCPortrait)
+		{
+			Image_NPC_Portrait->SetBrushFromTexture(NPCData->NPCPortrait);
+			Image_NPC_Portrait->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		}
+		else
+		{
+			// 이미지가 없는 NPC라면 가려줍니다.
+			Image_NPC_Portrait->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
+
 }
 
 void UR1ShopWidget::NativeConstruct()
