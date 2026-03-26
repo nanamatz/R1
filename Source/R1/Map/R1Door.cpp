@@ -76,41 +76,6 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID)
 	}
 }
 
-//void AR1Door::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-//{
-//	if (bLocked || TargetNodeID == -1) return;
-//
-//	AR1Player* Player = Cast<AR1Player>(OtherActor);
-//	if (Player)
-//	{
-//		// 🌟 [추가된 로직] 열쇠가 필요한 보물방 문일 때
-//		if (bRequiresKey)
-//		{
-//			UR1InventorySubsystem* Inven = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
-//
-//			// 인벤토리를 뒤져서 열쇠 1개를 성공적으로 깎았다면?
-//			if (Inven && Inven->ConsumeKeyItem())
-//			{
-//				UE_LOG(LogTemp, Warning, TEXT("열쇠를 소모하여 보물방 문을 열었습니다!"));
-//				bRequiresKey = false;
-//				bLocked = false;
-//				OnDoorEntered.Broadcast(DoorDirection); // 문 열림!
-//			}
-//			else
-//			{
-//				UE_LOG(LogTemp, Warning, TEXT("열쇠가 부족합니다!"));
-//			}
-//			return; // 열쇠 검사를 했으면 여기서 함수 종료
-//		}
-//
-//		// 전투 중이라 잠긴 일반 문일 때
-//		if (bLocked) return;
-//
-//		// 정상적으로 들어갈 수 있는 문일 때
-//		OnDoorEntered.Broadcast(DoorDirection);
-//	}
-//}
-
 void AR1Door::SetLocked(bool bIsLocked)
 {
 	bLocked = bIsLocked;
@@ -132,21 +97,20 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 {
 	if (!Interactor || bLocked || TargetNodeID == -1) return;
 
-	// 🌟 열쇠가 필요한 보물방 문일 때
 	if (bRequiresKey)
 	{
 		UR1InventorySubsystem* Inven = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 
 		if (Inven && Inven->ConsumeKeyItem())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("열쇠를 소모하여 보물방 문을 열었습니다!"));
 			bRequiresKey = false;
 			bLocked = false;
-			OnDoorEntered.Broadcast(DoorDirection); // 문 열림!
+			OnDoorEntered.Broadcast(DoorDirection);
 		}
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("열쇠가 부족합니다!"));
+			// 열쇠가 없다는 피드백 또는 열쇠가 필요하다는 피드백 효과 여기에 추가
 		}
 		return;
 	}
@@ -160,6 +124,6 @@ void AR1Door::SetKeyLocked(bool bNeedsKey)
 	bRequiresKey = bNeedsKey;
 	if (bRequiresKey)
 	{
-		bLocked = true; // 열쇠가 필요하면 기본적으로 잠금 상태!
+		bLocked = true;
 	}
 }

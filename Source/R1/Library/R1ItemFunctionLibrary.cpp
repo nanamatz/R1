@@ -26,11 +26,11 @@ FText UR1ItemFunctionLibrary::GetRarityText(EItemRarity Rarity)
 {
 	switch (Rarity)
 	{
-	case EItemRarity::Common: return FText::FromString(TEXT("흔한"));
-	case EItemRarity::Uncommon: return FText::FromString(TEXT("드문"));
-	case EItemRarity::Rare: return FText::FromString(TEXT("희귀한"));
-	case EItemRarity::Epic: return FText::FromString(TEXT("진귀한"));
-	case EItemRarity::Legendary: return FText::FromString(TEXT("전설적인"));
+	case EItemRarity::Common: return FText::FromString(TEXT("Common"));
+	case EItemRarity::Uncommon: return FText::FromString(TEXT("Uncommon"));
+	case EItemRarity::Rare: return FText::FromString(TEXT("Rare"));
+	case EItemRarity::Epic: return FText::FromString(TEXT("Epic"));
+	case EItemRarity::Legendary: return FText::FromString(TEXT("Legendary"));
 	}
 	return FText::GetEmpty();
 }
@@ -39,10 +39,10 @@ FText UR1ItemFunctionLibrary::GetItemTypeText(ER1ItemType ItemType)
 {
 	switch (ItemType)
 	{
-	case ER1ItemType::Equipment: return FText::FromString(TEXT("장비: "));
-	case ER1ItemType::Consumable: return FText::FromString(TEXT("소모품"));
-	case ER1ItemType::Material: return FText::FromString(TEXT("재료"));
-	case ER1ItemType::Key: return FText::FromString(TEXT("열쇠"));
+	case ER1ItemType::Equipment: return FText::FromString(TEXT("Equipment: "));
+	case ER1ItemType::Consumable: return FText::FromString(TEXT("Consumable"));
+	case ER1ItemType::Material: return FText::FromString(TEXT("Material"));
+	case ER1ItemType::Key: return FText::FromString(TEXT("Key"));
 	}
 	return FText::GetEmpty();
 }
@@ -51,13 +51,13 @@ FText UR1ItemFunctionLibrary::GetEquipSlotText(ER1EquipmentSlot EquipSlot)
 {
 	switch (EquipSlot)
 	{
-	case ER1EquipmentSlot::Weapon: return FText::FromString(TEXT("무기"));
-	case ER1EquipmentSlot::Helmet: return FText::FromString(TEXT("투구"));
-	case ER1EquipmentSlot::Armor: return FText::FromString(TEXT("갑옷"));
-	case ER1EquipmentSlot::Glove: return FText::FromString(TEXT("장갑"));
+	case ER1EquipmentSlot::Weapon: return FText::FromString(TEXT("Weapon"));
+	case ER1EquipmentSlot::Helmet: return FText::FromString(TEXT("Helm"));
+	case ER1EquipmentSlot::Armor: return FText::FromString(TEXT("Armor"));
+	case ER1EquipmentSlot::Glove: return FText::FromString(TEXT("Glove"));
 	case ER1EquipmentSlot::Ring1:
-	case ER1EquipmentSlot::Ring2: return FText::FromString(TEXT("반지"));
-	case ER1EquipmentSlot::Boots: return FText::FromString(TEXT("신발"));
+	case ER1EquipmentSlot::Ring2: return FText::FromString(TEXT("Ring"));
+	case ER1EquipmentSlot::Boots: return FText::FromString(TEXT("Boots"));
 	}
 	return FText::GetEmpty();
 }

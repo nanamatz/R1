@@ -1,29 +1,34 @@
 #include "Player/R1PlayerController.h"
-#include "Character/R1Player.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 
-#include "NiagaraSystem.h"
-#include "NiagaraFunctionLibrary.h"
+#include "AbilitySystem/R1AbilitySystemComponent.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Character/R1Player.h"
+#include "Data/R1InputData.h"
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
+#include "GameFramework/CharacterMovementComponent.h"
+
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
+
+#include "Item/R1InventorySubsystem.h"
+#include "Item/R1ItemInstance.h"
+#include "Interface/R1InteractionInterface.h"
+
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Navigation/PathFollowingComponent.h"
+
+#include "Object/R1ItemActor.h"
+#include "R1GameplayTags.h"
 
 #include "System/R1AssetManager.h"
 #include "System/R1GameInstance.h"
 #include "System/R1EquipmentManagerComponent.h"
 
-#include "Item/R1InventorySubsystem.h"
-#include "Item/R1ItemInstance.h"
-#include "Object/R1ItemActor.h"
-
-#include "Data/R1InputData.h"
-#include "R1GameplayTags.h"
 #include "UI/R1HUD.h"
-#include "Interface/R1InteractionInterface.h"
-#include "AbilitySystem/R1AbilitySystemComponent.h"
 
 AR1PlayerController::AR1PlayerController()
 {
@@ -168,6 +173,28 @@ void AR1PlayerController::PlayerTick(float DeltaTime)
 	if (R1Player->GetCreatureState() != ECreatureState::Dead)
 	{
 		ChaseTargetAndAttack();
+
+		// 🌟 [추가된 핵심 로직] 캐릭터의 실제 속도를 감지하여 상태를 자동으로 되돌립니다!
+		if (R1Player->GetCreatureState() != ECreatureState::Casting)
+		{
+			// SizeSquared()는 벡터의 길이를 제곱한 값으로, 미세한 떨림을 무시하기 위해 10.0f 정도의 여유를 줍니다.
+			if (R1Player->GetVelocity().SizeSquared() <= 10.0f)
+			{
+				// 목적지에 도착해서 속도가 0이 되면 Idle로 복귀!
+				if (R1Player->GetCreatureState() == ECreatureState::Moving)
+				{
+					R1Player->SetCreatureState(ECreatureState::Idle);
+				}
+			}
+			else
+			{
+				// (혹시 모를 외부 요인으로 밀려나거나 움직일 때를 대비한 방어 코드)
+				if (R1Player->GetCreatureState() == ECreatureState::Idle)
+				{
+					R1Player->SetCreatureState(ECreatureState::Moving);
+				}
+			}
+		}
 	}
 }
 
@@ -180,6 +207,8 @@ void AR1PlayerController::OnInputStarted()
 
 void AR1PlayerController::OnSetDestinationTriggered()
 {
+	if (!bMousePressed) return;
+
 	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting)
 	{
 		return;
@@ -198,17 +227,24 @@ void AR1PlayerController::OnSetDestinationTriggered()
 	if (bHitSuccessful)
 	{
 		CacheDestination = Hit.Location;
-	}
 
-	if (R1Player)
-	{
+		if (R1Player)
+		{
 
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+			if (R1Player->GetCreatureState() != ECreatureState::Moving)
+			{
+				R1Player->SetCreatureState(ECreatureState::Moving);
+			}
+
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+		}
 	}
 }
 
 void AR1PlayerController::OnSetDestinationReleased()
 {
+	if (!bMousePressed) return;
+
 	bMousePressed = false;
 
 	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting)
@@ -220,7 +256,11 @@ void AR1PlayerController::OnSetDestinationReleased()
 	{
 		if (TargetActor == nullptr)
 		{
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+			if (R1Player->GetCreatureState() != ECreatureState::Moving)
+			{
+				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+			}
+
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CacheDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
 		}
 	}
@@ -293,20 +333,15 @@ void AR1PlayerController::ChaseTargetAndAttack()
 	{
 		return;
 	}
-	
-	if(bMousePressed == false)
-	{
-		return;
-	}
 
 	TargetAttackActor = Cast<AR1Character>(TargetActor);
-	
+
 	if (TargetAttackActor)
 	{
 		FVector Direction = TargetAttackActor->GetActorLocation() - R1Player->GetActorLocation();
 
 		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(
-			R1Player->GetActorLocation(), 
+			R1Player->GetActorLocation(),
 			TargetAttackActor->GetActorLocation()
 		);
 		R1Player->SetActorRotation(Rotation);
@@ -314,7 +349,14 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		if (Direction.Length() < R1Player->AttackRange)
 		{
 			StopMovement();
+
+			if (TargetAttackActor->GetCreatureState() == ECreatureState::Dead)
+			{
+				return;
+			}
+
 			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
+			TargetActor = nullptr;
 		}
 		else
 		{
@@ -322,46 +364,32 @@ void AR1PlayerController::ChaseTargetAndAttack()
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
 	}
-	// 🌟 2. 몬스터가 아니라면, 상호작용 가능한 대상(인터페이스 보유)인지 확인!
 	else if (IR1InteractionInterface* InteractableTarget = Cast<IR1InteractionInterface>(TargetActor))
 	{
 		bool bIsInRange = false;
-
 		UPrimitiveComponent* TriggerComp = InteractableTarget->GetInteractTrigger();
 
 		if (TriggerComp)
 		{
-			// 💡 1순위 검사: 플레이어의 캡슐이 대상의 트리거 컴포넌트와 물리적으로 겹쳐있는가? (Lyra 표준 방식)
 			bIsInRange = TriggerComp->IsOverlappingActor(R1Player);
 
-			// 💡 2순위 보정: 길찾기(NavMesh) 오차로 인해 아주 미세하게 트리거 테두리 밖에 멈추는 현상 방지용 (테두리 20.0f 이내 허용)
-			if (!bIsInRange)
-			{
-				FVector ClosestPoint = TriggerComp->Bounds.GetBox().GetClosestPointTo(R1Player->GetActorLocation());
-				if (FVector::Dist2D(R1Player->GetActorLocation(), ClosestPoint) < 20.0f)
-				{
-					bIsInRange = true;
-				}
-			}
+			//if (!bIsInRange)
+			//{
+			//	FVector ClosestPoint = TriggerComp->Bounds.GetBox().GetClosestPointTo(R1Player->GetActorLocation());
+			//	if (FVector::Dist2D(R1Player->GetActorLocation(), ClosestPoint) < 50.0f)
+			//	{
+			//		bIsInRange = true;
+			//	}
+			//}
 		}
-		else
-		{
-			// 트리거 컴포넌트를 세팅하지 않은 액터를 위한 예비(Fallback) 로직
-			FVector ClosestPoint = TargetActor->GetComponentsBoundingBox().GetClosestPointTo(R1Player->GetActorLocation());
-			if (FVector::Dist2D(R1Player->GetActorLocation(), ClosestPoint) < 80.0f)
-			{
-				bIsInRange = true;
-			}
-		}
+
 		if (bIsInRange)
 		{
-			AActor* InteractTarget = TargetActor;  // 포인터 저장
-			ResetMovementState();
-			IR1InteractionInterface::Execute_Interact(InteractTarget, this);  // 저장된 포인터 사용
+			// 1. 거리가 충분히 가까워지면 자동으로 상호작용 실행!
+			IR1InteractionInterface::Execute_Interact(TargetActor, this);
 		}
 		else
 		{
-			// 아직 범위 밖이라면 트리거 중심을 향해 계속 이동
 			CacheDestination = TargetActor->GetActorLocation();
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
@@ -433,18 +461,25 @@ void AR1PlayerController::HandlePlayerDead(AR1Character* DeadCharacter, AR1Chara
 
 void AR1PlayerController::ResetMovementState()
 {
-	StopMovement();
+	if (UPathFollowingComponent* PathComp = FindComponentByClass<UPathFollowingComponent>())
+	{
+		PathComp->AbortMove(*this, FPathFollowingResultFlags::MovementStop);
+	}
 
+	// 2. 캐릭터의 남은 물리적 관성(미끄러짐)까지 완벽하게 제거하여 제자리에 못 박습니다.
+	if (R1Player && R1Player->GetCharacterMovement())
+	{
+		R1Player->GetCharacterMovement()->StopMovementImmediately();
+		CacheDestination = R1Player->GetActorLocation(); // 캐시도 현재 위치로 덮어쓰기
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+	}
+
+	// 3. 마우스 및 타겟 상태 초기화
 	bMousePressed = false;
 	FollowTime = 0.f;
 
 	TargetActor = nullptr;
 	TargetAttackActor = nullptr;
-
-	if (R1Player)
-	{
-		CacheDestination = R1Player->GetActorLocation();
-	}
 }
 
 AR1Character* AR1PlayerController::GetHighlightActor()

@@ -21,7 +21,7 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 	{
 		if (bIsEquipped)
 		{
-			Text_IsEquipped->SetText(FText::FromString(FString::Printf(TEXT("(장착중)"))));
+			Text_IsEquipped->SetText(FText::FromString(FString::Printf(TEXT("(Equipped)"))));
 		}
 		else
 		{
@@ -78,7 +78,7 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 				FGameplayTag Tag = ModifierPair.Key;
 				float StatValue = ModifierPair.Value;
 
-				FString StatNameStr = TEXT("알 수 없는 스탯");
+				FString StatNameStr = TEXT("None");
 				UTexture2D* StatIcon = nullptr;
 
 				// 태그 검색 및 매핑
@@ -129,7 +129,7 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 	{
 		if (Data->GrantedAbilities.Num() > 0)
 		{
-			FString AbilityString = TEXT("[부여 능력]\n");
+			FString AbilityString = TEXT("");
 
 			// 배열에 들어있는 클래스(TSubclassOf)들을 순회합니다.
 			for (const TSubclassOf<UR1GameplayAbility>& AbilityClass : Data->GrantedAbilities)
@@ -174,22 +174,22 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 FString UR1InventoryItemTooltipWidget::GetStatNameByTag(const FGameplayTag& Tag)
 {
 	// 공통 속성
-	if (Tag == R1GameplayTags::Data_Attribute_MaxHealth)			return TEXT("최대 체력");
-	if (Tag == R1GameplayTags::Data_Attribute_HealthRegeneration)	return TEXT("체력 재생");
-	if (Tag == R1GameplayTags::Data_Attribute_AttackRange)			return TEXT("공격 사거리");
-	if (Tag == R1GameplayTags::Data_Attribute_AttackRadius)			return TEXT("공격 범위");
-	if (Tag == R1GameplayTags::Data_Attribute_AttackSpeed)			return TEXT("공격 속도");
-	if (Tag == R1GameplayTags::Data_Attribute_MoveSpeed)			return TEXT("이동 속도");
+	if (Tag == R1GameplayTags::Data_Attribute_MaxHealth)			return TEXT("Health");
+	if (Tag == R1GameplayTags::Data_Attribute_HealthRegeneration)	return TEXT("Health Regen");
+	if (Tag == R1GameplayTags::Data_Attribute_AttackRange)			return TEXT("Attack Range");
+	if (Tag == R1GameplayTags::Data_Attribute_AttackRadius)			return TEXT("Attack Radius");
+	if (Tag == R1GameplayTags::Data_Attribute_AttackSpeed)			return TEXT("Attack Speed");
+	if (Tag == R1GameplayTags::Data_Attribute_MoveSpeed)			return TEXT("Move Speed");
 
 	// 플레이어 전용 속성
-	if (Tag == R1GameplayTags::Data_Attribute_MaxMana)				return TEXT("최대 마나");
-	if (Tag == R1GameplayTags::Data_Attribute_ManaRegeneration)		return TEXT("마나 재생");
-	if (Tag == R1GameplayTags::Data_Attribute_WeaponDamage)			return TEXT("공격력");
-	if (Tag == R1GameplayTags::Data_Attribute_EquipDefence)			return TEXT("방어력");
+	if (Tag == R1GameplayTags::Data_Attribute_MaxMana)				return TEXT("Mana");
+	if (Tag == R1GameplayTags::Data_Attribute_ManaRegeneration)		return TEXT("Mana Regen");
+	if (Tag == R1GameplayTags::Data_Attribute_WeaponDamage)			return TEXT("Damage");
+	if (Tag == R1GameplayTags::Data_Attribute_EquipDefence)			return TEXT("Defense");
 
 	// Multiplier 계열 (퍼센트 적용 대상)
-	if (Tag == R1GameplayTags::Data_Attribute_DamageMultiplier)		return TEXT("피해량 증폭");
-	if (Tag == R1GameplayTags::Data_Attribute_DefenceMultiplier)	return TEXT("방어력 증폭");
+	if (Tag == R1GameplayTags::Data_Attribute_DamageMultiplier)		return TEXT("Damage Multiplier");
+	if (Tag == R1GameplayTags::Data_Attribute_DefenceMultiplier)	return TEXT("Defense Multiplier");
 
 	// 예외 처리 방어 코드
 	FString FallbackName = Tag.GetTagName().ToString();

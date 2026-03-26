@@ -537,6 +537,15 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 	{
 		if (PendingNodeID != -1) return;
 
+		AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
+		if (PlayerCharacter)
+		{
+			if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
+			{
+				PC->ResetMovementState(); // 목적지 초기화 및 이동 중지
+			}
+		}
+
 		if (GeneratedMap[NextNodeID].RoomDefinition &&
 			GeneratedMap[NextNodeID].RoomDefinition->RoomType == ER1RoomContentType::Treasure)
 		{
@@ -804,7 +813,7 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 		if (PlayerCharacter)
 		{
 			FVector SafeLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
-			PlayerCharacter->SetActorLocation(SafeLocation);
+			PlayerCharacter->TeleportToRoom(SafeLocation);
 
 			HighestAchievedProgress = 1.0f;
 			OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
@@ -848,14 +857,15 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 		{
 			FVector DirectionToCenter = (GeneratedMap[MatchedNodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
 			FVector SafeLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
-
-			PlayerCharacter->SetActorLocation(SafeLocation);
-			PlayerCharacter->GetVelocity() = FVector::ZeroVector;
-
+			
 			if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
 			{
 				PC->ResetMovementState();
 			}
+
+			PlayerCharacter->TeleportToRoom(SafeLocation);
+			PlayerCharacter->GetVelocity() = FVector::ZeroVector;
+
 		}
 
 		UpdateMinimapState(CurrentActiveNodeID, PrevRoomID);

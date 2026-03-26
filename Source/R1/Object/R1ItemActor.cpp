@@ -21,6 +21,7 @@ AR1ItemActor::AR1ItemActor()
 	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	SphereComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); // 마우스 클릭용
+	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	// 클릭을 감지해야 하므로 Visibility 채널 블록 설정 등 필요
 
 	TooltipWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("TooltipWidget"));
