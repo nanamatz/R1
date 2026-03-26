@@ -102,4 +102,6 @@ protected:
 public:
 	// 체력 비율에 따라 화면 붉은기를 조절할 함수
 	void UpdateLowHealthEffect(float Ratio);
+
+	void TeleportToRoom(FVector TargetLocation);
 };
