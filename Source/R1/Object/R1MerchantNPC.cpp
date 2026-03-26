@@ -1,6 +1,8 @@
 #include "Object/R1MerchantNPC.h"
 #include "Data/R1ItemAssetData.h"
 #include "Data/R1ItemPoolData.h"
+#include "Data/R1ShopNPCData.h"
+#include "Data/R1NPCPoolData.h"
 #include "Item/R1ItemInstance.h"
 #include "Character/R1Player.h"
 #include "UI/R1HUD.h" 
@@ -8,6 +10,7 @@
 #include "Player/R1PlayerController.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+
 
 AR1MerchantNPC::AR1MerchantNPC()
 {
@@ -33,6 +36,8 @@ void AR1MerchantNPC::BeginPlay()
 
 	// 스폰 시점에 아이템을 딱 한 번만 생성해서 고정합니다.
 	GenerateShopItems();
+	
+	AssignNPCIdentity();
 
 	if (InteractTrigger)
 	{
@@ -106,6 +111,20 @@ bool AR1MerchantNPC::RemoveItemFromSale(UR1ItemInstance* ItemToRemove)
 		return true;
 	}
 	return false;
+}
+
+void AR1MerchantNPC::AssignNPCIdentity()
+{
+	if (NPCPool && NPCPool->AvailableNPCs.Num() > 0)
+	{
+		// 풀 안에 있는 NPC 목록 중에서 랜덤하게 하나를 뽑아 내 신분으로 삼습니다.
+		int32 RandomIndex = FMath::RandRange(0, NPCPool->AvailableNPCs.Num() - 1);
+		CurrentNPCData = NPCPool->AvailableNPCs[RandomIndex];
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MerchantNPC: NPCPool이 할당되지 않았거나 비어 있습니다!"));
+	}
 }
 
 void AR1MerchantNPC::GenerateShopItems()
