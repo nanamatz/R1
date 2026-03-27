@@ -372,21 +372,13 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		if (TriggerComp)
 		{
 			bIsInRange = TriggerComp->IsOverlappingActor(R1Player);
-
-			//if (!bIsInRange)
-			//{
-			//	FVector ClosestPoint = TriggerComp->Bounds.GetBox().GetClosestPointTo(R1Player->GetActorLocation());
-			//	if (FVector::Dist2D(R1Player->GetActorLocation(), ClosestPoint) < 50.0f)
-			//	{
-			//		bIsInRange = true;
-			//	}
-			//}
 		}
 
 		if (bIsInRange)
 		{
 			// 1. 거리가 충분히 가까워지면 자동으로 상호작용 실행!
 			IR1InteractionInterface::Execute_Interact(TargetActor, this);
+			ResetMovementState();
 		}
 		else
 		{

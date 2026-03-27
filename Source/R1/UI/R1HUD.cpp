@@ -167,6 +167,10 @@ void AR1HUD::OpenShopUI(AR1MerchantNPC* MerchantNPC)
 
     if (!bIsShopUIVisible)
     {
+        if (bIsInventoryUIVisible)
+        {
+			ToggleInventory(); // 인벤토리가 열려있다면 닫아줍니다.
+        }
         ShopWidget->InitShop(MerchantNPC);
         ShopSceneWidget->SetVisibility(ESlateVisibility::Visible);
         bIsShopUIVisible = true;
@@ -198,7 +202,6 @@ void AR1HUD::CloseShopUI()
 
 void AR1HUD::ToggleInventory()
 {
-    if (!InventoryWidgetClass || !InventoryUIWidget) return;
 
     if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
     {
@@ -208,6 +211,8 @@ void AR1HUD::ToggleInventory()
             return;
         }
     }
+
+    if (!InventoryWidgetClass || !InventoryUIWidget) return;
 
     if (bIsInventoryUIVisible)
     {

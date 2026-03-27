@@ -45,4 +45,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UTextBlock> Text_ShopNPC;
 
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> Text_Greeting;
 };
