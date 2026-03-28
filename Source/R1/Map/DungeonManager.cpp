@@ -173,15 +173,13 @@ void ADungeonManager::SpawnRoomClearReward()
 		return;
 	}
 
-	// 🌟 확률 체크 (0~100 사이의 난수가 DropChance보다 작을 때만 드랍)
-	float DropRoll = FMath::FRandRange(0.0f, 100.0f);
+	float DropRoll = FMath::FRandRange(1.f, 100.0f);
 	if (DropRoll > RoomClearDropChance)
 	{
 		UE_LOG(LogTemp, Log, TEXT("방 클리어 보상 드랍 실패 (확률: %.1f%%, 결과: %.1f)"), RoomClearDropChance, DropRoll);
 		return;
 	}
 
-	// 2. 가중치 기반 확률 계산 (이제 아이템 에셋에서 가중치를 직접 물어봅니다)
 	float TotalWeight = 0.0f;
 	for (UR1ItemAssetData* ItemData : RoomClearLootPool->DropItems)
 	{
@@ -211,7 +209,8 @@ void ADungeonManager::SpawnRoomClearReward()
 	if (!SelectedItem) return;
 
 	// 3. 월드에 스폰!
-	FVector SpawnLocation = GetActorLocation() + FVector(0.0f, 0.0f, 150.0f);
+	FVector SpawnLocation = GetActorLocation();
+	SpawnLocation.Z = 50.0f;
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
@@ -221,6 +220,7 @@ void ADungeonManager::SpawnRoomClearReward()
 	{
 		// 🌟 희귀도 정보도 아이템 에셋이 들고 있으므로 그대로 던져줍니다.
 		DroppedItem->InitItem(SelectedItem, SelectedItem->ItemRarity);
+		DroppedItem->PopEffect();
 
 		UE_LOG(LogTemp, Warning, TEXT("방 클리어 보상 드랍! [%s] (가중치: %.0f)"),
 			*SelectedItem->ItemName.ToString(), SelectedItem->GetDropWeight());

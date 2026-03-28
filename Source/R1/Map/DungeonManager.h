@@ -107,7 +107,7 @@ protected:
 	TObjectPtr<class UR1ItemPoolData> RoomClearLootPool;
 
 	UPROPERTY(EditAnywhere, Category = "Loot", meta = (ClampMin = "0.0", ClampMax = "100.0"))
-	float RoomClearDropChance = 30.0f;
+	float RoomClearDropChance = 100.0f;
 
 	// 스폰할 아이템 액터의 클래스 정보 (블루프린트에서 BP_ItemActor를 넣어줍니다)
 	UPROPERTY(EditAnywhere, Category = "Loot")
