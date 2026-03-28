@@ -141,21 +141,21 @@ void AR1GoldActor::PopEffect()
 	FVector RandomTorque = FVector(FMath::RandRange(-500.f, 500.f), FMath::RandRange(-500.f, 500.f), FMath::RandRange(-500.f, 500.f));
 	SphereComp->AddTorqueInDegrees(RandomTorque, NAME_None, true);
 
-	// 🌟 3. 스케일 애니메이션 (0에서 1로 커지며 생성)
-	SetActorScale3D(FVector::ZeroVector);
+	//// 🌟 3. 스케일 애니메이션 (0에서 1로 커지며 생성)
+	//SetActorScale3D(FVector::ZeroVector);
 
-	float TotalTime = 0.2f;
-	float StartTime = GetWorld()->GetTimeSeconds();
+	//float TotalTime = 0.2f;
+	//float StartTime = GetWorld()->GetTimeSeconds();
 
-	GetWorldTimerManager().SetTimer(ScaleTimerHandle, [this, StartTime, TotalTime]()
-		{
-			float Alpha = FMath::Clamp((GetWorld()->GetTimeSeconds() - StartTime) / TotalTime, 0.0f, 1.0f);
-			SetActorScale3D(FVector(Alpha, Alpha, Alpha));
-			if (Alpha >= 1.0f)
-			{
-				GetWorldTimerManager().ClearTimer(ScaleTimerHandle);
-			}
-		}, 0.01f, true);
+	//GetWorldTimerManager().SetTimer(ScaleTimerHandle, [this, StartTime, TotalTime]()
+	//	{
+	//		float Alpha = FMath::Clamp((GetWorld()->GetTimeSeconds() - StartTime) / TotalTime, 0.0f, 1.0f);
+	//		SetActorScale3D(FVector(Alpha, Alpha, Alpha));
+	//		if (Alpha >= 1.0f)
+	//		{
+	//			GetWorldTimerManager().ClearTimer(ScaleTimerHandle);
+	//		}
+	//	}, 0.01f, true);
 
 	// 🌟 4. 즉시 획득 방지 (0.5초 뒤에 상호작용 가능하게)
 	bCanInteract = false;

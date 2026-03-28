@@ -54,6 +54,18 @@ void UR1ShopWidget::InitShopNPC(UR1ShopNPCData* NPCData)
 		}
 	}
 
+	if (Text_Greeting)
+	{
+		// 대사 배열에 데이터가 1개 이상 있는지 안전 검사
+		if (NPCData->GreetingDialogues.Num() > 0)
+		{
+			// 0부터 (배열크기 - 1) 사이의 랜덤 인덱스 추출
+			int32 RandomIndex = FMath::RandRange(0, NPCData->GreetingDialogues.Num() - 1);
+
+			// 뽑힌 대사를 UI에 적용
+			Text_Greeting->SetText(NPCData->GreetingDialogues[RandomIndex]);
+		}
+	}
 }
 
 void UR1ShopWidget::NativeConstruct()

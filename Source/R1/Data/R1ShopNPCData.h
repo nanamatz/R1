@@ -15,7 +15,6 @@ class R1_API UR1ShopNPCData : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
-	// 상인 이름 (예: "멍멍Dog")
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC Info")
 	FText NPCName;
 
