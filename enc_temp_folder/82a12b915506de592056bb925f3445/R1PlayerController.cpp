@@ -490,12 +490,11 @@ void AR1PlayerController::DropItemToWorld(UR1ItemInstance* ItemToDrop, ER1Equipm
 	UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (!InvenSubsys) return;
 
-	FVector SpawnLoc = R1Player->GetActorLocation();
+	FVector SpawnLoc = R1Player->GetActorLocation() + FVector(0.f,0.f,50.f);
 
 	// 2. 월드에 아이템 액터 스폰!
 	FActorSpawnParameters SpawnParams;
 	AR1ItemActor* DroppedItem = GetWorld()->SpawnActor<AR1ItemActor>(ItemActorClass, SpawnLoc, FRotator::ZeroRotator, SpawnParams);
-	DroppedItem->PopEffect();
 
 	if (DroppedItem)
 	{

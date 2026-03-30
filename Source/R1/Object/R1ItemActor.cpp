@@ -1,8 +1,8 @@
 #include "Object/R1ItemActor.h"
-#include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/TextBlock.h"
+#include "Components/BoxComponent.h"
 
 #include "Character/R1Player.h"
 #include "Item/R1ItemInstance.h"
@@ -15,14 +15,18 @@
 AR1ItemActor::AR1ItemActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
-	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
-	RootComponent = SphereComp;
-	SphereComp->SetSphereRadius(50.0f);
-	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	SphereComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); // 마우스 클릭용
-	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	// 클릭을 감지해야 하므로 Visibility 채널 블록 설정 등 필요
+	
+	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
+	RootComponent = BoxComp;
+
+	// 임시 기본 크기 (나중에 InitItem에서 바뀜)
+	BoxComp->SetBoxExtent(FVector(32.0f, 32.0f, 32.0f));
+
+	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	BoxComp->SetCollisionProfileName(TEXT("PhysicsActor"));
+	BoxComp->SetSimulatePhysics(true);
+	BoxComp->SetEnableGravity(true);
+	BoxComp->SetGenerateOverlapEvents(true);
 
 	TooltipWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("TooltipWidget"));
 	TooltipWidget->SetupAttachment(RootComponent);
@@ -79,22 +83,19 @@ void AR1ItemActor::Interact_Implementation(AR1PlayerController* Interactor)
 {
 	if (!Interactor) return;
 
-	// 매개변수로 받은 플레이어 컨트롤러가 현재 조종 중인 캐릭터(Pawn)를 가져옵니다.
 	if (AR1Player* PlayerCharacter = Cast<AR1Player>(Interactor->GetPawn()))
 	{
-		// 기존에 잘 만들어두신 루팅(획득) 함수를 그대로 호출!
 		OnLootAttempted(PlayerCharacter);
 	}
 }
 
 UPrimitiveComponent* AR1ItemActor::GetInteractTrigger()
 {
-	return SphereComp;
+	return BoxComp;
 }
 
 void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, int32 InCount)
 {
-	// 🌟 데이터 테이블 검색 로직 전부 삭제! 던져준 에셋을 그대로 씁니다.
 	ItemData = InItemData;
 	ItemRarity = InRarity;
 	ItemCount = InCount;
@@ -104,6 +105,20 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 		if (ItemData->ItemMesh && MeshComp)
 		{
 			MeshComp->SetStaticMesh(ItemData->ItemMesh);
+
+			// 🌟 2. 메시 크기에 맞춰 박스 콜리전 크기 자동 조절!
+			FVector MinBounds, MaxBounds;
+			MeshComp->GetLocalBounds(MinBounds, MaxBounds);
+
+			// Extent는 전체 길이의 절반 값입니다.
+			FVector MeshExtent = (MaxBounds - MinBounds) * 0.5f;
+
+			// 💡 플레이어가 클릭하거나 밟기 편하도록 최소 크기(하한선) 보장
+			MeshExtent.X = FMath::Max(MeshExtent.X, 30.0f);
+			MeshExtent.Y = FMath::Max(MeshExtent.Y, 30.0f);
+			MeshExtent.Z = FMath::Max(MeshExtent.Z, 30.0f);
+
+			BoxComp->SetBoxExtent(MeshExtent);
 		}
 	}
 	else
@@ -155,5 +170,38 @@ void AR1ItemActor::UpdateTooltipUI()
 				false
 			);
 		}
+	}
+}
+
+void AR1ItemActor::PopEffect()
+{
+	BoxComp->SetNotifyRigidBodyCollision(true);
+	BoxComp->OnComponentHit.AddDynamic(this, &AR1ItemActor::OnBoxHit);
+
+	float VerticalPower = FMath::RandRange(400.0f, 600.0f);
+	FVector PopImpulse = FVector(0.f, 0.f, VerticalPower);
+	BoxComp->AddImpulse(PopImpulse, NAME_None, true);
+}
+
+void AR1ItemActor::DisablePhysicsAndSetOverlap()
+{
+	BoxComp->SetSimulatePhysics(false);
+	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	BoxComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	BoxComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	BoxComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+}
+
+void AR1ItemActor::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (OtherComp)
+	{
+		BoxComp->SetNotifyRigidBodyCollision(false);
+		BoxComp->OnComponentHit.RemoveDynamic(this, &AR1ItemActor::OnBoxHit);
+
+		BoxComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+		BoxComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+
+		DisablePhysicsAndSetOverlap();
 	}
 }

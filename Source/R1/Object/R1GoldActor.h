@@ -30,13 +30,8 @@ protected:
 	TObjectPtr<class UWidgetComponent> TooltipWidget;
 
 protected:
-	// 🌟 1. 자동 획득 범위를 담당할 투명한 자석 구체
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gold|Component")
-	TObjectPtr<class USphereComponent> PickupSphereComp;
-
-	// 🌟 2. 플레이어가 구체 범위에 들어왔을 때 실행될 겹침(Overlap) 이벤트 함수
 	UFUNCTION()
-	void OnPickupSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	virtual UPrimitiveComponent* GetInteractTrigger() override;
 	void PopEffect();
@@ -60,14 +55,10 @@ public:
 private:
 	// 이 뭉치 안에 들어있는 실제 골드 수치
 	UPROPERTY(EditAnywhere, Category = "Gold", meta = (AllowPrivateAccess = "true"))
-	int32 GoldAmount = 10; // 기본값 10
+	int32 GoldAmount = 10;
 protected:
 	void UpdateTooltipUI();
 
 protected:
 	bool bHighlighted = false;
-	bool bCanInteract = true;
-
-	FTimerHandle ScaleTimerHandle;
-	FTimerHandle PhysicsTimerHandle;
 };
