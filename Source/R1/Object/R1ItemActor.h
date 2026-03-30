@@ -25,6 +25,16 @@ public:
 	virtual void Interact_Implementation(class AR1PlayerController* Interactor) override;
 
 	virtual UPrimitiveComponent* GetInteractTrigger() override;
+
+	void PopEffect();
+
+	void DisablePhysicsAndSetOverlap();
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<class UBoxComponent> BoxComp;
+
+	UFUNCTION()
+	void OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 public:
 	// 🌟 머리 위에 아이템 이름을 띄워줄 UI 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
@@ -39,10 +49,6 @@ public:
 protected:
 	void UpdateTooltipUI();
 public:
-	// 마우스 클릭 및 상호작용 범위를 감지할 콜리전
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<class USphereComponent> SphereComp;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
 	int32 ItemCount = 1;
 
