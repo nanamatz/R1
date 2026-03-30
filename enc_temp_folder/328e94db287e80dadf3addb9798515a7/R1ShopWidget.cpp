@@ -63,11 +63,16 @@ void UR1ShopWidget::InitShopNPC(UR1ShopNPCData* NPCData)
 			FText SelectedText = NPCData->GreetingDialogues[RandomIndex];
 
 			// 뽑힌 대사를 UI에 적용
-			Text_Greeting->SetText(SelectedText);
+			Text_Greeting->SetText(NPCData->GreetingDialogues[RandomIndex]);
 
 			if (!SelectedText.IsEmptyOrWhitespace())
 			{
 				Text_Greeting->SetText(SelectedText);
+			}
+			else
+			{
+				// 빈칸이 뽑혔다면 기본 대사로 덮어씌움
+				Text_Greeting->SetText(FText::FromString(TEXT("어서오세요!")));
 			}
 		}
 	}
