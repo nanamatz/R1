@@ -50,7 +50,7 @@ AR1ItemActor::AR1ItemActor()
 
 	// 💡 부모 메시가 스케일 조정(반지 등)이 되더라도 후광 크기는 일정하게 유지하기 위해 절대 스케일 사용
 	HaloEffect->SetAbsolute(false, false, true);
-	HaloEffect->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f)); // 바닥에 너무 파묻히지 않게 살짝 띄움
+	HaloEffect->SetRelativeLocation(FVector(0.0f, 0.0f, 5.0f)); // 바닥에 너무 파묻히지 않게 살짝 띄움
 	HaloEffect->SetAutoActivate(false);
 	Tags.Add(FName("Item"));
 }
@@ -65,6 +65,7 @@ void AR1ItemActor::Highlight()
 {
 	if (MeshComp)
 	{
+		MeshComp->SetRenderCustomDepth(true);
 		MeshComp->SetCustomDepthStencilValue(251);
 	}
 
@@ -80,7 +81,7 @@ void AR1ItemActor::UnHighlight()
 {
 	if (MeshComp)
 	{
-		MeshComp->SetCustomDepthStencilValue(249);
+		MeshComp->SetRenderCustomDepth(false);
 	}
 
 	if (TooltipWidget)
@@ -117,8 +118,6 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 		if (ItemData->ItemMesh && MeshComp)
 		{
 			MeshComp->SetStaticMesh(ItemData->ItemMesh);
-			MeshComp->SetRenderCustomDepth(true);
-			MeshComp->SetCustomDepthStencilValue(249);
 
 			// 🌟 2. 메시 크기에 맞춰 박스 콜리전 크기 자동 조절!
 			FVector MinBounds, MaxBounds;
@@ -143,13 +142,13 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 	if (HaloEffect)
 	{
 		FLinearColor TargetColor;
-		float Intensity = 0.5f; // 기본 밝기
+		float Intensity = 1.0f; // 기본 밝기
 
 		TargetColor = UR1ItemFunctionLibrary::GetRarityColor(ItemRarity).GetSpecifiedColor();
 
 		// 밝기(Intensity) 적용
 		TargetColor *= Intensity;
-		TargetColor.A = 0.5f; // 알파값 고정
+		TargetColor.A = 1.0f; // 알파값 고정
 
 		// 🌟 2. 나이아가라 색상 파라미터("User.RarityColor") 주입
 		HaloEffect->SetNiagaraVariableLinearColor(TEXT("User.RarityColor"), TargetColor);
