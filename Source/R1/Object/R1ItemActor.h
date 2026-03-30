@@ -65,4 +65,11 @@ public:
 
 protected:
 	bool bHighlighted = false;
+	// 🌟 2. 통합 전리품 연출(Loot Effect) 나이아가라 컴포넌트 추가
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<class UNiagaraComponent> HaloEffect;
+
+private:
+	static const FName RarityColorParamName; // "User.RarityColor"
+	static const FName IsLegendaryParamName; // "User.IsLegendary"
 };
