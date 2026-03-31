@@ -7,6 +7,7 @@
 #include "Map/R1MapGenerator.h"
 #include "Interface/R1HighlightInterface.h"
 #include "Interface/R1InteractionInterface.h"
+#include "Data/R1RoomDefinitionData.h"
 #include "R1Door.generated.h"
 
 class UBoxComponent;
@@ -22,18 +23,47 @@ public:
 	AR1Door();
 
 protected:
+	virtual void Tick(float DeltaTime) override;
 	virtual void BeginPlay() override;
+
+protected:
+	bool bIsOpening = false;
+
+	FVector TargetBaseLocation;
+	FRotator TargetLockRotation;
+	UPROPERTY(EditAnywhere, Category = "Door Settings")
+	float OpenSpeed = 2.0f;
+
 	virtual void Highlight() override;
 	virtual void UnHighlight() override;
+
 	virtual UPrimitiveComponent* GetInteractTrigger() override;
+protected:
+	FTimerHandle DoorTransitionTimer;
+	void ExecuteDoorTransition();
 public:
 	// 문의 루트 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USceneComponent> RootComp;
 
 	// 문의 외형 (메시)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> BaseDoorMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> LockDoorMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> NoEntryMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> SpecialDoorMesh;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<UStaticMeshComponent> DoorMesh;
+	TObjectPtr<UStaticMeshComponent> DoorwayHighlightMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> BossDoorMesh;
 
 	// 플레이어 접근을 감지할 트리거 박스
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -53,7 +83,7 @@ public:
 
 	// 문을 열거나 잠그는 등 상태를 세팅하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Door Logic")
-	void SetupDoorConnection(int32 InTargetNodeID);
+	void SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType TargetRoomType);
 
 public:
 	// 문의 잠금 상태를 변경하는 함수
@@ -74,4 +104,13 @@ public:
 	// 🌟 추가: 문에 자물쇠를 채우는 함수
 	UFUNCTION(BlueprintCallable, Category = "Door Logic")
 	void SetKeyLocked(bool bNeedsKey);
+
+	// 🌟 문이 열리는 시각적 처리를 담당할 함수 추가
+	UFUNCTION(BlueprintCallable, Category = "Door Logic")
+	void OpenDoor();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door Logic")
+	bool bIsOpened = false;
+
 };
+
