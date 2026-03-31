@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "Map/R1Door.h"
 #include "Data/R1ItemPoolData.h"
+#include "Map/R1MapGenerator.h"
 #include "R1RoomDefinitionData.generated.h"
 
 UENUM(BlueprintType)

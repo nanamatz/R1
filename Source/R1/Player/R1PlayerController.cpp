@@ -222,7 +222,7 @@ void AR1PlayerController::OnSetDestinationTriggered()
 	FollowTime += GetWorld()->GetDeltaSeconds();
 
 	FHitResult Hit;
-	bool bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
+	bool bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, Hit);
 
 	if (bHitSuccessful)
 	{
@@ -276,7 +276,7 @@ void AR1PlayerController::TickCursorTrace()
 	}
 
 	FHitResult OutCursorHit;
-	if (GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, OutCursorHit) == false )
+	if (GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, OutCursorHit) == false )
 	{
 		return;
 	}

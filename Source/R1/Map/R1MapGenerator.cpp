@@ -762,7 +762,14 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 		if (!IsValid(Door)) continue;
 
 		int32 TargetNode = GetConnectedNodeInDirection(MatchedNodeID, Door->DoorDirection);
-		Door->SetupDoorConnection(TargetNode);
+		
+		ER1RoomContentType TargetRoomType = ER1RoomContentType::None;
+		if (TargetNode != -1 && GeneratedMap.IsValidIndex(TargetNode) && GeneratedMap[TargetNode].RoomDefinition)
+		{
+			TargetRoomType = GeneratedMap[TargetNode].RoomDefinition->RoomType;
+		}
+
+		Door->SetupDoorConnection(TargetNode, TargetRoomType);
 
 		if (TargetNode != -1 && GeneratedMap[TargetNode].RoomDefinition)
 		{

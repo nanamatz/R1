@@ -84,6 +84,7 @@ void ADungeonManager::UnlockRoomDoors()
 		if (IsValid(Door))
 		{
 			Door->SetLocked(false);
+			Door->OpenDoor();
 		}
 	}
 }
