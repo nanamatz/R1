@@ -66,6 +66,7 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID)
 		// 연결된 방이 없는 막다른 길이라면 문을 돌벽으로 바꾸거나 숨깁니다.
 		SetActorHiddenInGame(true);
 		SetActorEnableCollision(false);
+		NoEntryMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 	else
 	{
