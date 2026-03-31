@@ -178,6 +178,8 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 		NoEntryMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		BaseDoorMesh->SetVisibility(false);
 		BaseDoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		DoorwayHighlightMesh->SetVisibility(false);
+		DoorwayHighlightMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	else
 	{
@@ -206,7 +208,7 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 
 void AR1Door::SetLocked(bool bIsLocked)
 {
-	//bLocked = bIsLocked;
+	bCleared = !bIsLocked;
 	//if (bLocked)
 	//{
 	//	// 문을 잠그는 로직 (예: 충돌 활성화, 머티리얼 변경 등)
@@ -221,7 +223,7 @@ void AR1Door::SetLocked(bool bIsLocked)
 
 void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 {
-	if (!Interactor || TargetNodeID == -1) return;
+	if (!Interactor || !bCleared || TargetNodeID == -1) return;
 
 	if (bRequiresKey)
 	{

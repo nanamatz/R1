@@ -95,6 +95,7 @@ public:
 	// 현재 문이 잠겨있는지 여부 (블루프린트에서 머티리얼을 바꿀 때 쓸 수 있게 ReadOnly로 둡니다)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door Logic")
 	bool bLocked = false;
+	bool bCleared = false;
 
 public:
 	// 🌟 추가: 이 문을 열기 위해 열쇠가 필요한가?
