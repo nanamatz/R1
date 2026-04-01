@@ -7,6 +7,7 @@
 #include "Character/R1Player.h"
 #include "Item/R1InventorySubsystem.h"
 #include "Player/R1PlayerController.h"
+#include "Map/R1LockDoor.h"
 
 // Sets default values
 AR1Door::AR1Door()
@@ -21,17 +22,13 @@ AR1Door::AR1Door()
 	BaseDoorMesh->SetupAttachment(RootComp);
 	NoEntryMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("NoEntryMesh"));
 	NoEntryMesh->SetupAttachment(RootComp);
-	LockDoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LockDoorMesh"));
-	LockDoorMesh->SetupAttachment(RootComp);
+
 
 	SpecialDoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SpecialDoorMesh"));
 	SpecialDoorMesh->SetupAttachment(RootComp);
 
 	DoorwayHighlightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorwayHighlightMesh"));
 	DoorwayHighlightMesh->SetupAttachment(RootComp);
-	DoorwayHighlightMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	DoorwayHighlightMesh->SetRenderCustomDepth(false);
-	DoorwayHighlightMesh->SetCustomDepthStencilValue(252);
 
 	BossDoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BossDoorMesh"));
 	BossDoorMesh->SetupAttachment(RootComp);
@@ -56,30 +53,25 @@ void AR1Door::Tick(float DeltaTime)
 	bool bBaseMoving = false;
 	bool bLockRotating = false;
 
-	UStaticMeshComponent* ActiveMesh = nullptr;
-	if (BaseDoorMesh && BaseDoorMesh->IsVisible()) ActiveMesh = BaseDoorMesh;
-	else if (SpecialDoorMesh && SpecialDoorMesh->IsVisible()) ActiveMesh = SpecialDoorMesh;
-	else if (BossDoorMesh && BossDoorMesh->IsVisible()) ActiveMesh = BossDoorMesh;
-
-	if (ActiveMesh)
+	if (ActiveDoorMesh)
 	{
-		FVector CurrentLoc = ActiveMesh->GetRelativeLocation();
+		FVector CurrentLoc = ActiveDoorMesh->GetRelativeLocation();
 		FVector NewLoc = FMath::VInterpTo(CurrentLoc, TargetBaseLocation, DeltaTime, OpenSpeed);
-		ActiveMesh->SetRelativeLocation(NewLoc);
+		ActiveDoorMesh->SetRelativeLocation(NewLoc);
 
 		if (!NewLoc.Equals(TargetBaseLocation, 1.0f)) bBaseMoving = true;
 	}
 
 	// 2. LockDoor 보간 (Interact 시점에만 회전값이 세팅됨)
 	// 여기서 !bRequiresKey 조건은 이미 풀렸을 때(열쇠 사용 후) 돌아가게 하기 위함입니다.
-	if (LockDoorMesh && LockDoorMesh->IsVisible() && !bLocked)
-	{
-		FRotator CurrentRot = LockDoorMesh->GetRelativeRotation();
-		FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetLockRotation, DeltaTime, OpenSpeed);
-		LockDoorMesh->SetRelativeRotation(NewRot);
+	//if (LockDoorMesh && LockDoorMesh->IsVisible() && !bLocked)
+	//{
+	//	FRotator CurrentRot = LockDoorMesh->GetRelativeRotation();
+	//	FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetLockRotation, DeltaTime, OpenSpeed);
+	//	LockDoorMesh->SetRelativeRotation(NewRot);
 
-		if (!NewRot.Equals(TargetLockRotation, 1.0f)) bLockRotating = true;
-	}
+	//	if (!NewRot.Equals(TargetLockRotation, 1.0f)) bLockRotating = true;
+	//}
 
 	if (!bBaseMoving && !bLockRotating)
 	{
@@ -99,32 +91,17 @@ void AR1Door::Highlight()
 {
 	if (!bIsOpened)
 	{
-		if (BaseDoorMesh && BaseDoorMesh->IsVisible())
+		// 🌟 켜져있는 단 하나의 문만 하이라이트!
+		if (ActiveDoorMesh)
 		{
-			BaseDoorMesh->SetRenderCustomDepth(true);
-			BaseDoorMesh->SetCustomDepthStencilValue(252);
-		}
-		if (SpecialDoorMesh && SpecialDoorMesh->IsVisible())
-		{
-			SpecialDoorMesh->SetRenderCustomDepth(true);
-			SpecialDoorMesh->SetCustomDepthStencilValue(252);
-		}
-		if (LockDoorMesh && LockDoorMesh->IsVisible())
-		{
-			LockDoorMesh->SetRenderCustomDepth(true);
-			LockDoorMesh->SetCustomDepthStencilValue(252);
-		}
-		if (BossDoorMesh && BossDoorMesh->IsVisible())
-		{
-			BossDoorMesh->SetRenderCustomDepth(true);
-			BossDoorMesh->SetCustomDepthStencilValue(252);
+			ActiveDoorMesh->SetRenderCustomDepth(true);
+			ActiveDoorMesh->SetCustomDepthStencilValue(252);
 		}
 	}
 	else
 	{
 		if (DoorwayHighlightMesh)
 		{
-			// 게임엔 안 보이지만, 이 옵션을 켜면 포스트 프로세스가 외곽선만 그립니다!
 			DoorwayHighlightMesh->SetRenderCustomDepth(true);
 			DoorwayHighlightMesh->SetCustomDepthStencilValue(252);
 		}
@@ -133,11 +110,8 @@ void AR1Door::Highlight()
 
 void AR1Door::UnHighlight()
 {
-	if (BaseDoorMesh) BaseDoorMesh->SetRenderCustomDepth(false);
-	if (SpecialDoorMesh) SpecialDoorMesh->SetRenderCustomDepth(false);
-	if (LockDoorMesh) LockDoorMesh->SetRenderCustomDepth(false);
+	if (ActiveDoorMesh) ActiveDoorMesh->SetRenderCustomDepth(false);
 	if (DoorwayHighlightMesh) DoorwayHighlightMesh->SetRenderCustomDepth(false);
-	if (BossDoorMesh) BossDoorMesh->SetRenderCustomDepth(false);
 }
 
 UPrimitiveComponent* AR1Door::GetInteractTrigger()
@@ -154,8 +128,10 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 {
 	TargetNodeID = InTargetNodeID;
 
-	LockDoorMesh->SetVisibility(false);
-	LockDoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (LinkedLockDoor && !bIsOpened)
+	{
+		LinkedLockDoor->SetLockVisibility(false);
+	}
 
 	NoEntryMesh->SetVisibility(false);
 	NoEntryMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -163,23 +139,18 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 	SpecialDoorMesh->SetVisibility(false);
 	SpecialDoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	LockDoorMesh->SetVisibility(false);
-	LockDoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	BaseDoorMesh->SetVisibility(false);
 	BaseDoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	BossDoorMesh->SetVisibility(false);
 	BossDoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	ActiveDoorMesh = nullptr;
+
 	if (TargetNodeID == -1)
 	{
 		NoEntryMesh->SetVisibility(true);
 		NoEntryMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-		BaseDoorMesh->SetVisibility(false);
-		BaseDoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		DoorwayHighlightMesh->SetVisibility(false);
-		DoorwayHighlightMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	else
 	{
@@ -190,18 +161,21 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 			TargetRoomType == ER1RoomContentType::Treasure || 
 			TargetRoomType == ER1RoomContentType::Refresh)
 		{
-			SpecialDoorMesh->SetVisibility(true);
-			SpecialDoorMesh->SetCollisionProfileName(TEXT("BlockAll"));
+			ActiveDoorMesh = SpecialDoorMesh;
 		}
 		else if (TargetRoomType == ER1RoomContentType::Boss)
 		{
-			BossDoorMesh->SetVisibility(true);
-			BossDoorMesh->SetCollisionProfileName(TEXT("BlockAll"));
+			ActiveDoorMesh = BossDoorMesh;
 		}
 		else
 		{
-			BaseDoorMesh->SetVisibility(true);
-			BaseDoorMesh->SetCollisionProfileName(TEXT("BlockAll"));
+			ActiveDoorMesh = BaseDoorMesh;
+		}
+
+		if (ActiveDoorMesh)
+		{
+			ActiveDoorMesh->SetVisibility(true);
+			ActiveDoorMesh->SetCollisionProfileName(TEXT("BlockAll"));
 		}
 	}
 }
@@ -233,14 +207,11 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 		{
 			bRequiresKey = false;
 			bLocked = false;
-			if (LockDoorMesh)
+			if(LinkedLockDoor)
 			{
-				TargetLockRotation = LockDoorMesh->GetRelativeRotation() + FRotator(0.f, 90.f, 0.f);
-				LockDoorMesh->SetCollisionProfileName(TEXT("NoCollision"));
-				bIsOpening = true;
-				SetActorTickEnabled(true);
+				LinkedLockDoor->OpenDoorSmoothly();
+				GetWorld()->GetTimerManager().SetTimer(DoorTransitionTimer, this, &AR1Door::ExecuteDoorTransition, 0.5f, false);
 			}
-			GetWorld()->GetTimerManager().SetTimer(DoorTransitionTimer, this, &AR1Door::ExecuteDoorTransition, 0.5f, false);
 		}
 		else
 		{
@@ -261,10 +232,9 @@ void AR1Door::SetKeyLocked(bool bNeedsKey)
 	{
 		bLocked = true;
 
-		if (LockDoorMesh)
+		if (LinkedLockDoor)
 		{
-			LockDoorMesh->SetVisibility(true);
-			LockDoorMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			LinkedLockDoor->SetLockVisibility(true);
 		}
 	}
 }
@@ -274,17 +244,9 @@ void AR1Door::OpenDoor()
 	if (bIsOpened) return;
 
 	// 🌟 3. 현재 위치를 기준으로 '목표 지점'만 계산해서 저장합니다.
-	if (BaseDoorMesh && BaseDoorMesh->IsVisible())
+	if (ActiveDoorMesh)
 	{
-		TargetBaseLocation = BaseDoorMesh->GetRelativeLocation() + FVector(0.f, -200.f, 0.f);
-	}
-	else if (SpecialDoorMesh && SpecialDoorMesh->IsVisible())
-	{
-		TargetBaseLocation = SpecialDoorMesh->GetRelativeLocation() + FVector(0.f, -200.f, 0.f);
-	}
-	else if (BossDoorMesh && BossDoorMesh->IsVisible())
-	{
-		TargetBaseLocation = BossDoorMesh->GetRelativeLocation() + FVector(0.f, -200.f, 0.f);
+		TargetBaseLocation = ActiveDoorMesh->GetRelativeLocation() + FVector(0.f, -200.f, 0.f);
 	}
 
 	// 🌟 4. 이제부터 부드럽게 움직이라고 틱을 깨웁니다.
