@@ -128,7 +128,7 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 {
 	TargetNodeID = InTargetNodeID;
 
-	if (LinkedLockDoor && !bIsOpened)
+	if (LinkedLockDoor)
 	{
 		LinkedLockDoor->SetLockVisibility(false);
 	}
@@ -144,6 +144,9 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 
 	BossDoorMesh->SetVisibility(false);
 	BossDoorMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	DoorwayHighlightMesh->SetVisibility(false);
+	DoorwayHighlightMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	ActiveDoorMesh = nullptr;
 
@@ -248,6 +251,8 @@ void AR1Door::OpenDoor()
 	{
 		TargetBaseLocation = ActiveDoorMesh->GetRelativeLocation() + FVector(0.f, -200.f, 0.f);
 	}
+
+	DoorwayHighlightMesh->SetVisibility(true);
 
 	// 🌟 4. 이제부터 부드럽게 움직이라고 틱을 깨웁니다.
 	bIsOpened = true;

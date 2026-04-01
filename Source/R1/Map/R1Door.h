@@ -50,8 +50,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> BaseDoorMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	TObjectPtr<UStaticMeshComponent> LockDoorMesh;
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Door Link")
+	TObjectPtr<class AR1LockDoor> LinkedLockDoor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> NoEntryMesh;
@@ -64,6 +64,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> BossDoorMesh;
+
+	UPROPERTY()
+	TObjectPtr<UStaticMeshComponent> ActiveDoorMesh;
 
 	// 플레이어 접근을 감지할 트리거 박스
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
