@@ -35,9 +35,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Recovery")
 	TSubclassOf<AActor> DispenserParticleEffectClass;
-	// 사용 후 변할 머티리얼 (선택 사항)
-	UPROPERTY(EditAnywhere, Category = "Recovery")
-	TObjectPtr<UMaterialInterface> UsedMaterial;
 
 	// 상호작용 인터페이스 구현
 	virtual void Highlight() override;

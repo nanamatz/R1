@@ -104,13 +104,6 @@ void AR1Dispenser::Interact_Implementation(AR1PlayerController* Interactor)
 	// 🌟 4. 사용 완료 처리 (일회성)
 	bIsUsed = true;
 	UnHighlight();
-
-	if (UsedMaterial)
-	{
-		MeshComp->SetMaterial(0, UsedMaterial);
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("디스펜서 사용 완료: 연료 고갈"));
 }
 
 UPrimitiveComponent* AR1Dispenser::GetInteractTrigger()
