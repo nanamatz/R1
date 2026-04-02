@@ -222,7 +222,7 @@ void AR1ItemActor::DisablePhysicsAndSetOverlap()
 	BoxComp->SetSimulatePhysics(false);
 	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	BoxComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	BoxComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	BoxComp->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
 	BoxComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 }
 

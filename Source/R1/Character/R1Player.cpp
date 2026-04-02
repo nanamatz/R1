@@ -26,6 +26,7 @@
 #include "DataTable/CharacterStatsRow.h"
 #include "R1GameplayTags.h"
 #include "System/R1EquipmentManagerComponent.h"
+#include "Player/R1CameraOcclusionComponent.h"
 
 AR1Player::AR1Player()
 {
@@ -46,10 +47,12 @@ AR1Player::AR1Player()
 	SpringArm->bInheritRoll = false;
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->CameraLagSpeed = 3.f;
+	SpringArm->bDoCollisionTest = false;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false;	// 캐릭터가 회전할 때 카메라는 고정
+
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 
@@ -67,6 +70,9 @@ AR1Player::AR1Player()
 
 	PostProcessComp = CreateDefaultSubobject<UPostProcessComponent>(TEXT("PostProcessComp"));
 	PostProcessComp->SetupAttachment(RootComponent);
+
+	CameraOcclusionComp = CreateDefaultSubobject<UR1CameraOcclusionComponent>(TEXT("CameraOcclusionComp"));
+
 }
 void AR1Player::BeginPlay()
 {
@@ -170,6 +176,17 @@ void AR1Player::OnDead(const TObjectPtr<AR1Character> Attacker)
 void AR1Player::ActivateAbility(FGameplayTag AbilityTag)
 {
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
+}
+
+void AR1Player::AddCameraYaw(float YawDelta)
+{
+	if (SpringArm)
+	{
+		// 카메라 회전 민감도 (필요에 따라 에디터 변수로 빼서 조절하셔도 됩니다)
+
+		// SpringArm의 Z축(Yaw) 방향으로만 회전값을 더해줍니다.
+		SpringArm->AddRelativeRotation(FRotator(0.f, YawDelta * RotationSpeed, 0.f));
+	}
 }
 
 void AR1Player::OnManaChanged(float Ratio)

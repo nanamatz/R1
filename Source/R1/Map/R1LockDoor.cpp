@@ -22,7 +22,7 @@ AR1LockDoor::AR1LockDoor()
 
 	TriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	TriggerBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-	TriggerBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	TriggerBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
 	TriggerBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	Tags.Add(FName("Interactable"));

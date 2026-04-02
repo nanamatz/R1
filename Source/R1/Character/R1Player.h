@@ -53,6 +53,10 @@ public:
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
 
+	void AddCameraYaw(float YawDelta);
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float RotationSpeed = 3.f;
 public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Attributes")
@@ -104,4 +108,7 @@ public:
 	void UpdateLowHealthEffect(float Ratio);
 
 	void TeleportToRoom(FVector TargetLocation);
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<class UR1CameraOcclusionComponent> CameraOcclusionComp;
 };

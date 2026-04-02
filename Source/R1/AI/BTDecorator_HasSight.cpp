@@ -27,7 +27,7 @@ bool UBTDecorator_HasSight::CalculateRawConditionValue(UBehaviorTreeComponent& O
 	Params.AddIgnoredActor(ControllingPawn); // 자기 자신은 무시
 
 	// Visibility 채널을 쏴서 중간에 벽이나 장애물이 있는지 검사합니다.
-	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params);
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_GameTraceChannel2, Params);
 
 	if (bHit)
 	{

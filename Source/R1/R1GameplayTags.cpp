@@ -4,7 +4,8 @@ namespace R1GameplayTags
 {
 	//Input action tags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SetDestination, "Input.Action.SetDestination");
-	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Interaction, "Input.Action.Interaction");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_LookClick, "Input.Action.LookClick");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_LookMouse, "Input.Action.LookMouse");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Inventory, "Input.Action.Inventory");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_GameMenu, "Input.Action.GameMenu");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SkillQ, "Input.Action.SkillQ");
