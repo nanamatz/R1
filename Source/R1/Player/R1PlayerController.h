@@ -40,6 +40,14 @@ private:
 	void OnWSkill();
 	void OnESkill();
 	void OnRSkill();
+
+public:
+	// 🌟 카메라 회전용 입력 플래그
+
+	// 🌟 카메라 회전 입력 함수
+	void OnLookClickStarted();
+	void OnLookClickReleased();
+	void OnLookMouse(const FInputActionValue& Value);
 public:
 	UFUNCTION(BlueprintCallable)
 	void OnGameMenuToggle();
@@ -85,6 +93,7 @@ private:
 	bool bMousePressed = false;
 
 	bool bInventoryHidden = true;
+	bool bIsCameraRotating = false;
 
 protected:
 	UPROPERTY(BlueprintReadOnly)

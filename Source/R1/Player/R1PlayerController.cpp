@@ -148,6 +148,26 @@ void AR1PlayerController::SetupInputComponent()
 
 		EnhancedInputComponent->BindAction(ActionRSkill, ETriggerEvent::Started, this, &ThisClass::OnRSkill);
 
+		auto ActionLookClick = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_LookClick);
+
+		if (ActionLookClick == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionLookClick is null."));
+			return;
+		}
+
+		EnhancedInputComponent->BindAction(ActionLookClick, ETriggerEvent::Started, this, &ThisClass::OnLookClickStarted);
+		EnhancedInputComponent->BindAction(ActionLookClick, ETriggerEvent::Completed, this, &ThisClass::OnLookClickReleased);
+		EnhancedInputComponent->BindAction(ActionLookClick, ETriggerEvent::Canceled, this, &ThisClass::OnLookClickReleased);
+
+		auto ActionLookMouse = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_LookMouse);
+
+		if (ActionLookMouse == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionLookMouse is null."));
+			return;
+		}
+		EnhancedInputComponent->BindAction(ActionLookMouse, ETriggerEvent::Triggered, this, &ThisClass::OnLookMouse);
 	}
 	else
 	{
@@ -200,7 +220,7 @@ void AR1PlayerController::PlayerTick(float DeltaTime)
 
 void AR1PlayerController::OnInputStarted()
 {
-	StopMovement();
+	//StopMovement();
 	bMousePressed = true;
 	TargetActor = HighlightActor;
 }
@@ -208,34 +228,27 @@ void AR1PlayerController::OnInputStarted()
 void AR1PlayerController::OnSetDestinationTriggered()
 {
 	if (!bMousePressed) return;
-
-	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting)
-	{
-		return;
-	}
-
-	if (TargetActor)
-	{
-		return;
-	}
+	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
+	if (TargetActor) return;
 
 	FollowTime += GetWorld()->GetDeltaSeconds();
 
 	FHitResult Hit;
-	bool bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, Hit);
+	bool bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel2, false, Hit);
 
 	if (bHitSuccessful)
 	{
-		CacheDestination = Hit.Location;
-
-		if (R1Player)
+		// 마우스를 조금 움직였다고 매 프레임 재계산하는 것을 막아줍니다. (50 유닛 기준)
+		if (FVector::Dist(CacheDestination, Hit.Location) > 50.0f)
 		{
+			CacheDestination = Hit.Location; // 목적지 갱신
 
-			if (R1Player->GetCreatureState() != ECreatureState::Moving)
+			if (R1Player && R1Player->GetCreatureState() != ECreatureState::Moving)
 			{
 				R1Player->SetCreatureState(ECreatureState::Moving);
 			}
 
+			// 이제 거리가 50 이상 변했을 때만 이동 명령을 내립니다!
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
 	}
@@ -258,9 +271,9 @@ void AR1PlayerController::OnSetDestinationReleased()
 		{
 			if (R1Player->GetCreatureState() != ECreatureState::Moving)
 			{
-				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+				R1Player->SetCreatureState(ECreatureState::Moving);
 			}
-
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CacheDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
 		}
 	}
@@ -276,7 +289,7 @@ void AR1PlayerController::TickCursorTrace()
 	}
 
 	FHitResult OutCursorHit;
-	if (GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, OutCursorHit) == false )
+	if (GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel2, false, OutCursorHit) == false )
 	{
 		return;
 	}
@@ -324,43 +337,28 @@ void AR1PlayerController::TickCursorTrace()
 
 void AR1PlayerController::ChaseTargetAndAttack()
 {
-	if (R1Player == nullptr || TargetActor == nullptr)
-	{
-		return;
-	}
-
-	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting)
-	{
-		return;
-	}
+	if (R1Player == nullptr || TargetActor == nullptr) return;
+	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
 
 	TargetAttackActor = Cast<AR1Character>(TargetActor);
 
 	if (TargetAttackActor)
 	{
 		FVector Direction = TargetAttackActor->GetActorLocation() - R1Player->GetActorLocation();
-
-		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(
-			R1Player->GetActorLocation(),
-			TargetAttackActor->GetActorLocation()
-		);
+		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetAttackActor->GetActorLocation());
 		R1Player->SetActorRotation(Rotation);
 
 		if (Direction.Length() < R1Player->AttackRange)
 		{
 			StopMovement();
-
-			if (TargetAttackActor->GetCreatureState() == ECreatureState::Dead)
-			{
-				return;
-			}
+			if (TargetAttackActor->GetCreatureState() == ECreatureState::Dead) return;
 
 			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
 			TargetActor = nullptr;
 		}
 		else
 		{
-			CacheDestination = TargetAttackActor->GetActorLocation();
+			CacheDestination = TargetActor->GetActorLocation();
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
 	}
@@ -368,15 +366,10 @@ void AR1PlayerController::ChaseTargetAndAttack()
 	{
 		bool bIsInRange = false;
 		UPrimitiveComponent* TriggerComp = InteractableTarget->GetInteractTrigger();
-
-		if (TriggerComp)
-		{
-			bIsInRange = TriggerComp->IsOverlappingActor(R1Player);
-		}
+		if (TriggerComp) bIsInRange = TriggerComp->IsOverlappingActor(R1Player);
 
 		if (bIsInRange)
 		{
-			// 1. 거리가 충분히 가까워지면 자동으로 상호작용 실행!
 			IR1InteractionInterface::Execute_Interact(TargetActor, this);
 			ResetMovementState();
 		}
@@ -386,6 +379,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
 	}
+
 }
 
 void AR1PlayerController::SwitchCursorType(FHitResult& OutHit)
@@ -566,6 +560,32 @@ void AR1PlayerController::OnRSkill()
 	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)
 	{
 		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::R);
+	}
+}
+
+
+void AR1PlayerController::OnLookClickStarted()
+{
+	bIsCameraRotating = true;
+}
+
+void AR1PlayerController::OnLookClickReleased()
+{
+	bIsCameraRotating = false;
+}
+
+void AR1PlayerController::OnLookMouse(const FInputActionValue& Value)
+{
+	// 마우스 회전 트리거 버튼을 꾹 누르고 있을 때만 작동합니다.
+	if (!bIsCameraRotating || !R1Player) return;
+
+	// X축 마우스 이동량 추출
+	float LookValue = Value.Get<float>();
+
+	if (LookValue != 0.0f)
+	{
+		// 플레이어 캐릭터의 스프링암을 돌립니다.
+		R1Player->AddCameraYaw(LookValue);
 	}
 }
 

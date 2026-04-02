@@ -38,7 +38,7 @@ AR1Door::AR1Door()
 
 	TriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	TriggerBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-	TriggerBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	TriggerBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
 	TriggerBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	Tags.Add(FName("Interactable"));
@@ -61,17 +61,6 @@ void AR1Door::Tick(float DeltaTime)
 
 		if (!NewLoc.Equals(TargetBaseLocation, 1.0f)) bBaseMoving = true;
 	}
-
-	// 2. LockDoor 보간 (Interact 시점에만 회전값이 세팅됨)
-	// 여기서 !bRequiresKey 조건은 이미 풀렸을 때(열쇠 사용 후) 돌아가게 하기 위함입니다.
-	//if (LockDoorMesh && LockDoorMesh->IsVisible() && !bLocked)
-	//{
-	//	FRotator CurrentRot = LockDoorMesh->GetRelativeRotation();
-	//	FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetLockRotation, DeltaTime, OpenSpeed);
-	//	LockDoorMesh->SetRelativeRotation(NewRot);
-
-	//	if (!NewRot.Equals(TargetLockRotation, 1.0f)) bLockRotating = true;
-	//}
 
 	if (!bBaseMoving && !bLockRotating)
 	{
@@ -100,7 +89,7 @@ void AR1Door::Highlight()
 	}
 	else
 	{
-		if (DoorwayHighlightMesh)
+		if (ActiveDoorMesh && DoorwayHighlightMesh)
 		{
 			DoorwayHighlightMesh->SetRenderCustomDepth(true);
 			DoorwayHighlightMesh->SetCustomDepthStencilValue(252);
@@ -133,6 +122,15 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 		LinkedLockDoor->SetLockVisibility(false);
 	}
 
+	if (DoorwayHighlightMesh && bIsOpened)
+	{
+		DoorwayHighlightMesh->SetVisibility(true);
+	}
+	else
+	{
+		DoorwayHighlightMesh->SetVisibility(false);
+	}
+
 	NoEntryMesh->SetVisibility(false);
 	NoEntryMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -151,6 +149,7 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 	{
 		NoEntryMesh->SetVisibility(true);
 		NoEntryMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		TriggerBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	else
 	{
@@ -243,7 +242,8 @@ void AR1Door::OpenDoor()
 {
 	if (bIsOpened) return;
 
-	// 🌟 3. 현재 위치를 기준으로 '목표 지점'만 계산해서 저장합니다.
+	DoorwayHighlightMesh->SetVisibility(true);
+
 	if (ActiveDoorMesh)
 	{
 		TargetBaseLocation = ActiveDoorMesh->GetRelativeLocation() + FVector(0.f, -200.f, 0.f);

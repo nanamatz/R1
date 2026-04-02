@@ -78,7 +78,7 @@ TArray<AR1Character*> UR1AbilitySystemLibrary::GetChainLightningTargets(AR1Chara
 					HitResult,
 					CurrentOrigin + FVector(0, 0, 50.0f),
 					TargetLoc + FVector(0, 0, 50.0f),
-					ECC_Visibility,
+					ECC_GameTraceChannel2,
 					LoSParams
 				);
 

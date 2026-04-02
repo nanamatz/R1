@@ -75,7 +75,7 @@ void AR1GoldActor::DisablePhysicsAndSetOverlap()
 	SphereComp->SetSimulatePhysics(false);
 	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	SphereComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	SphereComp->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
 	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 }
 
