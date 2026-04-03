@@ -230,6 +230,12 @@ void AR1PlayerController::OnSetDestinationTriggered()
 	if (!bMousePressed) return;
 	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
 	if (TargetActor) return;
+	AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
+
+	if (MyR1HUD && MyR1HUD->bIsShopUIVisible == true)
+	{
+		return;
+	}
 
 	FollowTime += GetWorld()->GetDeltaSeconds();
 
@@ -264,6 +270,14 @@ void AR1PlayerController::OnSetDestinationReleased()
 	{
 		return;
 	}
+
+	AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
+	
+	if (MyR1HUD && MyR1HUD->bIsShopUIVisible == true)
+	{
+		return;
+	}
+
 
 	if (FollowTime <= ShortPressThreshold)
 	{
