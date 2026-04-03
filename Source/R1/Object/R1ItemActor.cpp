@@ -50,7 +50,6 @@ AR1ItemActor::AR1ItemActor()
 
 	// 💡 부모 메시가 스케일 조정(반지 등)이 되더라도 후광 크기는 일정하게 유지하기 위해 절대 스케일 사용
 	HaloEffect->SetAbsolute(false, false, true);
-	HaloEffect->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f)); // 바닥에 너무 파묻히지 않게 살짝 띄움
 	HaloEffect->SetAutoActivate(false);
 	Tags.Add(FName("Item"));
 }
@@ -149,14 +148,14 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 
 		// 밝기(Intensity) 적용
 		TargetColor *= Intensity;
-		TargetColor.A = 0.5f; // 알파값 고정
+		TargetColor.A = 0.3f; // 알파값 고정
 
 		// 🌟 2. 나이아가라 색상 파라미터("User.RarityColor") 주입
-		HaloEffect->SetNiagaraVariableLinearColor(TEXT("User.RarityColor"), TargetColor);
+		HaloEffect->SetVariableLinearColor(TEXT("User.RarityColor"), TargetColor);
 
 		// 🌟 3. [신규 핵심] 전설 등급 여부 판단 후 부울 파라미터("User.IsLegendary") 주입
 		bool bIsLegendary = (ItemRarity == EItemRarity::Legendary);
-		HaloEffect->SetNiagaraVariableBool(TEXT("User.IsLegendary"), bIsLegendary);
+		HaloEffect->SetVariableBool(TEXT("User.IsLegendary"), bIsLegendary);
 
 	}
 
