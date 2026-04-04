@@ -8,7 +8,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "R1GameplayTags.h"
 #include "Data/R1ItemAssetData.h"
-
+#include "Character/R1Player.h"
 // Sets default values for this component's properties
 UR1EquipmentManagerComponent::UR1EquipmentManagerComponent()
 {
@@ -118,6 +118,28 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 
 	EquippedHandlesMap.FindOrAdd(EquipSlot, NewHandles);
 
+	AR1Player* PlayerChar = Cast<AR1Player>(GetOwner());
+	if (PlayerChar && PlayerChar->GetMesh())
+	{
+		// 아이템에 시각적 메시(ItemMesh)가 있고, 연결할 소켓 이름이 지정되어 있다면?
+		if (ItemData->ItemMesh && !ItemData->EquipSocketName.IsNone())
+		{
+			// 스태틱 메시 컴포넌트를 런타임에 생성합니다.
+			UStaticMeshComponent* WeaponMeshComp = NewObject<UStaticMeshComponent>(GetOwner());
+			WeaponMeshComp->SetStaticMesh(ItemData->ItemMesh);
+
+			// 콜리전을 끕니다 (무기가 캐릭터를 밀어내는 현상 방지)
+			WeaponMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+			// 플레이어 메인 메시의 지정된 소켓에 부착합니다. (SnapToTarget 자동 적용)
+			WeaponMeshComp->SetupAttachment(PlayerChar->GetMesh(), ItemData->EquipSocketName);
+			WeaponMeshComp->RegisterComponent(); // 씬에 등록하여 렌더링 시작
+
+			// 나중에 장비를 벗을 때 지우기 위해 맵에 기록해 둡니다.
+			EquippedMeshesMap.Add(EquipSlot, WeaponMeshComp);
+		}
+	}
+
 	UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 완료! 스킬 %d개, 효과 %d개 적용됨"),
 		*UEnum::GetValueAsString(EquipSlot), NewHandles.AbilityHandles.Num(), NewHandles.EffectHandles.Num());
 }
@@ -151,6 +173,17 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 
 		// 4. Map에서 영수증 파기!
 		EquippedHandlesMap.Remove(EquipSlot);
+
+		if (UStaticMeshComponent** FoundMeshComp = EquippedMeshesMap.Find(EquipSlot))
+		{
+			if (*FoundMeshComp)
+			{
+				// 월드에서 모델링을 파괴합니다.
+				(*FoundMeshComp)->DestroyComponent();
+			}
+			// 맵에서 기록을 지웁니다.
+			EquippedMeshesMap.Remove(EquipSlot);
+		}
 
 		UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
 	}

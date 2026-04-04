@@ -82,4 +82,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS")
 	TMap<FGameplayTag, float> StatModifiers;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Visual")
+	FName EquipSocketName;
 };
