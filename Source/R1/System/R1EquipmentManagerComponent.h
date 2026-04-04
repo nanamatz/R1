@@ -69,4 +69,7 @@ private:
 	// 💡 [핵심] 현재 장착 중인 장비들의 영수증을 슬롯별로 관리하는 맵(Map)
 	UPROPERTY()
 	TMap<ER1EquipmentSlot, FR1EquipmentActiveHandles> EquippedHandlesMap;
+
+	UPROPERTY()
+	TMap<ER1EquipmentSlot, class UStaticMeshComponent*> EquippedMeshesMap;
 };
