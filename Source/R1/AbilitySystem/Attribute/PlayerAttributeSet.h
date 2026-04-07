@@ -37,6 +37,14 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, DefenceMultiplier);
 
 
+	ATTRIBUTE_ACCESSORS(ThisClass, ExtraGold);
+	ATTRIBUTE_ACCESSORS(ThisClass, Honor);
+	ATTRIBUTE_ACCESSORS(ThisClass, Luck);
+	ATTRIBUTE_ACCESSORS(ThisClass, Revive);
+
+	
+
+
 protected:
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
@@ -71,4 +79,16 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData DefenceMultiplier;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData ExtraGold;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData Honor;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData Luck;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData Revive;
 };

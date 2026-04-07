@@ -7,6 +7,7 @@
 #include "UI/System/R1TitleWidget.h"
 #include "UI/System/R1MainMenuWidget.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "UI/Progression/R1MetaUpgradeWidget.h"
 
 void AR1MainMenuController::BeginPlay()
 {
@@ -40,6 +41,12 @@ void AR1MainMenuController::BeginPlay()
 		GameStartCamera = FoundCameras[0];
 	}
 
+	UGameplayStatics::GetAllActorsWithTag(this, FName("Camera_MetaUpgrade"), FoundCameras);
+	if (FoundCameras.Num() > 0)
+	{
+		MetaUpgradeCamera = FoundCameras[0];
+	}
+
 	// 2. 게임 시작 시 타이틀 카메라로 시점을 즉시 고정합니다.
 	if (TitleCamera)
 	{
@@ -59,7 +66,6 @@ void AR1MainMenuController::BeginPlay()
 
 	if (APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0))
 	{
-		// 1.0(까망) -> 0.0(투명) 으로 1초 동안 변환
 		CameraManager->StartCameraFade(1.0f, 0.0f, 1.0f, FLinearColor::Black, false, false);
 	}
 }
@@ -92,19 +98,24 @@ void AR1MainMenuController::ShowMainMenuScreen()
 {
 	CurrentMenuState = EMenuState::MainMenu;
 
-	// 1. 카메라 이동 시작 (1.5초)
 	if (MainMenuCamera)
 	{
 		SetViewTargetWithBlend(MainMenuCamera, 1.5f, EViewTargetBlendFunction::VTBlend_Cubic, 2.0f);
 	}
 
-	// 2. 현재 떠있는 UI(타이틀 화면)는 즉시 숨기기
-	if (TitleScreenWidget && TitleScreenWidget->WBP_Title)
+	if (TitleScreenWidget)
 	{
-		TitleScreenWidget->WBP_Title->SetVisibility(ESlateVisibility::Hidden);
+		if (TitleScreenWidget->WBP_Title)
+		{
+			TitleScreenWidget->WBP_Title->SetVisibility(ESlateVisibility::Hidden);
+		}
+
+		if (TitleScreenWidget->WBP_UpgradeWidget)
+		{
+			TitleScreenWidget->WBP_UpgradeWidget->SetVisibility(ESlateVisibility::Hidden);
+		}
 	}
 
-	// 3. 1.5초 뒤에 메인 메뉴 UI를 띄우도록 타이머 설정
 	GetWorldTimerManager().SetTimer(MenuTimerHandle, this, &AR1MainMenuController::OnMainMenuCameraBlendFinished, 1.5f, false);
 }
 
@@ -123,19 +134,47 @@ void AR1MainMenuController::OnMainMenuCameraBlendFinished()
 	}
 }
 
+void AR1MainMenuController::OnMetaUpgradeCameraBlendFinished()
+{
+	if (TitleScreenWidget)
+	{
+		TitleScreenWidget->SwitchToMetaUpgrade(); // 이동이 끝난 후 UI 켜기!
+
+		FInputModeUIOnly InputModeData;
+		if (TitleScreenWidget->WBP_UpgradeWidget)
+		{
+			InputModeData.SetWidgetToFocus(TitleScreenWidget->WBP_UpgradeWidget->TakeWidget());
+		}
+		SetInputMode(InputModeData);
+	}
+}
+
+void AR1MainMenuController::OnOptionsCameraBlendFinished()
+{
+	if (TitleScreenWidget)
+	{
+		TitleScreenWidget->SwitchToOptions(); // 이동 끝난 후 띄움!
+	}
+}
+
 void AR1MainMenuController::ShowOptionsScreen()
 {
 	CurrentMenuState = EMenuState::Options;
 
 	if (TitleScreenWidget)
 	{
-		TitleScreenWidget->SwitchToOptions();
+		if (TitleScreenWidget->WBP_MainMenu)
+		{
+			TitleScreenWidget->WBP_MainMenu->SetVisibility(ESlateVisibility::Hidden);
+		}
 	}
+
 	if (OptionsCamera)
 	{
 		SetViewTargetWithBlend(OptionsCamera, 1.5f, EViewTargetBlendFunction::VTBlend_Cubic, 2.0f);
 	}
 
+	GetWorldTimerManager().SetTimer(MenuTimerHandle, this, &AR1MainMenuController::OnOptionsCameraBlendFinished, 1.5f, false);
 }
 
 void AR1MainMenuController::ShowGameStartCamera()
@@ -144,6 +183,26 @@ void AR1MainMenuController::ShowGameStartCamera()
 	{
 		SetViewTargetWithBlend(GameStartCamera, 1.5f, EViewTargetBlendFunction::VTBlend_Cubic, 2.0f);
 	}
+}
+
+void AR1MainMenuController::ShowMetaUpgradeScreen()
+{
+	CurrentMenuState = EMenuState::MetaUpgrade;
+
+	if (TitleScreenWidget)
+	{
+		if (TitleScreenWidget->WBP_MainMenu)
+		{
+			TitleScreenWidget->WBP_MainMenu->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+
+	if (MetaUpgradeCamera)
+	{
+		SetViewTargetWithBlend(MetaUpgradeCamera, 1.5f, EViewTargetBlendFunction::VTBlend_Cubic, 2.0f);
+	}
+
+	GetWorldTimerManager().SetTimer(MenuTimerHandle, this, &AR1MainMenuController::OnMetaUpgradeCameraBlendFinished, 1.5f, false);
 }
 
 void AR1MainMenuController::SetupInputComponent()
@@ -182,14 +241,16 @@ void AR1MainMenuController::GoBack()
 {
 	switch (CurrentMenuState)
 	{
+	case EMenuState::MetaUpgrade:
+		ShowMainMenuScreen();         
+		break;
 	case EMenuState::Options:
-		ShowMainMenuScreen(); // 옵션에서는 메인 메뉴로
+		ShowMainMenuScreen();
 		break;
 	case EMenuState::MainMenu:
-		ShowTitleScreen();    // 메인 메뉴에서는 타이틀로
+		ShowTitleScreen(); 
 		break;
 	case EMenuState::Title:
-		// 타이틀에서는 뒤로 갈 곳이 없으니 무시하거나, 게임 종료 처리
 		break;
 	}
 }

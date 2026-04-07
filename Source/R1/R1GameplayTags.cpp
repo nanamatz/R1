@@ -62,6 +62,18 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_AggroRange, "Data.Attribute.AggroRange");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_AttackAngle, "Data.Attribute.AttackAngle");
 
-
+	// Meta Upgrades
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_MaxHealth, "Meta.Upgrade.MaxHealth");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_MaxMana, "Meta.Upgrade.MaxMana");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_Damage, "Meta.Upgrade.Damage");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_Defense, "Meta.Upgrade.Defense");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_MoveSpeed, "Meta.Upgrade.MoveSpeed");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_ExtraGold, "Meta.Upgrade.ExtraGold");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_ExtraExp, "Meta.Upgrade.ExtraExp");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_HealthRegen, "Meta.Upgrade.HealthRegen");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_ManaRegen, "Meta.Upgrade.ManaRegen");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_Luck, "Meta.Upgrade.Luck");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_Honor, "Meta.Upgrade.Honor");
+	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_Revive, "Meta.Upgrade.Revive");
 
 }

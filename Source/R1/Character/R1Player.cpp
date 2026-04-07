@@ -238,6 +238,11 @@ void AR1Player::InitAttributes()
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		}
 	}
+	AR1PlayerState* PS = GetPlayerState<AR1PlayerState>();
+	if (PS)
+	{
+		PS->ApplyMetaUpgrades();
+	}
 }
 
 void AR1Player::UpdateLowHealthEffect(float Ratio)
