@@ -39,7 +39,8 @@ enum class EMenuState : uint8
 {
 	Title,
 	MainMenu,
-	Options
+	Options,
+	MetaUpgrade
 };
 
 UENUM(BlueprintType)

@@ -67,4 +67,18 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AggroRange);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackAngle);
 
+	//Meta Progression
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_MaxHealth);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_MaxMana);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Damage);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Defense);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_MoveSpeed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_ExtraGold);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_ExtraExp);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_HealthRegen);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_ManaRegen);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Luck);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Honor);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Revive);
+
 }

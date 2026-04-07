@@ -34,6 +34,7 @@ protected:
 	TObjectPtr<AActor> OptionsCamera;
 	TObjectPtr<AActor> MainMenuCamera;
 	TObjectPtr<AActor> GameStartCamera;
+	TObjectPtr<AActor> MetaUpgradeCamera;
 
 protected:
 	// 현재 화면 상태를 기억할 변수
@@ -45,26 +46,29 @@ protected:
 
 	// 아무 키나 눌렸을 때 실행될 함수
 	void OnGlobalInputPressed();
+
 public:
-	// ESC나 뒤로 가기 버튼을 눌렀을 때 호출될 만능 함수!
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void GoBack();
 
-public:
-	UFUNCTION(BlueprintCallable) 
+	UFUNCTION() 
 	void ShowTitleScreen();
 
-	UFUNCTION(BlueprintCallable) 
+	UFUNCTION() 
 	void ShowMainMenuScreen();
 
-	UFUNCTION(BlueprintCallable) 
+	UFUNCTION() 
 	void ShowOptionsScreen();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void ShowGameStartCamera();
 
+	UFUNCTION()
+	void ShowMetaUpgradeScreen();
 private:
 	void OnMainMenuCameraBlendFinished();
+	void OnMetaUpgradeCameraBlendFinished();
+	void OnOptionsCameraBlendFinished();
 
 	FTimerHandle MenuTimerHandle;
 };

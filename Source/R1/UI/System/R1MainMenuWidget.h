@@ -27,11 +27,16 @@ protected:
 	TObjectPtr<class UButton> Button_Continue;
 
 	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UButton> Button_Upgrade;
+
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UButton> Button_Options;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UButton> Button_Exit;
 
+	UFUNCTION()
+	void OnUpgradeButtonClicked();
 
 	UFUNCTION()
 	void OnNewRunButtonClicked();

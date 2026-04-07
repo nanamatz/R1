@@ -17,7 +17,11 @@ private:
 	// 세이브 파일 이름
 	const FString RunSaveSlotName = TEXT("CurrentRunSlot");
 	const int32 RunSaveUserIndex = 0;
+	// 🌟 2. 영구 세이브 (절대 삭제되지 않음, 업데이트만 됨)
+	const FString MetaSaveSlotName = TEXT("MetaSaveSlot");
+	const int32 MetaSaveUserIndex = 0;
 
+	void ExtractAndSaveMetaProgression();
 public:
 
 	// 세이브 파일이 있는지 확인 (Continue 버튼 활성화 용도)
@@ -35,4 +39,11 @@ public:
 	// 세이브 데이터를 열어서 플레이어에게 주입하고, 맵 데이터를 제너레이터에 전달
 	UFUNCTION(BlueprintCallable, Category = "SaveSystem")
 	bool LoadCurrentRun(class AR1Player* Player, class AR1MapGenerator* MapGenerator);
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "SaveSystem|Meta")
+	void SaveMetaProgression(class UR1MetaSaveGame* MetaSaveObj);
+
+	UFUNCTION(BlueprintCallable, Category = "SaveSystem|Meta")
+	class UR1MetaSaveGame* LoadMetaProgression();
 };

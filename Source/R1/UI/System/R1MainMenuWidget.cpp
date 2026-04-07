@@ -34,6 +34,10 @@ void UR1MainMenuWidget::NativeConstruct()
 	{
 		Button_Exit->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnExitButtonClicked);
 	}
+	if (Button_Upgrade)
+	{
+		Button_Upgrade->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnUpgradeButtonClicked);
+	}
 
 	if (UGameInstance* GameInstance = GetGameInstance())
 	{
@@ -66,6 +70,16 @@ FReply UR1MainMenuWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKe
 
 	// ESC가 아니라면 부모 클래스의 원래 로직을 실행
 	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
+void UR1MainMenuWidget::OnUpgradeButtonClicked()
+{
+	if (AR1MainMenuController* MenuPC = Cast<AR1MainMenuController>(GetOwningPlayer()))
+	{
+		// 이 함수는 컨트롤러에 새로 추가해주셔야 합니다! 
+		// (내부적으로 화면 관리자의 SwitchToMetaUpgrade()를 호출하게 됨)
+		MenuPC->ShowMetaUpgradeScreen();
+	}
 }
 
 void UR1MainMenuWidget::OnNewRunButtonClicked()

@@ -47,4 +47,18 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr <class UPlayerAttributeSet > PlayerAttributeSet;
+
+public:
+	// 메타 업그레이드 스탯 적용 함수
+	UFUNCTION(BlueprintCallable, Category = "AbilitySystem|Meta")
+	void ApplyMetaUpgrades();
+
+protected:
+	// 에디터에서 할당할 데이터 테이블 (FR1MetaUpgradeData 구조체 사용)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilitySystem|Meta")
+	TObjectPtr<class UDataTable> MetaUpgradeDataTable;
+
+	// 에디터에서 할당할 초기화 전용 Gameplay Effect
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilitySystem|Meta")
+	TSubclassOf<class UGameplayEffect> MetaUpgradeEffectClass;
 };

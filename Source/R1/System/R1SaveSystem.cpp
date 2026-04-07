@@ -14,9 +14,11 @@
 
 #include "Map/R1MapGenerator.h"
 #include "Data/R1RoomDefinitionData.h"
-
+#include "System/R1MetaSaveGame.h"
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1ItemInstance.h"
+
+
 
 bool UR1SaveSystem::HasSavedRun() const
 {
@@ -25,10 +27,11 @@ bool UR1SaveSystem::HasSavedRun() const
 
 void UR1SaveSystem::DeleteSavedRun()
 {
+	ExtractAndSaveMetaProgression();
+
 	if (HasSavedRun())
 	{
 		UGameplayStatics::DeleteGameInSlot(RunSaveSlotName, RunSaveUserIndex);
-		UE_LOG(LogTemp, Warning, TEXT("[SaveSystem] 💥 세이브 파일 삭제 완료! (사망 처리)"));
 	}
 
 	// 세이브 파일뿐만 아니라 현재 인메모리 상의 인벤토리 상태도 초기화
@@ -136,7 +139,6 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	}
 
 	UGameplayStatics::SaveGameToSlot(SaveObj, RunSaveSlotName, RunSaveUserIndex);
-	UE_LOG(LogTemp, Log, TEXT("[SaveSystem] 💾 현재 런(Run) 진행도 저장 완료!"));
 }
 
 bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenerator)
@@ -206,6 +208,49 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("[SaveSystem] 📂 저장된 런(Run) 진행도 복구 완료!"));
 	return true;
+}
+
+void UR1SaveSystem::SaveMetaProgression(UR1MetaSaveGame* MetaSaveObj)
+{
+	if (MetaSaveObj)
+	{
+		UGameplayStatics::SaveGameToSlot(MetaSaveObj, MetaSaveSlotName, MetaSaveUserIndex);
+	}
+}
+
+UR1MetaSaveGame* UR1SaveSystem::LoadMetaProgression()
+{
+	if (UGameplayStatics::DoesSaveGameExist(MetaSaveSlotName, MetaSaveUserIndex))
+	{
+		return Cast<UR1MetaSaveGame>(UGameplayStatics::LoadGameFromSlot(MetaSaveSlotName, MetaSaveUserIndex));
+	}
+
+	UR1MetaSaveGame* NewMetaSave = Cast<UR1MetaSaveGame>(UGameplayStatics::CreateSaveGameObject(UR1MetaSaveGame::StaticClass()));
+	NewMetaSave->PlayerMetaLevel = 1;
+	NewMetaSave->AvailableSkillPoints = 1;
+	return NewMetaSave;
+}
+
+void UR1SaveSystem::ExtractAndSaveMetaProgression()
+{
+	if (!HasSavedRun()) return;
+
+	// 1. 곧 지워질 예정인 단기 세이브 파일을 마지막으로 한 번 엽니다.
+	UR1PlayerSaveGame* RunSave = Cast<UR1PlayerSaveGame>(UGameplayStatics::LoadGameFromSlot(RunSaveSlotName, RunSaveUserIndex));
+	if (!RunSave) return;
+
+	// 2. 이번 판에서 얻은 레벨 계산 (기본 1레벨 시작이므로 '도달 레벨 - 1'이 번 포인트입니다)
+	int32 EarnedPoints = FMath::Max(0, FMath::FloorToInt(RunSave->Level) - 1);
+
+	// 3. 번 포인트가 1 이상이라면 금고에 입금!
+	if (EarnedPoints > 0)
+	{
+		UR1MetaSaveGame* MetaSave = LoadMetaProgression();
+
+		MetaSave->AvailableSkillPoints += EarnedPoints;
+		MetaSave->PlayerMetaLevel += EarnedPoints; // 총 누적 레벨도 증가
+
+		SaveMetaProgression(MetaSave);
+	}
 }
