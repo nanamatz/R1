@@ -34,7 +34,7 @@ protected:
 
 	// 슬롯들을 동적으로 담을 박스 (ScrollBox나 WrapBox 사용 권장)
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UPanelWidget> Panel_SkillList;
+	TObjectPtr<class UUniformGridPanel> Panel_SkillList;
 
 	// 에디터에서 할당할 슬롯 위젯의 클래스 (WBP_MetaUpgradeSlot)
 	UPROPERTY(EditDefaultsOnly, Category = "MetaUI")
@@ -50,4 +50,8 @@ protected:
 protected:
 	UFUNCTION()
 	void OnButtonBackClicked();
+
+private:
+	int32 GridColumn = 4;
+	int32 GridRow = 3;
 };
