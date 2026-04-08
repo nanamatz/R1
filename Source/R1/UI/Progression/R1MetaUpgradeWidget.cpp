@@ -4,8 +4,9 @@
 #include "UI/Progression/R1MetaUpgradeWidget.h"
 #include "UI/Progression/R1MetaUpgradeSlotWidget.h"
 #include "Components/TextBlock.h"
-#include "Components/PanelWidget.h"
 #include "Components/Button.h"
+#include "Components/UniformGridPanel.h"
+#include "Components/UniformGridSlot.h"
 #include "System/R1SaveSystem.h"
 #include "System/R1MetaSaveGame.h"
 #include "DataTable/R1MetaUpgradeData.h"
@@ -64,30 +65,72 @@ void UR1MetaUpgradeWidget::RefreshUI()
 
 	bool bHasPoints = (MetaSave->AvailableSkillPoints > 0);
 
+	//for (FR1MetaUpgradeData* UpgradeData : AllUpgrades)
+	//{
+	//	if (!UpgradeData) continue;
+
+	//	// 유저가 이 스킬을 몇 렙 찍었는지 확인 (없으면 0렙)
+	//	int32 CurrentLevel = 0;
+	//	if (int32* FoundLevel = MetaSave->InvestedUpgrades.Find(UpgradeData->UpgradeTag))
+	//	{
+	//		CurrentLevel = *FoundLevel;
+	//	}
+
+	//	// 조건: 플레이어의 누적 메타 레벨이 스킬의 요구 레벨 이상일 때만 화면에 표시
+	//	if (MetaSave->PlayerMetaLevel >= UpgradeData->RequiredPlayerLevel)
+	//	{
+	//		UR1MetaUpgradeSlotWidget* NewSlot = CreateWidget<UR1MetaUpgradeSlotWidget>(this, SlotWidgetClass);
+	//		if (NewSlot)
+	//		{
+	//			// 슬롯에 데이터 주입
+	//			NewSlot->InitSlot(UpgradeData->UpgradeTag, UpgradeData->UpgradeName, CurrentLevel, UpgradeData->MaxLevel, bHasPoints);
+
+	//			// 슬롯의 클릭 이벤트 구독
+	//			NewSlot->OnUpgradeButtonClicked.AddDynamic(this, &UR1MetaUpgradeWidget::HandleUpgradeRequest);
+
+	//			Panel_SkillList->AddChild(NewSlot);
+	//		}
+	//	}
+	//}
+	int32 CurrentSlotIndex = 0;
+
 	for (FR1MetaUpgradeData* UpgradeData : AllUpgrades)
 	{
 		if (!UpgradeData) continue;
 
-		// 유저가 이 스킬을 몇 렙 찍었는지 확인 (없으면 0렙)
 		int32 CurrentLevel = 0;
 		if (int32* FoundLevel = MetaSave->InvestedUpgrades.Find(UpgradeData->UpgradeTag))
 		{
 			CurrentLevel = *FoundLevel;
 		}
 
-		// 조건: 플레이어의 누적 메타 레벨이 스킬의 요구 레벨 이상일 때만 화면에 표시
 		if (MetaSave->PlayerMetaLevel >= UpgradeData->RequiredPlayerLevel)
 		{
 			UR1MetaUpgradeSlotWidget* NewSlot = CreateWidget<UR1MetaUpgradeSlotWidget>(this, SlotWidgetClass);
 			if (NewSlot)
 			{
-				// 슬롯에 데이터 주입
 				NewSlot->InitSlot(UpgradeData->UpgradeTag, UpgradeData->UpgradeName, CurrentLevel, UpgradeData->MaxLevel, bHasPoints);
-
-				// 슬롯의 클릭 이벤트 구독
 				NewSlot->OnUpgradeButtonClicked.AddDynamic(this, &UR1MetaUpgradeWidget::HandleUpgradeRequest);
 
-				Panel_SkillList->AddChild(NewSlot);
+				// 🌟 1. 격자 패널에 위젯을 추가하고, 그 반환값을 UniformGridSlot으로 받습니다.
+				UUniformGridSlot* GridSlot = Panel_SkillList->AddChildToUniformGrid(NewSlot);
+
+				if (GridSlot)
+				{
+					// 🌟 2. 몫(Row)과 나머지(Column)를 이용한 마법의 격자 공식!
+					int32 Row = CurrentSlotIndex / GridColumn;
+					int32 Col = CurrentSlotIndex % GridColumn;
+
+					GridSlot->SetRow(Row);
+					GridSlot->SetColumn(Col);
+
+					// (선택) 슬롯이 격자 칸에 꽉 차게 예쁘게 들어가도록 정렬 설정
+					GridSlot->SetHorizontalAlignment(HAlign_Fill);
+					GridSlot->SetVerticalAlignment(VAlign_Fill);
+				}
+
+				// 다음 스킬 배치를 위해 인덱스 증가
+				CurrentSlotIndex++;
 			}
 		}
 	}
