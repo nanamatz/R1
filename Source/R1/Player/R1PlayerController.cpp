@@ -478,6 +478,14 @@ void AR1PlayerController::ResetMovementState()
 	bMousePressed = false;
 	FollowTime = 0.f;
 
+	if (HighlightActor)
+	{
+		if (IR1HighlightInterface* OldHighlight = Cast<IR1HighlightInterface>(HighlightActor))
+		{
+			OldHighlight->UnHighlight();
+		}
+	}
+
 	TargetActor = nullptr;
 	TargetAttackActor = nullptr;
 }

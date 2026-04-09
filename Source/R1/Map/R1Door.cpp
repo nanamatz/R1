@@ -182,21 +182,12 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 void AR1Door::SetLocked(bool bIsLocked)
 {
 	bCleared = !bIsLocked;
-	//if (bLocked)
-	//{
-	//	// 문을 잠그는 로직 (예: 충돌 활성화, 머티리얼 변경 등)
-	//	//BaseDoorMesh->SetCollisionProfileName(TEXT("BlockAll"));
-	//	// TODO: 나중에 블루프린트에서 이 bLocked 변수를 읽고 '철창이 내려오는 애니메이션'을 재생하거나 '빨간색 빛'을 켤 수 있습니다.
-	//}
-	//else
-	//{
-
-	//}
 }
 
 void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 {
 	if (!Interactor || !bCleared || TargetNodeID == -1) return;
+
 
 	if (bRequiresKey)
 	{
@@ -219,6 +210,7 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 		}
 		return;
 	}
+	Interactor->ResetMovementState();
 
 	// 정상적으로 들어갈 수 있는 일반 문일 때
 	OnDoorEntered.Broadcast(DoorDirection);

@@ -59,7 +59,6 @@ private:
 
 public:
 	void PlayerOnDead();
-
 public:
 	UFUNCTION()
 	void HandlePlayerDead(AR1Character* DeadCharacter, AR1Character* Attacker);

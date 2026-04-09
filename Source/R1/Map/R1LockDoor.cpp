@@ -53,14 +53,19 @@ void AR1LockDoor::SetLockVisibility(bool bIsVisible)
 
 void AR1LockDoor::OpenDoorSmoothly()
 {
+	if (bIsOpened) return;
+
 	TargetRotation = LockDoorMesh->GetRelativeRotation() + FRotator(0.f, 90.f, 0.f);
 	LockDoorMesh->SetCollisionProfileName(TEXT("NoCollision"));
 	bIsOpening = true;
+	bIsOpened = true;
 	SetActorTickEnabled(true);
 }
 
 void AR1LockDoor::Highlight()
 {
+	if (bIsOpened) return;
+
 	if (LockDoorMesh && LockDoorMesh->IsVisible())
 	{
 		LockDoorMesh->SetRenderCustomDepth(true);
@@ -78,6 +83,10 @@ void AR1LockDoor::Interact_Implementation(AR1PlayerController* Interactor)
 	if (LinkedMainDoor)
 	{
 		LinkedMainDoor->Interact_Implementation(Interactor);
+	}
+	else
+	{
+		OpenDoorSmoothly();
 	}
 }
 

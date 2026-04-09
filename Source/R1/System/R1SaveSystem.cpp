@@ -227,8 +227,8 @@ UR1MetaSaveGame* UR1SaveSystem::LoadMetaProgression()
 	}
 
 	UR1MetaSaveGame* NewMetaSave = Cast<UR1MetaSaveGame>(UGameplayStatics::CreateSaveGameObject(UR1MetaSaveGame::StaticClass()));
-	NewMetaSave->PlayerMetaLevel = 1;
-	NewMetaSave->AvailableSkillPoints = 1;
+	NewMetaSave->PlayerMetaLevel = 12;
+	NewMetaSave->AvailableSkillPoints = 12;
 	return NewMetaSave;
 }
 
