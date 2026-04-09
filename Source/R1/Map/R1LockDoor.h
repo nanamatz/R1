@@ -47,6 +47,7 @@ public:
 
 private:
 	bool bIsOpening = false;
+	bool bIsOpened = false;
 	FRotator TargetRotation;
 
 };

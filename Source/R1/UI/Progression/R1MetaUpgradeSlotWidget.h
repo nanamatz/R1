@@ -20,7 +20,7 @@ public:
 
 	// 외부에서 이 슬롯의 데이터를 채워 넣을 때 호출하는 함수
 	UFUNCTION(BlueprintCallable, Category = "MetaUI")
-	void InitSlot(FGameplayTag InTag, const FText& InName, int32 InCurrentLevel, int32 InMaxLevel, bool bCanAfford);
+	void InitSlot(FGameplayTag InTag, const FText& InName, int32 InCurrentLevel, int32 InMaxLevel,class UTexture2D* IconImage, bool bCanAfford);
 
 	UPROPERTY(BlueprintAssignable, Category = "MetaUI")
 	FOnUpgradeButtonClicked OnUpgradeButtonClicked;
@@ -38,6 +38,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UButton> Button_Upgrade;
+
+	UPROPERTY()
+	TObjectPtr<class UTexture2D> Icon_Upgrade;
 
 private:
 	FGameplayTag MyUpgradeTag;
