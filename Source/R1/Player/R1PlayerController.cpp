@@ -2,7 +2,10 @@
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+
 #include "Character/R1Player.h"
+#include "Character/R1Monster.h"
+
 #include "Data/R1InputData.h"
 
 #include "EnhancedInputComponent.h"
@@ -230,12 +233,6 @@ void AR1PlayerController::OnSetDestinationTriggered()
 	if (!bMousePressed) return;
 	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
 	if (TargetActor) return;
-	AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
-
-	if (MyR1HUD && MyR1HUD->bIsShopUIVisible == true)
-	{
-		return;
-	}
 
 	FollowTime += GetWorld()->GetDeltaSeconds();
 
@@ -353,9 +350,9 @@ void AR1PlayerController::ChaseTargetAndAttack()
 {
 	if (R1Player == nullptr || TargetActor == nullptr) return;
 	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
+	UE_LOG(LogTemp, Warning, TEXT("TargetActor: %s"), TargetActor ? *TargetActor->GetName() : TEXT("None"));
 
-	TargetAttackActor = Cast<AR1Character>(TargetActor);
-
+	TargetAttackActor = Cast<AR1Monster>(TargetActor);
 	if (TargetAttackActor)
 	{
 		FVector Direction = TargetAttackActor->GetActorLocation() - R1Player->GetActorLocation();
@@ -368,11 +365,11 @@ void AR1PlayerController::ChaseTargetAndAttack()
 			if (TargetAttackActor->GetCreatureState() == ECreatureState::Dead) return;
 
 			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
-			TargetActor = nullptr;
+			//TargetAttackActor = nullptr;
 		}
 		else
 		{
-			CacheDestination = TargetActor->GetActorLocation();
+			CacheDestination = TargetAttackActor->GetActorLocation();
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 		}
 	}
@@ -385,7 +382,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		if (bIsInRange)
 		{
 			IR1InteractionInterface::Execute_Interact(TargetActor, this);
-			ResetMovementState();
+			//ResetMovementState();
 		}
 		else
 		{
@@ -474,10 +471,6 @@ void AR1PlayerController::ResetMovementState()
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
 	}
 
-	// 3. 마우스 및 타겟 상태 초기화
-	bMousePressed = false;
-	FollowTime = 0.f;
-
 	if (HighlightActor)
 	{
 		if (IR1HighlightInterface* OldHighlight = Cast<IR1HighlightInterface>(HighlightActor))
@@ -486,8 +479,13 @@ void AR1PlayerController::ResetMovementState()
 		}
 	}
 
+	// 3. 마우스 및 타겟 상태 초기화
+	bMousePressed = false;
+	FollowTime = 0.f;
+
 	TargetActor = nullptr;
 	TargetAttackActor = nullptr;
+	HighlightActor = nullptr;
 }
 
 AR1Character* AR1PlayerController::GetHighlightActor()

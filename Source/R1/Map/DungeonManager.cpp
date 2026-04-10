@@ -161,6 +161,18 @@ void ADungeonManager::HandleMonsterReadyToSleep(AR1Monster* DeadMonster)
 	}
 }
 
+void ADungeonManager::UnlockRoomDoorsInstantly()
+{
+	for (AR1Door* Door : RoomDoors)
+	{
+		if (IsValid(Door))
+		{
+			Door->SetLocked(false);
+			Door->OpenDoorInstantly(); // 🌟 애니메이션 없이 즉시 열기!
+		}
+	}
+}
+
 void ADungeonManager::SpawnRoomClearReward()
 {
 	// 1. 방어 코드: 루팅 풀 에셋이 안 꽂혀있거나, 풀 안에 아이템이 0개면 패스!

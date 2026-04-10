@@ -78,12 +78,6 @@ void AR1Player::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (UR1GameInstance* R1GameInstance = GetGameInstance<UR1GameInstance>())
-	{
-		//R1GameInstance->ApplyRespawnSnapshotToPlayer(this);
-		InitExpBar();
-	}
-
 	if (LowHealthMaterial)
 	{
 		LowHealthMI = UMaterialInstanceDynamic::Create(LowHealthMaterial, this);
@@ -93,8 +87,8 @@ void AR1Player::BeginPlay()
 		}
 	}
 
+	
 	AttackRange = CommonAttributeSet->GetAttackRange();
-
 }
 
 void AR1Player::PossessedBy(AController* NewController)
@@ -105,6 +99,7 @@ void AR1Player::PossessedBy(AController* NewController)
 
 	InitAttributes();
 
+	InitExpBar();
 }
 
 void AR1Player::InitAbilitySystem()
@@ -205,12 +200,23 @@ void AR1Player::InitExpBar()
 {
 	AR1PlayerState* PS = GetPlayerState<AR1PlayerState>();
 	UPlayerAttributeSet* PlayerAttributeSet = PS->GetPlayerAttributeSet();
-	if (PS && PlayerAttributeSet)
+	if (PlayerAttributeSet)
 	{
 		float Exp = PlayerAttributeSet->GetExp();
 		float MaxExp = PlayerAttributeSet->GetMaxExp();
+		float Level = PlayerAttributeSet->GetLevel(); // 🌟 레벨 가져오기
 		float Ratio = Exp / MaxExp;
+
+		UE_LOG(LogTemp, Warning, TEXT("====================================="));
+		UE_LOG(LogTemp, Warning, TEXT("[Player Init] InitExpBar 완료 - UI 동기화됨!"));
+		UE_LOG(LogTemp, Warning, TEXT("[Player Init] 현재 인게임 레벨: %f"), Level);
+		UE_LOG(LogTemp, Warning, TEXT("[Player Init] 현재 보유 경험치: %f / %f"), Exp, MaxExp);
+		UE_LOG(LogTemp, Warning, TEXT("====================================="));
 		PS->OnExpChanged.Broadcast(Ratio);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Player Init] PlayerAttributeSet이 아직도 nullptr입니다!"));
 	}
 }
 

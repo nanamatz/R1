@@ -73,6 +73,33 @@ void AR1PlayerState::ApplyMetaUpgrades()
 		return;
 	}
 
+	if (UPlayerAttributeSet* PlayerAttr = GetPlayerAttributeSet())
+	{
+		// 1. 레벨 동기화
+		PlayerAttr->SetLevel(MetaSave->PlayerMetaLevel);
+
+		// 2. [수정] 0으로 초기화하지 않고, 세이브된 메타 경험치를 그대로 주입
+		PlayerAttr->SetExp(MetaSave->CurrentMetaExp);
+
+		// 3. 현재 레벨에 맞는 MaxExp 계산
+		if (PlayerStatTable)
+		{
+			FRealCurve* MaxExpCurve = PlayerStatTable->FindCurve(FName("MaxExp"), TEXT(""));
+			if (MaxExpCurve)
+			{
+				float NewMaxExp = MaxExpCurve->Eval(MetaSave->PlayerMetaLevel);
+				PlayerAttr->SetMaxExp(NewMaxExp);
+
+				// UI 갱신을 위한 방송 (현재 경험치 / 새로운 MaxExp 비율)
+				float Ratio = (NewMaxExp > 0) ? (MetaSave->CurrentMetaExp / NewMaxExp) : 0.0f;
+				OnExpChanged.Broadcast(Ratio);
+
+				UE_LOG(LogTemp, Warning, TEXT("[Meta Load] 레벨: %d, 경험치: %f / %f (동기화 완료)"),
+					MetaSave->PlayerMetaLevel, MetaSave->CurrentMetaExp, NewMaxExp);
+			}
+		}
+	}
+
 	// 2. Gameplay Effect 스펙(Spec)을 생성합니다.
 	FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
 	ContextHandle.AddSourceObject(this);
