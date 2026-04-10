@@ -227,8 +227,8 @@ UR1MetaSaveGame* UR1SaveSystem::LoadMetaProgression()
 	}
 
 	UR1MetaSaveGame* NewMetaSave = Cast<UR1MetaSaveGame>(UGameplayStatics::CreateSaveGameObject(UR1MetaSaveGame::StaticClass()));
-	NewMetaSave->PlayerMetaLevel = 12;
-	NewMetaSave->AvailableSkillPoints = 12;
+	NewMetaSave->PlayerMetaLevel = 1;
+	NewMetaSave->AvailableSkillPoints = 1;
 	return NewMetaSave;
 }
 
@@ -236,21 +236,22 @@ void UR1SaveSystem::ExtractAndSaveMetaProgression()
 {
 	if (!HasSavedRun()) return;
 
-	// 1. 곧 지워질 예정인 단기 세이브 파일을 마지막으로 한 번 엽니다.
 	UR1PlayerSaveGame* RunSave = Cast<UR1PlayerSaveGame>(UGameplayStatics::LoadGameFromSlot(RunSaveSlotName, RunSaveUserIndex));
 	if (!RunSave) return;
 
-	// 2. 이번 판에서 얻은 레벨 계산 (기본 1레벨 시작이므로 '도달 레벨 - 1'이 번 포인트입니다)
-	int32 EarnedPoints = FMath::Max(0, FMath::FloorToInt(RunSave->Level) - 1);
+	UR1MetaSaveGame* MetaSave = LoadMetaProgression();
+	if (!MetaSave) return;
 
-	// 3. 번 포인트가 1 이상이라면 금고에 입금!
+	int32 EarnedPoints = FMath::Max(0, FMath::FloorToInt(RunSave->Level) - MetaSave->PlayerMetaLevel);
+
 	if (EarnedPoints > 0)
 	{
-		UR1MetaSaveGame* MetaSave = LoadMetaProgression();
-
 		MetaSave->AvailableSkillPoints += EarnedPoints;
-		MetaSave->PlayerMetaLevel += EarnedPoints; // 총 누적 레벨도 증가
 
-		SaveMetaProgression(MetaSave);
+		MetaSave->PlayerMetaLevel = FMath::FloorToInt(RunSave->Level);
 	}
+
+	MetaSave->CurrentMetaExp = RunSave->Exp;
+
+	SaveMetaProgression(MetaSave);
 }

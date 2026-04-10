@@ -365,7 +365,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 			if (TargetAttackActor->GetCreatureState() == ECreatureState::Dead) return;
 
 			R1Player->ActivateAbility(R1GameplayTags::Ability_Attack);
-			TargetAttackActor = nullptr;
+			//TargetAttackActor = nullptr;
 		}
 		else
 		{

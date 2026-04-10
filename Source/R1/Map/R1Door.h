@@ -95,6 +95,9 @@ public:
 
 	virtual void Interact_Implementation(class AR1PlayerController* Interactor) override;
 
+	UFUNCTION(BlueprintCallable)
+	void OpenDoorInstantly();
+
 	// 현재 문이 잠겨있는지 여부 (블루프린트에서 머티리얼을 바꿀 때 쓸 수 있게 ReadOnly로 둡니다)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Door Logic")
 	bool bLocked = false;
