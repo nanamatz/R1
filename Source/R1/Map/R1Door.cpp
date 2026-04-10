@@ -188,7 +188,6 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 {
 	if (!Interactor || !bCleared || TargetNodeID == -1) return;
 
-
 	if (bRequiresKey)
 	{
 		UR1InventorySubsystem* Inven = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
@@ -210,8 +209,8 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 		}
 		return;
 	}
-	Interactor->ResetMovementState();
 
+	Interactor->ResetMovementState();
 	// 정상적으로 들어갈 수 있는 일반 문일 때
 	OnDoorEntered.Broadcast(DoorDirection);
 }
