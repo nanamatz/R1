@@ -4,6 +4,7 @@
 #include "UI/Progression/R1MetaUpgradeSlotWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
+#include "Components/CanvasPanel.h"
 #include "Engine/Texture2D.h"
 
 void UR1MetaUpgradeSlotWidget::NativeConstruct()
@@ -15,7 +16,7 @@ void UR1MetaUpgradeSlotWidget::NativeConstruct()
 	}
 }
 
-void UR1MetaUpgradeSlotWidget::InitSlot(FGameplayTag InTag, const FText& InName, int32 InCurrentLevel, int32 InMaxLevel, UTexture2D* IconImage, bool bCanAfford)
+void UR1MetaUpgradeSlotWidget::InitSlot(FGameplayTag InTag, const FText& InName, int32 InCurrentLevel, int32 InMaxLevel,int32 InRequiredLevel, UTexture2D* IconImage, bool bCanAfford,bool bHasLocked)
 {
 	MyUpgradeTag = InTag;
 
@@ -31,7 +32,7 @@ void UR1MetaUpgradeSlotWidget::InitSlot(FGameplayTag InTag, const FText& InName,
 	{
 		// 만렙이거나 돈(포인트)이 없으면 버튼 비활성화!
 		bool bIsMaxLevel = (InCurrentLevel >= InMaxLevel);
-		Button_Upgrade->SetIsEnabled(!bIsMaxLevel && bCanAfford);
+		Button_Upgrade->SetIsEnabled(bHasLocked || (!bIsMaxLevel && bCanAfford));
 
 		if (IconImage)
 		{
@@ -46,6 +47,22 @@ void UR1MetaUpgradeSlotWidget::InitSlot(FGameplayTag InTag, const FText& InName,
 			// 변경된 스타일을 버튼에 다시 적용합니다.
 			Button_Upgrade->SetStyle(NewStyle);
 		}
+	}
+	if (CanvasPanel_LockPanel)
+	{
+		if (bHasLocked)
+		{
+			CanvasPanel_LockPanel->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			CanvasPanel_LockPanel->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+	if (Text_RequiredLevel)
+	{
+		FString LevelStr = FString::Printf(TEXT("Lv. %d"), InRequiredLevel);
+		Text_RequiredLevel->SetText(FText::FromString(LevelStr));
 	}
 }
 

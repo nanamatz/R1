@@ -382,7 +382,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		if (bIsInRange)
 		{
 			IR1InteractionInterface::Execute_Interact(TargetActor, this);
-			//ResetMovementState();
+			ResetMovementState();
 		}
 		else
 		{

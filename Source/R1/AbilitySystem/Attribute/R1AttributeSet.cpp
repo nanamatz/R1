@@ -31,6 +31,26 @@ void UR1AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 		float CurrentMaxHealth = GetMaxHealth();
 		NewValue = FMath::Clamp(NewValue, 0.0f, CurrentMaxHealth);
 	}
+	//else if (Attribute == GetMaxHealthAttribute())
+	//{
+	//	// 1. 기존 MaxHealth와 변경될 NewValue(새 MaxHealth)를 가져옵니다.
+	//	float CurrentMaxHealth = GetMaxHealth();
+
+	//	if (CurrentMaxHealth > 0.0f)
+	//	{
+	//		// 2. 현재 체력의 '비율'을 구합니다.
+	//		float CurrentRatio = GetHealth() / CurrentMaxHealth;
+
+	//		// 3. 새 MaxHealth에 기존 비율을 곱해 새로운 체력 값을 계산합니다.
+	//		float NewHealth = NewValue * CurrentRatio;
+
+	//		// 4. ASC를 통해 현재 Health 값을 안전하게 덮어씌웁니다.
+	//		if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
+	//		{
+	//			ASC->SetNumericAttributeBase(GetHealthAttribute(), NewHealth);
+	//		}
+	//	}
+	//}
 }
 
 void UR1AttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)

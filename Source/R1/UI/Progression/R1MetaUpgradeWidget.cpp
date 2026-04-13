@@ -64,6 +64,7 @@ void UR1MetaUpgradeWidget::RefreshUI()
 	MetaDataTable->GetAllRows<FR1MetaUpgradeData>(TEXT("MetaUI"), AllUpgrades);
 
 	bool bHasPoints = (MetaSave->AvailableSkillPoints > 0);
+	bool bHasLocked = false;
 
 	int32 CurrentSlotIndex = 0;
 
@@ -71,40 +72,40 @@ void UR1MetaUpgradeWidget::RefreshUI()
 	{
 		if (!UpgradeData) continue;
 
+		bHasLocked = (MetaSave->PlayerMetaLevel < UpgradeData->RequiredPlayerLevel);
+
+		//어차피 player Meta Level이 요구 레벨 이상일 때만 필요한 정보이므로 제어문 안으로 넣어줌.
 		int32 CurrentLevel = 0;
 		if (int32* FoundLevel = MetaSave->InvestedUpgrades.Find(UpgradeData->UpgradeTag))
 		{
 			CurrentLevel = *FoundLevel;
 		}
 
-		if (MetaSave->PlayerMetaLevel >= UpgradeData->RequiredPlayerLevel)
+		UR1MetaUpgradeSlotWidget* NewSlot = CreateWidget<UR1MetaUpgradeSlotWidget>(this, SlotWidgetClass);
+		if (NewSlot)
 		{
-			UR1MetaUpgradeSlotWidget* NewSlot = CreateWidget<UR1MetaUpgradeSlotWidget>(this, SlotWidgetClass);
-			if (NewSlot)
+			NewSlot->InitSlot(UpgradeData->UpgradeTag, UpgradeData->UpgradeName, CurrentLevel, UpgradeData->MaxLevel,UpgradeData->RequiredPlayerLevel, UpgradeData->UpgradeIcon,bHasPoints,bHasLocked);
+			NewSlot->OnUpgradeButtonClicked.AddDynamic(this, &UR1MetaUpgradeWidget::HandleUpgradeRequest);
+
+			// 🌟 1. 격자 패널에 위젯을 추가하고, 그 반환값을 UniformGridSlot으로 받습니다.
+			UUniformGridSlot* GridSlot = Panel_SkillList->AddChildToUniformGrid(NewSlot);
+
+			if (GridSlot)
 			{
-				NewSlot->InitSlot(UpgradeData->UpgradeTag, UpgradeData->UpgradeName, CurrentLevel, UpgradeData->MaxLevel, UpgradeData->UpgradeIcon,bHasPoints);
-				NewSlot->OnUpgradeButtonClicked.AddDynamic(this, &UR1MetaUpgradeWidget::HandleUpgradeRequest);
+				// 🌟 2. 몫(Row)과 나머지(Column)를 이용한 마법의 격자 공식!
+				int32 Row = CurrentSlotIndex / GridColumn;
+				int32 Col = CurrentSlotIndex % GridColumn;
 
-				// 🌟 1. 격자 패널에 위젯을 추가하고, 그 반환값을 UniformGridSlot으로 받습니다.
-				UUniformGridSlot* GridSlot = Panel_SkillList->AddChildToUniformGrid(NewSlot);
+				GridSlot->SetRow(Row);
+				GridSlot->SetColumn(Col);
 
-				if (GridSlot)
-				{
-					// 🌟 2. 몫(Row)과 나머지(Column)를 이용한 마법의 격자 공식!
-					int32 Row = CurrentSlotIndex / GridColumn;
-					int32 Col = CurrentSlotIndex % GridColumn;
-
-					GridSlot->SetRow(Row);
-					GridSlot->SetColumn(Col);
-
-					// (선택) 슬롯이 격자 칸에 꽉 차게 예쁘게 들어가도록 정렬 설정
-					GridSlot->SetHorizontalAlignment(HAlign_Fill);
-					GridSlot->SetVerticalAlignment(VAlign_Fill);
-				}
-
-				// 다음 스킬 배치를 위해 인덱스 증가
-				CurrentSlotIndex++;
+				// (선택) 슬롯이 격자 칸에 꽉 차게 예쁘게 들어가도록 정렬 설정
+				GridSlot->SetHorizontalAlignment(HAlign_Fill);
+				GridSlot->SetVerticalAlignment(VAlign_Fill);
 			}
+
+			// 다음 스킬 배치를 위해 인덱스 증가
+			CurrentSlotIndex++;
 		}
 	}
 }
