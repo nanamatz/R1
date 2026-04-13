@@ -65,10 +65,10 @@ void UR1ShopWidget::InitShopNPC(UR1ShopNPCData* NPCData)
 			// 뽑힌 대사를 UI에 적용
 			Text_Greeting->SetText(SelectedText);
 
-			if (!SelectedText.IsEmptyOrWhitespace())
-			{
-				Text_Greeting->SetText(SelectedText);
-			}
+			//if (!SelectedText.IsEmptyOrWhitespace())
+			//{
+			//	Text_Greeting->SetText(SelectedText);
+			//}
 		}
 	}
 }
