@@ -121,8 +121,8 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 	AR1Player* PlayerChar = Cast<AR1Player>(GetOwner());
 	if (PlayerChar && PlayerChar->GetMesh())
 	{
-		// 아이템에 시각적 메시(ItemMesh)가 있고, 연결할 소켓 이름이 지정되어 있다면?
-		if (ItemData->ItemMesh && !ItemData->EquipSocketName.IsNone())
+		PlayerChar->GetMesh()->HideBoneByName(FName("sword_bottom"), PBO_None);
+		if (ItemData->ItemMesh && (ItemData->EquipSlots[0] == ER1EquipmentSlot::Weapon))
 		{
 			// 스태틱 메시 컴포넌트를 런타임에 생성합니다.
 			UStaticMeshComponent* WeaponMeshComp = NewObject<UStaticMeshComponent>(GetOwner());
@@ -183,6 +183,12 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 			}
 			// 맵에서 기록을 지웁니다.
 			EquippedMeshesMap.Remove(EquipSlot);
+		}
+
+		AR1Player* PlayerChar = Cast<AR1Player>(GetOwner());
+		if (PlayerChar && PlayerChar->GetMesh())
+		{
+			PlayerChar->GetMesh()->UnHideBoneByName(FName("sword_bottom"));
 		}
 
 		UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
