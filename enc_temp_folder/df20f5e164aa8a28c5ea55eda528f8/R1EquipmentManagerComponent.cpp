@@ -121,10 +121,9 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 	AR1Player* PlayerChar = Cast<AR1Player>(GetOwner());
 	if (PlayerChar && PlayerChar->GetMesh())
 	{
+		PlayerChar->GetMesh()->HideBoneByName(FName("sword_bottom"), PBO_None);
 		if (ItemData->ItemMesh && (ItemData->EquipSlots[0] == ER1EquipmentSlot::Weapon))
 		{
-			PlayerChar->GetMesh()->HideBoneByName(FName("sword_bottom"), PBO_None);
-
 			// 스태틱 메시 컴포넌트를 런타임에 생성합니다.
 			UStaticMeshComponent* WeaponMeshComp = NewObject<UStaticMeshComponent>(GetOwner());
 			WeaponMeshComp->SetStaticMesh(ItemData->ItemMesh);
