@@ -108,3 +108,7 @@
 
 ## 11. 캐릭터 PalyerInfo UI 개선
 ### Hp 및 Mp 실제 수치 텍스트 추가
+
+## 12. 메타 프로그레션 업그레이드 기능 구현
+### Luck, Honor, Greed, Another Life 등
+
