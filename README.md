@@ -1,4 +1,3 @@
-[Design.md](https://github.com/user-attachments/files/26430265/Design.md)
 # 게임 시스템 기획 및 기술 명세서 (Game System Specification)
 
 ## 3. 다이내믹 아이템 퀘스트 시스템 (Dynamic Item Quest)
@@ -104,4 +103,10 @@
 * **사업자 등록 및 파트너 등록:** 개인/법인 사업자 등록 후 스팀 워크웍스(Steamworks) 계정 생성.
 * **Steam Direct 프로세스:** 등록비 지불, 세무 정보(W-8BEN) 입력 및 수령 계좌 인증 절차 진행.
 * **법적 고려사항:** 게임물관리위원회 심의(국내 출시용) 및 이용약관/개인정보 처리방침 마련.
+"""
+
+---
+
+## 11. 캐릭터 PalyerInfo UI 개선
+### Hp 및 Mp 실제 수치 텍스트 추가
 """
