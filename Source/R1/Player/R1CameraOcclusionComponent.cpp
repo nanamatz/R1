@@ -5,6 +5,7 @@
 #include "Character/R1Character.h"
 #include "Camera/CameraComponent.h"
 #include "Components/MeshComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -29,8 +30,6 @@ void UR1CameraOcclusionComponent::BeginPlay()
 	
 }
 
-
-// Called every frame
 void UR1CameraOcclusionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -52,7 +51,6 @@ void UR1CameraOcclusionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	FCollisionShape CollisionShape = FCollisionShape::MakeSphere(CheckRadius);
 
 	// SweepMultiByChannel 함수를 사용하여 CheckRadius 반경 내에 있는 모든 벽을 감지합니다.
-	// (기존에 세팅하신 커스텀 채널이 있다면 ECC_Camera 부분을 그 채널로 변경해 주세요)
 	GetWorld()->SweepMultiByChannel(
 		HitResults,
 		StartLocation,
@@ -63,36 +61,32 @@ void UR1CameraOcclusionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 		QueryParams
 	);
 
-	/*GetWorld()->LineTraceMultiByChannel(HitResults, StartLocation, EndLocation, ECC_Camera, QueryParams);*/
+	TSet<UPrimitiveComponent*> CurrentHitComponents;
 
-	// 이번 프레임에 레이저에 맞은 액터들을 담아둘 Set
-	TSet<AActor*> CurrentHitActors;
-
-	// 2. 맞은 액터들 검사
 	for (const FHitResult& Hit : HitResults)
 	{
-		AActor* HitActor = Hit.GetActor();
-		if (HitActor)
+		UPrimitiveComponent* HitComp = Hit.GetComponent();
+		if (HitComp)
 		{
-			CurrentHitActors.Add(HitActor);
+			CurrentHitComponents.Add(HitComp);
 
 			// 아직 맵에 없는 녀석이면 새로 등록하고 타겟 투명도를 설정
-			if (!OccludedActorMap.Contains(HitActor))
+			if (!OccludedComponentMap.Contains(HitComp))
 			{
-				InitializeActorMIDs(HitActor);
+				InitializeComponentMIDs(HitComp);
 			}
-			OccludedActorMap[HitActor].TargetOpacity = OccludedOpacity;
+			OccludedComponentMap[HitComp].TargetOpacity = OccludedOpacity;
 		}
 	}
 
 	// 3. 투명도 보간(Fading) 및 복구 로직
-	for (auto It = OccludedActorMap.CreateIterator(); It; ++It)
+	for (auto It = OccludedComponentMap.CreateIterator(); It; ++It)
 	{
-		AActor* Actor = It.Key();
+		UPrimitiveComponent* Comp = It.Key();
 		FOcclusionData& Data = It.Value();
 
 		// 이번 프레임에 레이저에 안 맞았다면 다시 원래대로(1.0) 복구 준비
-		if (!CurrentHitActors.Contains(Actor))
+		if (!CurrentHitComponents.Contains(Comp))
 		{
 			Data.TargetOpacity = 1.0f;
 		}
@@ -112,7 +106,6 @@ void UR1CameraOcclusionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 		// 완전히 원래대로 돌아왔다면 맵에서 제거 (최적화)
 		if (Data.TargetOpacity == 1.0f && FMath::IsNearlyEqual(Data.CurrentOpacity, 1.0f, 0.01f))
 		{
-			// 혹시 모를 오차를 위해 명시적으로 1.0 세팅
 			for (UMaterialInstanceDynamic* MID : Data.MIDs)
 			{
 				if (MID) MID->SetScalarParameterValue(OpacityParamName, 1.0f);
@@ -122,22 +115,16 @@ void UR1CameraOcclusionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	}
 }
 
-void UR1CameraOcclusionComponent::InitializeActorMIDs(AActor* TargetActor)
+void UR1CameraOcclusionComponent::InitializeComponentMIDs(UPrimitiveComponent* TargetComp)
 {
 	FOcclusionData NewData;
+	UMeshComponent* MeshComp = Cast<UMeshComponent>(TargetComp);
 
-	// 액터가 가진 모든 메시 컴포넌트(스태틱, 스켈레탈 전부)를 찾습니다.
-	TArray<UMeshComponent*> MeshComponents;
-	TargetActor->GetComponents<UMeshComponent>(MeshComponents);
-
-	for (UMeshComponent* MeshComp : MeshComponents)
+	if (MeshComp)
 	{
-		if (!MeshComp) continue;
-
 		int32 NumMaterials = MeshComp->GetNumMaterials();
 		for (int32 i = 0; i < NumMaterials; ++i)
 		{
-			// 🌟 이미 MID가 만들어져 있다면 그걸 가져오고, 아니면 새로 만듭니다.
 			UMaterialInterface* Mat = MeshComp->GetMaterial(i);
 			UMaterialInstanceDynamic* MID = Cast<UMaterialInstanceDynamic>(Mat);
 
@@ -153,6 +140,6 @@ void UR1CameraOcclusionComponent::InitializeActorMIDs(AActor* TargetActor)
 		}
 	}
 
-	OccludedActorMap.Add(TargetActor, NewData);
+	OccludedComponentMap.Add(TargetComp, NewData);
 }
 

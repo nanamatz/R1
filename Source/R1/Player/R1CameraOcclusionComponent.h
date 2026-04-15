@@ -52,10 +52,9 @@ protected:
 
 	// 현재 투명화 처리 중인 액터들을 관리하는 맵
 	UPROPERTY()
-	TMap<AActor*, FOcclusionData> OccludedActorMap;
+	TMap<class UPrimitiveComponent*, FOcclusionData> OccludedComponentMap;
 
 private:
 	// 다이내믹 머티리얼 인스턴스를 생성하고 저장하는 함수
-	void InitializeActorMIDs(AActor* TargetActor);
-		
+	void InitializeComponentMIDs(class UPrimitiveComponent* TargetComp);
 };
