@@ -350,7 +350,6 @@ void AR1PlayerController::ChaseTargetAndAttack()
 {
 	if (R1Player == nullptr || TargetActor == nullptr) return;
 	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
-	UE_LOG(LogTemp, Warning, TEXT("TargetActor: %s"), TargetActor ? *TargetActor->GetName() : TEXT("None"));
 
 	TargetAttackActor = Cast<AR1Monster>(TargetActor);
 	if (TargetAttackActor)
