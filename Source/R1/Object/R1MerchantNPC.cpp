@@ -56,8 +56,6 @@ void AR1MerchantNPC::OnInteractTriggerEndOverlap(UPrimitiveComponent* Overlapped
 			if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
 			{
 				HUD->CloseShopUI();
-
-				UE_LOG(LogTemp, Log, TEXT("플레이어가 상점 범위를 벗어나 UI를 닫습니다."));
 			}
 		}
 	}

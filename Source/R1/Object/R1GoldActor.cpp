@@ -133,9 +133,7 @@ void AR1GoldActor::Interact_Implementation(AR1PlayerController* Interactor)
 	{
 		InvenSubsys->AddGold(GoldAmount);
 
-		UE_LOG(LogTemp, Log, TEXT("골드 %d 획득! 지갑으로 직행!"), GoldAmount);
-
-		// 🔊 (나중에) 여기서 짤랑거리는 골드 획득 사운드를 재생하면 완벽합니다!
+		// TODO: 여기서 짤랑거리는 골드 획득 사운드를 재생하면 완벽합니다!
 	}
 
 	Destroy();
@@ -173,11 +171,9 @@ void AR1GoldActor::UpdateTooltipUI()
 				0,
 				false
 			);
-			UE_LOG(LogTemp, Log, TEXT("[GoldActor] 툴팁 데이터 세팅 성공! 금액: %d"), GoldAmount);
 		}
 		else
 		{
-			// 🚨 캐스팅 실패! (할당된 위젯이 UR1ItemTooltip을 상속받지 않음)
 			UE_LOG(LogTemp, Error, TEXT("[GoldActor] 🚨 툴팁 위젯 캐스팅 실패! 현재 할당된 위젯 클래스: %s"), *UserWidget->GetClass()->GetName());
 		}
 	}

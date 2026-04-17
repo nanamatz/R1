@@ -305,8 +305,6 @@ void AR1PlayerController::TickCursorTrace()
 		return;
 	}
 
-	/*UE_LOG(LogTemp,Warning,TEXT("%s"),*OutCursorHit.GetActor()->GetName());*/
-
 	SwitchCursorType(OutCursorHit);
 
 	AActor* LocalHighlightActor = OutCursorHit.GetActor();
@@ -314,25 +312,20 @@ void AR1PlayerController::TickCursorTrace()
 
 	if (HighlightableActor)
 	{
-		// 마우스 아래에 몬스터나 아이템이 있다!
 		if (HighlightActor != LocalHighlightActor)
 		{
-			// 예전 타겟은 불 끄기
 			if (IR1HighlightInterface* OldHighlight = Cast<IR1HighlightInterface>(HighlightActor))
 			{
 				OldHighlight->UnHighlight();
 			}
 
-			// 새 타겟 불 켜기
 			HighlightableActor->Highlight();
 
-			// 🌟 타겟 갱신 (진짜 타겟만 들어옵니다)
 			HighlightActor = LocalHighlightActor;
 		}
 	}
 	else
 	{
-		// 🌟 2. 마우스 아래에 맨땅(Floor)이나 벽이 있다!
 		if (HighlightActor)
 		{
 			// 불 끄고
@@ -340,7 +333,6 @@ void AR1PlayerController::TickCursorTrace()
 			{
 				OldHighlight->UnHighlight();
 			}
-			// 🌟 타겟을 완전히 비워버립니다! (이제 땅을 클릭해도 TargetActor에 안 들어갑니다)
 			HighlightActor = nullptr;
 		}
 	}

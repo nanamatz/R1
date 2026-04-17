@@ -144,20 +144,14 @@ void UR1MetaUpgradeWidget::HandleUpgradeRequest(FGameplayTag RequestedTag)
 	// 현재 레벨 확인
 	int32 CurrentLevel = MetaSave->InvestedUpgrades.Contains(RequestedTag) ? MetaSave->InvestedUpgrades[RequestedTag] : 0;
 
-	// 만렙인지 확인
 	if (CurrentLevel < UpgradeData->MaxLevel)
 	{
-		// 🌟 대망의 레벨업 & 결제 처리!
 		MetaSave->AvailableSkillPoints -= 1;
 		MetaSave->InvestedUpgrades.Add(RequestedTag, CurrentLevel + 1);
 
-		// 금고 덮어쓰기
 		SaveSystem->SaveMetaProgression(MetaSave);
 
-		// 화면 즉시 갱신 (포인트 줄어들고 레벨 올라간 거 반영)
 		RefreshUI();
-
-		UE_LOG(LogTemp, Warning, TEXT("[MetaUI] %s 레벨업 성공! (현재 %d 렙)"), *RequestedTag.ToString(), CurrentLevel + 1);
 	}
 }
 

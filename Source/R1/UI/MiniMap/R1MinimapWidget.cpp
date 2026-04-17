@@ -137,5 +137,4 @@ void UR1MinimapWidget::CalculateMapCenterOffset(const TArray<FR1MapNode>& MapDat
 	MapCenterOffset.X = (MinX + MaxX) / 2.0f;
 	MapCenterOffset.Y = (MinY + MaxY) / 2.0f;
 
-	UE_LOG(LogTemp, Warning, TEXT("[Minimap] 맵 오프셋 계산 완료: X=%f, Y=%f"), MapCenterOffset.X, MapCenterOffset.Y);
 }
