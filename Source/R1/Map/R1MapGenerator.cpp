@@ -621,20 +621,10 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 
 void AR1MapGenerator::OnSavedRoomLoaded()
 {
-	// 1. 방금 비동기 로딩이 완료된 현재 방의 좌표를 가져옵니다.
-	FVector SavedRoomLocation = GeneratedMap[CurrentActiveNodeID].SpawnLocation;
-
-	// 2. 월드에 존재하는 모든 던전 매니저를 싹 뒤집니다.
-	for (TActorIterator<ADungeonManager> ManagerIt(GetWorld()); ManagerIt; ++ManagerIt)
+	// Instead of TActorIterator, use the check-in mechanism (ActiveManagers map)
+	if (ActiveManagers.Contains(CurrentActiveNodeID))
 	{
-		FVector2D ManagerLoc2D(ManagerIt->GetActorLocation().X, ManagerIt->GetActorLocation().Y);
-		FVector2D SavedLoc2D(SavedRoomLocation.X, SavedRoomLocation.Y);
-
-		if (FVector2D::Distance(ManagerLoc2D, SavedLoc2D) < 100.0f)
-		{
-			RegisterRoomManager(*ManagerIt);
-			break;
-		}
+		RegisterRoomManager(ActiveManagers[CurrentActiveNodeID], CurrentActiveNodeID);
 	}
 }
 
@@ -876,6 +866,8 @@ void AR1MapGenerator::GoToNextFloor()
 
 	// 2. 맵 데이터 뼈대 완전 초기화
 	GeneratedMap.Empty();
+	ActiveManagers.Empty();
+	InitializedNodeIDs.Empty();
 	CurrentActiveNodeID = 0;
 	PendingNodeID = -1;
 	PendingDoorDirection = ER1DoorDirection::None;
