@@ -191,8 +191,6 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 {
 	if (!Interactor || !bCleared || TargetNodeID == -1) return;
 
-	if (GetWorld()->GetTimerManager().IsTimerActive(DoorTransitionTimer)) return;
-
 	if (bRequiresKey)
 	{
 		UR1InventorySubsystem* Inven = GetWorld()->GetSubsystem<UR1InventorySubsystem>();

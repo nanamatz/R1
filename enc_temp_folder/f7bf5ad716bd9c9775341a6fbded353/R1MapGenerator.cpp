@@ -734,7 +734,7 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 		Manager->LockRoomDoors();
 		if (Manager->ClearCondition == ER1RoomClearCondition::Treasure)
 		{
-			Manager->CompleteRoom();
+			Manager->CompleteRoom(); // 팡! 하고 아이템 드랍
 		}
 		else
 		{
@@ -790,7 +790,7 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 		int32 PrevRoomID = CurrentActiveNodeID;
 		CurrentActiveNodeID = MatchedNodeID;
 
-		/*if (PlayerCharacter && TargetDoorToSpawnAt)
+		if (PlayerCharacter && TargetDoorToSpawnAt)
 		{
 			FVector DirectionToCenter = (GeneratedMap[MatchedNodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
 			FVector SafeLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
@@ -803,30 +803,6 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
 			PlayerCharacter->TeleportToRoom(SafeLocation);
 			PlayerCharacter->GetVelocity() = FVector::ZeroVector;
 
-		}*/
-		if (PlayerCharacter) // TargetDoorToSpawnAt 검사를 안쪽으로 분리
-		{
-			FVector SafeLocation;
-			if (TargetDoorToSpawnAt)
-			{
-				// 맞는 문을 찾았을 때 (기존 로직)
-				FVector DirectionToCenter = (GeneratedMap[MatchedNodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
-				SafeLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
-			}
-			else
-			{
-				// 특수 방의 문 핏(Fit)이 안 맞아서 문을 못 찾은 경우, 방의 중앙 지점으로 스폰!
-				SafeLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 100.0f);
-				UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 문을 찾지 못해 방 중앙으로 강제 텔레포트 시킵니다!"));
-			}
-
-			if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
-			{
-				PC->ResetMovementState();
-			}
-
-			PlayerCharacter->TeleportToRoom(SafeLocation);
-			PlayerCharacter->GetVelocity() = FVector::ZeroVector;
 		}
 
 		UpdateMinimapState(CurrentActiveNodeID, PrevRoomID);
