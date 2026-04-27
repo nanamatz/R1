@@ -54,6 +54,7 @@ public:
 	FOnDeadDelegate OnDeadDelegate;
 
 	virtual void OnHealthChanged(float Ratio);
+	float GetHealthRatio() const;
 
 public:
 	// 변수를 부모로 이동
@@ -63,6 +64,7 @@ public:
 	// 공통 함수는 부모에서 한 번만 구현
 	void SetCreatureState(ECreatureState InState);
 	ECreatureState GetCreatureState() const { return CreatureState; }
+	FName GetCharacterRowName() const { return CharacterRowName; }
 
 protected:
 	// 1. 데이터 테이블 에셋 (에디터에서 지정)

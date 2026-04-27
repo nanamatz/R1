@@ -302,6 +302,14 @@ void AR1PlayerController::TickCursorTrace()
 	FHitResult OutCursorHit;
 	if (GetHitResultUnderCursor(ECollisionChannel::ECC_GameTraceChannel2, false, OutCursorHit) == false )
 	{
+		if (HighlightActor)
+		{
+			if (IR1HighlightInterface* OldHighlight = Cast<IR1HighlightInterface>(HighlightActor))
+			{
+				OldHighlight->UnHighlight();
+			}
+			HighlightActor = nullptr;
+		}
 		return;
 	}
 

@@ -26,13 +26,16 @@ public:
 
 	virtual void InitAbilitySystem() override;
 
+	virtual void Highlight() override;
+	virtual void UnHighlight() override;
+
 	//void DefaultAttack();
 public:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TObjectPtr<class UWidgetComponent> HpBarComponent;
+	//UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	//TObjectPtr<class UWidgetComponent> HpBarComponent;
 
-	UFUNCTION()
-	void RefreshHpBar(float Ratio);
+	//UFUNCTION()
+	//void RefreshHpBar(float Ratio);
 
 	class UR1AttributeSet* GetR1AttributeSet() const { return CoreAttributeSet; }
 
