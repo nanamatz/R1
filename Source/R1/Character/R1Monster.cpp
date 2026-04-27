@@ -14,6 +14,7 @@
 #include "Animation/R1AnimInstance.h"
 
 #include "UI/R1HpBarWidget.h"
+#include "UI/R1HUD.h"
 #include "AbilitySystemBlueprintLibrary.h"
 
 #include "Map/DungeonManager.h"
@@ -33,17 +34,17 @@ AR1Monster::AR1Monster()
 	CoreAttributeSet = CreateDefaultSubobject<UR1AttributeSet>(TEXT("CoreAttributeSet"));
 
 
-	HpBarComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
-	HpBarComponent->SetupAttachment(GetRootComponent());
+	//HpBarComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
+	//HpBarComponent->SetupAttachment(GetRootComponent());
 
-	ConstructorHelpers::FClassFinder<UUserWidget> HealthBarWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/Blueprints/UI/WBP_HpBar.WBP_HpBar_C'"));
-	if (HealthBarWidgetClass.Succeeded())
-	{
-		HpBarComponent->SetWidgetClass(HealthBarWidgetClass.Class);
-		HpBarComponent->SetWidgetSpace(EWidgetSpace::Screen);
-		HpBarComponent->SetDrawAtDesiredSize(true);
-		HpBarComponent->SetRelativeLocation(FVector(0, 0, 120));
-	}
+	//ConstructorHelpers::FClassFinder<UUserWidget> HealthBarWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/Blueprints/UI/WBP_HpBar.WBP_HpBar_C'"));
+	//if (HealthBarWidgetClass.Succeeded())
+	//{
+	//	HpBarComponent->SetWidgetClass(HealthBarWidgetClass.Class);
+	//	HpBarComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	//	HpBarComponent->SetDrawAtDesiredSize(true);
+	//	HpBarComponent->SetRelativeLocation(FVector(0, 0, 120));
+	//}
 
 
 	Tags.Add(FName("Enemy"));
@@ -59,11 +60,11 @@ void AR1Monster::BeginPlay()
 	
 	AR1Monster* Monster = Cast<AR1Monster>(this);
 
-	if (Monster)
-	{
-		Monster->OnHpChanged.AddDynamic(this, &AR1Monster::RefreshHpBar);
-	}	
-	RefreshHpBar(1.f);
+	//if (Monster)
+	//{
+	//	Monster->OnHpChanged.AddDynamic(this, &AR1Monster::RefreshHpBar);
+	//}	
+	//RefreshHpBar(1.f);
 
 	if (GetMesh())
 	{
@@ -85,17 +86,17 @@ void AR1Monster::InitAbilitySystem()
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
-void AR1Monster::RefreshHpBar(float Ratio)
-{
-	if (HpBarComponent && CoreAttributeSet)
-	{
-		UR1HpBarWidget* HpBar = Cast<UR1HpBarWidget>(HpBarComponent->GetUserWidgetObject());
-		if (HpBar)
-		{
-			HpBar->SetHpRatio(Ratio);
-		}
-	}
-}
+//void AR1Monster::RefreshHpBar(float Ratio)
+//{
+//	if (HpBarComponent && CoreAttributeSet)
+//	{
+//		UR1HpBarWidget* HpBar = Cast<UR1HpBarWidget>(HpBarComponent->GetUserWidgetObject());
+//		if (HpBar)
+//		{
+//			HpBar->SetHpRatio(Ratio);
+//		}
+//	}
+//}
 
 void AR1Monster::ActivateAbility(FGameplayTag AbilityTag)
 {
@@ -130,10 +131,10 @@ void AR1Monster::OnDead(const TObjectPtr<AR1Character> Attacker)
 		}
 	}
 
-	if (HpBarComponent)
-	{
-		HpBarComponent->SetHiddenInGame(true);
-	}
+	//if (HpBarComponent)
+	//{
+	//	HpBarComponent->SetHiddenInGame(true);
+	//}
 
 	RewardExperience(Attacker);
 	DropGold();
@@ -296,11 +297,11 @@ void AR1Monster::WakeUp()
 	}
 
 	// 7. HP 바 갱신 및 표시
-	if (HpBarComponent)
-	{
-		HpBarComponent->SetHiddenInGame(false);
-		RefreshHpBar(1.0f);
-	}
+	//if (HpBarComponent)
+	//{
+	//	HpBarComponent->SetHiddenInGame(false);
+	//	RefreshHpBar(1.0f);
+	//}
 
 	// 8. 디졸브 원상복구
 	CurrentDissolve = 0.0f;
@@ -333,8 +334,34 @@ void AR1Monster::GoToSleep()
 	GetCharacterMovement()->DisableMovement();
 
 	// 5. HP 바 위젯 끄기 (OnDead에서 하셨지만 여기서 한 번 더 확실하게)
-	if (HpBarComponent)
+	//if (HpBarComponent)
+	//{
+	//	HpBarComponent->SetHiddenInGame(true);
+	//}
+}
+
+void AR1Monster::Highlight()
+{
+	Super::Highlight();
+
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
 	{
-		HpBarComponent->SetHiddenInGame(true);
+		if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
+		{
+			HUD->ShowMonsterInfo(this);
+		}
+	}
+}
+
+void AR1Monster::UnHighlight()
+{
+	Super::UnHighlight();
+
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
+		{
+			HUD->HideMonsterInfo();
+		}
 	}
 }

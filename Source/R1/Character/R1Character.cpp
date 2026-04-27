@@ -119,6 +119,16 @@ void AR1Character::OnHealthChanged(float Ratio)
 	}
 }
 
+float AR1Character::GetHealthRatio() const
+{
+	if (CommonAttributeSet)
+	{
+		float MaxHp = CommonAttributeSet->GetMaxHealth();
+		return (MaxHp > 0.0f) ? (CommonAttributeSet->GetHealth() / MaxHp) : 0.0f;
+	}
+	return 0.0f;
+}
+
 
 
 void AR1Character::SetCreatureState(ECreatureState InState)

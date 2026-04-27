@@ -20,6 +20,9 @@ public:
     void UpdateGameOverUI();
     void ToggleGameMenu();
 
+    void ShowMonsterInfo(class AR1Monster* Monster);
+    void HideMonsterInfo();
+
     UUserWidget* GetInventoryWidget() const { return InventoryUIWidget; }
     UUserWidget* GetBaseUIWidget() const { return BaseUIWidget; }
     UUserWidget* GetGameOverUIWidget() const { return GameOverUIWidget; }
@@ -79,7 +82,13 @@ protected:
     TSubclassOf<UUserWidget> GameMenuUIWidgetClass;
 
     UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<class UR1MonsterInfoSceneWidget> MonsterInfoWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UUserWidget> MiniMapUIWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<class UR1MonsterInfoSceneWidget> MonsterInfoWidget = nullptr;
 
     UPROPERTY(EditDefaultsOnly)
     TObjectPtr<UUserWidget> MiniMapUIWidget = nullptr;

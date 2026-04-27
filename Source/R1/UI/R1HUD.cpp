@@ -8,6 +8,9 @@
 #include "Object/R1MerchantNPC.h"
 #include "UI/Shop/R1ShopWidget.h"
 #include "Blueprint/WidgetTree.h"
+#include "UI/System/R1MonsterInfoSceneWidget.h"
+#include "Character/R1Monster.h"
+#include "AbilitySystem/Attribute/R1AttributeSet.h"
 
 void AR1HUD::BeginPlay()
 {
@@ -120,6 +123,15 @@ void AR1HUD::BeginPlay()
 
                 ShopSceneWidget->AddToViewport(10);
                 ShopSceneWidget->SetVisibility(ESlateVisibility::Hidden);
+            }
+        }
+        if (!MonsterInfoWidget && MonsterInfoWidgetClass)
+        {
+            MonsterInfoWidget = CreateWidget<UR1MonsterInfoSceneWidget>(PC, MonsterInfoWidgetClass);
+            if (MonsterInfoWidget)
+            {
+                MonsterInfoWidget->AddToViewport(5);
+                MonsterInfoWidget->SetVisibility(ESlateVisibility::Hidden);
             }
         }
         if (AR1MapGenerator* MapGen = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
@@ -258,5 +270,23 @@ void AR1HUD::ToggleGameMenu()
         bIsGameMenuUIVisible = true;
     }
 }
+
+void AR1HUD::ShowMonsterInfo(AR1Monster* Monster)
+{
+    if (!Monster || !MonsterInfoWidget) return;
+
+    MonsterInfoWidget->SetMonster(Monster);
+    MonsterInfoWidget->SetVisibility(ESlateVisibility::Visible);
+}
+
+void AR1HUD::HideMonsterInfo()
+{
+    if (MonsterInfoWidget)
+    {
+        MonsterInfoWidget->SetMonster(nullptr);
+        MonsterInfoWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
+}
+
 
 

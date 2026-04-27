@@ -14,6 +14,9 @@ class R1_API AR1RangerMonster : public AR1Monster
 	GENERATED_BODY()
 
 public:
+    AR1RangerMonster();
+
+public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
     TSubclassOf<class AR1Projectile> ProjectileClass;
 
