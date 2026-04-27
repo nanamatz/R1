@@ -141,15 +141,18 @@ void AR1PlayerState::ApplyMetaUpgrades()
 		}
 	}
 
+	// 5. 완성된 스펙(모든 버프 수치가 담긴 GE)을 플레이어 자신에게 적용합니다!
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 
 	if (UR1AttributeSet* CoreAttr = GetCommonAttributeSet())
 	{
 		AbilitySystemComponent->SetNumericAttributeBase(CoreAttr->GetHealthAttribute(), CoreAttr->GetMaxHealth());
+		// (만약 UI 델리게이트가 필요하다면 여기서 Broadcast 호출)
 	}
 
 	if (UPlayerAttributeSet* PlayerAttr = GetPlayerAttributeSet())
 	{
 		AbilitySystemComponent->SetNumericAttributeBase(PlayerAttr->GetManaAttribute(), PlayerAttr->GetMaxMana());
+		// (만약 UI 델리게이트가 필요하다면 여기서 Broadcast 호출)
 	}
 }
