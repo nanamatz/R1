@@ -65,8 +65,6 @@ void AR1Dispenser::Interact_Implementation(AR1PlayerController* Interactor)
 	UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(Player->GetAbilitySystemComponent());
 	if (!ASC) return;
 
-	// 🌟 1. 현재 체력/마나 상태 확인
-	// 유저님이 작성하신 AttributeSet에서 값을 가져옵니다.
 	const UR1AttributeSet* BaseSet = ASC->GetSet<UR1AttributeSet>();
 	const UPlayerAttributeSet* PlayerSet = ASC->GetSet<UPlayerAttributeSet>();
 
@@ -77,18 +75,15 @@ void AR1Dispenser::Interact_Implementation(AR1PlayerController* Interactor)
 	float CurMP = PlayerSet->GetMana();
 	float MaxMP = PlayerSet->GetMaxMana();
 
-	// 🌟 2. 둘 다 가득 차 있다면 상호작용 거부 (횟수 차감 없음)
 	if (CurHP >= MaxHP && CurMP >= MaxMP)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("이미 체력과 마나가 가득 차 있습니다!"));
 		return;
 	}
 
-	// 🌟 3. 회복 GE 적용
 	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 	Context.AddInstigator(Player, Player);
 
-	// 체력이 부족하면 체력 회복 GE 적용
 	if ((CurHP < MaxHP  || CurMP < MaxMP) && RecoveryEffectClass)
 	{
 		FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RecoveryEffectClass, 1.0f, Context);
@@ -101,7 +96,6 @@ void AR1Dispenser::Interact_Implementation(AR1PlayerController* Interactor)
 		FRotator SpawnRotation = Player->GetActorRotation();
 		GetWorld()->SpawnActor<AActor>(DispenserParticleEffectClass, SpawnLocation, SpawnRotation);
 	}
-	// 🌟 4. 사용 완료 처리 (일회성)
 	bIsUsed = true;
 	UnHighlight();
 }

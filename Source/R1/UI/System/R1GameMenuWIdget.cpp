@@ -40,7 +40,7 @@ void UR1GameMenuWIdget::OnResumeButtonClicked()
 
 void UR1GameMenuWIdget::OnOptionsButtonClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[GameMenu] 옵션 버튼 클릭됨!"));
+	//TODO: 옵션 메뉴로 이동하는 로직 추가
 }
 
 void UR1GameMenuWIdget::OnExitButtonClicked()
