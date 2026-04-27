@@ -84,6 +84,7 @@ void AR1MapGenerator::GenerateMap()
 		// 재시도할 때마다 풀이 리셋되어야 하므로 다시 로드합니다.
 		InitializeRoomPools();
 		GeneratedMap.Empty();
+		InitializedNodeIDs.Empty();
 
 		TQueue<int32> RoomQueue;
 		int32 CurrentNodeID = 0;
@@ -524,6 +525,7 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 
 	// 2. 맵 데이터 뼈대 완전 초기화
 	GeneratedMap.Empty();
+	InitializedNodeIDs.Empty();
 
 	// 3. 현재 층수에 맞춰서 PDA로부터 풀(Pool) 로딩!
 	InitializeRoomPools();
@@ -678,6 +680,10 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 
 	if (MatchedNodeID == -1 || !GeneratedMap.IsValidIndex(MatchedNodeID)) return; // 맵에 없는 유령 방이면 무시
 
+	// GUARD: If this node is already initialized and we aren't explicitly transitioning to it, skip.
+	// This prevents the redundant registration during level streaming callbacks.
+	if (InitializedNodeIDs.Contains(MatchedNodeID) && MatchedNodeID != PendingNodeID) return;
+
 	if (GeneratedMap[MatchedNodeID].RoomDefinition)
 	{
 		Manager->InitializeRoomData(GeneratedMap[MatchedNodeID].RoomDefinition);
@@ -768,7 +774,7 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 		UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
 		if (RoomSubsystem)
 		{
-			RoomSubsystem->MarkRoomGameplayReady(GeneratedMap[0].RoomDefinition);
+			RoomSubsystem->MarkRoomGameplayReady(GeneratedMap[MatchedNodeID].RoomDefinition);
 
 			TArray<UR1RoomDefinitionData*> AdjacentRooms;
 			for (int32 ConnectedID : GeneratedMap[MatchedNodeID].ConnectedNodeIDs)
@@ -831,7 +837,8 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 			InnerRoomSubsystem->QueuePreloadRooms(AdjacentRooms);
 		}
 	}
-	
+
+	InitializedNodeIDs.Add(MatchedNodeID);
 }
 
 void AR1MapGenerator::GoToNextFloor()
