@@ -56,9 +56,6 @@ void AR1LockDoor::OpenDoorSmoothly()
 	if (bIsOpened) return;
 
 	TargetRotation = LockDoorMesh->GetRelativeRotation() + FRotator(0.f, 90.f, 0.f);
-	// 콜리전을 끄기 전에 내비게이션 업데이트를 명시적으로 차단합니다.
-	LockDoorMesh->SetCanEverAffectNavigation(false);
-
 	LockDoorMesh->SetCollisionProfileName(TEXT("NoCollision"));
 	bIsOpening = true;
 	bIsOpened = true;
