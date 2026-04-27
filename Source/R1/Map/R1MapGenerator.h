@@ -107,6 +107,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Map Generation")
 	TArray<FR1MapNode> GeneratedMap;
 
+	UPROPERTY()
+	TMap<int32, class ADungeonManager*> ActiveManagers;
+
+	UPROPERTY()
+	TSet<int32> InitializedNodeIDs;
+
 	// 아이작 방식(가지치기) 맵 생성 메인 함수
 	UFUNCTION(BlueprintCallable, Category = "Map Generation")
 	void GenerateMap();
@@ -139,7 +145,7 @@ private:
 
 public:
 	UFUNCTION()
-	void RegisterRoomManager(class ADungeonManager* Manager);
+	void RegisterRoomManager(class ADungeonManager* Manager, int32 RoomNodeID = -1);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Generation")
 	TArray<FFloorData> FloorSettings;

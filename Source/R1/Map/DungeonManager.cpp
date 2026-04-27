@@ -32,7 +32,7 @@ void ADungeonManager::BeginPlay()
 	{
 		if (AR1MapGenerator* Generator = Cast<AR1MapGenerator>(GeneratorActor))
 		{
-			Generator->RegisterRoomManager(this);
+			Generator->RegisterRoomManager(this, -1);
 		}
 	}
 }
