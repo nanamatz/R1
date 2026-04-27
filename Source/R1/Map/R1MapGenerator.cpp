@@ -84,6 +84,7 @@ void AR1MapGenerator::GenerateMap()
 		// 재시도할 때마다 풀이 리셋되어야 하므로 다시 로드합니다.
 		InitializeRoomPools();
 		GeneratedMap.Empty();
+		ActiveManagers.Empty();
 		InitializedNodeIDs.Empty();
 
 		TQueue<int32> RoomQueue;
@@ -525,6 +526,7 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 
 	// 2. 맵 데이터 뼈대 완전 초기화
 	GeneratedMap.Empty();
+	ActiveManagers.Empty();
 	InitializedNodeIDs.Empty();
 
 	// 3. 현재 층수에 맞춰서 PDA로부터 풀(Pool) 로딩!
@@ -679,6 +681,8 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 	}
 
 	if (MatchedNodeID == -1 || !GeneratedMap.IsValidIndex(MatchedNodeID)) return; // 맵에 없는 유령 방이면 무시
+
+	ActiveManagers.Add(MatchedNodeID, Manager);
 
 	// GUARD: If this node is already initialized and we aren't explicitly transitioning to it, skip.
 	// This prevents the redundant registration during level streaming callbacks.
@@ -945,18 +949,10 @@ void AR1MapGenerator::OnTransitionRoomLoaded()
 		RoomSubsystem->MarkRoomAsLeft(GeneratedMap[CurrentActiveNodeID].RoomDefinition);
 	}
 
-	FVector NextLocation = GeneratedMap[PendingNodeID].SpawnLocation;
-
-	for (TActorIterator<ADungeonManager> ManagerIt(GetWorld()); ManagerIt; ++ManagerIt)
+	// Instead of TActorIterator, use the check-in mechanism
+	if (ActiveManagers.Contains(PendingNodeID))
 	{
-		FVector2D ManagerLoc2D(ManagerIt->GetActorLocation().X, ManagerIt->GetActorLocation().Y);
-		FVector2D NextLoc2D(NextLocation.X, NextLocation.Y);
-
-		if (FVector2D::Distance(ManagerLoc2D, NextLoc2D) < 100.0f)
-		{
-			RegisterRoomManager(*ManagerIt);
-			break;
-		}
+		RegisterRoomManager(ActiveManagers[PendingNodeID], PendingNodeID);
 	}
 
 	TriggerAutoSave();
