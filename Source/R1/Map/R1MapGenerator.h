@@ -139,7 +139,7 @@ private:
 
 public:
 	UFUNCTION()
-	void RegisterRoomManager(class ADungeonManager* Manager);
+	void RegisterRoomManager(class ADungeonManager* Manager, int32 RoomNodeID = -1);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map Generation")
 	TArray<FFloorData> FloorSettings;

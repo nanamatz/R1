@@ -657,22 +657,26 @@ UR1RoomDefinitionData* AR1MapGenerator::FindRoomDefinitionByLabel(FName AssetNam
 	return nullptr;
 }
 
-void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager)
+void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNodeID)
 {
 	if (!IsValid(Manager)) return;
 
-	// 1. 이 매니저가 현재 지도의 몇 번 방 매니저인지 '위치(Location)'로 신원 파악을 합니다.
-	int32 MatchedNodeID = -1;
-	for (int32 i = 0; i < GeneratedMap.Num(); ++i)
+	// 1. 이 매니저가 현재 지도의 몇 번 방 매니저인지 '위치(Location)' 또는 명시적인 ID로 신원 파악을 합니다.
+	int32 MatchedNodeID = RoomNodeID;
+	
+	if (MatchedNodeID == -1)
 	{
-		if (GeneratedMap[i].SpawnLocation.Equals(Manager->GetActorLocation(), 10.0f))
+		for (int32 i = 0; i < GeneratedMap.Num(); ++i)
 		{
-			MatchedNodeID = i;
-			break;
+			if (GeneratedMap[i].SpawnLocation.Equals(Manager->GetActorLocation(), 10.0f))
+			{
+				MatchedNodeID = i;
+				break;
+			}
 		}
 	}
 
-	if (MatchedNodeID == -1) return; // 맵에 없는 유령 방이면 무시
+	if (MatchedNodeID == -1 || !GeneratedMap.IsValidIndex(MatchedNodeID)) return; // 맵에 없는 유령 방이면 무시
 
 	if (GeneratedMap[MatchedNodeID].RoomDefinition)
 	{
