@@ -33,7 +33,6 @@ void UR1GameplayAbility_HitReact::ActivateAbility(const FGameplayAbilitySpecHand
 
 	if (Monster && Monster->GetCharacterMovement())
 	{
-		// 피격 중에는 못 움직이게 이동 속도를 0으로! (기존 속도는 어딘가에 저장해두는 것이 좋습니다)
 		Monster->GetCharacterMovement()->MaxWalkSpeed = 0.f;
 		Monster->GetCharacterMovement()->StopMovementImmediately();
 	}
@@ -53,11 +52,9 @@ void UR1GameplayAbility_HitReact::ActivateAbility(const FGameplayAbilitySpecHand
 
 		// 3. 태스크 실행! (애니메이션 재생 시작)
 		Task->ReadyForActivation();
-		UE_LOG(LogTemp, Warning, TEXT("Ouch"));
 	}
 	else
 	{
-		// 몽타주가 없으면 바로 어빌리티 종료
 		UE_LOG(LogTemp, Error, TEXT("HitReact 어빌리티에 HitMontage가 세팅되지 않았습니다!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
