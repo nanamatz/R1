@@ -297,7 +297,7 @@ void AR1MapGenerator::AssignRoomTypes()
 	// 각 풀이 비어있지 않다면, "이 방 타입은 이번 층에 등장할 자격이 있음"을 배열에 등록
 	if (!TreasureRoomPool.IsEmpty()) AvailableSpecialTypes.Add(ER1RoomContentType::Treasure);
 	if (!ShopRoomPool.IsEmpty())     AvailableSpecialTypes.Add(ER1RoomContentType::Shop);
-	if (!RefreshRoomPool.IsEmpty())  AvailableSpecialTypes.Add(ER1RoomContentType::Refresh); 
+	if (!RefreshRoomPool.IsEmpty())  AvailableSpecialTypes.Add(ER1RoomContentType::Refresh);
 
 	TArray<UR1RoomDefinitionData*> SpecialRoomsToSpawn;
 
@@ -538,6 +538,7 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 		FR1MapNode NewNode;
 		NewNode.NodeID = SaveNode.NodeID;
 		NewNode.bIsCleared = SaveNode.bIsCleared;
+		NewNode.bIsVisited = SaveNode.bIsVisited;
 		NewNode.MinimapState = SaveNode.MinimapState;
 		NewNode.GridPosition = SaveNode.GridPosition;
 		NewNode.ConnectedNodeIDs = SaveNode.ConnectedNodeIDs;
@@ -553,45 +554,6 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 		GeneratedMap.Add(NewNode);
 	}
 
-	// 1단계: 맵 전체를 일단 짙은 안개(Hidden)로 덮어 초기화합니다.
-	for (FR1MapNode& Node : GeneratedMap)
-	{
-		Node.MinimapState = ER1MinimapRoomState::Hidden;
-	}
-
-	// 2단계: 플레이어가 현재 있는 방(Current)과 이미 클리어한 방(Visited)들의 도장을 확실하게 찍습니다.
-	for (FR1MapNode& Node : GeneratedMap)
-	{
-		if (Node.NodeID == CurrentActiveNodeID)
-		{
-			Node.MinimapState = ER1MinimapRoomState::Current;
-		}
-		else if (Node.bIsCleared)
-		{
-			Node.MinimapState = ER1MinimapRoomState::Visited;
-		}
-	}
-
-	// 3단계: 도장이 찍힌 방(Current, Visited)들을 기준으로, 연결된 모든 이웃 방의 시야를 밝힙니다(Discovered).
-	for (const FR1MapNode& Node : GeneratedMap)
-	{
-		// 이 방이 내가 서 있거나 이미 지나온 방이라면?
-		if (Node.MinimapState == ER1MinimapRoomState::Current || Node.MinimapState == ER1MinimapRoomState::Visited)
-		{
-			// 이 방과 연결된 모든 이웃 방들을 검사합니다.
-			for (int32 ConnID : Node.ConnectedNodeIDs)
-			{
-				if (GeneratedMap.IsValidIndex(ConnID))
-				{
-					// 이웃 방이 아직 안개 속(Hidden)에 있다면, 발견됨(Discovered) 상태로 바꿔줍니다!
-					if (GeneratedMap[ConnID].MinimapState == ER1MinimapRoomState::Hidden)
-					{
-						GeneratedMap[ConnID].MinimapState = ER1MinimapRoomState::Discovered;
-					}
-				}
-			}
-		}
-	}
 	// 5. 플레이어가 껐을 때 마지막으로 있던 방(CurrentActiveNodeID) 스폰!
 	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
 	if (RoomSubsystem && GeneratedMap.IsValidIndex(CurrentActiveNodeID) && GeneratedMap[CurrentActiveNodeID].RoomDefinition != nullptr)
@@ -647,6 +609,7 @@ UR1RoomDefinitionData* AR1MapGenerator::FindRoomDefinitionByLabel(FName AssetNam
 	if (auto* Found = SearchPool(BossRoomPool)) return Found;
 	if (auto* Found = SearchPool(TreasureRoomPool)) return Found;
 	if (auto* Found = SearchPool(ShopRoomPool)) return Found;
+	if (auto* Found = SearchPool(RefreshRoomPool)) return Found;
 
 	return nullptr;
 }
@@ -925,6 +888,7 @@ void AR1MapGenerator::UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID)
 	if (GeneratedMap.IsValidIndex(TargetNodeID))
 	{
 		GeneratedMap[TargetNodeID].MinimapState = ER1MinimapRoomState::Current;
+		GeneratedMap[TargetNodeID].bIsVisited = true;
 
 		// 3. 진입한 방과 연결된 모든 이웃 방들을 탐색하여 'Hidden'이면 'Discovered(발견됨)'로 밝힙니다.
 		for (int32 ConnectedID : GeneratedMap[TargetNodeID].ConnectedNodeIDs)

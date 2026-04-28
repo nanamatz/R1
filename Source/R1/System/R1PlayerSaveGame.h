@@ -18,6 +18,9 @@ struct FR1MapNodeSaveData
 	UPROPERTY() 
 	bool bIsCleared;
 
+	UPROPERTY()
+	bool bIsVisited;
+
 	UPROPERTY() 
 	ER1MinimapRoomState MinimapState;
 

@@ -89,6 +89,7 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 			SaveNode.NodeID = Node.NodeID;
 			SaveNode.MinimapState = Node.MinimapState;
 			SaveNode.bIsCleared = Node.bIsCleared;
+			SaveNode.bIsVisited = Node.bIsVisited;
 			SaveNode.GridPosition = Node.GridPosition;
 			SaveNode.ConnectedNodeIDs = Node.ConnectedNodeIDs;
 
