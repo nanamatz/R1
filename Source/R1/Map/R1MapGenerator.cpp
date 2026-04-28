@@ -395,8 +395,7 @@ void AR1MapGenerator::AssignRoomTypes()
 			// 방 타입이 전투가 없는 타입이라면 무조건 클리어 상태로 만듦
 			if (SpecialRoomData->RoomType == ER1RoomContentType::Treasure ||
 				SpecialRoomData->RoomType == ER1RoomContentType::Shop ||
-				SpecialRoomData->RoomType == ER1RoomContentType::Refresh ||
-				SpecialRoomData->RoomType == ER1RoomContentType::Event)
+				SpecialRoomData->RoomType == ER1RoomContentType::Refresh)
 			{
 				GeneratedMap[TargetNodeID].bIsCleared = true;
 			}
