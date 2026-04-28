@@ -73,6 +73,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bIsCleared = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsVisited = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsTreasureUnlocked = false;
 
@@ -164,17 +167,14 @@ private:
 
 private:
 	// 내부적으로 알아서 채워 쓸 풀 (에디터 노출 안 함, 임시 보관용 Transient)
-	UPROPERTY(Transient)
+	UPROPERTY()
 	TArray<UR1RoomDefinitionData*> StartRoomPool;
 
-	UPROPERTY(Transient)
+	UPROPERTY()
 	TArray<UR1RoomDefinitionData*> CombatRoomPool;
 
-	UPROPERTY(Transient)
+	UPROPERTY()
 	TArray<UR1RoomDefinitionData*> BossRoomPool;
-
-	UPROPERTY(Transient)
-	TArray<UR1RoomDefinitionData*> EventRoomPool;
 
 	UPROPERTY()
 	TArray<UR1RoomDefinitionData*> TreasureRoomPool;
