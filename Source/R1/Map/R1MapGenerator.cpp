@@ -794,20 +794,6 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 		int32 PrevRoomID = CurrentActiveNodeID;
 		CurrentActiveNodeID = MatchedNodeID;
 
-		/*if (PlayerCharacter && TargetDoorToSpawnAt)
-		{
-			FVector DirectionToCenter = (GeneratedMap[MatchedNodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
-			FVector SafeLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
-			
-			if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
-			{
-				PC->ResetMovementState();
-			}
-
-			PlayerCharacter->TeleportToRoom(SafeLocation);
-			PlayerCharacter->GetVelocity() = FVector::ZeroVector;
-
-		}*/
 		if (PlayerCharacter) // TargetDoorToSpawnAt 검사를 안쪽으로 분리
 		{
 			FVector SafeLocation;

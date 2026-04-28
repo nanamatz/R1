@@ -111,6 +111,15 @@ void AR1PlayerState::ApplyMetaUpgrades()
 	TArray<FR1MetaUpgradeData*> AllUpgrades;
 	MetaUpgradeDataTable->GetAllRows<FR1MetaUpgradeData>(TEXT("MetaUpgradeContext"), AllUpgrades);
 
+	// [Fix] 초기화: 모든 태그에 대해 0.0f로 먼저 설정하여, 투자하지 않은 항목에 대해 GAS 에러가 발생하는 것을 방지합니다.
+	for (FR1MetaUpgradeData* UpgradeData : AllUpgrades)
+	{
+		if (UpgradeData)
+		{
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(UpgradeData->UpgradeTag, 0.0f);
+		}
+	}
+
 	// 4. 유저가 투자한 내역을 순회하며 정확한 수치를 계산합니다.
 	for (const auto& Pair : MetaSave->InvestedUpgrades)
 	{
