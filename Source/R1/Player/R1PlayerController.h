@@ -25,6 +25,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 	virtual void PlayerTick(float DeltaTime) override;
+	virtual void GetAudioListenerPosition(FVector& OutLocation, FVector& OutFrontDir, FVector& OutRightDir) const override;
 public:
 	virtual void HandleGameplayEvent(FGameplayTag EventTag);
 

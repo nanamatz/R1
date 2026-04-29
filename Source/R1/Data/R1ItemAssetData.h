@@ -85,4 +85,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Visual")
 	FName EquipSocketName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Audio")
+	TMap<FGameplayTag, TSoftObjectPtr<USoundBase>> AudioRoutingMap;
 };

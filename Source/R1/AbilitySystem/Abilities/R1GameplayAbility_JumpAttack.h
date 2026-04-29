@@ -56,6 +56,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "JumpAttack")
 	FGameplayTag AttackEventTag;
 
+	UPROPERTY(EditDefaultsOnly, Category = "JumpAttack|Audio")
+	FGameplayTag AudioTag;
+
+	UPROPERTY(EditDefaultsOnly, Category = "JumpAttack|Audio")
+	FGameplayTag GameplayCueTag;
+
 	UPROPERTY(EditAnywhere, Category = "JumpAttack")
 	TObjectPtr<class UCurveVector> JumpHeightCurve; // 포물선을 그리기 위한 커브 (옵션)
 
