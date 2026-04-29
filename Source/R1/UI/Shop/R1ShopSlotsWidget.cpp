@@ -12,6 +12,10 @@
 #include "Item/R1InventorySubsystem.h"
 #include "Object/R1MerchantNPC.h"
 #include "Item/R1DragDropOperation.h"
+#include "Kismet/GameplayStatics.h"
+#include "UI/R1HUD.h"
+#include "Data/R1UISoundData.h"
+#include "Data/R1ItemAssetData.h"
 
 UR1ShopSlotsWidget::UR1ShopSlotsWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -105,6 +109,15 @@ bool UR1ShopSlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDr
 		{
 			InvenSubsys->AddGold(SellPrice);
 			UE_LOG(LogTemp, Log, TEXT("아이템 판매 완료! +%d 골드"), SellPrice);
+
+			if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))
+			{
+				if (HUD->UISoundData && HUD->UISoundData->ShopPurchase)
+				{
+					UGameplayStatics::PlaySound2D(this, HUD->UISoundData->ShopPurchase);
+				}
+			}
+
 			return true;
 		}
 	}

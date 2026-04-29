@@ -28,6 +28,9 @@ public:
     UUserWidget* GetGameOverUIWidget() const { return GameOverUIWidget; }
     UUserWidget* GetGameMenuUIWidget() const { return GameMenuUIWidget; }
 
+    UPROPERTY(EditDefaultsOnly, Category = "UI|Audio")
+    TObjectPtr<class UR1UISoundData> UISoundData;
+
 protected:
     virtual void BeginPlay() override;
 
