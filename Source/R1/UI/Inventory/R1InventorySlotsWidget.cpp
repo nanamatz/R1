@@ -13,6 +13,10 @@
 #include "R1Define.h"
 #include "Item/R1ItemInstance.h"
 #include "Object/R1ItemActor.h"
+#include "Kismet/GameplayStatics.h"
+#include "Data/R1ItemAssetData.h"
+#include "UI/R1HUD.h"
+#include "Data/R1UISoundData.h"
 
 UR1InventorySlotsWidget::UR1InventorySlotsWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -198,9 +202,27 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 		{
 			if (Inventory->BuyItemAt(DragDrop->ItemInstance, ToItemSlotPos))
 			{
+				if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))
+				{
+					if (HUD->UISoundData && HUD->UISoundData->ShopPurchase)
+					{
+						UGameplayStatics::PlaySound2D(this, HUD->UISoundData->ShopPurchase);
+					}
+				}
+
 				return true;
 			}
-			return false;
+			else
+			{
+				if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))
+				{
+					if (HUD->UISoundData && HUD->UISoundData->InventoryFullError)
+					{
+						UGameplayStatics::PlaySound2D(this, HUD->UISoundData->InventoryFullError);
+					}
+				}
+				return false;
+			}
 		}
 		else if (DragDrop->FromEquipmentSlot != ER1EquipmentSlot::None)
 		{
@@ -222,6 +244,12 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 			{
 				Inventory->MoveItemInGrid(DragDrop->ItemInstance, DragDrop->FromItemSlotPos, ToItemSlotPos);
 				Inventory->OnInventoryUpdated.Broadcast();
+
+				if (DragDrop->ItemInstance->GetItemData() && DragDrop->ItemInstance->GetItemData()->DropSound)
+				{
+					UGameplayStatics::PlaySound2D(this, DragDrop->ItemInstance->GetItemData()->DropSound);
+				}
+
 				return true;
 			}
 			else

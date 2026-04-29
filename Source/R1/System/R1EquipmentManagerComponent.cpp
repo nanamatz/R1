@@ -117,6 +117,7 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 	}
 
 	EquippedHandlesMap.FindOrAdd(EquipSlot, NewHandles);
+	EquippedItemsMap.Add(EquipSlot, ItemData);
 
 	AR1Player* PlayerChar = Cast<AR1Player>(GetOwner());
 	if (PlayerChar && PlayerChar->GetMesh())
@@ -174,6 +175,7 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 
 		// 4. Map에서 영수증 파기!
 		EquippedHandlesMap.Remove(EquipSlot);
+		EquippedItemsMap.Remove(EquipSlot);
 
 		if (UStaticMeshComponent** FoundMeshComp = EquippedMeshesMap.Find(EquipSlot))
 		{
@@ -193,10 +195,25 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 		}
 
 		UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
-	}
-}
+		}
+		}
 
-void UR1EquipmentManagerComponent::ExecuteSkillSlot(ER1SkillSlot Slot)
+		USoundBase* UR1EquipmentManagerComponent::GetSoundByTag(ER1EquipmentSlot EquipSlot, FGameplayTag AudioTag) const
+		{
+		if (const TObjectPtr<UR1ItemAssetData>* FoundItem = EquippedItemsMap.Find(EquipSlot))
+		{
+		if (*FoundItem)
+		{
+			if (const TSoftObjectPtr<USoundBase>* SoundPtr = (*FoundItem)->AudioRoutingMap.Find(AudioTag))
+			{
+				return SoundPtr->LoadSynchronous();
+			}
+		}
+		}
+		return nullptr;
+		}
+
+		void UR1EquipmentManagerComponent::ExecuteSkillSlot(ER1SkillSlot Slot)
 {
 	if (ASC && SkillSlotsMap.Contains(Slot))
 	{

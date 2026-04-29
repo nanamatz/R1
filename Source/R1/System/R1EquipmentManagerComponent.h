@@ -42,6 +42,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void UnEquipItem(ER1EquipmentSlot EquipSlot);
 
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	USoundBase* GetSoundByTag(ER1EquipmentSlot EquipSlot, FGameplayTag AudioTag) const;
+
 public:
 	// Q, W, E, R 단축키를 눌렀을 때 실행할 함수
 	void ExecuteSkillSlot(ER1SkillSlot Slot);
@@ -72,4 +75,7 @@ private:
 
 	UPROPERTY()
 	TMap<ER1EquipmentSlot, class UStaticMeshComponent*> EquippedMeshesMap;
+
+	UPROPERTY()
+	TMap<ER1EquipmentSlot, TObjectPtr<class UR1ItemAssetData>> EquippedItemsMap;
 };

@@ -221,6 +221,20 @@ void AR1PlayerController::PlayerTick(float DeltaTime)
 	}
 }
 
+void AR1PlayerController::GetAudioListenerPosition(FVector& OutLocation, FVector& OutFrontDir, FVector& OutRightDir) const
+{
+	if (R1Player)
+	{
+		OutLocation = R1Player->GetActorLocation();
+		OutFrontDir = R1Player->GetActorForwardVector();
+		OutRightDir = R1Player->GetActorRightVector();
+	}
+	else
+	{
+		Super::GetAudioListenerPosition(OutLocation, OutFrontDir, OutRightDir);
+	}
+}
+
 void AR1PlayerController::OnInputStarted()
 {
 	//StopMovement();

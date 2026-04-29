@@ -76,4 +76,12 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_Honor, "Meta.Upgrade.Honor");
 	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_Revive, "Meta.Upgrade.Revive");
 
+	// Audio
+	UE_DEFINE_GAMEPLAY_TAG(Audio_Attack_Sword, "Audio.Attack.Sword");
+	UE_DEFINE_GAMEPLAY_TAG(Audio_Skill_ChainLightning, "Audio.Skill.ChainLightning");
+	UE_DEFINE_GAMEPLAY_TAG(Audio_UI_Click, "Audio.UI.Click");
+
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Weapon_Impact, "GameplayCue.Weapon.Impact");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_ChainLightning, "GameplayCue.Skill.ChainLightning");
+
 }

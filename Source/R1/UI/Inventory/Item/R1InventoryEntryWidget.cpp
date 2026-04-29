@@ -13,6 +13,10 @@
 #include "Item/R1ItemInstance.h"
 #include "Item/R1DragDropOperation.h"
 #include "Item/R1InventoryItemTooltipWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "Data/R1ItemAssetData.h"
+#include "UI/R1HUD.h"
+#include "Data/R1UISoundData.h"
 
 UR1InventoryEntryWidget::UR1InventoryEntryWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -123,18 +127,44 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 		{
 			bool bIsShopItem = (Inventory->GetItemPosition(ItemInstance) == FIntPoint(-1, -1));
 
-			// 🌟 A. [상점 -> 내 가방] 우클릭 시 즉시 구매!
 			if (bIsShopItem && Inventory->bIsShopOpen)
 			{
-				Inventory->BuyItem(ItemInstance);
-				// (필요하다면 여기서 상인 NPC의 ItemsForSale 배열에서 아이템을 지우는 로직을 호출할 수 있습니다)
+				if (Inventory->BuyItem(ItemInstance))
+				{
+					if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))
+					{
+						if (HUD->UISoundData && HUD->UISoundData->ShopPurchase)
+						{
+							UGameplayStatics::PlaySound2D(this, HUD->UISoundData->ShopPurchase);
+						}
+					}
+				}
+				else
+				{
+					if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))
+					{
+						if (HUD->UISoundData && HUD->UISoundData->InventoryFullError)
+						{
+							UGameplayStatics::PlaySound2D(this, HUD->UISoundData->InventoryFullError);
+						}
+					}
+				}
+
 				return FReply::Handled();
 			}
 
-			// 🌟 B. [내 가방 -> 상점] Shift + 우클릭 시 즉시 판매!
 			if (!bIsShopItem && Inventory->bIsShopOpen && InMouseEvent.IsShiftDown())
 			{
 				Inventory->SellItem(ItemInstance, ItemInstance->ItemCount);
+
+				if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))
+				{
+					if (HUD->UISoundData && HUD->UISoundData->ShopPurchase)
+					{
+						UGameplayStatics::PlaySound2D(this, HUD->UISoundData->ShopPurchase);
+					}
+				}
+
 				return FReply::Handled();
 			}
 
@@ -162,6 +192,12 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 					}
 
 					Inventory->EquipItem(ItemInstance, TargetSlot);
+
+					if (ItemInstance->GetItemData() && ItemInstance->GetItemData()->EquipSound)
+					{
+						UGameplayStatics::PlaySound2D(this, ItemInstance->GetItemData()->EquipSound);
+					}
+
 					Inventory->OnInventoryUpdated.Broadcast();
 					return FReply::Handled();
 				}
@@ -195,6 +231,11 @@ void UR1InventoryEntryWidget::NativeOnDragDetected(const FGeometry& InGeometry, 
 	DragDrop->DeltaWidgetPos = CachedDeltaWidgetPos;
 
 	OutOperation = DragDrop;
+
+	if (ItemInstance->GetItemData() && ItemInstance->GetItemData()->PickupSound)
+	{
+		UGameplayStatics::PlaySound2D(this, ItemInstance->GetItemData()->PickupSound);
+	}
 
 	// 인벤토리 바닥에 남은 내 자신은 반투명하게 만듦
 	RefreshWidgetOpacity(false);

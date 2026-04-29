@@ -31,6 +31,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Damage")
 	FGameplayTag AttackEventTag;
 
+	UPROPERTY(EditDefaultsOnly, Category = "GAS|Audio")
+	FGameplayTag AudioTag;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GAS|Audio")
+	FGameplayTag GameplayCueTag;
+
 	UFUNCTION()
 	virtual void OnMontageEnded();
 

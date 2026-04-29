@@ -81,4 +81,12 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Honor);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Revive);
 
+	// Audio
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Attack_Sword);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Skill_ChainLightning);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_UI_Click);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Weapon_Impact);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Skill_ChainLightning);
+
 }

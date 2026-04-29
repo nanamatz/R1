@@ -49,4 +49,10 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")
 	TObjectPtr<class UNiagaraSystem> LightningVFX;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	FGameplayTag AudioTag;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	FGameplayTag GameplayCueTag;
 };

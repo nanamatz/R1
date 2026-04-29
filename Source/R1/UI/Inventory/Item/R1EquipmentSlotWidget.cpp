@@ -14,6 +14,8 @@
 
 #include "R1Define.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "Data/R1ItemAssetData.h"
 
 
 
@@ -68,8 +70,14 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 	UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (InventorySubsystem)
 	{
-		// 💡 서브시스템의 EquipItem이 그리드 제거와 스왑을 모두 책임집니다!
+		// 서브시스템의 EquipItem이 그리드 제거와 스왑을 모두 책임집니다!
 		InventorySubsystem->EquipItem(DragDropOp->ItemInstance, EquipmentSlotType);
+
+		//  Equip Sound
+		if (DragDropOp->ItemInstance->GetItemData() && DragDropOp->ItemInstance->GetItemData()->EquipSound)
+		{
+			UGameplayStatics::PlaySound2D(this, DragDropOp->ItemInstance->GetItemData()->EquipSound);
+		}
 
 		return true;
 	}
@@ -94,7 +102,13 @@ FReply UR1EquipmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeomet
 		UR1InventorySubsystem* Inventory = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 		if (Inventory)
 		{
-			// 💡 서브시스템의 UnequipItem이 자동으로 빈 자리를 찾아 그리드에 넣어줍니다.
+			// Pickup Sound (Unequip feel)
+			if (EquippedItem->GetItemData() && EquippedItem->GetItemData()->PickupSound)
+			{
+				UGameplayStatics::PlaySound2D(this, EquippedItem->GetItemData()->PickupSound);
+			}
+
+			//  서브시스템의 UnequipItem이 자동으로 빈 자리를 찾아 그리드에 넣어줍니다.
 			Inventory->UnequipItem(EquipmentSlotType);
 
 			return FReply::Handled();
@@ -125,6 +139,12 @@ void UR1EquipmentSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, c
 	DragDrop->DeltaWidgetPos = CachedDragOffset;
 
 	OutOperation = DragDrop;
+
+	// Pickup Sound
+	if (EquippedItem->GetItemData() && EquippedItem->GetItemData()->PickupSound)
+	{
+		UGameplayStatics::PlaySound2D(this, EquippedItem->GetItemData()->PickupSound);
+	}
 
 	// 드래그 중에는 원래 장비창의 아이콘을 반투명하게 만듦
 	Image_ItemIcon->SetRenderOpacity(0.5f);

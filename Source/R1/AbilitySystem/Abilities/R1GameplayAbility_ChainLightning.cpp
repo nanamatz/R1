@@ -9,6 +9,8 @@
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "System/R1EquipmentManagerComponent.h"
+#include "Character/R1Player.h"
 
 UR1GameplayAbility_ChainLightning::UR1GameplayAbility_ChainLightning()
 {
@@ -91,6 +93,34 @@ void UR1GameplayAbility_ChainLightning::ProcessNextBounce()
 			if (NiagaraComp)
 			{
 				NiagaraComp->SetVectorParameter(FName("BeamEnd"), EndLocation);
+			}
+		}
+
+		// [오디오 트리거] 장착된 무기에서 소리를 가져와 GameplayCue를 실행합니다.
+		if (GameplayCueTag.IsValid() && AudioTag.IsValid())
+		{
+			AActor* SourceActor = GetAvatarActorFromActorInfo();
+			UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
+
+			if (SourceActor && SourceASC)
+			{
+				USoundBase* SoundToPlay = nullptr;
+				if (AR1Player* Player = Cast<AR1Player>(SourceActor))
+				{
+					if (UR1EquipmentManagerComponent* EquipManager = Player->GetEquipmentComponent())
+					{
+						SoundToPlay = EquipManager->GetSoundByTag(ER1EquipmentSlot::Weapon, AudioTag);
+					}
+				}
+
+				if (SoundToPlay)
+				{
+					FGameplayCueParameters CueParams;
+					CueParams.SourceObject = SoundToPlay;
+					CueParams.Instigator = SourceActor;
+					CueParams.Location = TargetActor->GetActorLocation();
+					SourceASC->ExecuteGameplayCue(GameplayCueTag, CueParams);
+				}
 			}
 		}
 

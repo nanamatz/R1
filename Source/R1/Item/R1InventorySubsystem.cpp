@@ -331,62 +331,28 @@ bool UR1InventorySubsystem::BuyItemAt(UR1ItemInstance* ItemToBuy, FIntPoint Pref
 
 	int32 Price = ItemToBuy->GetItemData()->BaseValue * ItemToBuy->ItemCount;
 
-
 	if (Gold < Price)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("골드 부족: 필요 %d, 현재 %d"), Price, Gold);
 		return false;
 	}
-	ConsumeGold(Price);
 
-	if (CurrentMerchantNPC)
-	{
-		CurrentMerchantNPC->RemoveItemFromSale(ItemToBuy);
-	}
-
-	OnShopUpdated.Broadcast();
-
+	// 인벤토리에 들어갈 자리가 있는지 확인하고, 있을 때만 돈을 뺍니다.
 	if (AddItemAt(ItemToBuy->GetItemData(), ItemToBuy->ItemRarity, ItemToBuy->ItemCount, PreferredPos))
 	{
+		ConsumeGold(Price);
+
+		if (CurrentMerchantNPC)
+		{
+			CurrentMerchantNPC->RemoveItemFromSale(ItemToBuy);
+		}
+
+		OnShopUpdated.Broadcast();
 		return true;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 찼습니다! 아이템을 발밑에 떨어뜨립니다."));
-
-	if (UWorld* World = GetWorld())
-	{
-		if (APlayerController* PC = World->GetFirstPlayerController())
-		{
-			if (APawn* PlayerPawn = PC->GetPawn())
-			{
-				// 플레이어의 현재 위치를 가져옵니다.
-				FVector SpawnLocation = PlayerPawn->GetActorLocation();
-
-				// 발밑 주변에 겹치지 않게 무작위로 흩뿌려지도록 오프셋을 줍니다 (반경 100 범위)
-				SpawnLocation.X += FMath::RandRange(-100.0f, 100.0f);
-				SpawnLocation.Y += FMath::RandRange(-100.0f, 100.0f);
-				SpawnLocation.Z += 50.0f; // 바닥에 파묻히지 않게 Z축 살짝 띄움
-
-				FRotator SpawnRotation = FRotator::ZeroRotator;
-				FActorSpawnParameters SpawnParams;
-				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-				UClass* ItemActorClass = StaticLoadClass(AR1ItemActor::StaticClass(), nullptr, TEXT("/Script/Engine.Blueprint'/Game/Blueprints/Interactable/BP_ItemActor.BP_ItemActor_C'"));
-				if (ItemActorClass)
-				{
-					AR1ItemActor* DroppedItemActor = World->SpawnActor<AR1ItemActor>(ItemActorClass, SpawnLocation, SpawnRotation, SpawnParams);
-
-					if (DroppedItemActor)
-					{
-						// 스폰된 아이템 액터에 데이터를 주입하여 시각화 및 루팅 가능 상태로 만듭니다.
-						DroppedItemActor->InitItem(ItemToBuy->GetItemData(), ItemToBuy->ItemRarity, ItemToBuy->ItemCount);
-					}
-				}
-
-			}
-		}
-	}
-	return true;
+	UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 찼습니다! 구매 실패."));
+	return false;
 }
 
 void UR1InventorySubsystem::LoadItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos)
