@@ -16,6 +16,8 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Data/R1ItemAssetData.h"
+#include "UI/R1HUD.h"
+#include "Data/R1UISoundData.h"
 
 
 
@@ -103,9 +105,9 @@ FReply UR1EquipmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeomet
 		if (Inventory)
 		{
 			// Pickup Sound (Unequip feel)
-			if (EquippedItem->GetItemData() && EquippedItem->GetItemData()->PickupSound)
+			if (EquippedItem->GetItemData() && EquippedItem->GetItemData()->UnEquipSound)
 			{
-				UGameplayStatics::PlaySound2D(this, EquippedItem->GetItemData()->PickupSound);
+				UGameplayStatics::PlaySound2D(this, EquippedItem->GetItemData()->UnEquipSound);
 			}
 
 			//  서브시스템의 UnequipItem이 자동으로 빈 자리를 찾아 그리드에 넣어줍니다.
@@ -141,9 +143,12 @@ void UR1EquipmentSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, c
 	OutOperation = DragDrop;
 
 	// Pickup Sound
-	if (EquippedItem->GetItemData() && EquippedItem->GetItemData()->PickupSound)
+	if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))
 	{
-		UGameplayStatics::PlaySound2D(this, EquippedItem->GetItemData()->PickupSound);
+		if (HUD->UISoundData && HUD->UISoundData->PickupSound)
+		{
+			UGameplayStatics::PlaySound2D(this, HUD->UISoundData->PickupSound);
+		}
 	}
 
 	// 드래그 중에는 원래 장비창의 아이콘을 반투명하게 만듦

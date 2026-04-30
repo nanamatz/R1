@@ -87,13 +87,13 @@ public:
 	FName EquipSocketName;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|UI")
-	TObjectPtr<USoundBase> PickupSound; // 마우스로 집어들 때 (예: 가죽 바스락)
+	TObjectPtr<USoundBase> DropSound;  
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|UI")
-	TObjectPtr<USoundBase> DropSound;   // 인벤토리 빈 칸에 내려놓을 때
+	TObjectPtr<USoundBase> EquipSound;  
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|UI")
-	TObjectPtr<USoundBase> EquipSound;  // 장착 슬롯에 끼울 때 (예: 철컥!)
+	TObjectPtr<USoundBase> UnEquipSound;  
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Audio")
 	TMap<FGameplayTag, TSoftObjectPtr<USoundBase>> AudioRoutingMap;

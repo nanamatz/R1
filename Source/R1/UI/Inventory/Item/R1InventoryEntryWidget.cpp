@@ -232,9 +232,12 @@ void UR1InventoryEntryWidget::NativeOnDragDetected(const FGeometry& InGeometry, 
 
 	OutOperation = DragDrop;
 
-	if (ItemInstance->GetItemData() && ItemInstance->GetItemData()->PickupSound)
+	if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))
 	{
-		UGameplayStatics::PlaySound2D(this, ItemInstance->GetItemData()->PickupSound);
+		if (HUD->UISoundData && HUD->UISoundData->PickupSound)
+		{
+			UGameplayStatics::PlaySound2D(this, HUD->UISoundData->PickupSound);
+		}
 	}
 
 	// 인벤토리 바닥에 남은 내 자신은 반투명하게 만듦
