@@ -13,5 +13,4 @@ UCLASS()
 class R1_API UR1UserWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
 };

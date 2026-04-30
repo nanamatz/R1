@@ -17,6 +17,7 @@
 #include "Data/R1ItemAssetData.h"
 #include "UI/R1HUD.h"
 #include "Data/R1UISoundData.h"
+#include "Player/R1PlayerController.h"
 
 UR1InventoryEntryWidget::UR1InventoryEntryWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -212,6 +213,11 @@ FReply UR1InventoryEntryWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 void UR1InventoryEntryWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
+
+	if (AR1PlayerController* PC = Cast<AR1PlayerController>(GetOwningPlayer()))
+	{
+		PC->ResetMovementState();
+	}
 
 	if (!ItemInstance) return;
 
