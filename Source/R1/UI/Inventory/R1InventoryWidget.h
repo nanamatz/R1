@@ -15,6 +15,7 @@ class R1_API UR1InventoryWidget : public UUserWidget
 	GENERATED_BODY()
 protected:
 	virtual void NativeConstruct() override;
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
 	// 🌟 블루프린트의 텍스트 컴포넌트 이름과 동일해야 합니다!
 	UPROPERTY(meta = (BindWidget))

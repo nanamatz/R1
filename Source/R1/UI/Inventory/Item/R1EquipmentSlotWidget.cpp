@@ -63,11 +63,16 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 	UR1DragDropOperation* DragDropOp = Cast<UR1DragDropOperation>(InOperation);
 	if (!DragDropOp || !DragDropOp->ItemInstance) return false;
 
-	// 💡 배열 안에 내가 속한 부위(EquipmentSlotType)가 있는지 검사!
 	if (!DragDropOp->ItemInstance->GetEquipSlot().Contains(EquipmentSlotType))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("착용할 수 없는 부위입니다!"));
-		return false;
+
+		UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+		if (InvenSubsys)
+		{
+			InvenSubsys->OnInventoryUpdated.Broadcast();
+		}
+		return true;
 	}
 
 	UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>();

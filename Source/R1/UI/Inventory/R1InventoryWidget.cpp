@@ -3,6 +3,7 @@
 
 #include "UI/Inventory/R1InventoryWidget.h"
 #include "Components/TextBlock.h"
+#include "Item/R1DragDropOperation.h"
 #include "Item/R1InventorySubsystem.h"
 
 void UR1InventoryWidget::NativeConstruct()
@@ -17,6 +18,22 @@ void UR1InventoryWidget::NativeConstruct()
 		// 🌟 2. 위젯이 처음 열릴 때 현재 골드량으로 초기 텍스트 세팅
 		UpdateGoldUI(Inventory->GetGold());
 	}
+}
+
+bool UR1InventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+	Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
+
+	if (UR1DragDropOperation* DragDropOp = Cast<UR1DragDropOperation>(InOperation))
+	{
+		UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
+		if (InvenSubsys)
+		{
+			InvenSubsys->OnInventoryUpdated.Broadcast();
+		}
+	}
+
+	return true;
 }
 
 void UR1InventoryWidget::UpdateGoldUI(int32 NewGold)
