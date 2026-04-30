@@ -18,6 +18,7 @@
 #include "Data/R1ItemAssetData.h"
 #include "UI/R1HUD.h"
 #include "Data/R1UISoundData.h"
+#include "Player/R1PlayerController.h"
 
 
 
@@ -122,6 +123,11 @@ FReply UR1EquipmentSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeomet
 void UR1EquipmentSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
+
+	if (AR1PlayerController* PC = Cast<AR1PlayerController>(GetOwningPlayer()))
+	{
+		PC->ResetMovementState();
+	}
 
 	if (!EquippedItem || !DragWidgetClass) return;
 

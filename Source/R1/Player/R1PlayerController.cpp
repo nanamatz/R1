@@ -494,6 +494,7 @@ void AR1PlayerController::ResetMovementState()
 
 	// 3. 마우스 및 타겟 상태 초기화
 	bMousePressed = false;
+	bIsCameraRotating = false;
 	FollowTime = 0.f;
 
 	TargetActor = nullptr;
