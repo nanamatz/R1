@@ -26,6 +26,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TObjectPtr<USoundBase> InventoryFullError;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Common")
-	TObjectPtr<USoundBase> GenericButtonClick;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TObjectPtr<USoundBase> PickupSound;
+
 };

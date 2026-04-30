@@ -97,10 +97,6 @@ bool UR1InventorySlotsWidget::NativeOnDragOver(const FGeometry& InGeometry, cons
 	if (PreDragOverSlotPos == ToSlotPos) return true;
 	PreDragOverSlotPos = ToSlotPos;
 
-	// ----------------------------------------------------------------------
-	// 🌟 2. 하이라이트 칠하기 로직 시작
-	// ----------------------------------------------------------------------
-
 	// A. 일단 모든 슬롯의 상태를 노멀(투명)로 초기화합니다.
 	for (UR1InventroySlotWidget* CurrentSlot : SlotWidgets)
 	{
