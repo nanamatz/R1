@@ -3,7 +3,6 @@
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
-
 #include "GameplayEffect.h"
 #include "DataTable/CharacterStatsRow.h"
 #include "R1GameplayTags.h"
@@ -31,10 +30,8 @@ void AR1Character::BeginPlay()
 			InventorySubsystem->OnWeaponChanged.AddDynamic(this, &AR1Character::OnWeaponChanged);
 
 			// Initial state
-			if (InventorySubsystem->GetEquippedItem(ER1EquipmentSlot::Weapon))
-			{
-				bIsWeaponEquipped = true;
-			}
+			bool bHasWeapon = (InventorySubsystem->GetEquippedItem(ER1EquipmentSlot::Weapon) != nullptr);
+			OnWeaponChanged(bHasWeapon);
 		}
 	}
 }
@@ -246,4 +243,23 @@ void AR1Character::AddCharacterAbility()
 void AR1Character::OnWeaponChanged(bool bIsEquipped)
 {
 	bIsWeaponEquipped = bIsEquipped;
+
+	if (AbilitySystemComponent)
+	{
+		// 1. 기존에 부여된 공격 어빌리티가 있다면 제거
+		if (AttackAbilityHandle.IsValid())
+		{
+			AbilitySystemComponent->ClearAbility(AttackAbilityHandle);
+			AttackAbilityHandle = FGameplayAbilitySpecHandle();
+		}
+
+		// 2. 무기 장착 여부에 따라 어빌리티 결정
+		TSubclassOf<UGameplayAbility> NewAbilityClass = bIsEquipped ? AttackAbilityClass : FistAttackAbilityClass;
+
+		// 3. 새 어빌리티 부여
+		if (NewAbilityClass)
+		{
+			AttackAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(NewAbilityClass, 1));
+		}
+	}
 }

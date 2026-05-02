@@ -8,6 +8,7 @@
 #include "GameplayTagContainer.h"
 #include "Interface/R1HighlightInterface.h"
 #include "R1Define.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "R1Character.generated.h"
 
 class AR1Character;
@@ -108,10 +109,19 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<class UGameplayAbility>> StartupAbilities;
 
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TSubclassOf<class UGameplayAbility> AttackAbilityClass;
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TSubclassOf<class UGameplayAbility> FistAttackAbilityClass;
+
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	TArray<TSubclassOf<class UGameplayEffect>> StartupEffects;
 
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<class UAnimMontage> AttackMontage;
+
+private:
+	FGameplayAbilitySpecHandle AttackAbilityHandle;
 
 };
