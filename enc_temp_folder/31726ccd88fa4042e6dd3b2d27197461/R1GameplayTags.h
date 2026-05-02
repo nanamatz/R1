@@ -84,7 +84,6 @@ namespace R1GameplayTags
 
 	// Audio
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Attack_Sword);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Attack_Fist);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Skill_ChainLightning);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_UI_Click);
 

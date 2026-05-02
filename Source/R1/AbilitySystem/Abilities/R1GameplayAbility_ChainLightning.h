@@ -21,6 +21,8 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skill Data")
+	FName SkillID = FName("ChainLightning");
 	// 💡 시간차를 두고 다음 타겟을 타격하는 재귀 함수
 	UFUNCTION()
 	void ProcessNextBounce();

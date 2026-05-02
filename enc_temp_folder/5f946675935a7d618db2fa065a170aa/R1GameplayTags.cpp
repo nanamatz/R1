@@ -79,7 +79,6 @@ namespace R1GameplayTags
 
 	// Audio
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Attack_Sword, "Audio.Attack.Sword");
-	UE_DEFINE_GAMEPLAY_TAG(Audio_Attack_Fist, "Audio.Attack.Fist");
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Skill_ChainLightning, "Audio.Skill.ChainLightning");
 	UE_DEFINE_GAMEPLAY_TAG(Audio_UI_Click, "Audio.UI.Click");
 

@@ -4,33 +4,34 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/R1GameplayAbility.h"
-#include "R1GameplayAbility_Attack.generated.h"
+#include "R1GameplayAbility_FistAttack.generated.h"
 
-class AR1Character;
 /**
  * 
  */
 UCLASS()
-class R1_API UR1GameplayAbility_Attack : public UR1GameplayAbility
+class R1_API UR1GameplayAbility_FistAttack : public UR1GameplayAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UR1GameplayAbility_Attack(const FObjectInitializer& ObjectInitializer);
-
+	UR1GameplayAbility_FistAttack(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 protected:
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;	
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skill Data")
-	FName SkillID = FName("Attack");
+	FName SkillID = FName("FistAttack");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+protected:
+	UPROPERTY(EditAnywhere, Category = "FistAttack")
+	TObjectPtr<class UAnimMontage> FistMontage;
+
+	UPROPERTY(EditAnywhere, Category = "FistAttack")
 	TSubclassOf<class UGameplayEffect> DamageEffect;
 
-	// [설정] 애니메이션에서 보낼 이벤트 태그 (예: Event.Montage.Hit)
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Damage")
 	FGameplayTag AttackEventTag;
 
@@ -45,7 +46,4 @@ protected:
 
 	UFUNCTION()
 	virtual void OnAttackEventReceived(FGameplayEventData Payload);
-
-private:
-	void CheckAndApplyDamage_Sector(const FGameplayEffectSpecHandle& SpecHandle,AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC);
 };
