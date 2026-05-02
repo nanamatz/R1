@@ -23,6 +23,7 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_HitReact);
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_FistAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_JumpAttack);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LevelUp);
@@ -83,6 +84,7 @@ namespace R1GameplayTags
 
 	// Audio
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Attack_Sword);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Attack_Fist);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Skill_ChainLightning);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_UI_Click);
 

@@ -8,6 +8,7 @@
 #include "GameplayTagContainer.h"
 #include "Interface/R1HighlightInterface.h"
 #include "R1Define.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "R1Character.generated.h"
 
 class AR1Character;
@@ -65,6 +66,11 @@ public:
 	void SetCreatureState(ECreatureState InState);
 	ECreatureState GetCreatureState() const { return CreatureState; }
 	FName GetCharacterRowName() const { return CharacterRowName; }
+	bool GetIsWeaponEquipped() const { return bIsWeaponEquipped; }
+
+protected:
+	UFUNCTION()
+	virtual void OnWeaponChanged(bool bIsEquipped);
 
 protected:
 	// 1. 데이터 테이블 에셋 (에디터에서 지정)
@@ -83,6 +89,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bHighlighted = false;
 
+private:
+	bool bIsWeaponEquipped = false;
+
 protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;
@@ -100,10 +109,19 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<class UGameplayAbility>> StartupAbilities;
 
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TSubclassOf<class UGameplayAbility> AttackAbilityClass;
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TSubclassOf<class UGameplayAbility> FistAttackAbilityClass;
+
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	TArray<TSubclassOf<class UGameplayEffect>> StartupEffects;
 
 	UPROPERTY(EditAnywhere, Category="Animation")
 	TObjectPtr<class UAnimMontage> AttackMontage;
+
+private:
+	FGameplayAbilitySpecHandle AttackAbilityHandle;
 
 };

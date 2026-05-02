@@ -21,6 +21,7 @@ namespace R1GameplayTags
 
 	//Abiility tags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack,"Ability.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_FistAttack,"Ability.FistAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_JumpAttack,"Ability.JumpAttack");
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_LevelUp,"Ability.LevelUp");
@@ -78,6 +79,7 @@ namespace R1GameplayTags
 
 	// Audio
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Attack_Sword, "Audio.Attack.Sword");
+	UE_DEFINE_GAMEPLAY_TAG(Audio_Attack_Fist, "Audio.Attack.Fist");
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Skill_ChainLightning, "Audio.Skill.ChainLightning");
 	UE_DEFINE_GAMEPLAY_TAG(Audio_UI_Click, "Audio.UI.Click");
 

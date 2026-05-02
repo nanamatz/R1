@@ -7,6 +7,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShopUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponChanged,bool,bIsEquipped);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
 class UR1ItemInstance;
 
@@ -69,6 +70,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnGoldChanged OnGoldChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponChanged OnWeaponChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnShopUpdated OnShopUpdated;

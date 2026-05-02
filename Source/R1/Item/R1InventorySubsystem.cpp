@@ -1,6 +1,3 @@
-
-
-
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1ItemInstance.h"
 #include "System/R1EquipmentManagerComponent.h"
@@ -159,6 +156,11 @@ bool UR1InventorySubsystem::EquipItem(UR1ItemInstance* ItemToEquip, ER1Equipment
 	EquippedItems.Add(TargetSlot, ItemToEquip);
 	OnInventoryUpdated.Broadcast();
 
+	if (TargetSlot == ER1EquipmentSlot::Weapon)
+	{
+		OnWeaponChanged.Broadcast(true);
+	}
+
 	// 🌟 도우미 함수 적용으로 확 줄어든 코드!
 	if (UR1EquipmentManagerComponent* EquipComp = GetEquipmentManager())
 	{
@@ -197,6 +199,11 @@ bool UR1InventorySubsystem::UnequipItem(ER1EquipmentSlot TargetSlot, FIntPoint P
 
 	OnInventoryUpdated.Broadcast();
 
+	if (TargetSlot == ER1EquipmentSlot::Weapon)
+	{
+		OnWeaponChanged.Broadcast(false);
+	}
+
 	// 🌟 도우미 함수 적용
 	if (UR1EquipmentManagerComponent* EquipComp = GetEquipmentManager())
 	{
@@ -224,6 +231,8 @@ FIntPoint UR1InventorySubsystem::GetItemPosition(UR1ItemInstance* Item) const
 
 void UR1InventorySubsystem::ClearInventory()
 {
+	bool bWasWeaponEquipped = EquippedItems.Contains(ER1EquipmentSlot::Weapon);
+
 	if (UR1EquipmentManagerComponent* EquipComp = GetEquipmentManager())
 	{
 		for (auto& Pair : EquippedItems)
@@ -240,6 +249,11 @@ void UR1InventorySubsystem::ClearInventory()
 	}
 
 	OnInventoryUpdated.Broadcast();
+
+	if (bWasWeaponEquipped)
+	{
+		OnWeaponChanged.Broadcast(false);
+	}
 }
 
 bool UR1InventorySubsystem::AddItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, int32 InCount)
@@ -371,6 +385,11 @@ void UR1InventorySubsystem::LoadEquippedItem(UR1ItemAssetData* InItemData, EItem
 	if (UR1ItemInstance* Item = CreateItemInstance(InItemData, Rarity))
 	{
 		EquippedItems.Add(Slot, Item);
+
+		if (Slot == ER1EquipmentSlot::Weapon)
+		{
+			OnWeaponChanged.Broadcast(true);
+		}
 
 		if (UR1EquipmentManagerComponent* EquipComp = GetEquipmentManager())
 		{

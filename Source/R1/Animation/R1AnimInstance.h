@@ -41,4 +41,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsFalling = false;
 
+	UPROPERTY(BlueprintReadOnly)
+	bool bWeaponEquiped = false;
 };
