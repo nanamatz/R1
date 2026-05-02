@@ -65,6 +65,11 @@ public:
 	void SetCreatureState(ECreatureState InState);
 	ECreatureState GetCreatureState() const { return CreatureState; }
 	FName GetCharacterRowName() const { return CharacterRowName; }
+	bool GetIsWeaponEquipped() const { return bIsWeaponEquipped; }
+
+protected:
+	UFUNCTION()
+	virtual void OnWeaponChanged(bool bIsEquipped);
 
 protected:
 	// 1. 데이터 테이블 에셋 (에디터에서 지정)
@@ -82,6 +87,9 @@ protected:
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bHighlighted = false;
+
+private:
+	bool bIsWeaponEquipped = false;
 
 protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)

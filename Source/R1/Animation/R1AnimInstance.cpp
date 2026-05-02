@@ -35,4 +35,6 @@ void UR1AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	bShouldMove = (GroundSpeed > 3.f && MovementComponent->GetCurrentAcceleration() != FVector::ZeroVector);
 	bIsFalling = MovementComponent->IsFalling();
+
+	bWeaponEquiped = Character->GetIsWeaponEquipped();
 }

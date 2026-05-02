@@ -124,7 +124,7 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 	{
 		if (ItemData->ItemMesh && (ItemData->EquipSlots[0] == ER1EquipmentSlot::Weapon))
 		{
-			//PlayerChar->GetMesh()->HideBoneByName(FName("sword_bottom"), PBO_None);
+			PlayerChar->GetMesh()->HideBoneByName(FName("sword_bottom"), PBO_None);
 
 			// 스태틱 메시 컴포넌트를 런타임에 생성합니다.
 			UStaticMeshComponent* WeaponMeshComp = NewObject<UStaticMeshComponent>(GetOwner());
@@ -187,14 +187,21 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 			// 맵에서 기록을 지웁니다.
 			EquippedMeshesMap.Remove(EquipSlot);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
-	}
-}
 
-USoundBase* UR1EquipmentManagerComponent::GetSoundByTag(ER1EquipmentSlot EquipSlot, FGameplayTag AudioTag) const
-{
-	if (const TObjectPtr<UR1ItemAssetData>* FoundItem = EquippedItemsMap.Find(EquipSlot))
-	{
+		AR1Player* PlayerChar = Cast<AR1Player>(GetOwner());
+		if (PlayerChar && PlayerChar->GetMesh())
+		{
+			PlayerChar->GetMesh()->UnHideBoneByName(FName("sword_bottom"));
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
+		}
+		}
+
+		USoundBase* UR1EquipmentManagerComponent::GetSoundByTag(ER1EquipmentSlot EquipSlot, FGameplayTag AudioTag) const
+		{
+		if (const TObjectPtr<UR1ItemAssetData>* FoundItem = EquippedItemsMap.Find(EquipSlot))
+		{
 		if (*FoundItem)
 		{
 			if (const TSoftObjectPtr<USoundBase>* SoundPtr = (*FoundItem)->AudioRoutingMap.Find(AudioTag))
@@ -202,11 +209,11 @@ USoundBase* UR1EquipmentManagerComponent::GetSoundByTag(ER1EquipmentSlot EquipSl
 				return SoundPtr->LoadSynchronous();
 			}
 		}
-	}
-	return nullptr;
-}
+		}
+		return nullptr;
+		}
 
-void UR1EquipmentManagerComponent::ExecuteSkillSlot(ER1SkillSlot Slot)
+		void UR1EquipmentManagerComponent::ExecuteSkillSlot(ER1SkillSlot Slot)
 {
 	if (ASC && SkillSlotsMap.Contains(Slot))
 	{
@@ -222,7 +229,6 @@ void UR1EquipmentManagerComponent::ExecuteSkillSlot(ER1SkillSlot Slot)
 
 void UR1EquipmentManagerComponent::AssignSkillToSlot(ER1SkillSlot Slot, FGameplayAbilitySpecHandle AbilityHandle)
 {
-
 }
 
 

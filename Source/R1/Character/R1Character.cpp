@@ -7,6 +7,7 @@
 #include "GameplayEffect.h"
 #include "DataTable/CharacterStatsRow.h"
 #include "R1GameplayTags.h"
+#include "Item/R1InventorySubsystem.h"
 
 // Sets default values
 AR1Character::AR1Character()
@@ -22,6 +23,20 @@ void AR1Character::BeginPlay()
 	Super::BeginPlay();
 	AddCharacterAbility();
 	ApplyCharacterEffect();
+
+	if (IsPlayerControlled())
+	{
+		if (UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
+		{
+			InventorySubsystem->OnWeaponChanged.AddDynamic(this, &AR1Character::OnWeaponChanged);
+
+			// Initial state
+			if (InventorySubsystem->GetEquippedItem(ER1EquipmentSlot::Weapon))
+			{
+				bIsWeaponEquipped = true;
+			}
+		}
+	}
 }
 
 // Called every frame
@@ -226,4 +241,9 @@ void AR1Character::AddCharacterAbility()
 
 	ASC->AddCharacterAbilities(StartupAbilities);
 
+}
+
+void AR1Character::OnWeaponChanged(bool bIsEquipped)
+{
+	bIsWeaponEquipped = bIsEquipped;
 }

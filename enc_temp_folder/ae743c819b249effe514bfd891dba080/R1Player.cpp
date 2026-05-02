@@ -87,8 +87,6 @@ void AR1Player::BeginPlay()
 		}
 	}
 
-	GetMesh()->HideBoneByName(FName("sword_bottom"), PBO_None);
-	GetMesh()->HideBoneByName(FName("shield_inner"), PBO_None);
 	
 	AttackRange = CommonAttributeSet->GetAttackRange();
 }
