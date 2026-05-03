@@ -8,6 +8,7 @@
 #include "Character/R1Player.h"
 #include "R1GameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "System/R1DamageUISubsystem.h"
 
 UR1AttributeSet::UR1AttributeSet()
 {
@@ -103,6 +104,21 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 					// 아바타에게 "너 맞았어!" 라고 태그 이벤트 전달
 					TargetASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+				}
+
+				float DamageAmount = FMath::Abs(Data.EvaluatedData.Magnitude);
+    
+				FR1DamageInfo DamageInfo;
+				DamageInfo.DamageAmount = DamageAmount;
+				DamageInfo.TargetLocation = Character->GetActorLocation();
+				DamageInfo.DamageType = ER1DamageType::Normal;
+
+				if (UWorld* World = Character->GetWorld())
+				{
+					if (UR1DamageUISubsystem* DamageSS = World->GetSubsystem<UR1DamageUISubsystem>())
+					{
+						DamageSS->ShowDamageText(DamageInfo);
+					}
 				}
 			}
 
