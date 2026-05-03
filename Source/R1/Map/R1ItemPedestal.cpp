@@ -92,6 +92,7 @@ void AR1ItemPedestal::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	if (SpawnedItem)
 	{
 		SpawnedItem->InitItem(SelectedItem, SelectedItem->ItemRarity);
+		SpawnedItem->PopEffect();
 		bIsSpawned = true;
 	}
 }

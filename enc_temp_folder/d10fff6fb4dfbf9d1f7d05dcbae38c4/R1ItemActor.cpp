@@ -172,7 +172,7 @@ void AR1ItemActor::OnLootAttempted(AR1Player* Looter)
 	{
 		if (ItemData->PickupSound)
 		{
-			UGameplayStatics::PlaySoundAtLocation(this, ItemData->PickupSound, GetActorLocation());
+			UGameplayStatics::PlaySound2D(this, ItemData->PickupSound);
 		}
 
 		UE_LOG(LogTemp, Warning, TEXT("아이템 획득: %s"), *ItemData->ItemName.ToString());

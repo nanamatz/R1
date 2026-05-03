@@ -233,6 +233,7 @@ void ADungeonManager::SpawnRoomClearReward()
 	{
 		// 🌟 희귀도 정보도 아이템 에셋이 들고 있으므로 그대로 던져줍니다.
 		DroppedItem->InitItem(SelectedItem, SelectedItem->ItemRarity);
+		DroppedItem->PopEffect();
 
 		UE_LOG(LogTemp, Warning, TEXT("방 클리어 보상 드랍! [%s] (가중치: %.0f)"),
 			*SelectedItem->ItemName.ToString(), SelectedItem->GetDropWeight());

@@ -136,7 +136,7 @@ void AR1GoldActor::Interact_Implementation(AR1PlayerController* Interactor)
 
 		if (PickupSound)
 		{
-			UGameplayStatics::PlaySoundAtLocation(this, PickupSound, GetActorLocation());
+			UGameplayStatics::PlaySound2D(this, PickupSound);
 		}
 	}
 
