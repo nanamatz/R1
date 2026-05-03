@@ -1,23 +1,17 @@
 #include "UI/R1DamageTextWidget.h"
-#include "System/R1DamageUISubsystem.h" 
+#include "Components/TextBlock.h"
 
 void UR1DamageTextWidget::SetDamageInfo(const FR1DamageInfo& Info)
 {
-	OnSetDamageInfo(Info);
-}
-
-void UR1DamageTextWidget::ReturnToPool()
-{
-	if (UWorld* World = GetWorld())
+	if (Text_DamageAmount)
 	{
-		if (UR1DamageUISubsystem* DamageSS = World->GetSubsystem<UR1DamageUISubsystem>())
-		{
-			DamageSS->ReturnWidgetToPool(this);
-		}
+		Text_DamageAmount->SetText(FText::AsNumber(FMath::RoundToInt(Info.DamageAmount)));
 	}
+
+	OnSetDamageInfo(Info);
 }
 
 void UR1DamageTextWidget::HandleAnimationFinished()
 {
-	ReturnToPool();
+	OnAnimationFinished.Broadcast();
 }
