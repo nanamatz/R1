@@ -26,10 +26,10 @@ void AR1DamageTextActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (UR1DamageTextWidget* DamageWidget = Cast<UR1DamageTextWidget>(DamageTextWidgetComp->GetUserWidgetObject()))
-	{
-		DamageWidget->OnAnimationFinished.AddDynamic(this, &AR1DamageTextActor::HandleAnimationFinished);
-	}
+	//if (UR1DamageTextWidget* DamageWidget = Cast<UR1DamageTextWidget>(DamageTextWidgetComp->GetUserWidgetObject()))
+	//{
+	//	DamageWidget->OnAnimationFinished.AddDynamic(this, &AR1DamageTextActor::HandleAnimationFinished);
+	//}
 }
 
 void AR1DamageTextActor::SetDamageInfo(const FR1DamageInfo& DamageInfo)

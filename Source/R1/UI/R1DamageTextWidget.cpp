@@ -11,7 +11,3 @@ void UR1DamageTextWidget::SetDamageInfo(const FR1DamageInfo& Info)
 	OnSetDamageInfo(Info);
 }
 
-void UR1DamageTextWidget::HandleAnimationFinished()
-{
-	OnAnimationFinished.Broadcast();
-}
