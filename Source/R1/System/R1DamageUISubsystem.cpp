@@ -1,47 +1,45 @@
 #include "System/R1DamageUISubsystem.h"
-#include "UI/R1DamageTextWidget.h"
-#include "Blueprint/UserWidget.h"
-#include "Kismet/GameplayStatics.h"
+#include "System/R1DamageTextActor.h"
+
+UR1DamageUISubsystem::UR1DamageUISubsystem()
+{
+	DamageActorClass = AR1DamageTextActor::StaticClass();
+}
 
 void UR1DamageUISubsystem::ShowDamageText(const FR1DamageInfo& DamageInfo)
 {
-	UR1DamageTextWidget* Widget = GetWidgetFromPool();
-	if (Widget)
+	AR1DamageTextActor* DamageActor = GetActorFromPool();
+	if (DamageActor)
 	{
-		Widget->SetDamageInfo(DamageInfo);
+		DamageActor->SetActorLocation(DamageInfo.TargetLocation);
+		DamageActor->SetActorHiddenInGame(false);
+		DamageActor->SetDamageInfo(DamageInfo);
+	}
+}
+
+void UR1DamageUISubsystem::ReturnActorToPool(AR1DamageTextActor* Actor)
+{
+	if (Actor)
+	{
+		Actor->SetActorHiddenInGame(true);
+		ActorPool.Add(Actor);
+	}
+}
+
+AR1DamageTextActor* UR1DamageUISubsystem::GetActorFromPool()
+{
+	if (ActorPool.Num() > 0)
+	{
+		return ActorPool.Pop();
+	}
+
+	if (DamageActorClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		
-		if (!Widget->IsInViewport())
-		{
-			Widget->AddToViewport();
-		}
-
-		FVector2D ScreenPosition;
-		if (UGameplayStatics::ProjectWorldToScreen(GetWorld()->GetFirstPlayerController(), DamageInfo.TargetLocation + FVector(0,0,100), ScreenPosition))
-		{
-			Widget->SetPositionInViewport(ScreenPosition);
-		}
-	}
-}
-
-void UR1DamageUISubsystem::ReturnWidgetToPool(UR1DamageTextWidget* Widget)
-{
-	if (Widget)
-	{
-		Widget->RemoveFromParent();
-		WidgetPool.Add(Widget);
-	}
-}
-
-UR1DamageTextWidget* UR1DamageUISubsystem::GetWidgetFromPool()
-{
-	if (WidgetPool.Num() > 0)
-	{
-		return WidgetPool.Pop();
-	}
-
-	if (DamageWidgetClass)
-	{
-		return CreateWidget<UR1DamageTextWidget>(GetWorld(), DamageWidgetClass);
+		AR1DamageTextActor* NewActor = GetWorld()->SpawnActor<AR1DamageTextActor>(DamageActorClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+		return NewActor;
 	}
 
 	return nullptr;

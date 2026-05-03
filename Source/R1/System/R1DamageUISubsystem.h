@@ -5,7 +5,7 @@
 #include "R1Define.h"
 #include "R1DamageUISubsystem.generated.h"
 
-class UR1DamageTextWidget;
+class AR1DamageTextActor;
 
 UCLASS()
 class R1_API UR1DamageUISubsystem : public UWorldSubsystem
@@ -13,18 +13,21 @@ class R1_API UR1DamageUISubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
+	UR1DamageUISubsystem();
+
+public:
 	UFUNCTION(BlueprintCallable, Category = "Damage UI")
 	void ShowDamageText(const FR1DamageInfo& DamageInfo);
 
-	void ReturnWidgetToPool(UR1DamageTextWidget* Widget);
+	void ReturnActorToPool(AR1DamageTextActor* Actor);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Damage UI")
-	TSubclassOf<UR1DamageTextWidget> DamageWidgetClass;
+	TSubclassOf<AR1DamageTextActor> DamageActorClass;
 
 private:
 	UPROPERTY()
-	TArray<TObjectPtr<UR1DamageTextWidget>> WidgetPool;
+	TArray<TObjectPtr<AR1DamageTextActor>> ActorPool;
 
-	UR1DamageTextWidget* GetWidgetFromPool();
+	AR1DamageTextActor* GetActorFromPool();
 };
