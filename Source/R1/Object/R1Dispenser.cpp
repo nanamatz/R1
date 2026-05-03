@@ -11,6 +11,9 @@
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "AbilitySystem/Attribute/PlayerAttributeSet.h"
+#include "Kismet/GameplayStatics.h"
+#include "UI/R1HUD.h"
+#include "Data/R1UISoundData.h"
 
 // Sets default values
 AR1Dispenser::AR1Dispenser()
@@ -78,6 +81,19 @@ void AR1Dispenser::Interact_Implementation(AR1PlayerController* Interactor)
 	if (CurHP >= MaxHP && CurMP >= MaxMP)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("이미 체력과 마나가 가득 차 있습니다!"));
+
+		if (RecoveryErrorSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, RecoveryErrorSound, GetActorLocation());
+		}
+		else if (AR1HUD* HUD = Cast<AR1HUD>(Interactor->GetHUD()))
+		{
+			if (HUD->UISoundData && HUD->UISoundData->ActionError)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, HUD->UISoundData->ActionError, GetActorLocation());
+			}
+		}
+
 		return;
 	}
 
@@ -96,6 +112,12 @@ void AR1Dispenser::Interact_Implementation(AR1PlayerController* Interactor)
 		FRotator SpawnRotation = Player->GetActorRotation();
 		GetWorld()->SpawnActor<AActor>(DispenserParticleEffectClass, SpawnLocation, SpawnRotation);
 	}
+
+	if (RecoverySound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, RecoverySound, GetActorLocation());
+	}
+
 	bIsUsed = true;
 	UnHighlight();
 }

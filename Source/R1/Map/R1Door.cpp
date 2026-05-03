@@ -8,6 +8,9 @@
 #include "Item/R1InventorySubsystem.h"
 #include "Player/R1PlayerController.h"
 #include "Map/R1LockDoor.h"
+#include "UI/R1HUD.h"
+#include "Data/R1UISoundData.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AR1Door::AR1Door()
@@ -211,7 +214,14 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("열쇠가 부족합니다!"));
-			// 열쇠가 없다는 피드백 또는 열쇠가 필요하다는 피드백 효과 여기에 추가
+			
+			if (AR1HUD* HUD = Cast<AR1HUD>(Interactor->GetHUD()))
+			{
+				if (HUD->UISoundData && HUD->UISoundData->ActionError)
+				{
+					UGameplayStatics::PlaySoundAtLocation(this, HUD->UISoundData->ActionError, GetActorLocation());
+				}
+			}
 		}
 		return;
 	}

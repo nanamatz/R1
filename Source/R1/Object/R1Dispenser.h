@@ -36,6 +36,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Recovery")
 	TSubclassOf<AActor> DispenserParticleEffectClass;
 
+	UPROPERTY(EditAnywhere, Category = "Recovery")
+	TObjectPtr<USoundBase> RecoverySound;
+
+	UPROPERTY(EditAnywhere, Category = "Recovery")
+	TObjectPtr<USoundBase> RecoveryErrorSound;
+
 	// 상호작용 인터페이스 구현
 	virtual void Highlight() override;
 	virtual void UnHighlight() override;
