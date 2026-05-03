@@ -112,7 +112,16 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
     
 				FR1DamageInfo DamageInfo;
 				DamageInfo.DamageAmount = DamageAmount;
-				DamageInfo.DamageType = ER1DamageType::Normal;
+				
+				// Check for critical hit tag injected during execution
+				if (Data.EffectSpec.GetDynamicAssetTags().HasTagExact(R1GameplayTags::Event_Hit_Critical))
+				{
+					DamageInfo.DamageType = ER1DamageType::Critical;
+				}
+				else
+				{
+					DamageInfo.DamageType = ER1DamageType::Normal;
+				}
 				
 				FVector TargetLoc = Character->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
 				if (USkeletalMeshComponent* Mesh = Character->GetMesh())
