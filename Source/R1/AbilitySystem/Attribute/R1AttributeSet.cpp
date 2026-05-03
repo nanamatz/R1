@@ -16,6 +16,8 @@ UR1AttributeSet::UR1AttributeSet()
 	InitMaxHealth(100.f);
 	InitBaseDamage(10.f);
 	InitBaseDefence(5.f);
+	InitCriticalHitChance(0.0f);
+	InitCriticalHitMultiplier(2.0f);
 	InitAttackRange(200.f);
 	InitAttackRadius(50.f);
 	InitHealthRegeneration(1.f);

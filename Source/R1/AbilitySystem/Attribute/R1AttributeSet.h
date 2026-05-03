@@ -37,6 +37,9 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, BaseDamage);
 	ATTRIBUTE_ACCESSORS(ThisClass, BaseDefence);
 
+	ATTRIBUTE_ACCESSORS(ThisClass, CriticalHitChance);
+	ATTRIBUTE_ACCESSORS(ThisClass, CriticalHitMultiplier);
+
 
 	//Monster Only
 
@@ -62,6 +65,12 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData BaseDefence;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData CriticalHitChance;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData CriticalHitMultiplier;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData AttackRange;
