@@ -108,7 +108,7 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 					TargetASC->HandleGameplayEvent(EventData.EventTag, &EventData);
 				}
 
-				float DamageAmount = FMath::Abs(Data.EvaluatedData.Magnitude);
+				int32 DamageAmount = FMath::FloorToInt(FMath::Abs(Data.EvaluatedData.Magnitude));
     
 				FR1DamageInfo DamageInfo;
 				DamageInfo.DamageAmount = DamageAmount;

@@ -52,6 +52,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float Level = 0.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float CriticalHitChance = 0.0f;
+
 	//Monster Only
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float Xp = 0.0f;

@@ -121,15 +121,15 @@ void UR1DamageExecutionCalc::Execute_Implementation(const FGameplayEffectCustomE
 	float RandomDeviation = FMath::RandRange(0.75f, 1.25f);
 	MitigatedDamage *= RandomDeviation;
 
-	// 데미지가 음수가 되지 않도록 방어
-	MitigatedDamage = FMath::Max<float>(MitigatedDamage, 0.0f);
+	// 최종 데미지를 정수로 변환
+	int32 FinalDamage = FMath::Max<int32>(FMath::FloorToInt(MitigatedDamage), 0);
 
-	if (MitigatedDamage > 0.0f)
+	if (FinalDamage > 0)
 	{
 		OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
 			UR1AttributeSet::GetHealthAttribute(),
 			EGameplayModOp::Additive,
-			-MitigatedDamage
+			-static_cast<float>(FinalDamage)
 		));
 	}
 }

@@ -108,7 +108,7 @@ struct FR1DamageInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float DamageAmount = 0.0f;
+	int32 DamageAmount = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector TargetLocation = FVector::ZeroVector;

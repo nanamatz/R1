@@ -199,7 +199,8 @@ void AR1Character::InitAttributes()
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_AttackRadius, StatData->AttackRadius);
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_AttackSpeed, StatData->AttackSpeed);
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_MoveSpeed, StatData->MoveSpeed);
-			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_HealthRegeneration, StatData->HealthRegeneration);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_CriticalHitChance, StatData->CriticalHitChance);
+			
 
 			// 4. 내용물이 채워진 GE를 나 자신에게 적용
 			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
