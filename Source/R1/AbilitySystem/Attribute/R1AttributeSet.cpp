@@ -110,8 +110,17 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
     
 				FR1DamageInfo DamageInfo;
 				DamageInfo.DamageAmount = DamageAmount;
-				DamageInfo.TargetLocation = Character->GetActorLocation();
 				DamageInfo.DamageType = ER1DamageType::Normal;
+				
+				FVector TargetLoc = Character->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
+				if (USkeletalMeshComponent* Mesh = Character->GetMesh())
+				{
+					if (Mesh->DoesSocketExist(FName("DamageTextSocket")))
+					{
+						TargetLoc = Mesh->GetSocketLocation(FName("DamageTextSocket"));
+					}
+				}
+				DamageInfo.TargetLocation = TargetLoc;
 
 				if (UWorld* World = Character->GetWorld())
 				{
