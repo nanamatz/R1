@@ -38,12 +38,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Damage")
 	FGameplayTag AttackEventTag;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Audio")
-	TObjectPtr<class USoundBase> HitSound1;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Audio")
-	TObjectPtr<class USoundBase> HitSound2;
-
 	UFUNCTION()
 	virtual void OnMontageEnded();
 

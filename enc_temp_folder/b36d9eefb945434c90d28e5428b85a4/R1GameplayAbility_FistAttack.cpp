@@ -5,7 +5,6 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h" // 몽타주 Task
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"  // 이벤트 대기 Task
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
-#include "Kismet/GameplayStatics.h"
 #include "Player/R1PlayerController.h"
 #include "Character/R1Player.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -159,14 +158,6 @@ void UR1GameplayAbility_FistAttack::OnAttackEventReceived(FGameplayEventData Pay
 
 					// 나 자신에게 이벤트를 보내서, 내 몸에 장착된 패시브 GA들이 듣고 반응하게 합니다.
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceCharacter, HitEventTag, PayloadData);
-
-					USoundBase* SoundToPlay = (ComboIndex == 0) ? HitSound1 : HitSound2;
-
-					if (SoundToPlay)
-					{
-						// 타겟의 위치에서 3D 사운드로 재생합니다.
-						UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, TargetActor->GetActorLocation());
-					}
 				}
 				else
 				{
