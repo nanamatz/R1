@@ -5,6 +5,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h" // 몽타주 Task
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"  // 이벤트 대기 Task
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "Kismet/GameplayStatics.h"
 #include "Player/R1PlayerController.h"
 #include "Character/R1Player.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -159,42 +160,12 @@ void UR1GameplayAbility_FistAttack::OnAttackEventReceived(FGameplayEventData Pay
 					// 나 자신에게 이벤트를 보내서, 내 몸에 장착된 패시브 GA들이 듣고 반응하게 합니다.
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceCharacter, HitEventTag, PayloadData);
 
-					if (GameplayCueTag.IsValid() && AudioTag.IsValid())
+					USoundBase* SoundToPlay = (ComboIndex == 0) ? HitSound1 : HitSound2;
+
+					if (SoundToPlay)
 					{
-						USoundBase* SoundToPlay = nullptr;
-
-						if (SoundToPlay)
-						{
-							FGameplayCueParameters CueParams;
-							CueParams.SourceObject = SoundToPlay;
-							CueParams.Instigator = SourceCharacter;
-
-							FVector StartLoc = SourceCharacter->GetActorLocation() + FVector(0, 0, 50.0f); // 명치를 향하도록 Z축 보정
-							FVector EndLoc = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
-
-							FHitResult HitResult;
-							FCollisionQueryParams TraceParams;
-							TraceParams.AddIgnoredActor(SourceCharacter);
-
-							// 공격자의 명치에서 타겟의 명치로 보이지 않는 선을 긋습니다.
-							bool bHit = SourceCharacter->GetWorld()->LineTraceSingleByChannel(
-								HitResult, StartLoc, EndLoc, ECC_Visibility, TraceParams);
-
-							if (bHit)
-							{
-								// 캡슐(피부)에 맞았다면 그 정확한 표면 지점과 각도를 사용합니다.
-								CueParams.Location = HitResult.ImpactPoint;
-								CueParams.Normal = HitResult.ImpactNormal;
-							}
-							else
-							{
-								// 만약 장애물 등으로 빗나갔다면(예외 상황) 기본 위치로 세팅
-								CueParams.Location = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
-								CueParams.Normal = (StartLoc - EndLoc).GetSafeNormal();
-							}
-
-							SourceASC->ExecuteGameplayCue(GameplayCueTag, CueParams);
-						}
+						// 타겟의 위치에서 3D 사운드로 재생합니다.
+						UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, TargetActor->GetActorLocation());
 					}
 				}
 				else

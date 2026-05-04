@@ -13,6 +13,9 @@ struct R1DamageStatics
 	DECLARE_ATTRIBUTE_CAPTUREDEF(BaseDamage);
 	DECLARE_ATTRIBUTE_CAPTUREDEF(BaseDefence);
 
+	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitChance);
+	DECLARE_ATTRIBUTE_CAPTUREDEF(CriticalHitMultiplier);
+
 	// 플레이어 전용 스탯
 	DECLARE_ATTRIBUTE_CAPTUREDEF(WeaponDamage);
 	DECLARE_ATTRIBUTE_CAPTUREDEF(DamageMultiplier);
@@ -22,6 +25,9 @@ struct R1DamageStatics
 	R1DamageStatics()
 	{
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UR1AttributeSet, BaseDamage, Source, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UR1AttributeSet, CriticalHitChance, Source, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UR1AttributeSet, CriticalHitMultiplier, Source, false);
+
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UPlayerAttributeSet, WeaponDamage, Source, false);
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UPlayerAttributeSet, DamageMultiplier, Source, false);
 
@@ -40,6 +46,9 @@ static const R1DamageStatics& DamageStatics()
 UR1DamageExecutionCalc::UR1DamageExecutionCalc()
 {
 	RelevantAttributesToCapture.Add(DamageStatics().BaseDamageDef);
+	RelevantAttributesToCapture.Add(DamageStatics().CriticalHitChanceDef);
+	RelevantAttributesToCapture.Add(DamageStatics().CriticalHitMultiplierDef);
+
 	RelevantAttributesToCapture.Add(DamageStatics().WeaponDamageDef);
 	RelevantAttributesToCapture.Add(DamageStatics().DamageMultiplierDef);
 
@@ -83,15 +92,44 @@ void UR1DamageExecutionCalc::Execute_Implementation(const FGameplayEffectCustomE
 
 	float MitigatedDamage = TotalAttackPower - TotalDefencePower;
 
-	// 데미지가 음수가 되지 않도록 방어
-	MitigatedDamage = FMath::Max<float>(MitigatedDamage, 0.0f);
+	float CriticalHitChance = 0.0f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CriticalHitChanceDef, EvaluationParameters, CriticalHitChance);
 
-	if (MitigatedDamage > 0.0f)
+	float CriticalHitMultiplier = 2.0f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().CriticalHitMultiplierDef, EvaluationParameters, CriticalHitMultiplier);
+	CriticalHitMultiplier = FMath::Max<float>(CriticalHitMultiplier, 1.0f);
+
+	bool bIsCriticalHit = false;
+	if (CriticalHitChance > 0.0f)
+	{
+		float RandomRoll = FMath::FRand();
+		if (RandomRoll <= CriticalHitChance)
+		{
+			bIsCriticalHit = true;
+			MitigatedDamage *= CriticalHitMultiplier;
+
+			// Inject dynamic tag to signal critical hit to PostGameplayEffectExecute
+			FGameplayEffectSpec* MutableSpec = const_cast<FGameplayEffectSpec*>(&ExecutionParams.GetOwningSpec());
+			if (MutableSpec)
+			{
+				MutableSpec->AddDynamicAssetTag(R1GameplayTags::Event_Hit_Critical);
+			}
+		}
+	}
+
+	// Apply ±25% Randomness (0.75 to 1.25)
+	float RandomDeviation = FMath::RandRange(0.75f, 1.25f);
+	MitigatedDamage *= RandomDeviation;
+
+	// 최종 데미지를 정수로 변환
+	int32 FinalDamage = FMath::Max<int32>(FMath::FloorToInt(MitigatedDamage), 0);
+
+	if (FinalDamage > 0)
 	{
 		OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
 			UR1AttributeSet::GetHealthAttribute(),
 			EGameplayModOp::Additive,
-			-MitigatedDamage
+			-static_cast<float>(FinalDamage)
 		));
 	}
 }

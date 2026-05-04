@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "R1Define.generated.h"
+
 UENUM(BlueprintType)
 enum class ER1ItemType : uint8
 {
@@ -90,4 +92,27 @@ enum class EItemRarity : uint8
 namespace Item
 {
 	const FIntPoint UnitInventorySlotSize = FIntPoint(50.f, 50.f);
+};
+
+UENUM(BlueprintType)
+enum class ER1DamageType : uint8
+{
+	Normal,
+	Critical,
+	Heal
+};
+
+USTRUCT(BlueprintType)
+struct FR1DamageInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 DamageAmount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector TargetLocation = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ER1DamageType DamageType = ER1DamageType::Normal;
 };

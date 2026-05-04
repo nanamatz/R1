@@ -13,6 +13,7 @@
 #include "Player/R1PlayerController.h"
 #include "NiagaraComponent.h"
 #include "Library/R1ItemFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 const FName AR1ItemActor::RarityColorParamName = FName("User.RarityColor");
 const FName AR1ItemActor::IsLegendaryParamName = FName("User.IsLegendary");
@@ -169,6 +170,11 @@ void AR1ItemActor::OnLootAttempted(AR1Player* Looter)
 	UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 	if (InvenSubsys && InvenSubsys->AddItemAt(ItemData, ItemRarity,ItemCount, FIntPoint(-1, -1)))
 	{
+		if (ItemData->PickupSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, ItemData->PickupSound, GetActorLocation());
+		}
+
 		UE_LOG(LogTemp, Warning, TEXT("아이템 획득: %s"), *ItemData->ItemName.ToString());
 		Destroy();
 	}
@@ -238,6 +244,11 @@ void AR1ItemActor::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActo
 		if (HaloEffect)
 		{
 			HaloEffect->Activate(true);
+		}
+
+		if (ItemData && ItemData->WorldDropSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, ItemData->WorldDropSound, GetActorLocation());
 		}
 
 		DisablePhysicsAndSetOverlap();

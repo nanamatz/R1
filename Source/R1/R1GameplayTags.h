@@ -21,6 +21,7 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_Attack);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_HitReact);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Critical);
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_FistAttack);
@@ -49,6 +50,8 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackRange);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackRadius);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackSpeed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_CriticalHitChance);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_CriticalHitMultiplier);
 
 
 	//player only

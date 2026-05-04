@@ -8,6 +8,7 @@
 #include "Character/R1Player.h"
 #include "R1GameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "System/R1DamageUISubsystem.h"
 
 UR1AttributeSet::UR1AttributeSet()
 {
@@ -15,6 +16,8 @@ UR1AttributeSet::UR1AttributeSet()
 	InitMaxHealth(100.f);
 	InitBaseDamage(10.f);
 	InitBaseDefence(5.f);
+	InitCriticalHitChance(0.0f);
+	InitCriticalHitMultiplier(2.0f);
 	InitAttackRange(200.f);
 	InitAttackRadius(50.f);
 	InitHealthRegeneration(1.f);
@@ -103,6 +106,39 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 					// 아바타에게 "너 맞았어!" 라고 태그 이벤트 전달
 					TargetASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+				}
+
+				int32 DamageAmount = FMath::FloorToInt(FMath::Abs(Data.EvaluatedData.Magnitude));
+    
+				FR1DamageInfo DamageInfo;
+				DamageInfo.DamageAmount = DamageAmount;
+				
+				// Check for critical hit tag injected during execution
+				if (Data.EffectSpec.GetDynamicAssetTags().HasTagExact(R1GameplayTags::Event_Hit_Critical))
+				{
+					DamageInfo.DamageType = ER1DamageType::Critical;
+				}
+				else
+				{
+					DamageInfo.DamageType = ER1DamageType::Normal;
+				}
+				
+				FVector TargetLoc = Character->GetActorLocation() + FVector(0.0f, 0.0f, 100.0f);
+				if (USkeletalMeshComponent* Mesh = Character->GetMesh())
+				{
+					if (Mesh->DoesSocketExist(FName("DamageTextSocket")))
+					{
+						TargetLoc = Mesh->GetSocketLocation(FName("DamageTextSocket"));
+					}
+				}
+				DamageInfo.TargetLocation = TargetLoc;
+
+				if (UWorld* World = Character->GetWorld())
+				{
+					if (UR1DamageUISubsystem* DamageSS = World->GetSubsystem<UR1DamageUISubsystem>())
+					{
+						DamageSS->ShowDamageText(DamageInfo);
+					}
 				}
 			}
 

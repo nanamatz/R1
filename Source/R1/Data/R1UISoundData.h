@@ -29,4 +29,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TObjectPtr<USoundBase> PickupSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feedback")
+	TObjectPtr<USoundBase> ActionError;
 };

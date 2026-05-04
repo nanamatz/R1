@@ -29,13 +29,7 @@ public:
 	virtual void Highlight() override;
 	virtual void UnHighlight() override;
 
-	//void DefaultAttack();
 public:
-	//UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	//TObjectPtr<class UWidgetComponent> HpBarComponent;
-
-	//UFUNCTION()
-	//void RefreshHpBar(float Ratio);
 
 	class UR1AttributeSet* GetR1AttributeSet() const { return CoreAttributeSet; }
 
@@ -68,6 +62,7 @@ public:
 	TSubclassOf<class UGameplayEffect> XpEffect;
 
 protected:
+	virtual void OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker) override;
 	virtual void InitAttributes() override;
 
 	// 몬스터 전용 초기화 GE (GE_InitMonsterStats 할당)
@@ -122,6 +117,14 @@ protected:
 	// 에디터에서 이 몬스터가 사용할 비헤이비어 트리를 할당할 수 있게 뚫어줍니다.
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TObjectPtr<class UBehaviorTree> DefaultBehaviorTree;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Audio|SFX")
+	TObjectPtr<class USoundBase> HitSound;
+
+	// 몬스터가 죽을 때 나는 소리
+	UPROPERTY(EditDefaultsOnly, Category = "Audio|SFX")
+	TObjectPtr<class USoundBase> DeathSound;
+
 
 public:
 	// 컨트롤러가 가져갈 수 있게 Getter 함수 제공

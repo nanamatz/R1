@@ -95,6 +95,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|UI")
 	TObjectPtr<USoundBase> UnEquipSound;  
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|Gameplay")
+	TObjectPtr<USoundBase> PickupSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|Gameplay")
+	TObjectPtr<USoundBase> WorldDropSound;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment|Audio")
 	TMap<FGameplayTag, TSoftObjectPtr<USoundBase>> AudioRoutingMap;
 };

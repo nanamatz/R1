@@ -22,6 +22,7 @@
 #include "TimerManager.h"
 #include "R1GameplayTags.h"
 #include "Object/R1GoldActor.h"
+#include "Kismet/GameplayStatics.h"
 
 
 AR1Monster::AR1Monster()
@@ -32,20 +33,6 @@ AR1Monster::AR1Monster()
 	AbilitySystemComponent = CreateDefaultSubobject<UR1AbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	MonsterAttributeSet = CreateDefaultSubobject<UMonsterAttributeSet>(TEXT("MonsterAttributeSet"));
 	CoreAttributeSet = CreateDefaultSubobject<UR1AttributeSet>(TEXT("CoreAttributeSet"));
-
-
-	//HpBarComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
-	//HpBarComponent->SetupAttachment(GetRootComponent());
-
-	//ConstructorHelpers::FClassFinder<UUserWidget> HealthBarWidgetClass(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/Blueprints/UI/WBP_HpBar.WBP_HpBar_C'"));
-	//if (HealthBarWidgetClass.Succeeded())
-	//{
-	//	HpBarComponent->SetWidgetClass(HealthBarWidgetClass.Class);
-	//	HpBarComponent->SetWidgetSpace(EWidgetSpace::Screen);
-	//	HpBarComponent->SetDrawAtDesiredSize(true);
-	//	HpBarComponent->SetRelativeLocation(FVector(0, 0, 120));
-	//}
-
 
 	Tags.Add(FName("Enemy"));
 }
@@ -59,12 +46,6 @@ void AR1Monster::BeginPlay()
 	InitAttributes();
 	
 	AR1Monster* Monster = Cast<AR1Monster>(this);
-
-	//if (Monster)
-	//{
-	//	Monster->OnHpChanged.AddDynamic(this, &AR1Monster::RefreshHpBar);
-	//}	
-	//RefreshHpBar(1.f);
 
 	if (GetMesh())
 	{
@@ -85,18 +66,6 @@ void AR1Monster::InitAbilitySystem()
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
-
-//void AR1Monster::RefreshHpBar(float Ratio)
-//{
-//	if (HpBarComponent && CoreAttributeSet)
-//	{
-//		UR1HpBarWidget* HpBar = Cast<UR1HpBarWidget>(HpBarComponent->GetUserWidgetObject());
-//		if (HpBar)
-//		{
-//			HpBar->SetHpRatio(Ratio);
-//		}
-//	}
-//}
 
 void AR1Monster::ActivateAbility(FGameplayTag AbilityTag)
 {
@@ -131,11 +100,10 @@ void AR1Monster::OnDead(const TObjectPtr<AR1Character> Attacker)
 		}
 	}
 
-	//if (HpBarComponent)
-	//{
-	//	HpBarComponent->SetHiddenInGame(true);
-	//}
-
+	if (DeathSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
+	}
 	RewardExperience(Attacker);
 	DropGold();
 
@@ -191,23 +159,33 @@ void AR1Monster::DropGold()
 		return;
 	}
 
-	if (FMath::RandRange(0.0f, 1.0f) < 0.7f)
+	if (FMath::RandRange(0.0f, 1.0f) < GoldDropChance)
 	{
 		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		// 🌟 주변에 겹치는 것이 있어도 무조건 스폰되게 설정
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+		// 🌟 라인 트레이스를 지우고, 몬스터의 중심부에서 그대로 스폰합니다.
 		FVector SpawnLocation = GetActorLocation();
 		FRotator SpawnRotation = FRotator::ZeroRotator;
 
-		// 🌟 C++ StaticClass가 아니라, 블루프린트가 할당된 'GoldActorClass'를 스폰합니다!
 		AR1GoldActor* DroppedGold = GetWorld()->SpawnActor<AR1GoldActor>(GoldActorClass, SpawnLocation, SpawnRotation, SpawnParams);
 
 		if (DroppedGold)
 		{
 			int32 FinalAmount = FMath::RandRange(MinGoldDrop, MaxGoldDrop);
-
 			DroppedGold->SetGoldAmount(FinalAmount);
 		}
+	}
+}
+
+void AR1Monster::OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker)
+{
+	Super::OnDamaged(Damage, Attacker);
+
+	if (HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, HitSound, GetActorLocation());
 	}
 }
 

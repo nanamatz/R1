@@ -18,6 +18,7 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Montage_Begin,"Event.Monage.Begin");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Montage_End,"Event.Monage.End");
 	UE_DEFINE_GAMEPLAY_TAG(Event_HitReact,"Event.HitReact");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_Critical, "Event.Hit.Critical");
 
 	//Abiility tags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack,"Ability.Attack");
@@ -45,6 +46,8 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_AttackRange, "Data.Attribute.AttackRange");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_AttackRadius, "Data.Attribute.AttackRadius");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_AttackSpeed, "Data.Attribute.AttackSpeed");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_CriticalHitChance, "Data.Attribute.CriticalHitChance");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_CriticalHitMultiplier, "Data.Attribute.CriticalHitMultiplier");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MoveSpeed, "Data.Attribute.MoveSpeed");
 
 	//player only
