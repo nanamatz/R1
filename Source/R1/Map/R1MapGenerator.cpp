@@ -518,11 +518,16 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 }
 
 
-void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& SavedNodes, int32 SavedFloorIndex, int32 SavedActiveNodeID)
+void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& SavedNodes, int32 SavedFloorIndex, int32 SavedActiveNodeID, FVector SavedLocation, FRotator SavedRotation)
 {
 	CurrentFloorIndex = SavedFloorIndex;
 	CurrentActiveNodeID = SavedActiveNodeID;
 	PendingNodeID = -1; // 불러올 땐 이동 중이 아님을 명시
+
+	// [Added] 위치 정보 저장
+	bIsLoadingFromSave = true;
+	LoadedPlayerLocation = SavedLocation;
+	LoadedPlayerRotation = SavedRotation;
 
 	// 2. 맵 데이터 뼈대 완전 초기화
 	GeneratedMap.Empty();
@@ -716,8 +721,24 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 	{
 		if (PlayerCharacter)
 		{
-			FVector SafeLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
-			PlayerCharacter->TeleportToRoom(SafeLocation);
+			FVector FinalLocation;
+			FRotator FinalRotation = FRotator::ZeroRotator;
+
+			// [Modified] 세이브 로딩 중이라면 저장된 위치 사용
+			if (bIsLoadingFromSave)
+			{
+				FinalLocation = LoadedPlayerLocation;
+				FinalRotation = LoadedPlayerRotation;
+				bIsLoadingFromSave = false; // 일회성 처리
+				UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 세이브된 위치로 플레이어를 복구합니다: %s"), *FinalLocation.ToString());
+			}
+			else
+			{
+				FinalLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
+			}
+
+			PlayerCharacter->TeleportToRoom(FinalLocation);
+			PlayerCharacter->SetActorRotation(FinalRotation);
 
 			HighestAchievedProgress = 1.0f;
 			OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);

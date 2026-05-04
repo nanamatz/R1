@@ -53,6 +53,10 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	// 1. 플레이어 상태 저장 (작성하셨던 코드 재활용!)
 	if (Player)
 	{
+		// [Added] 위치 및 회전 저장
+		SaveObj->PlayerLocation = Player->GetActorLocation();
+		SaveObj->PlayerRotation = Player->GetActorRotation();
+
 		if (AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState()))
 		{
 			if (UR1AttributeSet* CommonAttr = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet()))
@@ -179,7 +183,8 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 
 	if (MapGenerator)
 	{
-		MapGenerator->LoadMapFromSaveData(SaveObj->SavedMapNodes, SaveObj->CurrentFloorIndex, SaveObj->CurrentActiveNodeID);
+		// [Modified] 위치와 회전값도 함께 넘겨줌
+		MapGenerator->LoadMapFromSaveData(SaveObj->SavedMapNodes, SaveObj->CurrentFloorIndex, SaveObj->CurrentActiveNodeID, SaveObj->PlayerLocation, SaveObj->PlayerRotation);
 	}
 
 	// 3. 인벤토리 및 장착 아이템 복구
