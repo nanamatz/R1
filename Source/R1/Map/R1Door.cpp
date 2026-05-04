@@ -10,6 +10,7 @@
 #include "Map/R1LockDoor.h"
 #include "UI/R1HUD.h"
 #include "Data/R1UISoundData.h"
+#include "Sound/SoundBase.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -188,6 +189,11 @@ void AR1Door::SetupDoorConnection(int32 InTargetNodeID, ER1RoomContentType Targe
 void AR1Door::SetLocked(bool bIsLocked)
 {
 	bCleared = !bIsLocked;
+
+	if (CloseSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, CloseSound, GetActorLocation());
+	}
 }
 
 void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
@@ -206,6 +212,10 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 			bLocked = false;
 			if(LinkedLockDoor)
 			{
+				if(LinkedLockDoor->UnLockSound)
+				{
+					UGameplayStatics::PlaySoundAtLocation(LinkedLockDoor, LinkedLockDoor->UnLockSound, LinkedLockDoor->GetActorLocation());
+				}
 				LinkedLockDoor->OpenDoorSmoothly();
 				OpenDoor();
 				GetWorld()->GetTimerManager().SetTimer(DoorTransitionTimer, this, &AR1Door::ExecuteDoorTransition, 0.5f, false);
@@ -215,12 +225,9 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("열쇠가 부족합니다!"));
 			
-			if (AR1HUD* HUD = Cast<AR1HUD>(Interactor->GetHUD()))
+			if (LinkedLockDoor && LinkedLockDoor->ErrorSound)
 			{
-				if (HUD->UISoundData && HUD->UISoundData->ActionError)
-				{
-					UGameplayStatics::PlaySoundAtLocation(this, HUD->UISoundData->ActionError, GetActorLocation());
-				}
+				UGameplayStatics::PlaySoundAtLocation(LinkedLockDoor, LinkedLockDoor->ErrorSound, LinkedLockDoor->GetActorLocation());
 			}
 		}
 		return;
@@ -247,6 +254,11 @@ void AR1Door::OpenDoorInstantly()
 	bIsOpened = true;
 	bIsOpening = false; // 애니메이션을 하지 않으므로 false
 	SetActorTickEnabled(false);
+
+	if (OpenSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, OpenSound, GetActorLocation());
+	}
 }
 
 void AR1Door::SetKeyLocked(bool bNeedsKey)
@@ -274,8 +286,12 @@ void AR1Door::OpenDoor()
 		TargetBaseLocation = ActiveDoorMesh->GetRelativeLocation() + FVector(0.f, -200.f, 0.f);
 	}
 
-	// 🌟 4. 이제부터 부드럽게 움직이라고 틱을 깨웁니다.
 	bIsOpened = true;
 	bIsOpening = true;
 	SetActorTickEnabled(true);
+
+	if (OpenSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, OpenSound, GetActorLocation());
+	}
 }

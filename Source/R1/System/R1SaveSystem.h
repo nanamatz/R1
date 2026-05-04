@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "System/R1PlayerSaveGame.h"
 #include "R1SaveSystem.generated.h"
 
 /**
@@ -46,4 +47,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "SaveSystem|Meta")
 	class UR1MetaSaveGame* LoadMetaProgression();
+
+	UPROPERTY()
+	TMap<int32, FR1ShopInventorySaveData> ActiveShopInventories;
+
+	// 상점 데이터 관리 함수
+	void SaveShopInventory(int32 RoomID, const TArray<class UR1ItemInstance*>& ShopItems);
+	bool LoadShopInventory(int32 RoomID, TArray<class UR1ItemInstance*>& OutShopItems, UObject* Outer);
 };

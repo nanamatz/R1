@@ -10,7 +10,9 @@
 #include "Player/R1PlayerController.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
-
+#include "System/R1SaveSystem.h"
+#include "Map/DungeonManager.h"
+#include "EngineUtils.h"
 
 AR1MerchantNPC::AR1MerchantNPC()
 {
@@ -106,6 +108,15 @@ bool AR1MerchantNPC::RemoveItemFromSale(UR1ItemInstance* ItemToRemove)
 	if (ItemsForSale.Contains(ItemToRemove))
 	{
 		ItemsForSale.Remove(ItemToRemove);
+
+		UR1SaveSystem* SaveSystem = GetGameInstance()->GetSubsystem<UR1SaveSystem>();
+		int32 RoomID = GetRoomNodeID();
+
+		if (SaveSystem && RoomID != -1)
+		{
+			SaveSystem->SaveShopInventory(RoomID, ItemsForSale);
+		}
+
 		return true;
 	}
 	return false;
@@ -133,26 +144,60 @@ void AR1MerchantNPC::GenerateShopItems()
 		return;
 	}
 
-	ItemsForSale.Empty();
+	UR1SaveSystem* SaveSystem = GetGameInstance()->GetSubsystem<UR1SaveSystem>();
+	int32 RoomID = GetRoomNodeID();
 
-	TArray<TObjectPtr<UR1ItemAssetData>> AvailablePool = ItemPool->DropItems;
-	
-	int32 TargetCount = FMath::Min(CuratedItemCounts, AvailablePool.Num());
-
-	while (ItemsForSale.Num() < TargetCount)
+	if (SaveSystem && RoomID != -1)
 	{
-		int32 RandomIndex = FMath::RandRange(0, AvailablePool.Num() - 1);
-		UR1ItemAssetData* ChosenData = AvailablePool[RandomIndex];
-
-		if (ChosenData)
+		TArray<UR1ItemInstance*> CachedItems;
+		if (SaveSystem->LoadShopInventory(RoomID, CachedItems, this))
 		{
-			UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(this);
-			NewItem->Init(ChosenData, ChosenData->ItemRarity);
-			NewItem->ItemCount = 1; // 기본 1개로 고정
-			ItemsForSale.Add(NewItem);
+			ItemsForSale = CachedItems;
+			UE_LOG(LogTemp, Warning, TEXT("Merchant: %d번 방 상점 리스트 복원 완료!"), RoomID);
+			return; // 복원 성공 시 새로 뽑지 않고 그대로 종료!
 		}
-		
-		// 중복 방지를 위해 뽑은 아이템은 풀에서 제거
-		AvailablePool.RemoveAt(RandomIndex);
 	}
+
+	if (ItemsForSale.IsEmpty())
+	{
+		TArray<TObjectPtr<UR1ItemAssetData>> AvailablePool = ItemPool->DropItems;
+
+		int32 TargetCount = FMath::Min(CuratedItemCounts, AvailablePool.Num());
+
+		while (ItemsForSale.Num() < TargetCount)
+		{
+			int32 RandomIndex = FMath::RandRange(0, AvailablePool.Num() - 1);
+			UR1ItemAssetData* ChosenData = AvailablePool[RandomIndex];
+
+			if (ChosenData)
+			{
+				UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(this);
+				NewItem->Init(ChosenData, ChosenData->ItemRarity);
+				NewItem->ItemCount = 1; // 기본 1개로 고정
+				ItemsForSale.Add(NewItem);
+			}
+
+			// 중복 방지를 위해 뽑은 아이템은 풀에서 제거
+			AvailablePool.RemoveAt(RandomIndex);
+		}
+
+		if (SaveSystem && RoomID != -1)
+		{
+			SaveSystem->SaveShopInventory(RoomID, ItemsForSale);
+			UE_LOG(LogTemp, Warning, TEXT("Merchant: %d번 방 상점 리스트 최초 생성 및 캐싱 완료!"), RoomID);
+		}
+	}
+}
+
+int32 AR1MerchantNPC::GetRoomNodeID()
+{
+	// 같은 스트리밍 레벨(방) 안에 존재하는 던전 매니저를 찾아서 그 방의 ID를 가져옵니다.
+	for (TActorIterator<ADungeonManager> It(GetWorld()); It; ++It)
+	{
+		if (It->GetLevel() == this->GetLevel())
+		{
+			return It->RoomNodeID;
+		}
+	}
+	return -1; // 못 찾았을 경우
 }

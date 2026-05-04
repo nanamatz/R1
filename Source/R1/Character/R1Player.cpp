@@ -27,6 +27,7 @@
 #include "R1GameplayTags.h"
 #include "System/R1EquipmentManagerComponent.h"
 #include "Player/R1CameraOcclusionComponent.h"
+#include "Components/AudioComponent.h"
 
 AR1Player::AR1Player()
 {
@@ -72,6 +73,10 @@ AR1Player::AR1Player()
 	PostProcessComp->SetupAttachment(RootComponent);
 
 	CameraOcclusionComp = CreateDefaultSubobject<UR1CameraOcclusionComponent>(TEXT("CameraOcclusionComp"));
+
+	HeartbeatAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("HeartbeatAudioComponent"));
+	HeartbeatAudioComponent->SetupAttachment(RootComponent);
+	HeartbeatAudioComponent->bAutoActivate = false;
 
 }
 void AR1Player::BeginPlay()
@@ -164,6 +169,11 @@ void AR1Player::OnDead(const TObjectPtr<AR1Character> Attacker)
 		StimuliSource->UnregisterFromPerceptionSystem(); // 죽으면 레이더에서 사라짐!
 	}
 
+	if (HeartbeatAudioComponent)
+	{
+		HeartbeatAudioComponent->Stop();
+	}
+
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 }
@@ -239,6 +249,7 @@ void AR1Player::InitAttributes()
 		{
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_MaxMana, StatData->MaxMana);
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_ManaRegeneration, StatData->ManaRegeneration);
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_HealthRegeneration, StatData->HealthRegeneration);
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_MaxExp, StatData->MaxExp);
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_Level, StatData->Level);
 			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Attribute_Mana, StatData->Mana);
@@ -264,15 +275,39 @@ void AR1Player::UpdateLowHealthEffect(float Ratio)
 
 		float TargetIntensity = FMath::Pow(NormalizedFactor, 1.5f);
 
-		TargetIntensity *= 1.5f;
+		TargetIntensity *= 2.5f;
 
 		TargetIntensity = FMath::Clamp(TargetIntensity, 0.0f, 1.0f);
 
 		LowHealthMI->SetScalarParameterValue(TEXT("Intensity"), TargetIntensity);
+
+		// [심장 소리 추가 로직]
+		if (HeartbeatSound && HeartbeatAudioComponent)
+		{
+			if (!HeartbeatAudioComponent->IsPlaying())
+			{
+				HeartbeatAudioComponent->SetSound(HeartbeatSound);
+				HeartbeatAudioComponent->Play();
+			}
+
+			// NormalizedFactor가 0(체력 50%) -> 1(체력 0%)로 변함
+			// 볼륨: 0.5 ~ 1.2 정도로 조절
+			float TargetVolume = FMath::Lerp(0.2f, 1.2f, NormalizedFactor);
+			// 피치(속도): 1.0 ~ 1.8 정도로 조절
+			float TargetPitch = FMath::Lerp(1.0f, 1.8f, NormalizedFactor);
+
+			HeartbeatAudioComponent->SetVolumeMultiplier(TargetVolume);
+			HeartbeatAudioComponent->SetPitchMultiplier(TargetPitch);
+		}
 	}
 	else
 	{
 		LowHealthMI->SetScalarParameterValue(TEXT("Intensity"), 0.0f);
+
+		if (HeartbeatAudioComponent && HeartbeatAudioComponent->IsPlaying())
+		{
+			HeartbeatAudioComponent->Stop();
+		}
 	}
 }
 
@@ -288,7 +323,6 @@ void AR1Player::TeleportToRoom(FVector TargetLocation)
 		SpringArm->bEnableCameraLag = false;
 
 		// 3. 플레이어를 순간이동 시킵니다. 
-		// 🌟 TeleportPhysics 플래그가 핵심입니다! (물리 엔진 텔레포트 처리)
 		SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
 		// 4. (안전장치) 텔레포트된 위치로 자식 컴포넌트(카메라)들의 위치를 즉시 갱신합니다.

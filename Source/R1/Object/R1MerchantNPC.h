@@ -75,4 +75,8 @@ protected:
 private:
 	UPROPERTY(EditAnywhere)
 	int32 CuratedItemCounts = 5;
+
+protected:
+	// 현재 NPC가 속한 방의 ID를 찾아냅니다.
+	int32 GetRoomNodeID();
 };

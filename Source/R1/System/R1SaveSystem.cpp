@@ -42,6 +42,7 @@ void UR1SaveSystem::DeleteSavedRun()
 			InventorySubsystem->ClearInventory();
 		}
 	}
+	ActiveShopInventories.Empty();
 }
 
 void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenerator)
@@ -138,6 +139,8 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 			}
 		}
 	}
+	
+	SaveObj->ShopInventories = ActiveShopInventories;
 
 	UGameplayStatics::SaveGameToSlot(SaveObj, RunSaveSlotName, RunSaveUserIndex);
 }
@@ -209,6 +212,8 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 		}
 	}
 
+	ActiveShopInventories = SaveObj->ShopInventories;
+
 	return true;
 }
 
@@ -231,6 +236,41 @@ UR1MetaSaveGame* UR1SaveSystem::LoadMetaProgression()
 	NewMetaSave->PlayerMetaLevel = 1;
 	NewMetaSave->AvailableSkillPoints = 1;
 	return NewMetaSave;
+}
+
+void UR1SaveSystem::SaveShopInventory(int32 RoomID, const TArray<class UR1ItemInstance*>& ShopItems)
+{
+	FR1ShopInventorySaveData SaveData;
+	for (UR1ItemInstance* Item : ShopItems)
+	{
+		if (Item && Item->GetItemData())
+		{
+			FR1ItemSaveData ItemSaveData;
+			ItemSaveData.ItemData = Item->GetItemData();
+			ItemSaveData.ItemRarity = Item->ItemRarity;
+			SaveData.Items.Add(ItemSaveData);
+		}
+	}
+	// 방 번호를 키값으로 캐시 갱신
+	ActiveShopInventories.Add(RoomID, SaveData);
+}
+
+bool UR1SaveSystem::LoadShopInventory(int32 RoomID, TArray<class UR1ItemInstance*>& OutShopItems, UObject* Outer)
+{
+	if (!ActiveShopInventories.Contains(RoomID)) return false;
+
+	OutShopItems.Empty();
+	for (const FR1ItemSaveData& ItemData : ActiveShopInventories[RoomID].Items)
+	{
+		if (UR1ItemAssetData* ResolvedData = ItemData.ItemData.LoadSynchronous())
+		{
+			UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(Outer);
+			NewItem->Init(ResolvedData, ItemData.ItemRarity);
+			NewItem->ItemCount = 1;
+			OutShopItems.Add(NewItem);
+		}
+	}
+	return true;
 }
 
 void UR1SaveSystem::ExtractAndSaveMetaProgression()

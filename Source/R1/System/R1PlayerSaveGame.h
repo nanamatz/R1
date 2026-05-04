@@ -64,6 +64,15 @@ struct FR1EquippedItemSaveData
 	ER1EquipmentSlot Slot = ER1EquipmentSlot::None;
 };
 
+USTRUCT(BlueprintType)
+struct FR1ShopInventorySaveData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FR1ItemSaveData> Items;
+};
+
 /**
  * 
  */
@@ -124,4 +133,7 @@ public:
 	// 장착된 아이템 데이터
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FR1EquippedItemSaveData> EquippedItems;
+
+	UPROPERTY(BlueprintReadWrite)
+	TMap<int32, FR1ShopInventorySaveData> ShopInventories;
 };

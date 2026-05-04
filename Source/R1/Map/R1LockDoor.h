@@ -50,4 +50,13 @@ private:
 	bool bIsOpened = false;
 	FRotator TargetRotation;
 
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TObjectPtr<class USoundBase> OpenSound;
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TObjectPtr<class USoundBase> UnLockSound;
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TObjectPtr<class USoundBase> ErrorSound;
 };

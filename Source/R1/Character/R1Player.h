@@ -111,4 +111,11 @@ public:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<class UR1CameraOcclusionComponent> CameraOcclusionComp;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	TObjectPtr<class USoundBase> HeartbeatSound;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
+	TObjectPtr<class UAudioComponent> HeartbeatAudioComponent;
 };
