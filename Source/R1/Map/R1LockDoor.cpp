@@ -4,7 +4,10 @@
 #include "Map/R1LockDoor.h"
 #include "Map/R1Door.h"
 #include "Components/BoxComponent.h"
+#include "Sound/SoundBase.h"
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
+
 
 // Sets default values
 AR1LockDoor::AR1LockDoor()
@@ -63,6 +66,11 @@ void AR1LockDoor::OpenDoorSmoothly()
 	bIsOpening = true;
 	bIsOpened = true;
 	SetActorTickEnabled(true);
+
+	if (OpenSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, OpenSound, GetActorLocation());
+	}
 }
 
 void AR1LockDoor::Highlight()

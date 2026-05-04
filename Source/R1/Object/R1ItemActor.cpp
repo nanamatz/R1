@@ -128,9 +128,9 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 			FVector MeshExtent = (MaxBounds - MinBounds) * 0.5f;
 
 			// 💡 플레이어가 클릭하거나 밟기 편하도록 최소 크기(하한선) 보장
-			MeshExtent.X = FMath::Max(MeshExtent.X, 30.0f);
-			MeshExtent.Y = FMath::Max(MeshExtent.Y, 30.0f);
-			MeshExtent.Z = FMath::Max(MeshExtent.Z, 30.0f);
+			MeshExtent.X = FMath::Max(MeshExtent.X, 50.0f);
+			MeshExtent.Y = FMath::Max(MeshExtent.Y, 50.0f);
+			MeshExtent.Z = FMath::Max(MeshExtent.Z, 50.0f);
 
 			BoxComp->SetBoxExtent(MeshExtent);
 		}
