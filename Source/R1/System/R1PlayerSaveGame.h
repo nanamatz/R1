@@ -116,6 +116,13 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	float MoveSpeed = 0.f;
 
+	// [Added] 플레이어 위치 및 회전 데이터
+	UPROPERTY(BlueprintReadWrite)
+	FVector PlayerLocation = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadWrite)
+	FRotator PlayerRotation = FRotator::ZeroRotator;
+
 	// 맵 데이터
 	UPROPERTY(BlueprintReadWrite)
 	int32 CurrentFloorIndex = 0;

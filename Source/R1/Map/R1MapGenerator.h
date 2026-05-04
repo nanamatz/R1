@@ -138,7 +138,7 @@ public:
 public:
 	// 세이브 데이터로부터 맵을 복원하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Map Generation")
-	void LoadMapFromSaveData(const TArray<struct FR1MapNodeSaveData>& SavedNodes, int32 SavedFloorIndex, int32 SavedActiveNodeID);
+	void LoadMapFromSaveData(const TArray<struct FR1MapNodeSaveData>& SavedNodes, int32 SavedFloorIndex, int32 SavedActiveNodeID, FVector SavedLocation = FVector::ZeroVector, FRotator SavedRotation = FRotator::ZeroRotator);
 
 	UFUNCTION()
 	void OnSavedRoomLoaded();
@@ -248,6 +248,12 @@ public:
 protected:
 	// 뒤로 가는 현상을 막기 위한 변수
 	float HighestAchievedProgress = 0.0f;
+
+private:
+	// [Added] 세이브에서 불러온 위치 정보 보관용
+	bool bIsLoadingFromSave = false;
+	FVector LoadedPlayerLocation = FVector::ZeroVector;
+	FRotator LoadedPlayerRotation = FRotator::ZeroRotator;
 
 public:
 	// 위젯 클래스 하나만 에디터에서 받도록 남겨둡니다. (UI 인스턴스 변수는 삭제!)
