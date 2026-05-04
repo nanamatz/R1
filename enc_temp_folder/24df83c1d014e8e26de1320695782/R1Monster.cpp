@@ -167,7 +167,6 @@ void AR1Monster::DropGold()
 		FVector SpawnLocation = GetActorLocation();
 		FRotator SpawnRotation = FRotator::ZeroRotator;
 
-		// 🌟 Find the ground to avoid floating gold
 		FHitResult HitResult;
 		FVector Start = SpawnLocation;
 		FVector End = Start - FVector(0, 0, 1000.0f); // Trace down 10m
@@ -176,8 +175,7 @@ void AR1Monster::DropGold()
 
 		if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, TraceParams))
 		{
-			// Spawn at hit location + offset (GoldActor radius is 50, so 55 is safe)
-			SpawnLocation = HitResult.Location + FVector(0, 0, 55.0f);
+			SpawnLocation = HitResult.Location;
 		}
 
 		AR1GoldActor* DroppedGold = GetWorld()->SpawnActor<AR1GoldActor>(GoldActorClass, SpawnLocation, SpawnRotation, SpawnParams);

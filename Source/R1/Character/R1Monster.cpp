@@ -162,30 +162,18 @@ void AR1Monster::DropGold()
 	if (FMath::RandRange(0.0f, 1.0f) < GoldDropChance)
 	{
 		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		// 🌟 주변에 겹치는 것이 있어도 무조건 스폰되게 설정
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+		// 🌟 라인 트레이스를 지우고, 몬스터의 중심부에서 그대로 스폰합니다.
 		FVector SpawnLocation = GetActorLocation();
 		FRotator SpawnRotation = FRotator::ZeroRotator;
-
-		// 🌟 Find the ground to avoid floating gold
-		FHitResult HitResult;
-		FVector Start = SpawnLocation;
-		FVector End = Start - FVector(0, 0, 1000.0f); // Trace down 10m
-		FCollisionQueryParams TraceParams;
-		TraceParams.AddIgnoredActor(this);
-
-		if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, TraceParams))
-		{
-			// Spawn at hit location + offset (GoldActor radius is 50, so 55 is safe)
-			SpawnLocation = HitResult.Location + FVector(0, 0, 55.0f);
-		}
 
 		AR1GoldActor* DroppedGold = GetWorld()->SpawnActor<AR1GoldActor>(GoldActorClass, SpawnLocation, SpawnRotation, SpawnParams);
 
 		if (DroppedGold)
 		{
 			int32 FinalAmount = FMath::RandRange(MinGoldDrop, MaxGoldDrop);
-
 			DroppedGold->SetGoldAmount(FinalAmount);
 		}
 	}

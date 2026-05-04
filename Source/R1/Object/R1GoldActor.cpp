@@ -178,12 +178,12 @@ void AR1GoldActor::UpdateTooltipUI()
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("[GoldActor] 🚨 툴팁 위젯 캐스팅 실패! 현재 할당된 위젯 클래스: %s"), *UserWidget->GetClass()->GetName());
+			UE_LOG(LogTemp, Error, TEXT(" 툴팁 위젯 캐스팅 실패! 현재 할당된 위젯 클래스: %s"), *UserWidget->GetClass()->GetName());
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[GoldActor] 🚨 UserWidgetObject가 NULL입니다. 위젯 클래스가 할당되지 않았습니다."));
+		UE_LOG(LogTemp, Error, TEXT(" UserWidgetObject가 NULL입니다. 위젯 클래스가 할당되지 않았습니다."));
 	}
 }
 
