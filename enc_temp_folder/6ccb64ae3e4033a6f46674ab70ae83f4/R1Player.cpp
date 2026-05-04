@@ -275,7 +275,7 @@ void AR1Player::UpdateLowHealthEffect(float Ratio)
 
 		float TargetIntensity = FMath::Pow(NormalizedFactor, 1.5f);
 
-		TargetIntensity *= 2.5f;
+		TargetIntensity *= 1.5f;
 
 		TargetIntensity = FMath::Clamp(TargetIntensity, 0.0f, 1.0f);
 
@@ -292,7 +292,7 @@ void AR1Player::UpdateLowHealthEffect(float Ratio)
 
 			// NormalizedFactor가 0(체력 50%) -> 1(체력 0%)로 변함
 			// 볼륨: 0.5 ~ 1.2 정도로 조절
-			float TargetVolume = FMath::Lerp(0.2f, 1.2f, NormalizedFactor);
+			float TargetVolume = FMath::Lerp(0.5f, 1.2f, NormalizedFactor);
 			// 피치(속도): 1.0 ~ 1.8 정도로 조절
 			float TargetPitch = FMath::Lerp(1.0f, 1.8f, NormalizedFactor);
 
