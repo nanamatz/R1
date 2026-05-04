@@ -159,7 +159,7 @@ void AR1Monster::DropGold()
 		return;
 	}
 
-	if (FMath::RandRange(0.0f, 1.0f) < 0.7f)
+	if (FMath::RandRange(0.0f, 1.0f) < GoldDropChance)
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
@@ -167,7 +167,19 @@ void AR1Monster::DropGold()
 		FVector SpawnLocation = GetActorLocation();
 		FRotator SpawnRotation = FRotator::ZeroRotator;
 
-		// 🌟 C++ StaticClass가 아니라, 블루프린트가 할당된 'GoldActorClass'를 스폰합니다!
+		// 🌟 Find the ground to avoid floating gold
+		FHitResult HitResult;
+		FVector Start = SpawnLocation;
+		FVector End = Start - FVector(0, 0, 1000.0f); // Trace down 10m
+		FCollisionQueryParams TraceParams;
+		TraceParams.AddIgnoredActor(this);
+
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, TraceParams))
+		{
+			// Spawn at hit location + offset (GoldActor radius is 50, so 55 is safe)
+			SpawnLocation = HitResult.Location + FVector(0, 0, 55.0f);
+		}
+
 		AR1GoldActor* DroppedGold = GetWorld()->SpawnActor<AR1GoldActor>(GoldActorClass, SpawnLocation, SpawnRotation, SpawnParams);
 
 		if (DroppedGold)

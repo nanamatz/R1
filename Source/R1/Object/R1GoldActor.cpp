@@ -189,6 +189,12 @@ void AR1GoldActor::UpdateTooltipUI()
 
 void AR1GoldActor::OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	// 🌟 Ignore hits with pawns (monsters/players) to ensure it hits the ground
+	if (OtherActor && OtherActor->IsA<APawn>())
+	{
+		return;
+	}
+
 	if (OtherComp)
 	{
 		// 2. 더 이상 Hit 이벤트가 연달아 터지지 않도록 즉시 차단
