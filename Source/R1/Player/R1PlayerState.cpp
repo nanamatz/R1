@@ -85,11 +85,7 @@ void AR1PlayerState::ApplyMetaUpgrades()
 	if (!SaveSystem) return;
 
 	UR1MetaSaveGame* MetaSave = SaveSystem->LoadMetaProgression();
-	if (!MetaSave || MetaSave->InvestedUpgrades.IsEmpty())
-	{
-		UE_LOG(LogTemp, Log, TEXT("[PlayerState] 투자된 메타 스킬이 없습니다. 기본 스탯으로 시작합니다."));
-		return;
-	}
+	if (!MetaSave) return;
 
 	if (UPlayerAttributeSet* PlayerAttr = GetPlayerAttributeSet())
 	{
@@ -116,6 +112,12 @@ void AR1PlayerState::ApplyMetaUpgrades()
 					MetaSave->PlayerMetaLevel, MetaSave->CurrentMetaExp, NewMaxExp);
 			}
 		}
+	}
+
+	if (MetaSave->InvestedUpgrades.IsEmpty())
+	{
+		UE_LOG(LogTemp, Log, TEXT("[PlayerState] 투자된 메타 스킬이 없습니다. 기본 스탯으로 시작합니다."));
+		return;
 	}
 
 	// 2. Gameplay Effect 스펙(Spec)을 생성합니다.
