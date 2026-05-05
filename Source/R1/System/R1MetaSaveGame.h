@@ -20,11 +20,11 @@ public:
 	int32 PlayerMetaLevel = 1;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	int32 CurrentMetaExp = 1;
+	int32 CurrentMetaExp = 0;
 
 	// 현재 로비에서 사용 가능한 스킬 포인트
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	int32 AvailableSkillPoints = 1;
+	int32 AvailableSkillPoints = 0;
 
 	// 영구 투자된 스탯 정보 (Key: 업그레이드 태그, Value: 찍은 레벨)
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
