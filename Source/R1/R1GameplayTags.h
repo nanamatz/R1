@@ -85,6 +85,14 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Honor);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Revive);
 
+	// Run Stat Upgrades
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Points);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Attack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Health);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_MoveSpeed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_AttackSpeed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_CriticalHitChance);
+
 	// Audio
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Attack_Sword);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Attack_Fist);

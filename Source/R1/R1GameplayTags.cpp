@@ -80,6 +80,14 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_Honor, "Meta.Upgrade.Honor");
 	UE_DEFINE_GAMEPLAY_TAG(Meta_Upgrade_Revive, "Meta.Upgrade.Revive");
 
+	// Run Stat Upgrades
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Points, "Stat.Run.Points");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Attack, "Stat.Run.Upgrade.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Health, "Stat.Run.Upgrade.Health");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_MoveSpeed, "Stat.Run.Upgrade.MoveSpeed");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_AttackSpeed, "Stat.Run.Upgrade.AttackSpeed");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_CriticalHitChance, "Stat.Run.Upgrade.CriticalHitChance");
+
 	// Audio
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Attack_Sword, "Audio.Attack.Sword");
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Attack_Fist, "Audio.Attack.Fist");
