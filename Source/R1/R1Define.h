@@ -1,8 +1,9 @@
 
 
 #pragma once
-
 #include "R1Define.generated.h"
+
+
 
 UENUM(BlueprintType)
 enum class ER1ItemType : uint8

@@ -33,6 +33,9 @@ public:
 	int32 GetInvestmentCount(FGameplayTag StatTag) const;
 
 	UFUNCTION(BlueprintPure, Category = "Run Upgrade")
+	int32 GetAvailablePoints() const { return AvailablePoints; }
+
+	UFUNCTION(BlueprintPure, Category = "Run Upgrade")
 	int32 GetPointsPerLevel() const { return PointsPerLevel; }
 
 	UFUNCTION(BlueprintCallable, Category = "Run Upgrade")

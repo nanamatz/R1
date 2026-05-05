@@ -56,6 +56,11 @@ void UR1MetaUpgradeWidget::RefreshUI()
 		Text_AvailablePoints->SetText(FText::AsNumber(MetaSave->AvailableSkillPoints));
 	}
 
+	if (Text_MetaPlayerLevel)
+	{
+		Text_MetaPlayerLevel->SetText(FText::AsNumber(MetaSave->PlayerMetaLevel));
+	}
+
 	// 3. 기존 슬롯들 다 지우기
 	Panel_SkillList->ClearChildren();
 
