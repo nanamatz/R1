@@ -24,6 +24,7 @@ void AR1HUD::BeginPlay()
         bIsShopUIVisible = false;
         bIsGameOverUIVisible = false;
         bIsGameMenuUIVisible = false;
+        bIsCharacterStatUIVisible = false;
 
         if (!InventoryUIWidget)
         {
@@ -98,7 +99,7 @@ void AR1HUD::BeginPlay()
             FloorGuideSceneWidget = CreateWidget<UR1FloorGuideSceneWidget>(PC, FloorGuideSceneWidgetClass);
             if (FloorGuideSceneWidget)
             {
-                FloorGuideSceneWidget->AddToViewport(20);
+                FloorGuideSceneWidget->AddToViewport(15);
                 FloorGuideSceneWidget->SetVisibility(ESlateVisibility::Hidden);
             }
         }
@@ -134,6 +135,16 @@ void AR1HUD::BeginPlay()
                 MonsterInfoWidget->SetVisibility(ESlateVisibility::Hidden);
             }
         }
+        if (!CharacterStatUISceneWidget)
+        {
+            CharacterStatUISceneWidget = CreateWidget<UUserWidget>(PC, CharacterStatUIWidgetClass);
+            if (CharacterStatUISceneWidget)
+            {
+                CharacterStatUISceneWidget->AddToViewport(5);
+                CharacterStatUISceneWidget->SetVisibility(ESlateVisibility::Hidden);
+            }
+        }
+
         if (AR1MapGenerator* MapGen = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
         {
             MapGen->OnMapGenerated.AddDynamic(this, &AR1HUD::HandleMapGenerated);
@@ -237,6 +248,22 @@ void AR1HUD::ToggleInventory()
 		bIsInventoryUIVisible = true;
     }
 
+}
+
+void AR1HUD::ToggleCharacterStatUI()
+{
+    if (!CharacterStatUIWidgetClass || !CharacterStatUISceneWidget) return;
+
+    if (bIsCharacterStatUIVisible)
+    {
+        CharacterStatUISceneWidget->SetVisibility(ESlateVisibility::Hidden);
+        bIsCharacterStatUIVisible = false;
+    }
+    else
+    {
+        CharacterStatUISceneWidget->SetVisibility(ESlateVisibility::Visible);
+        bIsCharacterStatUIVisible = true;
+    }
 }
 
 void AR1HUD::UpdateGameOverUI()

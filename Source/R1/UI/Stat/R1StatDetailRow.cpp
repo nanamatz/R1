@@ -1,19 +1,26 @@
-
-
-
 #include "UI/Stat/R1StatDetailRow.h"
 #include "Components/TextBlock.h"
 
-void UR1StatDetailRow::InjectData(const FText& FormattedValue)
+void UR1StatDetailRow::NativePreConstruct()
 {
-	if (Text_Amount)
+	Super::NativePreConstruct();
+
+	if (Text_AttributeName)
 	{
-		Text_Amount->SetText(FormattedValue);
+		Text_AttributeName->SetText(EditorAttributeName);
 	}
 }
 
-FText UR1StatDetailRow::GetAttributeName() const
+void UR1StatDetailRow::InjectData(const FText& InName, const FText& InValue)
 {
-	return Text_AttributeName ? Text_AttributeName->GetText() : FText::GetEmpty();
+	if (Text_AttributeName)
+	{
+		Text_AttributeName->SetText(InName);
+	}
+
+	if (Text_Amount)
+	{
+		Text_Amount->SetText(InValue);
+	}
 }
 

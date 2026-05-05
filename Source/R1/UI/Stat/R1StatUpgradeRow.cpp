@@ -1,6 +1,4 @@
 
-
-
 #include "UI/Stat/R1StatUpgradeRow.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
@@ -15,17 +13,35 @@ void UR1StatUpgradeRow::NativeConstruct()
 	}
 }
 
-void UR1StatUpgradeRow::InjectData(int32 InvestmentCount)
+void UR1StatUpgradeRow::InjectData(const FText& InName, int32 InvestmentCount)
 {
+	if (Text_AttributeName)
+	{
+		Text_AttributeName->SetText(InName);
+	}
+
 	if (Text_StatValue)
 	{
 		Text_StatValue->SetText(FText::AsNumber(InvestmentCount));
 	}
 }
 
-FText UR1StatUpgradeRow::GetAttributeName() const
+void UR1StatUpgradeRow::SetButtonEnabled(bool bEnabled)
 {
-	return Text_AttributeName ? Text_AttributeName->GetText() : FText::GetEmpty();
+	if (Button_Upgrade)
+	{
+		Button_Upgrade->SetIsEnabled(bEnabled);
+	}
+}
+
+void UR1StatUpgradeRow::NativePreConstruct()
+{
+	Super::NativePreConstruct();
+
+	if (Text_AttributeName)
+	{
+		Text_AttributeName->SetText(EditorAttributeName);
+	}
 }
 
 void UR1StatUpgradeRow::Internal_OnButtonClicked()
@@ -35,4 +51,3 @@ void UR1StatUpgradeRow::Internal_OnButtonClicked()
 		OnUpgradeRowClicked.Broadcast(StatTag);
 	}
 }
-

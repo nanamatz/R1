@@ -3,10 +3,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
+#include "R1Define.h"
 #include "R1PlayerState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnExpChangedDelegate, float, Ratio);
-
 /**
  * 
  */
@@ -28,7 +28,7 @@ public:
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
-	UCurveTable* PlayerStatTable;
+	TObjectPtr<UCurveTable> PlayerStatTable;
 
 public:
 	// 경험치 변경 시 UI에 알릴 델리게이트
@@ -39,10 +39,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	float GetCurrentExpRatio() const;
 
+	UFUNCTION(BlueprintPure, Category = "Attributes")
+	int32 GetRunLevel() const { return RunLevel; }
+
+	UFUNCTION(BlueprintPure, Category = "Attributes")
+	ER1CharacterClass GetPlayerClass() const { return PlayerClass; }
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	void SetPlayerClass(ER1CharacterClass InClass) { PlayerClass = InClass; }
+
 protected:
 	virtual void BeginPlay() override;
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	int32 RunLevel = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	ER1CharacterClass PlayerClass = ER1CharacterClass::Knight;
+
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;
 	

@@ -100,6 +100,16 @@ void AR1PlayerController::SetupInputComponent()
 		
 		EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
 
+		auto ActionCharacterStatUIToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_CharacterStatUI);
+
+		if (ActionCharacterStatUIToggle == nullptr)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed:ActionCharacterStatUIToggle is null."));
+			return;
+		}
+
+		EnhancedInputComponent->BindAction(ActionCharacterStatUIToggle, ETriggerEvent::Started, this, &ThisClass::OnCharacterStatUIToggle);
+
 		auto ActionGameMenuToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_GameMenu);
 
 		if (ActionGameMenuToggle == nullptr)
@@ -171,6 +181,8 @@ void AR1PlayerController::SetupInputComponent()
 			return;
 		}
 		EnhancedInputComponent->BindAction(ActionLookMouse, ETriggerEvent::Triggered, this, &ThisClass::OnLookMouse);
+
+
 	}
 	else
 	{
@@ -560,6 +572,15 @@ void AR1PlayerController::OnInventoryToggle()
 	if (MyR1HUD)
 	{
 		MyR1HUD->ToggleInventory();
+	}
+}
+
+void AR1PlayerController::OnCharacterStatUIToggle()
+{
+	AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
+	if (MyR1HUD)
+	{
+		MyR1HUD->ToggleCharacterStatUI();
 	}
 }
 

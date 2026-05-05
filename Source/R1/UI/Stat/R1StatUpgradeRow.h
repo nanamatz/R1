@@ -23,8 +23,9 @@ class R1_API UR1StatUpgradeRow : public UR1UserWidget
 public:
 	virtual void NativeConstruct() override;
 
-	void InjectData(int32 InvestmentCount);
-	FText GetAttributeName() const;
+	void InjectData(const FText& InName, int32 InvestmentCount);
+	
+	void SetButtonEnabled(bool bEnabled);
 
 	void SetStatTag(const FGameplayTag& InTag) { StatTag = InTag; }
 	FGameplayTag GetStatTag() const { return StatTag; }
@@ -34,19 +35,30 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "R1|UI")
 	FOnUpgradeRowClickedSignature OnUpgradeRowClicked;
 
+public:
+	// 기획자가 부모 위젯(CharacterStatUI)의 디테일 패널에서 직접 입력할 이름
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "R1|UI Setup")
+	FText EditorAttributeName;
+
+	// C++에서 데이터 주입 짝을 찾을 때 사용할 함수
+	FText GetAttributeNameText() const { return EditorAttributeName; }
+
+protected:
+	virtual void NativePreConstruct() override;
+
 protected:
 	UFUNCTION()
 	void Internal_OnButtonClicked();
 
 protected:
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* Text_AttributeName;
+	TObjectPtr<UTextBlock> Text_AttributeName;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* Text_StatValue;
+	TObjectPtr<UTextBlock> Text_StatValue;
 
 	UPROPERTY(meta = (BindWidget))
-	class UButton* Button_Upgrade;
+	TObjectPtr<UButton> Button_Upgrade;
 
 private:
 	FGameplayTag StatTag;

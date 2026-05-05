@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
 #include "GameplayEffectTypes.h"
+#include "DataTable/R1StatUpgradeData.h"
 #include "R1RunUpgradeComponent.generated.h"
 
 class UGameplayEffect;
@@ -68,7 +69,7 @@ protected:
 	TSubclassOf<UGameplayEffect> RunUpgradeGEClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Run Upgrade")
-	UDataTable* StatUpgradeDataTable;
+	TObjectPtr<UDataTable> StatUpgradeDataTable;
 
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, struct FR1StatUpgradeData> CachedStatUpgradeData;

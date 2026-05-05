@@ -33,24 +33,21 @@ FText UR1StatFormattingLibrary::GetWeaponDamageRangeText(UAbilitySystemComponent
 {
 	if (!ASC) return FText::GetEmpty();
 
-	bool bFoundBase = false;
-	float BaseDamage = ASC->GetNumericAttribute(UR1AttributeSet::GetBaseDamageAttribute(), bFoundBase);
+	float BaseDamage = ASC->GetNumericAttribute(UR1AttributeSet::GetBaseDamageAttribute());
 	
-	bool bFoundWeapon = false;
-	float WeaponDamage = ASC->GetNumericAttribute(UPlayerAttributeSet::GetWeaponDamageAttribute(), bFoundWeapon);
+	float WeaponDamage = ASC->GetNumericAttribute(UPlayerAttributeSet::GetWeaponDamageAttribute());
 	
-	bool bFoundMult = false;
-	float DamageMultiplier = ASC->GetNumericAttribute(UPlayerAttributeSet::GetDamageMultiplierAttribute(), bFoundMult);
+	float DamageMultiplier = ASC->GetNumericAttribute(UPlayerAttributeSet::GetDamageMultiplierAttribute());
 
 	// Default to 1.0 if multiplier not found or is zero
-	if (!bFoundMult || DamageMultiplier == 0.f) DamageMultiplier = 1.0f;
+	if (DamageMultiplier == 0.f) DamageMultiplier = 1.0f;
 
 	float TotalBaseValue = (BaseDamage + WeaponDamage) * DamageMultiplier;
 	
 	float Min = TotalBaseValue * 0.75f;
 	float Max = TotalBaseValue * 1.25f;
 
-	return FText::Format(NSLOCTEXT("R1", "DamageRangeFormat", "{0} ~ {1}"), 
+	return FText::Format(NSLOCTEXT("R1", "DamageRangeFormat", "{0}  -  {1}"), 
 		FText::AsNumber(FMath::FloorToInt(Min)), 
 		FText::AsNumber(FMath::FloorToInt(Max)));
 }

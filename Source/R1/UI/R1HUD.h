@@ -17,16 +17,17 @@ class R1_API AR1HUD : public AHUD
 public:
     // 인벤토리 토글 함수
     void ToggleInventory();
+    void ToggleCharacterStatUI();
     void UpdateGameOverUI();
     void ToggleGameMenu();
 
     void ShowMonsterInfo(class AR1Monster* Monster);
     void HideMonsterInfo();
 
-    UUserWidget* GetInventoryWidget() const { return InventoryUIWidget; }
-    UUserWidget* GetBaseUIWidget() const { return BaseUIWidget; }
-    UUserWidget* GetGameOverUIWidget() const { return GameOverUIWidget; }
-    UUserWidget* GetGameMenuUIWidget() const { return GameMenuUIWidget; }
+    //UUserWidget* GetInventoryWidget() const { return InventoryUIWidget; }
+    //UUserWidget* GetBaseUIWidget() const { return BaseUIWidget; }
+    //UUserWidget* GetGameOverUIWidget() const { return GameOverUIWidget; }
+    //UUserWidget* GetGameMenuUIWidget() const { return GameMenuUIWidget; }
 
     UPROPERTY(EditDefaultsOnly, Category = "UI|Audio")
     TObjectPtr<class UR1UISoundData> UISoundData;
@@ -39,6 +40,7 @@ public:
     bool bIsShopUIVisible;
     bool bIsGameOverUIVisible;
     bool bIsGameMenuUIVisible;
+    bool bIsCharacterStatUIVisible;
 
     UPROPERTY(EditAnywhere, Category = "UI")
     TSubclassOf<class UR1FloorGuideSceneWidget> FloorGuideSceneWidgetClass;
@@ -70,7 +72,13 @@ protected:
 
     UPROPERTY(EditDefaultsOnly)
     TObjectPtr<class UR1ShopWidget> ShopWidget = nullptr;
-protected:
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<UUserWidget> CharacterStatUISceneWidget = nullptr;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> CharacterStatUIWidgetClass;
+
 
     UPROPERTY(EditDefaultsOnly, Category="UI")
     TSubclassOf<UUserWidget> InventoryWidgetClass;

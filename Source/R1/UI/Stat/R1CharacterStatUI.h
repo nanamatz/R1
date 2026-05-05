@@ -2,10 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "UI/R1UserWidget.h"
+#include "R1Define.h"
 #include "GameplayTagContainer.h"
 #include "R1CharacterStatUI.generated.h"
 
-class UScrollBox;
+class UPanelWidget; // ScrollBox나 VerticalBox 모두 호환 가능
 class UTextBlock;
 class UDataTable;
 class UR1RunUpgradeComponent;
@@ -25,34 +26,48 @@ public:
 	void RefreshUI();
 
 protected:
+	FText GetCharacterClassName(ER1CharacterClass InClass) const;
+
 	UFUNCTION()
 	void HandleAvailablePointsChanged(int32 NewPoints);
 
 	UFUNCTION()
 	void HandleInvestmentHistoryChanged(FGameplayTag StatTag, int32 NewCount);
 
-	/** Callback for when an upgrade button is clicked. */
+	UFUNCTION()
+	void HandleExpChanged(float Ratio);
+
+	UFUNCTION()
 	void OnUpgradeStatClicked(FGameplayTag StatTag);
 
 protected:
 	UPROPERTY(meta = (BindWidget))
-	UScrollBox* ScrollBox_UpgradeList;
+	TObjectPtr<UPanelWidget> List_Upgrade;
 
 	UPROPERTY(meta = (BindWidget))
-	UScrollBox* ScrollBox_DetailList;
+	TObjectPtr<UPanelWidget> List_Detail;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Text_RemainPointAmount;
+	TObjectPtr<UTextBlock> Text_RemainPointAmount;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Text_ClassName;
+	TObjectPtr<UTextBlock> Text_ClassName;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Text_CurrentExp;
+	TObjectPtr<UTextBlock> Text_CurrentExp;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Text_ExpToLevelUp;
+	TObjectPtr<UTextBlock> Text_ExpToLevelUp;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_LevelAmount;
 
 	UPROPERTY(EditDefaultsOnly, Category = "R1|UI")
-	UDataTable* StatUpgradeDataTable;
+	TSubclassOf<class UR1StatUpgradeRow> UpgradeRowClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "R1|UI")
+	TSubclassOf<class UR1StatDetailRow> DetailRowClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "R1|UI")
+	TObjectPtr<UDataTable> StatUpgradeDataTable;
 };

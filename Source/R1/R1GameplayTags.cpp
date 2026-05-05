@@ -8,6 +8,7 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_LookMouse, "Input.Action.LookMouse");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Inventory, "Input.Action.Inventory");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_GameMenu, "Input.Action.GameMenu");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_CharacterStatUI, "Input.Action.CharacterStatUI");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SkillQ, "Input.Action.SkillQ");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SkillW, "Input.Action.SkillW");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SkillE, "Input.Action.SkillE");
@@ -82,12 +83,29 @@ namespace R1GameplayTags
 
 	// Run Stat Upgrades
 	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Points, "Stat.Run.Points");
-	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Attack, "Stat.Run.Upgrade.Attack");
-	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Health, "Stat.Run.Upgrade.Health");
-	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_MoveSpeed, "Stat.Run.Upgrade.MoveSpeed");
-	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_AttackSpeed, "Stat.Run.Upgrade.AttackSpeed");
-	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_CriticalHitChance, "Stat.Run.Upgrade.CriticalHitChance");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Damage, "Stat.Run.Upgrade.Damage");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Power, "Stat.Run.Upgrade.Power");
 
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Dexterity, "Stat.Run.Upgrade.Dexterity");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_AttackSpeed, "Stat.Run.Upgrade.AttackSpeed");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_AttackRange, "Stat.Run.Upgrade.AttackRange");
+
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Speed, "Stat.Run.Upgrade.Speed");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_MoveSpeed, "Stat.Run.Upgrade.MoveSpeed");
+
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Wisdom, "Stat.Run.Upgrade.Wisdom");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Mana, "Stat.Run.Upgrade.Mana");
+
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Vitality, "Stat.Run.Upgrade.Vitality");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Health, "Stat.Run.Upgrade.Health");
+
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Sharpness, "Stat.Run.Upgrade.Sharpness");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_CritChance, "Stat.Run.Upgrade.CritChance");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_CritMulti, "Stat.Run.Upgrade.CritMulti");
+
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_Spirit, "Stat.Run.Upgrade.Spirit");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_ManaRegen, "Stat.Run.Upgrade.ManaRegen");
+	UE_DEFINE_GAMEPLAY_TAG(Stat_Run_Upgrade_HealthRegen, "Stat.Run.Upgrade.HealthRegen");
 	// Audio
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Attack_Sword, "Audio.Attack.Sword");
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Attack_Fist, "Audio.Attack.Fist");

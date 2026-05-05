@@ -1,16 +1,25 @@
 #include "UI/Stat/R1CharacterStatUI.h"
-#include "Components/ScrollBox.h"
+
+#include "Components/PanelWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
+
 #include "Player/R1PlayerState.h"
 #include "Player/R1RunUpgradeComponent.h"
+
 #include "AbilitySystem/Attribute/PlayerAttributeSet.h"
+#include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "AbilitySystemComponent.h"
+
+#include "Engine/DataTable.h"
 #include "DataTable/R1StatUpgradeData.h"
 #include "Library/R1StatFormattingLibrary.h"
+
 #include "UI/Stat/R1StatUpgradeRow.h"
 #include "UI/Stat/R1StatDetailRow.h"
-#include "Engine/DataTable.h"
+
+#include "R1GameplayTags.h"
+#include "R1Define.h"
 
 void UR1CharacterStatUI::NativeConstruct()
 {
@@ -24,6 +33,8 @@ void UR1CharacterStatUI::NativeConstruct()
 			RunUpgradeComp->OnAvailablePointsChanged.AddUniqueDynamic(this, &UR1CharacterStatUI::HandleAvailablePointsChanged);
 			RunUpgradeComp->OnInvestmentHistoryChanged.AddUniqueDynamic(this, &UR1CharacterStatUI::HandleInvestmentHistoryChanged);
 		}
+
+		PS->OnExpChanged.AddUniqueDynamic(this, &UR1CharacterStatUI::HandleExpChanged);
 	}
 
 	RefreshUI();
@@ -41,21 +52,21 @@ void UR1CharacterStatUI::RefreshUI()
 	if (!RunUpgradeComp || !ASC || !PlayerAS) return;
 
 	// Update Available Points
+	int32 CurrentPoints = RunUpgradeComp->GetAvailablePoints();
 	if (Text_RemainPointAmount)
 	{
-		Text_RemainPointAmount->SetText(FText::AsNumber(RunUpgradeComp->GetAvailablePoints()));
+		Text_RemainPointAmount->SetText(FText::AsNumber(CurrentPoints));
 	}
 
 	// Update Level/Exp/Class text
 	if (Text_ClassName)
 	{
-		FString CharacterClassName = TEXT("Player");
-		if (APawn* OwningPawn = GetOwningPlayerPawn())
-		{
-			CharacterClassName = OwningPawn->GetClass()->GetName();
-			CharacterClassName.RemoveFromEnd(TEXT("_C"));
-		}
-		Text_ClassName->SetText(FText::FromString(CharacterClassName)); 
+		Text_ClassName->SetText(GetCharacterClassName(PS->GetPlayerClass())); 
+	}
+
+	if (Text_LevelAmount)
+	{
+		Text_LevelAmount->SetText(FText::AsNumber(PS->GetRunLevel()));
 	}
 
 	if (Text_CurrentExp && Text_ExpToLevelUp)
@@ -64,79 +75,99 @@ void UR1CharacterStatUI::RefreshUI()
 		Text_ExpToLevelUp->SetText(FText::AsNumber(FMath::FloorToInt(PlayerAS->GetMaxExp())));
 	}
 
+	TArray<FR1StatUpgradeData*> AllUpgradeData;
+	if (StatUpgradeDataTable)
+	{
+		StatUpgradeDataTable->GetAllRows<FR1StatUpgradeData>(TEXT(""), AllUpgradeData);
+	}
+
 	// Refresh Upgrade List
-	if (ScrollBox_UpgradeList && StatUpgradeDataTable)
+	if (List_Upgrade && AllUpgradeData.Num() > 0)
 	{
-		TArray<UR1StatUpgradeRow*> Rows;
-		for (UWidget* Child : ScrollBox_UpgradeList->GetAllChildren())
+		int32 ChildCount = List_Upgrade->GetChildrenCount();
+		for (int32 i = 0; i < ChildCount; ++i)
 		{
-			if (UR1StatUpgradeRow* Row = Cast<UR1StatUpgradeRow>(Child))
+			if (UR1StatUpgradeRow* Row = Cast<UR1StatUpgradeRow>(List_Upgrade->GetChildAt(i)))
 			{
-				Rows.Add(Row);
-			}
-		}
+				FString RowStatName = Row->GetAttributeNameText().ToString();
 
-		TArray<FR1StatUpgradeData*> AllUpgradeData;
-		StatUpgradeDataTable->GetAllRows<FR1StatUpgradeData>(TEXT(""), AllUpgradeData);
-
-		for (UR1StatUpgradeRow* Row : Rows)
-		{
-			FText RowName = Row->GetAttributeName();
-			for (FR1StatUpgradeData* Data : AllUpgradeData)
-			{
-				if (Data->StatName.EqualTo(RowName))
+				for (FR1StatUpgradeData* Data : AllUpgradeData)
 				{
-					int32 Count = RunUpgradeComp->GetInvestmentCount(Data->StatTag);
-					Row->InjectData(Count);
-					Row->SetStatTag(Data->StatTag);
-					
-					// Bind upgrade request
-					Row->OnUpgradeRowClicked.RemoveAll(this);
-					Row->OnUpgradeRowClicked.AddUniqueDynamic(this, &UR1CharacterStatUI::OnUpgradeStatClicked);
-					break;
+					if (RowStatName.Equals(Data->StatName.ToString(), ESearchCase::IgnoreCase))
+					{
+						int32 Count = RunUpgradeComp->GetInvestmentCount(Data->StatTag);
+						Row->InjectData(Data->StatName, Count);
+						Row->SetStatTag(Data->StatTag);
+						Row->SetButtonEnabled(CurrentPoints > 0);
+						Row->OnUpgradeRowClicked.AddUniqueDynamic(this, &UR1CharacterStatUI::OnUpgradeStatClicked);
+						break;
+					}
 				}
 			}
 		}
 	}
 
-	// Refresh Detail List
-	if (ScrollBox_DetailList && StatUpgradeDataTable)
+	// 2. Detail List 순회 및 데이터 주입
+	if (List_Detail && AllUpgradeData.Num() > 0)
 	{
-		TArray<UR1StatDetailRow*> Rows;
-		for (UWidget* Child : ScrollBox_DetailList->GetAllChildren())
+		int32 ChildCount = List_Detail->GetChildrenCount();
+		for (int32 i = 0; i < ChildCount; ++i)
 		{
-			if (UR1StatDetailRow* Row = Cast<UR1StatDetailRow>(Child))
+			if (UR1StatDetailRow* Row = Cast<UR1StatDetailRow>(List_Detail->GetChildAt(i)))
 			{
-				Rows.Add(Row);
-			}
-		}
+				FString RowStatName = Row->GetAttributeNameText().ToString();
 
-		TArray<FR1StatUpgradeData*> AllUpgradeData;
-		StatUpgradeDataTable->GetAllRows<FR1StatUpgradeData>(TEXT(""), AllUpgradeData);
-
-		for (UR1StatDetailRow* Row : Rows)
-		{
-			FText RowName = Row->GetAttributeName();
-			for (FR1StatUpgradeData* Data : AllUpgradeData)
-			{
-				if (Data->StatName.EqualTo(RowName))
+				for (FR1StatUpgradeData* Data : AllUpgradeData)
 				{
-					FText FormattedValue;
-					if (Data->DisplayType == ER1StatDisplayType::Range)
+					if (RowStatName.Equals(Data->StatName.ToString(), ESearchCase::IgnoreCase))
 					{
-						FormattedValue = UR1StatFormattingLibrary::GetWeaponDamageRangeText(ASC);
+						FText FormattedValue;
+						if (Data->DisplayType == ER1StatDisplayType::Range)
+						{
+							FormattedValue = UR1StatFormattingLibrary::GetWeaponDamageRangeText(ASC);
+						}
+						else if (Data->DisplayType == ER1StatDisplayType::Fraction)
+						{
+							float CurrentValue = ASC->GetNumericAttribute(Data->Attribute);
+							float MaxValue = 1.0f;
+
+							if (Data->Attribute.GetName() == TEXT("MaxHealth"))
+							{
+								MaxValue = ASC->GetNumericAttribute(UR1AttributeSet::GetMaxHealthAttribute());
+							}
+							else if (Data->Attribute.GetName() == TEXT("MaxMana"))
+							{
+								MaxValue = ASC->GetNumericAttribute(UPlayerAttributeSet::GetMaxManaAttribute());
+							}
+
+							FormattedValue = UR1StatFormattingLibrary::GetFractionText(CurrentValue, MaxValue);
+						}
+						else
+						{
+							float AttrValue = ASC->GetNumericAttribute(Data->Attribute);
+							FormattedValue = UR1StatFormattingLibrary::FormatStatValue(AttrValue, Data->DisplayType);
+						}
+
+						Row->InjectData(Data->StatName, FormattedValue);
+						break;
 					}
-					else
-					{
-						float AttrValue = ASC->GetNumericAttribute(Data->Attribute);
-						FormattedValue = UR1StatFormattingLibrary::FormatStatValue(AttrValue, Data->DisplayType);
-					}
-					Row->InjectData(FormattedValue);
-					break;
 				}
 			}
 		}
 	}
+}
+
+
+FText UR1CharacterStatUI::GetCharacterClassName(ER1CharacterClass InClass) const
+{
+	switch (InClass)
+	{
+	case ER1CharacterClass::Knight: return FText::FromString(TEXT("Knight"));
+	case ER1CharacterClass::OutLaw: return FText::FromString(TEXT("OutLaw"));
+	case ER1CharacterClass::Fighter: return FText::FromString(TEXT("Fighter"));
+	case ER1CharacterClass::Wizard: return FText::FromString(TEXT("Wizard"));
+	}
+	return FText::FromString(TEXT("Tennis Player"));
 }
 
 void UR1CharacterStatUI::HandleAvailablePointsChanged(int32 NewPoints)
@@ -145,9 +176,26 @@ void UR1CharacterStatUI::HandleAvailablePointsChanged(int32 NewPoints)
 	{
 		Text_RemainPointAmount->SetText(FText::AsNumber(NewPoints));
 	}
+
+	if (List_Upgrade)
+	{
+		bool bEnable = NewPoints > 0;
+		for (UWidget* Child : List_Upgrade->GetAllChildren())
+		{
+			if (UR1StatUpgradeRow* Row = Cast<UR1StatUpgradeRow>(Child))
+			{
+				Row->SetButtonEnabled(bEnable);
+			}
+		}
+	}
 }
 
 void UR1CharacterStatUI::HandleInvestmentHistoryChanged(FGameplayTag StatTag, int32 NewCount)
+{
+	RefreshUI();
+}
+
+void UR1CharacterStatUI::HandleExpChanged(float Ratio)
 {
 	RefreshUI();
 }
