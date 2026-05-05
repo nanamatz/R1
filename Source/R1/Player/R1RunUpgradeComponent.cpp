@@ -152,9 +152,9 @@ void UR1RunUpgradeComponent::ApplyRunUpgradeEffect()
 			FGameplayTag StatTag = Pair.Key;
 			int32 InvestmentCount = Pair.Value;
 
-			if (FR1StatUpgradeData** FoundDataPtr = CachedStatUpgradeData.Find(StatTag))
+			if (FR1StatUpgradeData* FoundDataPtr = CachedStatUpgradeData.Find(StatTag))
 			{
-				float TotalBonus = InvestmentCount * (*FoundDataPtr)->IncreaseAmount;
+				float TotalBonus = InvestmentCount * FoundDataPtr->IncreaseAmount;
 				SpecHandle.Data.Get()->SetSetByCallerMagnitude(StatTag, TotalBonus);
 			}
 			else
