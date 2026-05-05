@@ -14,6 +14,44 @@ UR1RunUpgradeComponent::UR1RunUpgradeComponent()
 void UR1RunUpgradeComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	CacheDataTable();
+}
+
+void UR1RunUpgradeComponent::CacheDataTable()
+{
+	if (!StatUpgradeDataTable)
+	{
+		return;
+	}
+
+	CachedStatUpgradeData.Empty();
+
+	static const FString ContextString(TEXT("UR1RunUpgradeComponent::CacheDataTable"));
+	TArray<FR1StatUpgradeData*> AllRows;
+	StatUpgradeDataTable->GetAllRows<FR1StatUpgradeData>(ContextString, AllRows);
+
+	for (FR1StatUpgradeData* Row : AllRows)
+	{
+		if (Row)
+		{
+			CachedStatUpgradeData.Add(Row->StatTag, Row);
+		}
+	}
+}
+
+UAbilitySystemComponent* UR1RunUpgradeComponent::GetAbilitySystemComponent() const
+{
+	AActor* Owner = GetOwner();
+	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Owner))
+	{
+		return ASI->GetAbilitySystemComponent();
+	}
+	else if (Owner)
+	{
+		return Owner->FindComponentByClass<UAbilitySystemComponent>();
+	}
+
+	return nullptr;
 }
 
 void UR1RunUpgradeComponent::AddPoints(int32 Amount)
@@ -30,27 +68,7 @@ void UR1RunUpgradeComponent::UpgradeStat(FGameplayTag StatTag)
 		return;
 	}
 
-	if (!StatUpgradeDataTable)
-	{
-		UE_LOG(LogR1, Error, TEXT("UR1RunUpgradeComponent::UpgradeStat: StatUpgradeDataTable is null!"));
-		return;
-	}
-
-	static const FString ContextString(TEXT("UR1RunUpgradeComponent::UpgradeStat"));
-	TArray<FR1StatUpgradeData*> AllRows;
-	StatUpgradeDataTable->GetAllRows<FR1StatUpgradeData>(ContextString, AllRows);
-
-	bool bFound = false;
-	for (FR1StatUpgradeData* Row : AllRows)
-	{
-		if (Row && Row->StatTag == StatTag)
-		{
-			bFound = true;
-			break;
-		}
-	}
-
-	if (!bFound)
+	if (!CachedStatUpgradeData.Contains(StatTag))
 	{
 		UE_LOG(LogR1, Warning, TEXT("UR1RunUpgradeComponent::UpgradeStat: Could not find StatTag %s in DataTable"), *StatTag.ToString());
 		return;
@@ -82,18 +100,7 @@ void UR1RunUpgradeComponent::Reset()
 	
 	if (RunUpgradeGEHandle.IsValid())
 	{
-		AActor* Owner = GetOwner();
-		UAbilitySystemComponent* ASC = nullptr;
-		if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Owner))
-		{
-			ASC = ASI->GetAbilitySystemComponent();
-		}
-		else if (Owner)
-		{
-			ASC = Owner->FindComponentByClass<UAbilitySystemComponent>();
-		}
-
-		if (ASC)
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 		{
 			ASC->RemoveActiveGameplayEffect(RunUpgradeGEHandle);
 		}
@@ -113,23 +120,8 @@ void UR1RunUpgradeComponent::ApplyRunUpgradeEffect()
 		UE_LOG(LogR1, Error, TEXT("UR1RunUpgradeComponent::ApplyRunUpgradeEffect: RunUpgradeGEClass is null!"));
 		return;
 	}
-	if (!StatUpgradeDataTable)
-	{
-		UE_LOG(LogR1, Error, TEXT("UR1RunUpgradeComponent::ApplyRunUpgradeEffect: StatUpgradeDataTable is null!"));
-		return;
-	}
 
-	AActor* Owner = GetOwner();
-	UAbilitySystemComponent* ASC = nullptr;
-	if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Owner))
-	{
-		ASC = ASI->GetAbilitySystemComponent();
-	}
-	else if (Owner)
-	{
-		ASC = Owner->FindComponentByClass<UAbilitySystemComponent>();
-	}
-
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC)
 	{
 		UE_LOG(LogR1, Error, TEXT("UR1RunUpgradeComponent::ApplyRunUpgradeEffect: Could not find ASC on owner!"));
@@ -149,17 +141,10 @@ void UR1RunUpgradeComponent::ApplyRunUpgradeEffect()
 	FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(RunUpgradeGEClass, 1.0f, EffectContext);
 	if (SpecHandle.IsValid())
 	{
-		static const FString ContextString(TEXT("UR1RunUpgradeComponent::ApplyRunUpgradeEffect"));
-		TArray<FR1StatUpgradeData*> AllRows;
-		StatUpgradeDataTable->GetAllRows<FR1StatUpgradeData>(ContextString, AllRows);
-
 		// Initialize all stat magnitudes to 0.0f to prevent GAS errors for uninvested stats
-		for (FR1StatUpgradeData* Row : AllRows)
+		for (const auto& Pair : CachedStatUpgradeData)
 		{
-			if (Row)
-			{
-				SpecHandle.Data.Get()->SetSetByCallerMagnitude(Row->StatTag, 0.0f);
-			}
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(Pair.Key, 0.0f);
 		}
 
 		for (const auto& Pair : InvestmentHistory)
@@ -167,24 +152,14 @@ void UR1RunUpgradeComponent::ApplyRunUpgradeEffect()
 			FGameplayTag StatTag = Pair.Key;
 			int32 InvestmentCount = Pair.Value;
 
-			FR1StatUpgradeData* FoundData = nullptr;
-			for (FR1StatUpgradeData* Row : AllRows)
+			if (FR1StatUpgradeData** FoundDataPtr = CachedStatUpgradeData.Find(StatTag))
 			{
-				if (Row && Row->StatTag == StatTag)
-				{
-					FoundData = Row;
-					break;
-				}
-			}
-
-			if (FoundData)
-			{
-				float TotalBonus = InvestmentCount * FoundData->IncreaseAmount;
+				float TotalBonus = InvestmentCount * (*FoundDataPtr)->IncreaseAmount;
 				SpecHandle.Data.Get()->SetSetByCallerMagnitude(StatTag, TotalBonus);
 			}
 			else
 			{
-				UE_LOG(LogR1, Warning, TEXT("UR1RunUpgradeComponent::ApplyRunUpgradeEffect: Could not find data for tag %s in DataTable"), *StatTag.ToString());
+				UE_LOG(LogR1, Warning, TEXT("UR1RunUpgradeComponent::ApplyRunUpgradeEffect: Could not find data for tag %s in CachedStatUpgradeData"), *StatTag.ToString());
 			}
 		}
 

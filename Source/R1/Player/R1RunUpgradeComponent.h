@@ -35,8 +35,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Run Upgrade")
 	void ApplyRunUpgradeEffect();
 
+	class UAbilitySystemComponent* GetAbilitySystemComponent() const;
+
 protected:
 	virtual void BeginPlay() override;
+	void CacheDataTable();
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Run Upgrade")
@@ -57,6 +60,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Run Upgrade")
 	UDataTable* StatUpgradeDataTable;
+
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, struct FR1StatUpgradeData*> CachedStatUpgradeData;
 
 	UPROPERTY(Transient)
 	FActiveGameplayEffectHandle RunUpgradeGEHandle;
