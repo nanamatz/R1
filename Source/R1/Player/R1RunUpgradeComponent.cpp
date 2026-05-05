@@ -34,7 +34,7 @@ void UR1RunUpgradeComponent::CacheDataTable()
 	{
 		if (Row)
 		{
-			CachedStatUpgradeData.Add(Row->StatTag, Row);
+			CachedStatUpgradeData.Add(Row->StatTag, *Row);
 		}
 	}
 }
