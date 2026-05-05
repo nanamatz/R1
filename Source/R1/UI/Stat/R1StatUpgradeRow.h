@@ -19,6 +19,7 @@ class R1_API UR1StatUpgradeRow : public UR1UserWidget
 
 public:
 	void InjectData(int32 InvestmentCount);
+	FText GetAttributeName() const;
 
 protected:
 	UPROPERTY(meta = (BindWidget))
