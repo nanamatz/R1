@@ -30,6 +30,32 @@ void UR1RunUpgradeComponent::UpgradeStat(FGameplayTag StatTag)
 		return;
 	}
 
+	if (!StatUpgradeDataTable)
+	{
+		UE_LOG(LogR1, Error, TEXT("UR1RunUpgradeComponent::UpgradeStat: StatUpgradeDataTable is null!"));
+		return;
+	}
+
+	static const FString ContextString(TEXT("UR1RunUpgradeComponent::UpgradeStat"));
+	TArray<FR1StatUpgradeData*> AllRows;
+	StatUpgradeDataTable->GetAllRows<FR1StatUpgradeData>(ContextString, AllRows);
+
+	bool bFound = false;
+	for (FR1StatUpgradeData* Row : AllRows)
+	{
+		if (Row && Row->StatTag == StatTag)
+		{
+			bFound = true;
+			break;
+		}
+	}
+
+	if (!bFound)
+	{
+		UE_LOG(LogR1, Warning, TEXT("UR1RunUpgradeComponent::UpgradeStat: Could not find StatTag %s in DataTable"), *StatTag.ToString());
+		return;
+	}
+
 	AvailablePoints--;
 	InvestmentHistory.FindOrAdd(StatTag)++;
 
@@ -42,9 +68,17 @@ void UR1RunUpgradeComponent::UpgradeStat(FGameplayTag StatTag)
 void UR1RunUpgradeComponent::Reset()
 {
 	AvailablePoints = 0;
+	
+	TArray<FGameplayTag> InvestedTags;
+	InvestmentHistory.GetKeys(InvestedTags);
+
 	InvestmentHistory.Empty();
 	
 	OnAvailablePointsChanged.Broadcast(AvailablePoints);
+	for (const FGameplayTag& StatTag : InvestedTags)
+	{
+		OnInvestmentHistoryChanged.Broadcast(StatTag, 0);
+	}
 	
 	if (RunUpgradeGEHandle.IsValid())
 	{
@@ -118,6 +152,15 @@ void UR1RunUpgradeComponent::ApplyRunUpgradeEffect()
 		static const FString ContextString(TEXT("UR1RunUpgradeComponent::ApplyRunUpgradeEffect"));
 		TArray<FR1StatUpgradeData*> AllRows;
 		StatUpgradeDataTable->GetAllRows<FR1StatUpgradeData>(ContextString, AllRows);
+
+		// Initialize all stat magnitudes to 0.0f to prevent GAS errors for uninvested stats
+		for (FR1StatUpgradeData* Row : AllRows)
+		{
+			if (Row)
+			{
+				SpecHandle.Data.Get()->SetSetByCallerMagnitude(Row->StatTag, 0.0f);
+			}
+		}
 
 		for (const auto& Pair : InvestmentHistory)
 		{
