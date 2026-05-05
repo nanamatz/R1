@@ -8,6 +8,8 @@
 #include "System/R1SaveSystem.h"
 #include "System/R1MetaSaveGame.h"
 #include "DataTable/R1MetaUpgradeData.h"
+#include "Player/R1RunUpgradeComponent.h"
+#include "GameplayEffectExtension.h"
 
 AR1PlayerState::AR1PlayerState(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -17,6 +19,7 @@ AR1PlayerState::AR1PlayerState(const FObjectInitializer& ObjectInitializer)
 	PlayerAttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
 	CoreAttributeSet = CreateDefaultSubobject<UR1AttributeSet>(TEXT("CoreAttributeSet"));
 
+	RunUpgradeComponent = CreateDefaultSubobject<UR1RunUpgradeComponent>(TEXT("RunUpgradeComponent"));
 }
 
 
@@ -38,6 +41,21 @@ UPlayerAttributeSet* AR1PlayerState::GetPlayerAttributeSet() const
 UR1AttributeSet* AR1PlayerState::GetCommonAttributeSet() const
 {
 	return CoreAttributeSet;
+}
+
+void AR1PlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (AbilitySystemComponent && PlayerAttributeSet)
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(PlayerAttributeSet->GetLevelAttribute()).AddUObject(this, &AR1PlayerState::OnLevelChanged);
+	}
+
+	if (RunUpgradeComponent)
+	{
+		RunUpgradeComponent->Reset();
+	}
 }
 
 float AR1PlayerState::GetCurrentExpRatio() const
@@ -162,3 +180,15 @@ void AR1PlayerState::ApplyMetaUpgrades()
 		AbilitySystemComponent->SetNumericAttributeBase(PlayerAttr->GetManaAttribute(), PlayerAttr->GetMaxMana());
 	}
 }
+
+void AR1PlayerState::OnLevelChanged(const FOnAttributeChangeData& Data)
+{
+	if (Data.NewValue > Data.OldValue)
+	{
+		if (RunUpgradeComponent)
+		{
+			RunUpgradeComponent->AddPoints(5);
+		}
+	}
+}
+

@@ -24,6 +24,7 @@ public:
 	class UR1AbilitySystemComponent* GetR1AbilitySystemComponent() const;
 	class UPlayerAttributeSet* GetPlayerAttributeSet() const;
 	class UR1AttributeSet* GetCommonAttributeSet() const;
+	class UR1RunUpgradeComponent* GetRunUpgradeComponent() const { return RunUpgradeComponent; }
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
@@ -39,6 +40,9 @@ public:
 	float GetCurrentExpRatio() const;
 
 protected:
+	virtual void BeginPlay() override;
+
+protected:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;
 	
@@ -47,6 +51,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr <class UPlayerAttributeSet > PlayerAttributeSet;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<class UR1RunUpgradeComponent> RunUpgradeComponent;
 
 public:
 	// 메타 업그레이드 스탯 적용 함수
@@ -61,4 +68,6 @@ protected:
 	// 에디터에서 할당할 초기화 전용 Gameplay Effect
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilitySystem|Meta")
 	TSubclassOf<class UGameplayEffect> MetaUpgradeEffectClass;
+
+	void OnLevelChanged(const struct FOnAttributeChangeData& Data);
 };
