@@ -71,7 +71,7 @@ protected:
 	UDataTable* StatUpgradeDataTable;
 
 	UPROPERTY(Transient)
-	TMap<FGameplayTag, struct FR1StatUpgradeData*> CachedStatUpgradeData;
+	TMap<FGameplayTag, struct FR1StatUpgradeData> CachedStatUpgradeData;
 
 	UPROPERTY(Transient)
 	FActiveGameplayEffectHandle RunUpgradeGEHandle;
