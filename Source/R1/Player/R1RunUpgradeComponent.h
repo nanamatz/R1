@@ -32,6 +32,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Run Upgrade")
 	int32 GetInvestmentCount(FGameplayTag StatTag) const;
 
+	UFUNCTION(BlueprintPure, Category = "Run Upgrade")
+	int32 GetPointsPerLevel() const { return PointsPerLevel; }
+
 	UFUNCTION(BlueprintCallable, Category = "Run Upgrade")
 	void ApplyRunUpgradeEffect();
 
@@ -49,6 +52,9 @@ public:
 	FOnInvestmentHistoryChangedSignature OnInvestmentHistoryChanged;
 
 protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Run Upgrade")
+	int32 PointsPerLevel = 5;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Run Upgrade")
 	int32 AvailablePoints = 0;
 

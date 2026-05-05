@@ -187,8 +187,8 @@ void AR1PlayerState::OnLevelChanged(const FOnAttributeChangeData& Data)
 	{
 		if (RunUpgradeComponent)
 		{
-			const int32 LevelDelta = FMath::FloorToInt(Data.NewValue - Data.OldValue);
-			RunUpgradeComponent->AddPoints(5 * LevelDelta);
+			const int32 LevelDelta = FMath::FloorToInt(Data.NewValue) - FMath::FloorToInt(Data.OldValue);
+			RunUpgradeComponent->AddPoints(RunUpgradeComponent->GetPointsPerLevel() * LevelDelta);
 		}
 	}
 }
