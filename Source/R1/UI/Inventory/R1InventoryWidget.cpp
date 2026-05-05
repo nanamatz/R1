@@ -3,6 +3,8 @@
 
 #include "UI/Inventory/R1InventoryWidget.h"
 #include "Components/TextBlock.h"
+#include "Components/Button.h"
+#include "UI/R1HUD.h"
 #include "Item/R1DragDropOperation.h"
 #include "Item/R1InventorySubsystem.h"
 
@@ -17,6 +19,11 @@ void UR1InventoryWidget::NativeConstruct()
 
 		// 🌟 2. 위젯이 처음 열릴 때 현재 골드량으로 초기 텍스트 세팅
 		UpdateGoldUI(Inventory->GetGold());
+	}
+
+	if (Button_Close)
+	{
+		Button_Close->OnClicked.AddUniqueDynamic(this, &UR1InventoryWidget::OnCloseButtonClicked);
 	}
 }
 
@@ -41,5 +48,16 @@ void UR1InventoryWidget::UpdateGoldUI(int32 NewGold)
 	if (Text_Gold)
 	{
 		Text_Gold->SetText(FText::AsNumber(NewGold));
+	}
+}
+
+void UR1InventoryWidget::OnCloseButtonClicked()
+{
+	APlayerController* PC = GetOwningPlayer();
+	if (!PC) return;
+
+	if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
+	{
+		HUD->ToggleInventory();
 	}
 }

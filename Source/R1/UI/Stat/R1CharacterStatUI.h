@@ -9,6 +9,7 @@
 class UPanelWidget; // ScrollBox나 VerticalBox 모두 호환 가능
 class UTextBlock;
 class UDataTable;
+class UButton;
 class UR1RunUpgradeComponent;
 
 /**
@@ -40,6 +41,9 @@ protected:
 	UFUNCTION()
 	void OnUpgradeStatClicked(FGameplayTag StatTag);
 
+	UFUNCTION()
+	void OnCloseButtonClicked();
+
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UPanelWidget> List_Upgrade;
@@ -61,6 +65,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> Text_LevelAmount;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> Button_Close;
 
 	UPROPERTY(EditDefaultsOnly, Category = "R1|UI")
 	TSubclassOf<class UR1StatUpgradeRow> UpgradeRowClass;

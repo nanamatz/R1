@@ -28,4 +28,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category = "Effects")
 	TSubclassOf<AActor> LevelUpParticleEffectClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	TObjectPtr<class USoundBase> LevelUpSound;
 };

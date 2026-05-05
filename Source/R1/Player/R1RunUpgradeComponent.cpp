@@ -77,10 +77,11 @@ void UR1RunUpgradeComponent::UpgradeStat(FGameplayTag StatTag)
 	AvailablePoints--;
 	InvestmentHistory.FindOrAdd(StatTag)++;
 
+	ApplyRunUpgradeEffect();
+
 	OnAvailablePointsChanged.Broadcast(AvailablePoints);
 	OnInvestmentHistoryChanged.Broadcast(StatTag, InvestmentHistory[StatTag]);
 
-	ApplyRunUpgradeEffect();
 }
 
 void UR1RunUpgradeComponent::Reset()

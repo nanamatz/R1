@@ -17,6 +17,7 @@
 
 #include "UI/Stat/R1StatUpgradeRow.h"
 #include "UI/Stat/R1StatDetailRow.h"
+#include "UI/R1HUD.h"
 
 #include "R1GameplayTags.h"
 #include "R1Define.h"
@@ -35,6 +36,10 @@ void UR1CharacterStatUI::NativeConstruct()
 		}
 
 		PS->OnExpChanged.AddUniqueDynamic(this, &UR1CharacterStatUI::HandleExpChanged);
+	}
+	if (Button_Close)
+	{
+		Button_Close->OnClicked.AddUniqueDynamic(this, &UR1CharacterStatUI::OnCloseButtonClicked);
 	}
 
 	RefreshUI();
@@ -209,5 +214,16 @@ void UR1CharacterStatUI::OnUpgradeStatClicked(FGameplayTag StatTag)
 		{
 			RunUpgradeComp->UpgradeStat(StatTag);
 		}
+	}
+}
+
+void UR1CharacterStatUI::OnCloseButtonClicked()
+{
+	APlayerController* PC = GetOwningPlayer();
+	if (!PC) return;
+
+	if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
+	{
+		HUD->ToggleCharacterStatUI();
 	}
 }
