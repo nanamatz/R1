@@ -12,3 +12,8 @@ void UR1StatDetailRow::InjectData(const FText& FormattedValue)
 	}
 }
 
+FText UR1StatDetailRow::GetAttributeName() const
+{
+	return Text_AttributeName ? Text_AttributeName->GetText() : FText::GetEmpty();
+}
+

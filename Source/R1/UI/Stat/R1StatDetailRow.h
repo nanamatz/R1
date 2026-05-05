@@ -18,6 +18,7 @@ class R1_API UR1StatDetailRow : public UR1UserWidget
 
 public:
 	void InjectData(const FText& FormattedValue);
+	FText GetAttributeName() const;
 
 protected:
 	UPROPERTY(meta = (BindWidget))
