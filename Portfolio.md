@@ -45,3 +45,116 @@ It became clear that for Project R1 to survive and thrive as a production-grade 
 This led to the systematic dismantling of the God Objects. We identified that core gameplay logic—like stats, status effects, and damage math—belonged in a dedicated framework like the **Gameplay Ability System (GAS)**. Global management logic—like dungeon generation state and item databases—belonged in persistent **Subsystems** that could exist independently of any specific level or actor. We also realized that the "magic numbers" and hardcoded logic for monsters and items needed to be moved into **Primary Data Assets**, allowing designers to tune values like "Attack Range" or "Critical Hit Chance" without touching a single line of C++. 
 
 The switch was not merely a "cleanup" of the code; it was a fundamental shift in our engineering philosophy. By moving to a decoupled, data-driven architecture, we weren't just fixing bugs; we were building a platform that could scale to accommodate the hundreds of unique items and enemy types that a modern ARPG demands. This transition, while challenging to execute mid-development, was the catalyst that allowed Project R1 to move from a fragile prototype to a robust, high-performance production environment.
+
+## Phase 2: Procedural World & Memory Optimization
+
+As Project R1 moved away from its monolithic roots, the next major architectural challenge was the world itself. In a modern Action RPG, the environment is not merely a static backdrop but a dynamic, evolving entity. We needed a system that could generate complex, non-linear dungeon layouts that felt hand-crafted yet remained entirely procedural. More importantly, we needed to ensure that this dynamic world did not come at the cost of performance. Loading a new room should not cause a "hitch" or a frame-drop, and the memory footprint had to remain stable regardless of the dungeon’s total size.
+
+This phase of development focused on two critical systems: the **World Generation Algorithm** and the **Room Streaming Subsystem**. Together, they form the "heartbeat" of the R1 world, managing the physical layout and the underlying memory lifecycle of every corridor and combat arena.
+
+### Part 1: The World Generation Algorithm
+
+Most procedural generation in early-stage projects relies on simple random walks or grid-based noise. While these methods are easy to implement, they often produce layouts that feel "soulless"—long, winding corridors that lead nowhere, or clusters of rooms that overlap in nonsensical ways. For R1, we adopted a more structured approach: an **Isaac-style queue-based branching algorithm**.
+
+#### The Logic of Branching
+Managed by the `AR1MapGenerator` class, this algorithm views the dungeon as a mathematical graph rather than a simple grid. The generation begins at a central "Start Node" and uses a BFS (Breadth-First Search) inspired approach to "grow" the dungeon. Instead of placing rooms randomly, the generator maintains a queue of active nodes that are looking for neighbors. 
+
+The core innovation lies in how we handle connectivity. Every room in R1 is defined by a `UR1RoomDefinitionData` Primary Data Asset. This asset doesn't just contain the level name; it contains the metadata for its "Available Doors" (North, South, East, West). During generation, the `AR1MapGenerator` doesn't just pick a random room; it performs a **puzzle-piece validation**. If the parent node has a "North" door, the generator specifically queries the room pool for a definition that contains a "South" door. This ensures that every generated connection is physically valid and that players never encounter a door that leads into a solid wall.
+
+#### Preventing "The Blob"
+A common pitfall in branching algorithms is the tendency for rooms to cluster together in a dense "blob," destroying the sense of exploration. To counter this, we implemented a **Grid Neighbor Check**. Before a new room is finalized at a specific grid coordinate, the generator checks its immediate neighbors. If a potential position already has more than one adjacent room, the generator discards the branch. This forces the dungeon to spread out, creating the branching paths and dead-ends (often leading to treasure or mini-bosses) that are characteristic of the genre's best level design.
+
+```cpp
+// Core Generation Loop Snippet from AR1MapGenerator.cpp
+while (!RoomQueue.IsEmpty() && CurrentNodeID < TotalRoomCount)
+{
+    int32 ParentID;
+    RoomQueue.Dequeue(ParentID);
+    FR1MapNode& ParentNode = GeneratedMap[ParentID];
+
+    // Shuffle door directions to ensure non-linear growth
+    TArray<ER1DoorDirection> ParentDoors = ParentNode.RoomDefinition->AvailableDoors;
+    for (int32 i = ParentDoors.Num() - 1; i > 0; i--) { ParentDoors.Swap(i, FMath::RandRange(0, i)); }
+
+    for (ER1DoorDirection DoorDir : ParentDoors)
+    {
+        FIntPoint NewPos = ParentNode.GridPosition + GetDirOffset(DoorDir);
+        
+        // 1. Occupancy Check: Ensure the space is empty
+        if (GetNodeIDAt(NewPos) != -1) continue;
+
+        // 2. Cluster Prevention: Isaac-style neighbor check
+        if (GetNeighborCount(NewPos) > 1) continue;
+
+        // 3. Puzzle Piece Fit: Find a room with the matching door
+        ER1DoorDirection OppositeDir = GetOppositeDir(DoorDir);
+        UR1RoomDefinitionData* NextRoomData = PopValidRoomFromPool(CombatRoomPool, OppositeDir);
+
+        if (NextRoomData)
+        {
+            // Finalize Node and Enqueue for further branching
+            RegisterNewNode(CurrentNodeID, NewPos, NextRoomData, ParentID);
+            RoomQueue.Enqueue(CurrentNodeID++);
+        }
+    }
+}
+```
+
+By separating the **Generation Logic** (the graph growth) from the **Room Definitions** (the data assets), we created a system where designers can add entirely new room shapes or connectivity patterns without ever touching the C++ code. The generator simply treats the new `UR1RoomDefinitionData` as another piece of the puzzle.
+
+### Part 2: The Room Streaming Subsystem
+
+Once the map layout is generated, the next challenge is rendering it. In a large dungeon, spawning 50+ rooms simultaneously would lead to an immediate crash due to memory exhaustion. Conversely, loading rooms only when the player enters them causes significant "hitches" as the engine pauses to load assets.
+
+The solution was the `UR1RoomStreamingSubsystem` and its **Thermal State Machine**.
+
+#### The Thermal State Machine
+To manage the lifecycle of a room, we categorize its "temperature" based on its proximity to the player. This state machine ensures that we are always one step ahead of the player's movement, loading data into memory before it's needed and unloading it once it's no longer relevant.
+
+1.  **Cold:** The room exists only as a node in the map generator. No assets are in memory.
+2.  **Preloading:** The player is two rooms away. The subsystem begins an asynchronous load of the room’s level and its core `PrimaryDataAssets` (textures, sounds, monster meshes).
+3.  **Warm:** The level is loaded and the room is physically spawned in the world, but it is invisible and has no active AI or physics. It is "simmering," ready to be activated instantly.
+4.  **Hot:** The player is in the room or an immediately adjacent room. The room is visible, AI is active, and all systems are running.
+
+#### FR1RuntimeBudget: Engineering Stability
+To prevent memory overflows, the subsystem operates under a strict `FR1RuntimeBudget`. This is a data-driven configuration that limits how many rooms can be "Warm" or "Hot" at any given time. If the player moves quickly through the dungeon, the subsystem doesn't just keep loading; it actively "trims" the oldest Warm rooms (those with the oldest `LastTouchedTime`) to stay within the memory budget.
+
+This "Budget-Aware" streaming is critical for multi-platform compatibility. On a high-end PC, we might allow 10 Warm rooms for seamless backtracking; on a console or lower-spec machine, we can tune the `MaxPreloadedRooms` down to 3, trading a bit of backtracking speed for total system stability.
+
+```cpp
+// ER1RoomThermalState and Transition Logic from R1RoomStreamingSubsystem.h/cpp
+UENUM(BlueprintType)
+enum class ER1RoomThermalState : uint8
+{
+    Cold,       // On Disk
+    Preloading, // Async Loading
+    Warm,       // Loaded but Inactive
+    Hot,        // Active & Visible
+};
+
+void UR1RoomStreamingSubsystem::TickRoomCachePolicy()
+{
+    const double Now = FPlatformTime::Seconds();
+    for (auto& Pair : RoomStates)
+    {
+        FR1RoomRuntimeState& State = Pair.Value;
+        if (State.ThermalState == ER1RoomThermalState::Cold) continue;
+
+        // Hot rooms are protected from unloading
+        if (State.ThermalState == ER1RoomThermalState::Hot) {
+            State.LastTouchedTime = Now;
+            continue;
+        }
+
+        // Graceful Unloading: Transition Warm -> Cold after timeout
+        if (Now - State.LastTouchedTime > Budget.UnloadGraceSeconds)
+        {
+            UnloadRoomInternal(State); // Purge level and release asset handles
+            State.ThermalState = ER1RoomThermalState::Cold;
+        }
+    }
+}
+```
+
+The combination of the `AR1MapGenerator` and the `UR1RoomStreamingSubsystem` transformed the R1 world from a series of static levels into a living, breathing ecosystem. By treating the world as a data-driven graph and managing its memory via a state-aware subsystem, we achieved the "Holy Grail" of ARPG development: a seamless, non-linear, and infinitely expandable world that maintains a rock-solid 60 FPS on target hardware. This architecture doesn't just support the current game; it provides the foundation for any future expansion, allowing us to scale from small crypts to massive, sprawling underworlds with the change of a few variables in a Data Asset.
+
