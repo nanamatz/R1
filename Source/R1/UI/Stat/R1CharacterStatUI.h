@@ -4,6 +4,7 @@
 #include "UI/R1UserWidget.h"
 #include "R1Define.h"
 #include "GameplayTagContainer.h"
+#include "GameplayEffectTypes.h"
 #include "R1CharacterStatUI.generated.h"
 
 class UPanelWidget; // ScrollBox나 VerticalBox 모두 호환 가능
@@ -43,6 +44,8 @@ protected:
 
 	UFUNCTION()
 	void OnCloseButtonClicked();
+
+	void OnAttributeChanged(const FOnAttributeChangeData& Data);
 
 protected:
 	UPROPERTY(meta = (BindWidget))

@@ -42,6 +42,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Attributes")
 	int32 GetRunLevel() const { return RunLevel; }
 
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	void SetRunLevel(int32 InLevel) { RunLevel = InLevel; }
+
 	UFUNCTION(BlueprintPure, Category = "Attributes")
 	ER1CharacterClass GetPlayerClass() const { return PlayerClass; }
 

@@ -109,6 +109,20 @@ void UR1RunUpgradeComponent::Reset()
 	}
 }
 
+void UR1RunUpgradeComponent::LoadUpgradeData(int32 InAvailablePoints, const TMap<FGameplayTag, int32>& InHistory)
+{
+	AvailablePoints = InAvailablePoints;
+	InvestmentHistory = InHistory;
+
+	ApplyRunUpgradeEffect();
+
+	OnAvailablePointsChanged.Broadcast(AvailablePoints);
+	for (const auto& Pair : InvestmentHistory)
+	{
+		OnInvestmentHistoryChanged.Broadcast(Pair.Key, Pair.Value);
+	}
+}
+
 int32 UR1RunUpgradeComponent::GetInvestmentCount(FGameplayTag StatTag) const
 {
 	return InvestmentHistory.Contains(StatTag) ? InvestmentHistory[StatTag] : 0;

@@ -36,6 +36,27 @@ void UR1CharacterStatUI::NativeConstruct()
 		}
 
 		PS->OnExpChanged.AddUniqueDynamic(this, &UR1CharacterStatUI::HandleExpChanged);
+		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+		{
+			if (StatUpgradeDataTable)
+			{
+				TArray<FR1StatUpgradeData*> AllUpgradeData;
+				StatUpgradeDataTable->GetAllRows<FR1StatUpgradeData>(TEXT("StatUI_BindAttributes"), AllUpgradeData);
+
+				for (FR1StatUpgradeData* Data : AllUpgradeData)
+				{
+					// 데이터 테이블에 유효한 어트리뷰트가 세팅되어 있다면
+					if (Data->Attribute.IsValid())
+					{
+						// Task 1: 중복 바인딩 방지를 위해 기존 바인딩을 먼저 제거합니다.
+						ASC->GetGameplayAttributeValueChangeDelegate(Data->Attribute).RemoveAll(this);
+						// 해당 어트리뷰트의 변경 델리게이트를 찾아 우리의 함수를 연결해줍니다.
+						ASC->GetGameplayAttributeValueChangeDelegate(Data->Attribute).AddUObject(this, &UR1CharacterStatUI::OnAttributeChanged);
+					}
+				}
+			}
+		}
+
 	}
 	if (Button_Close)
 	{
@@ -226,4 +247,16 @@ void UR1CharacterStatUI::OnCloseButtonClicked()
 	{
 		HUD->ToggleCharacterStatUI();
 	}
+}
+
+void UR1CharacterStatUI::OnAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Changed Attribute : %s"), *Data.Attribute.GetName());
+	UE_LOG(LogTemp, Warning, TEXT("Old Data : %f"), Data.OldValue);
+	UE_LOG(LogTemp, Warning, TEXT("New Data : %f"), Data.NewValue);
+	
+	// Task 3: 전체 RefreshUI 대신 변경된 속성과 관련된 부분만 업데이트하도록 최적화합니다.
+	// 현재는 간단한 최적화를 위해 RefreshUI를 호출하지만, 
+	// 실제로는 Data.Attribute에 해당하는 Row만 찾아 InjectData를 호출하는 것이 이상적입니다.
+	RefreshUI();
 }

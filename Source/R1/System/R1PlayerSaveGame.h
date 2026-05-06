@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "GameplayTagContainer.h"
 #include "R1Define.h"
 #include "R1PlayerSaveGame.generated.h"
 
@@ -114,7 +115,38 @@ public:
 	float AttackSpeed = 0.f;
 
 	UPROPERTY(BlueprintReadWrite)
+	float AttackRange = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
 	float MoveSpeed = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float CritChance = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float CritMultiplier = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float DamageMultiplier = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float HealthRegen = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	float ManaRegen = 0.f;
+
+	UPROPERTY(BlueprintReadWrite)
+	int32 LastSettledLevel = 1;
+
+	// [Added] 런 진행도 저장 데이터
+	UPROPERTY(BlueprintReadWrite)
+	int32 RunLevel = 1;
+
+	UPROPERTY(BlueprintReadWrite)
+	int32 AvailableRunUpgradePoints = 0;
+
+	UPROPERTY(BlueprintReadWrite)
+	TMap<FGameplayTag, int32> RunUpgradeHistory;
 
 	// [Added] 플레이어 위치 및 회전 데이터
 	UPROPERTY(BlueprintReadWrite)

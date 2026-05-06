@@ -42,6 +42,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Run Upgrade")
 	void ApplyRunUpgradeEffect();
 
+	UFUNCTION(BlueprintCallable, Category = "Run Upgrade")
+	void LoadUpgradeData(int32 InAvailablePoints, const TMap<FGameplayTag, int32>& InHistory);
+
+	const TMap<FGameplayTag, int32>& GetInvestmentHistory() const { return InvestmentHistory; }
+
 	class UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
 protected:
