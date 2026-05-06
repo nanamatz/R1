@@ -17,7 +17,7 @@ FSlateColor UR1ItemFunctionLibrary::GetRarityColor(EItemRarity Rarity)
 	case EItemRarity::Epic:
 		return FSlateColor(FLinearColor(0.6f, 0.3f, 0.7f)); // 우아한 보라
 	case EItemRarity::Legendary:
-		return FSlateColor(FLinearColor(1.0f, 0.5f, 0.1f)); // 묵직한 금색
+		return FSlateColor(FLinearColor(0.8f, 0.6f, 0.2f)); // 묵직한 금색
 	}
 	return FSlateColor(FLinearColor(0.6f, 0.6f, 0.6f));
 }

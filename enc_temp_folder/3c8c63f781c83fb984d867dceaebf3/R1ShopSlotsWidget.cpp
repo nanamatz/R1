@@ -198,9 +198,11 @@ void UR1ShopSlotsWidget::RefreshShopUI()
 		// 자리(FoundPos)를 찾았다면, 인벤토리와 100% 동일한 방식으로 위젯을 생성하고 부착합니다.
 		if (bFound)
 		{
+			// 🌟 [수정 2] this 대신 GetOwningPlayer() 사용
 			UR1InventoryEntryWidget* NewEntry = CreateWidget<UR1InventoryEntryWidget>(GetOwningPlayer(), EntryWidgetClass);
 			if (NewEntry)
 			{
+				// 🌟 [수정 3] .Add()가 아니라 인벤토리처럼 정확한 인덱스에 할당!
 				int32 SlotIndex = FoundPos.Y * X_COUNT + FoundPos.X;
 				EntryWidgets[SlotIndex] = NewEntry;
 

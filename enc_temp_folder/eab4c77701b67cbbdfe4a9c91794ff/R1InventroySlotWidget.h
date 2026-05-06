@@ -60,9 +60,6 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_Background;
 
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UImage> Image_RarityBorder;
-
 private:
 	// 현재 슬롯의 상태를 기억할 변수들
 	ESlotHoverState CurrentHoverState = ESlotHoverState::Normal;
