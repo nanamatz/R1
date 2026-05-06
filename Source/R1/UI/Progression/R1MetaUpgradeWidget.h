@@ -32,6 +32,10 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UTextBlock> Text_AvailablePoints;
 
+	// UI 위에 띄울 플레이어 진행 레벨
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> Text_MetaPlayerLevel;
+
 	// 슬롯들을 동적으로 담을 박스 (ScrollBox나 WrapBox 사용 권장)
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UUniformGridPanel> Panel_SkillList;

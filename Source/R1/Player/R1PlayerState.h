@@ -3,10 +3,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
+#include "R1Define.h"
 #include "R1PlayerState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnExpChangedDelegate, float, Ratio);
-
 /**
  * 
  */
@@ -24,10 +24,11 @@ public:
 	class UR1AbilitySystemComponent* GetR1AbilitySystemComponent() const;
 	class UPlayerAttributeSet* GetPlayerAttributeSet() const;
 	class UR1AttributeSet* GetCommonAttributeSet() const;
+	class UR1RunUpgradeComponent* GetRunUpgradeComponent() const { return RunUpgradeComponent; }
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
-	UCurveTable* PlayerStatTable;
+	TObjectPtr<UCurveTable> PlayerStatTable;
 
 public:
 	// 경험치 변경 시 UI에 알릴 델리게이트
@@ -38,7 +39,28 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	float GetCurrentExpRatio() const;
 
+	UFUNCTION(BlueprintPure, Category = "Attributes")
+	int32 GetRunLevel() const { return RunLevel; }
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	void SetRunLevel(int32 InLevel) { RunLevel = InLevel; }
+
+	UFUNCTION(BlueprintPure, Category = "Attributes")
+	ER1CharacterClass GetPlayerClass() const { return PlayerClass; }
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	void SetPlayerClass(ER1CharacterClass InClass) { PlayerClass = InClass; }
+
 protected:
+	virtual void BeginPlay() override;
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	int32 RunLevel = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	ER1CharacterClass PlayerClass = ER1CharacterClass::Knight;
+
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TObjectPtr<class UR1AbilitySystemComponent> AbilitySystemComponent;
 	
@@ -47,6 +69,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr <class UPlayerAttributeSet > PlayerAttributeSet;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<class UR1RunUpgradeComponent> RunUpgradeComponent;
 
 public:
 	// 메타 업그레이드 스탯 적용 함수
@@ -61,4 +86,6 @@ protected:
 	// 에디터에서 할당할 초기화 전용 Gameplay Effect
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilitySystem|Meta")
 	TSubclassOf<class UGameplayEffect> MetaUpgradeEffectClass;
+
+	void OnLevelChanged(const struct FOnAttributeChangeData& Data);
 };

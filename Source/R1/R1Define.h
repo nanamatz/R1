@@ -1,8 +1,18 @@
 
 
 #pragma once
-
 #include "R1Define.generated.h"
+
+
+
+UENUM(BlueprintType)
+enum class ER1CharacterClass : uint8
+{
+	Knight,
+	OutLaw,
+	Fighter,
+	Wizard
+};
 
 UENUM(BlueprintType)
 enum class ER1ItemType : uint8

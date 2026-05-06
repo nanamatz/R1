@@ -11,6 +11,7 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_LookMouse);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Inventory);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_GameMenu);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_CharacterStatUI);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SkillQ);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SkillW);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SkillE);
@@ -84,6 +85,32 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Luck);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Honor);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_Revive);
+
+	// Run Stat Upgrades
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Points);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Damage);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Power);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Dex);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_AttackSpeed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_AttackRange);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Speed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_MoveSpeed);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Wisdom);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Mana);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Vitality);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Health);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Sharpness);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_CritChance);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_CritMulti);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_Spirit);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_HealthRegen);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Stat_Run_Upgrade_ManaRegen);
 
 	// Audio
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_Attack_Sword);

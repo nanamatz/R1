@@ -10,12 +10,16 @@
 
 UPlayerAttributeSet::UPlayerAttributeSet()
 {
-	InitManaRegeneration(1.f);
-	InitMana(100.f);
-	InitMaxMana(100.f);
+	InitManaRegeneration(0.f);
+	InitMana(0.f);
+	InitMaxMana(0.f);
 	InitExp(0.f);
-	InitMaxExp(10.f);
+	InitMaxExp(0.f);
 	InitLevel(1.f);
+	InitHonor(0.f);
+	InitRevive(0.f);
+	InitExtraGold(0.f);
+	InitLuck(0.f);
 }
 
 

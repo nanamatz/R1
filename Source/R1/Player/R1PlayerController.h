@@ -37,6 +37,7 @@ private:
 	void OnSetDestinationReleased();
 
 	void OnInventoryToggle();
+	void OnCharacterStatUIToggle();
 	void OnQSkill();
 	void OnWSkill();
 	void OnESkill();

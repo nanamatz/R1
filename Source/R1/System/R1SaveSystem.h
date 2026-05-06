@@ -18,7 +18,7 @@ private:
 	// 세이브 파일 이름
 	const FString RunSaveSlotName = TEXT("CurrentRunSlot");
 	const int32 RunSaveUserIndex = 0;
-	// 🌟 2. 영구 세이브 (절대 삭제되지 않음, 업데이트만 됨)
+	// 영구 세이브 파일 이름 (언락한 캐릭터, 업적, 메타 진행도 등등)
 	const FString MetaSaveSlotName = TEXT("MetaSaveSlot");
 	const int32 MetaSaveUserIndex = 0;
 
