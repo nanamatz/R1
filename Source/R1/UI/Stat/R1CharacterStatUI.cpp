@@ -251,12 +251,5 @@ void UR1CharacterStatUI::OnCloseButtonClicked()
 
 void UR1CharacterStatUI::OnAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Changed Attribute : %s"), *Data.Attribute.GetName());
-	UE_LOG(LogTemp, Warning, TEXT("Old Data : %f"), Data.OldValue);
-	UE_LOG(LogTemp, Warning, TEXT("New Data : %f"), Data.NewValue);
-	
-	// Task 3: 전체 RefreshUI 대신 변경된 속성과 관련된 부분만 업데이트하도록 최적화합니다.
-	// 현재는 간단한 최적화를 위해 RefreshUI를 호출하지만, 
-	// 실제로는 Data.Attribute에 해당하는 Row만 찾아 InjectData를 호출하는 것이 이상적입니다.
 	RefreshUI();
 }
