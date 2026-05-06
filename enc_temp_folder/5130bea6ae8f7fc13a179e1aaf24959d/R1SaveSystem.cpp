@@ -46,6 +46,7 @@ void UR1SaveSystem::DeleteSavedRun()
 		}
 	}
 	ActiveShopInventories.Empty();
+	CachedLastSettledLevel = 1; // 런 삭제 시 메모리 캐시 리셋
 }
 
 void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenerator)
@@ -170,6 +171,7 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	
 	SaveObj->ShopInventories = ActiveShopInventories;
 
+	// 💡 인라인 메타 진행도 정산 (디스크 읽기 생략)
 	int32 CurrentLevel = FMath::FloorToInt(SaveObj->Level);
 	int32 EarnedPoints = FMath::Max(0, CurrentLevel - CachedLastSettledLevel);
 
@@ -188,12 +190,11 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	{
 		if (EarnedPoints > 0)
 		{
-			//MetaSave->AvailableSkillPoints += EarnedPoints;
+			MetaSave->AvailableSkillPoints += EarnedPoints;
 
 			if (CurrentLevel > MetaSave->PlayerMetaLevel)
 			{
 				MetaSave->PlayerMetaLevel = CurrentLevel;
-				MetaSave->AvailableSkillPoints = CurrentLevel - MetaSave->PlayerMetaLevel;
 			}
 		}
 		MetaSave->CurrentMetaExp = FMath::FloorToInt(SaveObj->Exp);
@@ -207,6 +208,8 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 
 	UR1PlayerSaveGame* SaveObj = Cast<UR1PlayerSaveGame>(UGameplayStatics::LoadGameFromSlot(RunSaveSlotName, RunSaveUserIndex));
 	if (!SaveObj) return false;
+
+	CachedLastSettledLevel = SaveObj->LastSettledLevel; // 메모리 캐시 초기화
 
 	// 1. 플레이어 상태 주입
 	if (Player)
@@ -367,7 +370,7 @@ void UR1SaveSystem::ExtractAndSaveMetaProgression()
 	if (EarnedPoints > 0)
 	{
 		// 2. 포인트 지급 및 마지막 정산 레벨 기록
-		//MetaSave->AvailableSkillPoints += EarnedPoints;
+		MetaSave->AvailableSkillPoints += EarnedPoints;
 		
 		// 런 세이브의 정산 레벨 업데이트 및 즉시 저장 (중복 정산 방지 핵심)
 		RunSave->LastSettledLevel = CurrentLevel;
@@ -377,7 +380,6 @@ void UR1SaveSystem::ExtractAndSaveMetaProgression()
 		if (CurrentLevel > MetaSave->PlayerMetaLevel)
 		{
 			MetaSave->PlayerMetaLevel = CurrentLevel;
-			MetaSave->AvailableSkillPoints = CurrentLevel - MetaSave->PlayerMetaLevel;
 		}
 	}
 

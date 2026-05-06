@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -45,7 +43,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SaveSystem|Meta")
 	void SaveMetaProgression(class UR1MetaSaveGame* MetaSaveObj);
 
-	UPROPERTY(BlueprintCallable, Category = "SaveSystem|Meta")
+	UFUNCTION(BlueprintCallable, Category = "SaveSystem|Meta")
 	class UR1MetaSaveGame* LoadMetaProgression();
 
 	// 메모리 상에서 정산된 레벨을 추적하여 디스크 I/O 병목 및 중복 정산 방지
