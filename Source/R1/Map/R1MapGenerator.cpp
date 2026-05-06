@@ -698,8 +698,8 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 	if (GeneratedMap[MatchedNodeID].bIsCleared)
 	{
 		Manager->bIsCleared = true;
-		/*Manager->UnlockRoomDoors();*/
-		Manager->UnlockRoomDoorsInstantly();
+		Manager->UnlockRoomDoors();
+		//Manager->UnlockRoomDoorsInstantly();
 	}
 	else
 	{

@@ -75,7 +75,7 @@ void AR1LockDoor::OpenDoorSmoothly()
 
 void AR1LockDoor::Highlight()
 {
-	if (bIsOpened) return;
+	if (bIsOpened || !LinkedMainDoor->bCleared ) return;
 
 	if (LockDoorMesh && LockDoorMesh->IsVisible())
 	{
