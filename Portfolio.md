@@ -260,3 +260,132 @@ By decoupling combat logic into the ASC and Attribute Sets, we have built a "Com
 
 Phase 3 transformed the R1 combat system from a fragile collection of hardcoded rules into a robust, industrial-grade framework. By embracing GAS and a data-driven mindset, we created an architecture that doesn't just work for a handful of enemies, but scales to support the hundreds of unique items, abilities, and status effects required for a modern, production-ready Action RPG. This decoupling of data from logic ensures that as the game grows, the codebase remains lean, maintainable, and performant, serving as the definitive foundation for the project's future.
 
+## Phase 4: Inventory & Equipment Optimization
+
+As the scope of Project R1 expanded, the inventory and equipment systems became a significant focus for optimization. In many RPGs, inventory management is often a performance bottleneck, particularly when the system relies on spawning actual actors for every item in a player's possession. To address this, we implemented a highly efficient, data-driven architecture that separates visual representation from logical data and utilizes mathematical grid checks for high-performance management.
+
+### Part 1: The Optimized Grid Inventory
+
+The R1 inventory system was designed with a "Data-First" philosophy. The primary goal was to handle hundreds of items across multiple containers (player inventory, stash, merchant shops) with zero impact on frame time and minimal memory overhead.
+
+#### Separation of Concerns: AR1ItemActor vs. UR1ItemInstance
+A critical architectural decision was the strict separation between the **Visual Representation** (`AR1ItemActor`) and the **Logic/Data** (`UR1ItemInstance`).
+
+*   **AR1ItemActor**: This is a standard `AActor` that exists only when an item is physically present in the game world (e.g., dropped on the ground). It contains a static mesh, a collision component, and an interaction trigger. Once a player picks up the item, the actor is destroyed.
+*   **UR1ItemInstance**: This is a lightweight `UObject` that represents the item's existence within a logical container. It stores the item's state—its rarity, stack count, and a pointer to its `UR1ItemAssetData`.
+
+By using `UObject` instances instead of `AActor` instances for inventory items, we eliminated the overhead associated with the actor lifecycle, replication, and physics simulation for items that are not currently visible. This allows the system to scale to thousands of items without the performance degradation typically seen in actor-heavy implementations.
+
+#### The "Tetris-Style" Grid Mapping
+The `UR1InventorySubsystem` manages the player's inventory as a "Tetris-style" grid. Rather than a simple list, items occupy specific dimensions (e.g., a sword might be 1x3, while a ring is 1x1). 
+
+To achieve high-performance queries, the inventory is internally represented as a flat `TArray<TObjectPtr<UR1ItemInstance>>` called `GridData`. The size of this array is `Columns * Rows`. Every cell in the grid corresponds to an index in this array. If an item occupies multiple cells, every corresponding index in the `GridData` array points to the same `UR1ItemInstance`.
+
+#### O(1) Mathematical Grid Checks
+One of the key optimizations in the `UR1InventorySubsystem` is the `CanAddItemAt` function. This function performs O(1) mathematical checks to determine if an item of a specific size can be placed at a target coordinate. Instead of iterating through every item in the inventory to check for overlaps, we simply calculate the target indices in the `GridData` array and check if they are `nullptr`.
+
+```cpp
+// Optimization: O(1) Grid Validation in UR1InventorySubsystem.cpp
+bool UR1InventorySubsystem::CanAddItemAt(const FIntPoint& ItemSize, const FIntPoint& TargetPos, UR1ItemInstance* IgnoreItem)
+{
+    if (TargetPos.X < 0 || TargetPos.Y < 0) return false;
+
+    for (int32 X = 0; X < ItemSize.X; ++X)
+    {
+        for (int32 Y = 0; Y < ItemSize.Y; ++Y)
+        {
+            int32 CheckX = TargetPos.X + X;
+            int32 CheckY = TargetPos.Y + Y;
+
+            // 1. Boundary Check: Ensure the item stays within inventory limits
+            if (CheckX >= GetInventoryColumns() || CheckY >= GetInventoryRows())
+            {
+                return false;
+            }
+
+            // 2. Occupancy Check: Direct index lookup in the flat GridData array
+            int32 GridIndex = CheckY * GetInventoryColumns() + CheckX;
+            if (GridData[GridIndex] != nullptr && GridData[GridIndex] != IgnoreItem)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+```
+
+This mathematical approach ensures that inventory operations—such as dragging an item, sorting, or auto-looting—remain instantaneous regardless of how many items the player is carrying.
+
+### Part 2: The Equipment-GAS Bridge (The Receipt Pattern)
+
+While the inventory manages item storage, the equipment system manages how items actually affect the player's power. This is achieved through a specialized bridge between the inventory data and the **Gameplay Ability System (GAS)**, managed by the `UR1EquipmentManagerComponent`.
+
+#### The Receipt Pattern: FR1EquipmentActiveHandles
+The most significant challenge in equipment systems is ensuring "Zero Stat Leaks." If a player equips a helmet that provides +50 Health and then unequips it, the system must guarantee that exactly 50 Health is removed, even if multiple other effects are active.
+
+To solve this, we implemented the **Receipt Pattern**. When an item is equipped, the `UR1EquipmentManagerComponent` applies the associated `GameplayEffects` and `GameplayAbilities` to the character's `AbilitySystemComponent`. Crucially, it captures the "handles" (pointers) returned by GAS and stores them in a `FR1EquipmentActiveHandles` struct.
+
+```cpp
+// The Receipt Pattern: FR1EquipmentActiveHandles Struct
+USTRUCT(BlueprintType)
+struct FR1EquipmentActiveHandles
+{
+    GENERATED_BODY()
+
+    // Store handles for active effects (stats/buffs)
+    UPROPERTY()
+    TArray<FActiveGameplayEffectHandle> EffectHandles;
+
+    // Store handles for granted abilities (skills)
+    UPROPERTY()
+    TArray<FGameplayAbilitySpecHandle> AbilityHandles;
+
+    void Clear()
+    {
+        EffectHandles.Empty();
+        AbilityHandles.Empty();
+    }
+};
+```
+
+#### Ensuring Zero Stat Leaks
+These handles act as a "receipt" for the equipment transaction. When the item is unequipped, the system doesn't try to "undo" the math or guess which effects were applied. Instead, it looks up the specific receipt for that equipment slot and tells GAS to remove the effects associated with those exact handles.
+
+```cpp
+// Reliable Cleanup in UR1EquipmentManagerComponent.cpp
+void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
+{
+    if (!ASC) return;
+
+    // 1. Retrieve the 'Receipt' for the specific equipment slot
+    if (FR1EquipmentActiveHandles* FoundHandles = EquippedHandlesMap.Find(EquipSlot))
+    {
+        // 2. Precisely remove granted abilities using their unique handles
+        for (const FGameplayAbilitySpecHandle& AbilityHandle : FoundHandles->AbilityHandles)
+        {
+            ASC->ClearAbility(AbilityHandle);
+        }
+
+        // 3. Precisely remove granted gameplay effects (stat modifiers)
+        for (const FActiveGameplayEffectHandle& EffectHandle : FoundHandles->EffectHandles)
+        {
+            ASC->RemoveActiveGameplayEffect(EffectHandle);
+        }
+
+        // 4. Finalize removal and invalidate the receipt
+        EquippedHandlesMap.Remove(EquipSlot);
+        
+        // ... (Cleanup of associated skeletal/static meshes)
+    }
+}
+```
+
+This pattern ensures that the character's attributes remain perfectly consistent throughout the gameplay session. It allows for highly complex items that grant both passive stats (via `GameplayEffects`) and active skills (via `GameplayAbilities`), with the confidence that every modification is tracked and reversible.
+
+### Conclusion: A Scalable Foundation
+
+Phase 4 of Project R1 demonstrates the power of decoupling and data-oriented design in game systems. By treating items as lightweight data instances and utilizing a robust receipt pattern for equipment, we created a system that is not only highly performant but also incredibly reliable. 
+
+The O(1) grid logic allows for responsive UI interaction, while the GAS-Equipment bridge provides a mathematically sound way to handle character progression. This architecture ensures that as the game grows with more items, skills, and status effects, the core systems remain stable and performant, providing a professional-grade foundation for a modern Action RPG.
+
