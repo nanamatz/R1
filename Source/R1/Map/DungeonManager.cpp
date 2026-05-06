@@ -160,17 +160,17 @@ void ADungeonManager::HandleMonsterReadyToSleep(AR1Monster* DeadMonster)
 	}
 }
 
-void ADungeonManager::UnlockRoomDoorsInstantly()
-{
-	for (AR1Door* Door : RoomDoors)
-	{
-		if (IsValid(Door))
-		{
-			Door->SetLocked(false);
-			Door->OpenDoorInstantly(); // 🌟 애니메이션 없이 즉시 열기!
-		}
-	}
-}
+//void ADungeonManager::UnlockRoomDoorsInstantly()
+//{
+//	for (AR1Door* Door : RoomDoors)
+//	{
+//		if (IsValid(Door))
+//		{
+//			Door->SetLocked(false);
+//			Door->OpenDoorInstantly(); // 🌟 애니메이션 없이 즉시 열기!
+//		}
+//	}
+//}
 
 void ADungeonManager::SpawnRoomClearReward()
 {

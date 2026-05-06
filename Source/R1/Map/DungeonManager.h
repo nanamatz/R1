@@ -93,8 +93,8 @@ public:
 	UFUNCTION()
 	void HandleMonsterReadyToSleep(class AR1Monster* DeadMonster);
 
-	UFUNCTION(BlueprintCallable)
-	void UnlockRoomDoorsInstantly();
+	//UFUNCTION(BlueprintCallable)
+	//void UnlockRoomDoorsInstantly();
 public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Room State")
 	TArray<class AR1Door*> RoomDoors;

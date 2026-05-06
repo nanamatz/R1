@@ -85,18 +85,14 @@ void AR1Door::BeginPlay()
 
 void AR1Door::Highlight()
 {
-	if (!bIsOpened)
+
+	if (!bIsOpened || TargetNodeID == -1)
 	{
-		// 🌟 켜져있는 단 하나의 문만 하이라이트!
-		if (ActiveDoorMesh)
-		{
-			ActiveDoorMesh->SetRenderCustomDepth(true);
-			ActiveDoorMesh->SetCustomDepthStencilValue(252);
-		}
+		return;
 	}
 	else
 	{
-		if (ActiveDoorMesh && DoorwayHighlightMesh)
+		if (DoorwayHighlightMesh)
 		{
 			DoorwayHighlightMesh->SetRenderCustomDepth(true);
 			DoorwayHighlightMesh->SetCustomDepthStencilValue(252);
@@ -238,28 +234,28 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 	OnDoorEntered.Broadcast(DoorDirection);
 }
 
-void AR1Door::OpenDoorInstantly()
-{
-	if (bIsOpened) return;
-
-	DoorwayHighlightMesh->SetVisibility(true);
-
-	if (ActiveDoorMesh)
-	{
-		// 목표 위치로 틱 없이 즉시 텔레포트 시킵니다.
-		TargetBaseLocation = ActiveDoorMesh->GetRelativeLocation() + FVector(0.f, -200.f, 0.f);
-		ActiveDoorMesh->SetRelativeLocation(TargetBaseLocation);
-	}
-
-	bIsOpened = true;
-	bIsOpening = false; // 애니메이션을 하지 않으므로 false
-	SetActorTickEnabled(false);
-
-	if (OpenSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, OpenSound, GetActorLocation());
-	}
-}
+//void AR1Door::OpenDoorInstantly()
+//{
+//	if (bIsOpened) return;
+//
+//	DoorwayHighlightMesh->SetVisibility(true);
+//
+//	if (ActiveDoorMesh)
+//	{
+//		// 목표 위치로 틱 없이 즉시 텔레포트 시킵니다.
+//		TargetBaseLocation = ActiveDoorMesh->GetRelativeLocation() + FVector(0.f, -200.f, 0.f);
+//		ActiveDoorMesh->SetRelativeLocation(TargetBaseLocation);
+//	}
+//
+//	bIsOpened = true;
+//	bIsOpening = false; // 애니메이션을 하지 않으므로 false
+//	SetActorTickEnabled(false);
+//
+//	if (OpenSound)
+//	{
+//		UGameplayStatics::PlaySoundAtLocation(this, OpenSound, GetActorLocation());
+//	}
+//}
 
 void AR1Door::SetKeyLocked(bool bNeedsKey)
 {
