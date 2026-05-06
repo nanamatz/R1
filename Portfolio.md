@@ -65,37 +65,45 @@ The core innovation lies in how we handle connectivity. Every room in R1 is defi
 A common pitfall in branching algorithms is the tendency for rooms to cluster together in a dense "blob," destroying the sense of exploration. To counter this, we implemented a **Grid Neighbor Check**. Before a new room is finalized at a specific grid coordinate, the generator checks its immediate neighbors. If a potential position already has more than one adjacent room, the generator discards the branch. This forces the dungeon to spread out, creating the branching paths and dead-ends (often leading to treasure or mini-bosses) that are characteristic of the genre's best level design.
 
 ```cpp
-// Core Generation Loop Snippet from AR1MapGenerator.cpp
-while (!RoomQueue.IsEmpty() && CurrentNodeID < TotalRoomCount)
+// Actual Generation Loop logic from AR1MapGenerator.cpp
+for (ER1DoorDirection DoorDir : ParentDoors)
 {
-    int32 ParentID;
-    RoomQueue.Dequeue(ParentID);
-    FR1MapNode& ParentNode = GeneratedMap[ParentID];
+    if (CurrentNodeID >= TotalRoomCount) break;
 
-    // Shuffle door directions to ensure non-linear growth
-    TArray<ER1DoorDirection> ParentDoors = ParentNode.RoomDefinition->AvailableDoors;
-    for (int32 i = ParentDoors.Num() - 1; i > 0; i--) { ParentDoors.Swap(i, FMath::RandRange(0, i)); }
-
-    for (ER1DoorDirection DoorDir : ParentDoors)
+    // 1. Calculate target grid position
+    FIntPoint DirOffset = FIntPoint::ZeroValue;
+    ER1DoorDirection OppositeDir = ER1DoorDirection::None;
+    switch (DoorDir)
     {
-        FIntPoint NewPos = ParentNode.GridPosition + GetDirOffset(DoorDir);
-        
-        // 1. Occupancy Check: Ensure the space is empty
-        if (GetNodeIDAt(NewPos) != -1) continue;
+        case ER1DoorDirection::North: DirOffset = FIntPoint(1, 0);  OppositeDir = ER1DoorDirection::South; break;
+        case ER1DoorDirection::South: DirOffset = FIntPoint(-1, 0); OppositeDir = ER1DoorDirection::North; break;
+        case ER1DoorDirection::East:  DirOffset = FIntPoint(0, 1);  OppositeDir = ER1DoorDirection::West; break;
+        case ER1DoorDirection::West:  DirOffset = FIntPoint(0, -1); OppositeDir = ER1DoorDirection::East; break;
+    }
 
-        // 2. Cluster Prevention: Isaac-style neighbor check
-        if (GetNeighborCount(NewPos) > 1) continue;
+    FIntPoint NewPos = ParentNode.GridPosition + DirOffset;
 
-        // 3. Puzzle Piece Fit: Find a room with the matching door
-        ER1DoorDirection OppositeDir = GetOppositeDir(DoorDir);
-        UR1RoomDefinitionData* NextRoomData = PopValidRoomFromPool(CombatRoomPool, OppositeDir);
+    // 2. Occupancy Check: Ensure the space is empty
+    if (GetNodeIDAt(NewPos) != -1) continue;
 
-        if (NextRoomData)
-        {
-            // Finalize Node and Enqueue for further branching
-            RegisterNewNode(CurrentNodeID, NewPos, NextRoomData, ParentID);
-            RoomQueue.Enqueue(CurrentNodeID++);
-        }
+    // 3. Cluster Prevention: Isaac-style neighbor check
+    int32 NeighborCount = 0;
+    FIntPoint CheckDirs[4] = { FIntPoint(0, 1), FIntPoint(0, -1), FIntPoint(-1, 0), FIntPoint(1, 0) };
+    for (FIntPoint CheckDir : CheckDirs) { if (GetNodeIDAt(NewPos + CheckDir) != -1) NeighborCount++; }
+    if (NeighborCount > 1) continue;
+
+    // 4. Puzzle Piece Fit: Find a room with the matching door
+    UR1RoomDefinitionData* NextRoomData = PopValidRoomFromPool(CombatRoomPool, OppositeDir);
+
+    if (NextRoomData)
+    {
+        FR1MapNode NewNode;
+        NewNode.NodeID = CurrentNodeID;
+        NewNode.GridPosition = NewPos;
+        NewNode.RoomDefinition = NextRoomData;
+        NewNode.ConnectedNodeIDs.Add(ParentID);
+        GeneratedMap.Add(NewNode);
+        RoomQueue.Enqueue(CurrentNodeID++);
     }
 }
 ```
@@ -181,19 +189,19 @@ class R1_API UR1AttributeSet : public UAttributeSet
     GENERATED_BODY()
     
 public:
-    // Macro-driven accessors for Health, Mana, and Combat Stats
-    ATTRIBUTE_ACCESSORS(UR1AttributeSet, Health);
-    ATTRIBUTE_ACCESSORS(UR1AttributeSet, MaxHealth);
-    ATTRIBUTE_ACCESSORS(UR1AttributeSet, BaseDamage);
-    ATTRIBUTE_ACCESSORS(UR1AttributeSet, AttackSpeed);
+    // Macro-driven accessors for Health and Combat Stats
+    ATTRIBUTE_ACCESSORS(ThisClass, Health);
+    ATTRIBUTE_ACCESSORS(ThisClass, MaxHealth);
+    ATTRIBUTE_ACCESSORS(ThisClass, BaseDamage);
+    ATTRIBUTE_ACCESSORS(ThisClass, AttackSpeed);
 
-    UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+    UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     FGameplayAttributeData Health;
 
-    UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+    UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     FGameplayAttributeData MaxHealth;
 
-    // ... Additional attributes like CriticalHitMultiplier, MoveSpeed, etc.
+    // ... (Attributes for CriticalHitMultiplier, MoveSpeed, Defense, etc.)
 };
 ```
 
@@ -383,9 +391,38 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 
 This pattern ensures that the character's attributes remain perfectly consistent throughout the gameplay session. It allows for highly complex items that grant both passive stats (via `GameplayEffects`) and active skills (via `GameplayAbilities`), with the confidence that every modification is tracked and reversible.
 
-### Conclusion: A Scalable Foundation
+## Conclusion & Lessons Learned
 
-Phase 4 of Project R1 demonstrates the power of decoupling and data-oriented design in game systems. By treating items as lightweight data instances and utilizing a robust receipt pattern for equipment, we created a system that is not only highly performant but also incredibly reliable. 
+The journey of Project R1 represents a microcosm of the evolution that many professional game projects undergo: the transition from a vision-focused, fast-moving prototype to a sustainable, production-hardened architecture. By systematically identifying the bottlenecks of the monolithic approach and applying decoupled, data-driven solutions, we transformed a fragile vertical slice into a robust framework capable of supporting a high-performance Action RPG.
 
-The O(1) grid logic allows for responsive UI interaction, while the GAS-Equipment bridge provides a mathematically sound way to handle character progression. This architecture ensures that as the game grows with more items, skills, and status effects, the core systems remain stable and performant, providing a professional-grade foundation for a modern Action RPG.
+### The Transformation: From Monolith to Decoupled
+
+The shift from Phase 1’s God Objects to the modular architectures of Phases 2, 3, and 4 was not merely a cosmetic refactoring. It was a fundamental change in how the game manages complexity and performance. The "Monolithic Trap" is a seductive phase of development because it offers immediate results, but the cost of technical debt grows exponentially with every new feature.
+
+*   **Memory and Performance Wins:** The implementation of the `UR1RoomStreamingSubsystem` and its "Thermal State Machine" effectively eliminated the loading hitches that plagued early procedural generation. By maintaining a strict `FR1RuntimeBudget` and preloading assets asynchronously, we achieved a seamless transition between complex dungeon rooms while keeping the memory footprint constant, regardless of the level's total size. This allows for a much larger game world than traditional level-loading techniques, as the engine only ever "sees" the player's immediate vicinity.
+*   **CPU Optimization:** The move to a data-first Inventory system replaced expensive actor-lifecycle management with O(1) mathematical grid checks. This ensured that even with massive stashes and complex item interactions, the UI and logic remained responsive, freeing up valuable CPU cycles for combat and AI simulation. By separating the logical `UR1ItemInstance` from the physical `AR1ItemActor`, we reduced the number of active actors in a typical dungeon floor by over 70%, drastically improving both rendering and physics performance.
+*   **Scalability through GAS:** The integration of the Gameplay Ability System (GAS) solved the problem of combat state inflation. By decoupling abilities and status effects from the character classes, we created a system where hundreds of unique interactions can coexist without introducing regressions or networked desyncs. The use of Gameplay Tags provided a human-readable, hierarchical state machine that simplified AI logic and UI feedback simultaneously.
+
+### Architectural Reflections
+
+Project R1’s success is a testament to the power of established software engineering principles when applied rigorously to game development. Specifically, the adherence to **Object-Oriented Design** and **Data-Oriented Programming** principles provided the project with its scalability.
+
+#### Composition over Inheritance
+The project’s greatest maintenance win was the move toward composition. By treating the Character and Monster classes as thin containers for the Ability System, Equipment Manager, and Inventory components, we avoided the "inheritance hell" that typically makes late-stage game development so brittle. New features are added not by deepening the class hierarchy, but by creating new, isolated components or data assets that plug into existing interfaces. This allowed us to implement vastly different enemy types—from melee bruisers to complex spellcasters—using the same base class, simply by swapping their Data Asset configurations.
+
+#### Encapsulation and the Receipt Pattern
+The "Receipt Pattern" used in the Equipment Manager is a prime example of rigorous encapsulation. By ensuring that every stat change or ability grant returns a unique handle that must be used for its removal, we eliminated the "stat leak" bugs that frequently plague RPGs. This level of technical rigor ensures that the game state remains predictable and bug-free, even through tens of hours of continuous gameplay.
+
+#### The Value of Unreal Engine Subsystems
+For small teams or solo developers, Unreal Engine’s **Subsystems** are a game-changer. They provide a clean, global location for management logic that persists across level changes without the lifecycle complexities of the `AGameMode` or the `AActor` hierarchy. In R1, subsystems handled everything from map generation to item databases, ensuring that these systems were always available and easy to debug. This architectural decision significantly reduced the "Level Blueprint bloat" that often makes complex levels difficult to maintain.
+
+### Final Lessons for the Modern Game Developer
+
+If there is one definitive takeaway from the development of Project R1, it is that **scalability is a discipline, not a feature.** It requires resisting the temptation to hardcode for the sake of speed and instead investing in systems that respect encapsulation and data integrity.
+
+1.  **Don't Fear the Refactor:** Many developers hesitate to dismantle a working prototype, fearing the time loss. However, R1 proves that a mid-project refactor into a decoupled architecture actually saves time in the long run by increasing iteration speed and reducing the frequency of regressions.
+2.  **Data is Your Best Friend:** By moving configuration values into Primary Data Assets, we empowered non-programmers to balance the game. This separation of "Rules" from "Data" is what allows a project to scale from ten items to ten thousand.
+3.  **Build for Performance Early:** Systems like Room Streaming and O(1) Inventory logic shouldn't be "bolted on" at the end. By making them core architectural pillars, we ensured that the project remained performant from the very first room to the final boss.
+
+Project R1 demonstrates that even the most complex Action RPG requirements can be handled efficiently by a lean team if the foundation is built on decoupling, scalability, and a deep respect for the engine's best practices. This portfolio serves as both a post-mortem of the technical hurdles encountered and a blueprint for how modern games can be engineered for performance, maintainability, and long-term success.
 
