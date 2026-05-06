@@ -139,6 +139,14 @@ void UR1ShopSlotsWidget::RefreshShopUI()
 	// 🌟 [수정 1] 인벤토리와 동일하게 EntryWidgets 배열을 그리드 크기만큼 꽉 채워서 초기화
 	EntryWidgets.Init(nullptr, X_COUNT * Y_COUNT);
 
+	for (UR1InventroySlotWidget* CurSlot : SlotWidgets)
+	{
+		if (CurSlot)
+		{
+			CurSlot->SetItemRarity(false);
+		}
+	}
+
 	// 상점 내 빈칸 배치를 위한 임시 1차원 배열(그리드 맵)
 	TArray<bool> ShopGridMap;
 	ShopGridMap.Init(false, X_COUNT * Y_COUNT);
@@ -190,11 +198,9 @@ void UR1ShopSlotsWidget::RefreshShopUI()
 		// 자리(FoundPos)를 찾았다면, 인벤토리와 100% 동일한 방식으로 위젯을 생성하고 부착합니다.
 		if (bFound)
 		{
-			// 🌟 [수정 2] this 대신 GetOwningPlayer() 사용
 			UR1InventoryEntryWidget* NewEntry = CreateWidget<UR1InventoryEntryWidget>(GetOwningPlayer(), EntryWidgetClass);
 			if (NewEntry)
 			{
-				// 🌟 [수정 3] .Add()가 아니라 인벤토리처럼 정확한 인덱스에 할당!
 				int32 SlotIndex = FoundPos.Y * X_COUNT + FoundPos.X;
 				EntryWidgets[SlotIndex] = NewEntry;
 
@@ -209,6 +215,18 @@ void UR1ShopSlotsWidget::RefreshShopUI()
 				}
 
 				NewEntry->Init(this, ShopItem, ShopItem->ItemCount);
+
+				for (int32 iy = 0; iy < ItemSize.Y; ++iy)
+				{
+					for (int32 ix = 0; ix < ItemSize.X; ++ix)
+					{
+						int32 TargetIndex = (FoundPos.Y + iy) * X_COUNT + (FoundPos.X + ix);
+						if (SlotWidgets.IsValidIndex(TargetIndex) && SlotWidgets[TargetIndex])
+						{
+							SlotWidgets[TargetIndex]->SetItemRarity(true, ShopItem->ItemRarity);
+						}
+					}
+				}
 			}
 		}
 	}

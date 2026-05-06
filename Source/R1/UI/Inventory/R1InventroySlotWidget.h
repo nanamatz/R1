@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/R1UserWidget.h"
+#include "R1Define.h"
 #include "R1InventroySlotWidget.generated.h"
 
 
@@ -36,6 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void SetSlotState(ESlotHoverState InState);
 
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void SetItemRarity(bool bHasItem, EItemRarity InRarity = EItemRarity::Common);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Colors")
 	FLinearColor NormalColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -45,10 +49,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Colors")
 	FLinearColor InvalidColor = FLinearColor(1.0f, 0.1f, 0.1f, 0.8f);
 
+protected:
+	// 🌟 내부적으로 우선순위를 따져서 최종 색상을 칠하는 함수
+	void RefreshColor();
+
 public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<USizeBox> SizeBox_Root;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_Background;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> Image_RarityBorder;
+
+private:
+	// 현재 슬롯의 상태를 기억할 변수들
+	ESlotHoverState CurrentHoverState = ESlotHoverState::Normal;
+	bool bIsOccupied = false;
+	EItemRarity OccupiedRarity = EItemRarity::Common;
 };

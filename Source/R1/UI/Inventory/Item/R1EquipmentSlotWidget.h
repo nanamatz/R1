@@ -39,9 +39,21 @@ public:
 	void RefreshSlotUI();
 
 protected:
+	void RefreshColor();
+
+protected:
 	// 🌟 에디터에서 툴팁 위젯 클래스를 할당할 수 있게 해주는 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class UR1InventoryItemTooltipWidget> TooltipClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Colors")
+	FLinearColor NormalColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Colors")
+	FLinearColor ValidColor = FLinearColor(0.15f, 1.0f, 0.15f, 0.8f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Colors")
+	FLinearColor InvalidColor = FLinearColor(1.0f, 0.1f, 0.1f, 0.8f);
 
 public:
 	// 💡 에디터에서 이 슬롯이 어떤 부위인지 설정할 수 있게 합니다.
@@ -69,4 +81,8 @@ protected:
 	TObjectPtr<UImage> Image_BGIcon;
 
 	FVector2D CachedDragOffset = FVector2D::ZeroVector;
+
+private:
+	// 0: Normal, 1: Valid, 2: Invalid (ESlotHoverState와 동일한 의미)
+	int32 CurrentHoverState = 0; 
 };

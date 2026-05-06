@@ -329,6 +329,14 @@ void UR1InventorySlotsWidget::RefreshInventoryUI()
 	// 배열 포인터들도 깔끔하게 초기화합니다.
 	EntryWidgets.Init(nullptr, X_COUNT * Y_COUNT);
 
+	for (UR1InventroySlotWidget* CurSlot : SlotWidgets)
+	{
+		if (CurSlot)
+		{
+			CurSlot->SetItemRarity(false);
+		}
+	}
+
 	// 2. 서브시스템의 최신 데이터를 가져옵니다.
 	const TArray<TObjectPtr<UR1ItemInstance>>& GridData = Inventory->GetGridData();
 
@@ -355,6 +363,19 @@ void UR1InventorySlotsWidget::RefreshInventoryUI()
 
 				// 그렸다고 메모해 둠 (다음 칸에서 중복으로 안 그리게)
 				DrawnItems.Add(Item);
+
+				FIntPoint ItemSize = Item->GetItemSize();
+				for (int32 dy = 0; dy < ItemSize.Y; ++dy)
+				{
+					for (int32 dx = 0; dx < ItemSize.X; ++dx)
+					{
+						int32 TargetIndex = (y + dy) * X_COUNT + (x + dx);
+						if (SlotWidgets.IsValidIndex(TargetIndex) && SlotWidgets[TargetIndex])
+						{
+							SlotWidgets[TargetIndex]->SetItemRarity(true, Item->ItemRarity);
+						}
+					}
+				}
 			}
 		}
 	}

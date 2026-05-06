@@ -19,8 +19,7 @@
 #include "UI/R1HUD.h"
 #include "Data/R1UISoundData.h"
 #include "Player/R1PlayerController.h"
-
-
+#include "Library/R1ItemFunctionLibrary.h"
 
 void UR1EquipmentSlotWidget::NativePreConstruct()
 {
@@ -58,7 +57,8 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 {
 	Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 
-	Image_Background->SetColorAndOpacity(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+	CurrentHoverState = 0;
+	RefreshColor();
 
 	UR1DragDropOperation* DragDropOp = Cast<UR1DragDropOperation>(InOperation);
 	if (!DragDropOp || !DragDropOp->ItemInstance) return false;
@@ -201,15 +201,14 @@ bool UR1EquipmentSlotWidget::NativeOnDragOver(const FGeometry& InGeometry, const
 	// 💡 내가 속한 부위와 이 아이템의 부위가 일치하는가?
 	if (DragDropOp->ItemInstance->GetEquipSlot().Contains(EquipmentSlotType))
 	{
-		// 초록색 (알파값 0.5로 반투명하게)
-		Image_Background->SetColorAndOpacity(FLinearColor(0.0f, 1.0f, 0.0f, 0.5f));
+		CurrentHoverState = 1; // Valid
 	}
 	else
 	{
-		// 빨간색 
-		Image_Background->SetColorAndOpacity(FLinearColor(1.0f, 0.0f, 0.0f, 0.5f));
+		CurrentHoverState = 2; // Invalid
 	}
 
+	RefreshColor();
 	return true;
 }
 
@@ -217,8 +216,35 @@ void UR1EquipmentSlotWidget::NativeOnDragLeave(const FDragDropEvent& InDragDropE
 {
 	Super::NativeOnDragLeave(InDragDropEvent, InOperation);
 
-	// 🌟 마우스가 벗어나면 다시 원래 색(흰색)으로 복구
-	Image_Background->SetColorAndOpacity(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f));
+	// 🌟 마우스가 벗어나면 다시 원래 색으로 복구
+	CurrentHoverState = 0;
+	RefreshColor();
+}
+
+void UR1EquipmentSlotWidget::RefreshColor()
+{
+	if (!Image_Background) return;
+
+	if (CurrentHoverState == 1) // Valid
+	{
+		Image_Background->SetColorAndOpacity(ValidColor);
+	}
+	else if (CurrentHoverState == 2) // Invalid
+	{
+		Image_Background->SetColorAndOpacity(InvalidColor);
+	}
+	else
+	{
+		if (EquippedItem)
+		{
+			FSlateColor RarityColor = UR1ItemFunctionLibrary::GetRarityColor(EquippedItem->ItemRarity);
+			Image_Background->SetColorAndOpacity(RarityColor.GetSpecifiedColor());
+		}
+		else
+		{
+			Image_Background->SetColorAndOpacity(NormalColor);
+		}
+	}
 }
 
 void UR1EquipmentSlotWidget::RefreshSlotUI()
@@ -267,4 +293,6 @@ void UR1EquipmentSlotWidget::RefreshSlotUI()
 
 		SetToolTip(nullptr);
 	}
+
+	RefreshColor();
 }
