@@ -147,4 +147,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool ConsumeKeyItem();
+
+private:
+	int32 MaxStack = 999; // 최대 겹치기 개수
 };

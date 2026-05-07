@@ -273,8 +273,6 @@ bool UR1InventorySubsystem::AddItemAt(UR1ItemAssetData* InItemData, EItemRarity 
 
 	if (bIsStackable)
 	{
-		int32 MaxStack = 999; // 최대 겹치기 개수
-
 		for (UR1ItemInstance* ExistingItem : Items)
 		{
 			// 가방에서 나랑 완전히 똑같은 종류의 아이템을 찾았다면?

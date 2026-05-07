@@ -4,16 +4,20 @@
 #include "UI/Shop/R1ShopSlotsWidget.h"
 #include "UI/Inventory/R1InventroySlotWidget.h"
 #include "UI/Inventory/Item/R1InventoryEntryWidget.h"
+#include "UI/R1HUD.h"
+#include "UI/Shop/R1ShopWidget.h"
+
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
+
 #include "Item/R1ItemInstance.h"
 #include "Item/R1InventorySubsystem.h"
-#include "Object/R1MerchantNPC.h"
 #include "Item/R1DragDropOperation.h"
 #include "Kismet/GameplayStatics.h"
-#include "UI/R1HUD.h"
+#include "Object/R1MerchantNPC.h"
+
 #include "Data/R1UISoundData.h"
 #include "Data/R1ItemAssetData.h"
 
@@ -135,6 +139,16 @@ void UR1ShopSlotsWidget::RefreshShopUI()
 	if (!CurrentNPC || !CanvasPanel_Entries || !EntryWidgetClass) return;
 
 	CanvasPanel_Entries->ClearChildren();
+
+	// 🌟 [수정] 부모인 UR1ShopWidget에게도 NPC 정보(이름, 초상화, 대사 등)를 다시 확인하도록 요청합니다.
+	// 이는 아이템 구매 후나 기타 UI 갱신 시 GreetingText 등이 사라지는 현상을 방지합니다.
+	if (UR1ShopWidget* ParentShop = GetTypedOuter<UR1ShopWidget>())
+	{
+		if (CurrentNPC && CurrentNPC->CurrentNPCData)
+		{
+			ParentShop->InitShopNPC(CurrentNPC->CurrentNPCData);
+		}
+	}
 
 	// 🌟 [수정 1] 인벤토리와 동일하게 EntryWidgets 배열을 그리드 크기만큼 꽉 채워서 초기화
 	EntryWidgets.Init(nullptr, X_COUNT * Y_COUNT);
