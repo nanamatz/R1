@@ -109,8 +109,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Room Streaming")
 	ER1RoomThermalState GetRoomState(UR1RoomDefinitionData* RoomDefinition) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
-	bool CanOpenDoorImmediately(UR1RoomDefinitionData* RoomDefinition) const;
+	//UFUNCTION(BlueprintCallable, Category = "Room Streaming")
+	//bool CanOpenDoorImmediately(UR1RoomDefinitionData* RoomDefinition) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
 	void TickRoomCachePolicy();

@@ -192,8 +192,8 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 
 			if (CurrentLevel > MetaSave->PlayerMetaLevel)
 			{
+				MetaSave->AvailableSkillPoints += (CurrentLevel - MetaSave->PlayerMetaLevel);
 				MetaSave->PlayerMetaLevel = CurrentLevel;
-				MetaSave->AvailableSkillPoints = CurrentLevel - MetaSave->PlayerMetaLevel;
 			}
 		}
 		MetaSave->CurrentMetaExp = FMath::FloorToInt(SaveObj->Exp);
@@ -376,8 +376,8 @@ void UR1SaveSystem::ExtractAndSaveMetaProgression()
 		// 메타 레벨 갱신 (최고 레벨 기록)
 		if (CurrentLevel > MetaSave->PlayerMetaLevel)
 		{
+			MetaSave->AvailableSkillPoints += (CurrentLevel - MetaSave->PlayerMetaLevel);
 			MetaSave->PlayerMetaLevel = CurrentLevel;
-			MetaSave->AvailableSkillPoints = CurrentLevel - MetaSave->PlayerMetaLevel;
 		}
 	}
 

@@ -47,4 +47,7 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UTextBlock> Text_Greeting;
+
+	// 현재 표시 중인 대사를 저장하여 리프레시 시에도 바뀌지 않게 합니다.
+	FText CachedGreeting;
 };

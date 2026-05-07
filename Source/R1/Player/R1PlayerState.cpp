@@ -10,6 +10,8 @@
 #include "DataTable/R1MetaUpgradeData.h"
 #include "Player/R1RunUpgradeComponent.h"
 #include "GameplayEffectExtension.h"
+#include "Map/R1MapGenerator.h"
+#include "Kismet/GameplayStatics.h"
 
 AR1PlayerState::AR1PlayerState(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -194,6 +196,12 @@ void AR1PlayerState::OnLevelChanged(const FOnAttributeChangeData& Data)
 		if (RunUpgradeComponent)
 		{
 			RunUpgradeComponent->AddPoints(RunUpgradeComponent->GetPointsPerLevel() * LevelDelta);
+		}
+
+		// [Added] 레벨 업 시 자동 저장 트리거 (메타 진행도 유실 방지)
+		if (AR1MapGenerator* MapGen = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(GetWorld(), AR1MapGenerator::StaticClass())))
+		{
+			MapGen->TriggerAutoSave();
 		}
 	}
 }

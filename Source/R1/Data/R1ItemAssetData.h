@@ -28,17 +28,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
 	EItemRarity ItemRarity = EItemRarity::Common;
 
-	// 🌟 [핵심] 희귀도에 따라 가중치를 스스로 계산해서 반환하는 함수
-	// (기획에 맞게 수치는 자유롭게 조절하세요. 높을수록 잘 나옵니다.)
 	float GetDropWeight() const
 	{
 		switch (ItemRarity)
 		{
-		case EItemRarity::Common:		return 1000.0f; // 70% 확률 수준
-		case EItemRarity::Uncommon:		return 300.0f;  // 20%
-		case EItemRarity::Rare:			return 100.0f;  // 7%
-		case EItemRarity::Epic:			return 30.0f;   // 2%
-		case EItemRarity::Legendary:	return 5.0f;    // 0.X%대 극악의 확률
+		case EItemRarity::Common:		return 900.0f; 
+		case EItemRarity::Uncommon:		return 550.0f;  
+		case EItemRarity::Rare:			return 300.0f;  
+		case EItemRarity::Epic:			return 100.0f;   
+		case EItemRarity::Legendary:	return 50.0f;   
 		default:						return 0.0f;
 		}
 	}

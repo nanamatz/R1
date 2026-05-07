@@ -23,6 +23,10 @@ void UR1ShopWidget::InitShop(AR1MerchantNPC* InNPC)
 
 	ShopSlotsWidget->InitShopGrid(InNPC);
 
+	// 새로운 NPC를 만날 때만 대사를 새로 뽑을 수 있도록 캐시를 초기화할 수도 있지만,
+	// 여기서는 InitShopNPC 내부에서 판단하도록 넘깁니다.
+	CachedGreeting = FText::GetEmpty();
+
 	if (InNPC->CurrentNPCData)
 	{
 		InitShopNPC(InNPC->CurrentNPCData);
@@ -37,6 +41,7 @@ void UR1ShopWidget::InitShopNPC(UR1ShopNPCData* NPCData)
 	if (Text_ShopNPC)
 	{
 		Text_ShopNPC->SetText(NPCData->NPCName);
+		Text_ShopNPC->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	}
 
 	// 2. 초상화 세팅
@@ -56,14 +61,25 @@ void UR1ShopWidget::InitShopNPC(UR1ShopNPCData* NPCData)
 
 	if (Text_Greeting)
 	{
-		// 대사 배열에 데이터가 1개 이상 있는지 안전 검사
-		if (NPCData->GreetingDialogues.Num() > 0)
+		// 이미 대사가 캐싱되어 있다면 (구매 시 리프레시 등) 새로 뽑지 않고 그대로 씁니다.
+		if (CachedGreeting.IsEmpty())
 		{
-			int32 RandomIndex = FMath::RandRange(0, NPCData->GreetingDialogues.Num() - 1);
-			FText SelectedText = NPCData->GreetingDialogues[RandomIndex];
+			if (NPCData->GreetingDialogues.Num() > 0)
+			{
+				int32 RandomIndex = FMath::RandRange(0, NPCData->GreetingDialogues.Num() - 1);
+				CachedGreeting = NPCData->GreetingDialogues[RandomIndex];
+			}
+		}
 
-			// 뽑힌 대사를 UI에 적용
-			Text_Greeting->SetText(SelectedText);
+		if (!CachedGreeting.IsEmpty())
+		{
+			Text_Greeting->SetText(CachedGreeting);
+			Text_Greeting->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		}
+		else
+		{
+			Text_Greeting->SetText(FText::GetEmpty());
+			Text_Greeting->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
 }

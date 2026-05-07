@@ -95,11 +95,11 @@ ER1RoomThermalState UR1RoomStreamingSubsystem::GetRoomState(UR1RoomDefinitionDat
 	return ER1RoomThermalState::Cold;
 }
 
-bool UR1RoomStreamingSubsystem::CanOpenDoorImmediately(UR1RoomDefinitionData* RoomDefinition) const
-{
-	const ER1RoomThermalState State = GetRoomState(RoomDefinition);
-	return State == ER1RoomThermalState::Hot;
-}
+//bool UR1RoomStreamingSubsystem::CanOpenDoorImmediately(UR1RoomDefinitionData* RoomDefinition) const
+//{
+//	const ER1RoomThermalState State = GetRoomState(RoomDefinition);
+//	return State == ER1RoomThermalState::Hot;
+//}
 
 void UR1RoomStreamingSubsystem::TickRoomCachePolicy()
 {
