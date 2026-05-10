@@ -57,6 +57,13 @@ void ADungeonManager::UnregisterMonster(AR1Character* DeadCharacter, AR1Characte
 	{
 		ActiveMonsters.Remove(DeadCharacter);
 
+		// 보스 처치 조건일 경우, 죽은 캐릭터가 보스인지 확인하여 즉시 클리어
+		if (ClearCondition == ER1RoomClearCondition::KillBoss && DeadCharacter->ActorHasTag(FName("Boss")))
+		{
+			CompleteRoom();
+			return;
+		}
+
 		if (ActiveMonsters.Num() == 0)
 		{
 			CompleteRoom();

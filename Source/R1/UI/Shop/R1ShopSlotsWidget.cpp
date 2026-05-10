@@ -140,7 +140,6 @@ void UR1ShopSlotsWidget::RefreshShopUI()
 
 	CanvasPanel_Entries->ClearChildren();
 
-	// 🌟 [수정] 부모인 UR1ShopWidget에게도 NPC 정보(이름, 초상화, 대사 등)를 다시 확인하도록 요청합니다.
 	// 이는 아이템 구매 후나 기타 UI 갱신 시 GreetingText 등이 사라지는 현상을 방지합니다.
 	if (UR1ShopWidget* ParentShop = GetTypedOuter<UR1ShopWidget>())
 	{

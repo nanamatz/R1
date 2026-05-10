@@ -23,6 +23,8 @@ public:
 
     void ShowMonsterInfo(class AR1Monster* Monster);
     void HideMonsterInfo();
+    void ShowBossInfo(class AR1Boss* InBoss);
+    void HideBossInfo();
 
     //UUserWidget* GetInventoryWidget() const { return InventoryUIWidget; }
     //UUserWidget* GetBaseUIWidget() const { return BaseUIWidget; }
@@ -120,4 +122,5 @@ private:
     bool bIsFloorGuidePending = false;
     ER1FloorLevel PendingFloorLevel;
 
+    TWeakObjectPtr<class AR1Boss> CurrentBoss;
 };
