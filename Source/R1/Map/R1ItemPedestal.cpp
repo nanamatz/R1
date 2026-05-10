@@ -57,28 +57,7 @@ void AR1ItemPedestal::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 
 	if (bIsSpawned) return;
 
-	// 2. 가중치 기반 확률 계산
-	float TotalWeight = 0.0f;
-	for (UR1ItemAssetData* ItemData : TreasureLootPool->DropItems)
-	{
-		if (ItemData) TotalWeight += ItemData->GetDropWeight();
-	}
-
-	float RandomValue = FMath::FRandRange(0.0f, TotalWeight);
-	float AccumulatedWeight = 0.0f;
-	UR1ItemAssetData* SelectedItem = nullptr;
-
-	for (UR1ItemAssetData* ItemData : TreasureLootPool->DropItems)
-	{
-		if (!ItemData) continue;
-
-		AccumulatedWeight += ItemData->GetDropWeight();
-		if (RandomValue <= AccumulatedWeight)
-		{
-			SelectedItem = ItemData;
-			break;
-		}
-	}
+	UR1ItemAssetData* SelectedItem = UR1ItemPoolData::GetRandomItemFromPool(TreasureLootPool);
 
 	if (!SelectedItem) return;
 
