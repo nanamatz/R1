@@ -18,4 +18,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
 	TArray<TObjectPtr<UR1ItemAssetData>> DropItems;
+
+	UFUNCTION(BlueprintCallable, Category = "Loot")
+	static class UR1ItemAssetData* GetRandomItemFromPool(const UR1ItemPoolData* Pool);
 };

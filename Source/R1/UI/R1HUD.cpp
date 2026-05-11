@@ -308,6 +308,27 @@ void AR1HUD::ShowMonsterInfo(AR1Monster* Monster)
 
 void AR1HUD::HideMonsterInfo()
 {
+    if (CurrentBoss.IsValid()) return;
+
+    if (MonsterInfoWidget)
+    {
+        MonsterInfoWidget->SetMonster(nullptr);
+        MonsterInfoWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
+}
+
+void AR1HUD::ShowBossInfo(AR1Boss* InBoss)
+{
+    if (!InBoss || !MonsterInfoWidget) return;
+
+    CurrentBoss = InBoss;
+    MonsterInfoWidget->SetMonster(Cast<AR1Monster>(InBoss));
+    MonsterInfoWidget->SetVisibility(ESlateVisibility::Visible);
+}
+
+void AR1HUD::HideBossInfo()
+{
+    CurrentBoss = nullptr;
     if (MonsterInfoWidget)
     {
         MonsterInfoWidget->SetMonster(nullptr);

@@ -57,6 +57,13 @@ void ADungeonManager::UnregisterMonster(AR1Character* DeadCharacter, AR1Characte
 	{
 		ActiveMonsters.Remove(DeadCharacter);
 
+		// 보스 처치 조건일 경우, 죽은 캐릭터가 보스인지 확인하여 즉시 클리어
+		if (ClearCondition == ER1RoomClearCondition::KillBoss && DeadCharacter->ActorHasTag(FName("Boss")))
+		{
+			CompleteRoom();
+			return;
+		}
+
 		if (ActiveMonsters.Num() == 0)
 		{
 			CompleteRoom();
@@ -192,31 +199,7 @@ void ADungeonManager::SpawnRoomClearReward()
 		return;
 	}
 
-	float TotalWeight = 0.0f;
-	for (UR1ItemAssetData* ItemData : RoomClearLootPool->DropItems)
-	{
-		if (ItemData)
-		{
-			TotalWeight += ItemData->GetDropWeight(); // 🌟 아이템의 희귀도별 가중치 합산
-		}
-	}
-
-	float RandomValue = FMath::FRandRange(0.0f, TotalWeight);
-	float AccumulatedWeight = 0.0f;
-
-	UR1ItemAssetData* SelectedItem = nullptr;
-
-	for (UR1ItemAssetData* ItemData : RoomClearLootPool->DropItems)
-	{
-		if (!ItemData) continue;
-
-		AccumulatedWeight += ItemData->GetDropWeight();
-		if (RandomValue <= AccumulatedWeight)
-		{
-			SelectedItem = ItemData;
-			break;
-		}
-	}
+	UR1ItemAssetData* SelectedItem = UR1ItemPoolData::GetRandomItemFromPool(RoomClearLootPool);
 
 	if (!SelectedItem) return;
 
