@@ -14,17 +14,17 @@ class R1_API AR1Boss : public AR1Monster
 public:
     AR1Boss();
 
+public:
+	TArray<TSubclassOf<class UGameplayAbility>> GetDefaultSkillList() { return DefaultSkillAbilities; }
+	TArray<TSubclassOf<class UGameplayAbility>> GetAdditionalSkillList() { return AdditionalSkillAbilities; }
 protected:
     virtual void BeginPlay() override;
     virtual void OnDead(const TObjectPtr<class AR1Character> Attacker) override;
-
+	virtual void AddCharacterAbility() override;
 protected:
-    UPROPERTY(EditAnywhere, Category = "Loot")
-    TObjectPtr<class UR1ItemPoolData> BossLootPool;
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TArray<TSubclassOf<class UGameplayAbility>> DefaultSkillAbilities;
 
-    UPROPERTY(EditAnywhere, Category = "Loot")
-    float BossDropChance = 1.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Loot")
-    TSubclassOf<class AR1ItemActor> ItemActorClass;
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TArray<TSubclassOf<class UGameplayAbility>> AdditionalSkillAbilities;
 };

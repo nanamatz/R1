@@ -101,7 +101,7 @@ protected:
 
 public:
 	//초기화 함수
-	void AddCharacterAbility();	
+	virtual void AddCharacterAbility();	
 	void ApplyCharacterEffect();
 	virtual void InitAttributes();
 public:

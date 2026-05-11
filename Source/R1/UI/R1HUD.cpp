@@ -10,6 +10,7 @@
 #include "Blueprint/WidgetTree.h"
 #include "UI/System/R1MonsterInfoSceneWidget.h"
 #include "Character/R1Monster.h"
+#include "Character/R1Boss.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 
 void AR1HUD::BeginPlay()
