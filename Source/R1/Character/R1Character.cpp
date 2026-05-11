@@ -247,20 +247,18 @@ void AR1Character::OnWeaponChanged(bool bIsEquipped)
 
 	if (AbilitySystemComponent)
 	{
-		// 1. 기존에 부여된 공격 어빌리티가 있다면 제거
+		// 1. 기존에 부여된 기본 공격 어빌리티가 있다면 제거
 		if (AttackAbilityHandle.IsValid())
 		{
 			AbilitySystemComponent->ClearAbility(AttackAbilityHandle);
 			AttackAbilityHandle = FGameplayAbilitySpecHandle();
 		}
 
-		// 2. 무기 장착 여부에 따라 어빌리티 결정
-		TSubclassOf<UGameplayAbility> NewAbilityClass = bIsEquipped ? AttackAbilityClass : FistAttackAbilityClass;
-
-		// 3. 새 어빌리티 부여
-		if (NewAbilityClass)
+		// 2. 무기가 없을 때만 기본 공격(Fist 등) 부여
+		if (!bIsEquipped && DefaultAttackAbilityClass)
 		{
-			AttackAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(NewAbilityClass, 1));
+			AttackAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAttackAbilityClass, 1));
 		}
+		// 무기를 장착했을 때는 UR1EquipmentManagerComponent에서 아이템 데이터를 보고 어빌리티를 직접 꽂아줍니다.
 	}
 }

@@ -45,9 +45,6 @@ private:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "JumpAttack")
-	TObjectPtr<class UAnimMontage> JumpMontage;
-
-	UPROPERTY(EditAnywhere, Category = "JumpAttack")
 	TSubclassOf<class UGameplayEffect> DamageEffect;
 
 	UPROPERTY(EditAnywhere, Category = "JumpAttack")

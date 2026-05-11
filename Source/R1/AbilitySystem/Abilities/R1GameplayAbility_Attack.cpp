@@ -30,7 +30,7 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 
 	AR1Character* Attacker = Cast<AR1Character>(ActorInfo->AvatarActor);
 
-	if (Attacker && Attacker->AttackMontage)
+	if (Attacker && MontageToPlay)
 	{
 		Attacker->SetCreatureState(ECreatureState::Casting);
 		float AttackRate = 1.0f; // 기본 속도
@@ -50,7 +50,7 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 		UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this,
 			NAME_None,
-			Attacker->AttackMontage, // 재생할 몽타주
+			MontageToPlay, // 재생할 몽타주
 			AttackRate,
 			NAME_None,
 			false
@@ -74,9 +74,6 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 
 		// Task 시작!
 		WaitEventTask->ReadyForActivation();
-
-
-		/*Attacker->PlayAnimMontage(Attacker->AttackMontage);*/
 	}
 	else
 	{
@@ -164,7 +161,6 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 						// [오디오 트리거] 장착된 무기에서 소리를 가져와 GameplayCue를 실행합니다.
 						if (GameplayCueTag.IsValid() && AudioTag.IsValid())
 						{
-							USoundBase* SoundToPlay = nullptr;
 							if (AR1Player* Player = Cast<AR1Player>(SourceCharacter))
 							{
 								if (UR1EquipmentManagerComponent* EquipManager = Player->GetEquipmentComponent())

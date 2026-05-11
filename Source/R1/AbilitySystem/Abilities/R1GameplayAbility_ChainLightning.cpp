@@ -104,7 +104,6 @@ void UR1GameplayAbility_ChainLightning::ProcessNextBounce()
 
 			if (SourceActor && SourceASC)
 			{
-				USoundBase* SoundToPlay = nullptr;
 				if (AR1Player* Player = Cast<AR1Player>(SourceActor))
 				{
 					if (UR1EquipmentManagerComponent* EquipManager = Player->GetEquipmentComponent())

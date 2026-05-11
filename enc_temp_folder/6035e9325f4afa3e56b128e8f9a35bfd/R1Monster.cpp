@@ -162,8 +162,10 @@ void AR1Monster::DropGold()
 	if (FMath::RandRange(0.0f, 1.0f) < GoldDropChance)
 	{
 		FActorSpawnParameters SpawnParams;
+		// 🌟 주변에 겹치는 것이 있어도 무조건 스폰되게 설정
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+		// 🌟 라인 트레이스를 지우고, 몬스터의 중심부에서 그대로 스폰합니다.
 		FVector SpawnLocation = GetActorLocation();
 		FRotator SpawnRotation = FRotator::ZeroRotator;
 

@@ -49,14 +49,9 @@ public:
 	TObjectPtr<class UR1AttributeSet> CoreAttributeSet;
 
 public:
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TObjectPtr<class UAnimMontage> DeathAnimMontage;
-
-	UAnimMontage* GetHitReactMontage() const { return HitReactMontage; }
-
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TObjectPtr<class UAnimMontage> HitReactMontage;
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TSubclassOf<class UGameplayEffect> XpEffect;
@@ -117,9 +112,6 @@ protected:
 	// 에디터에서 이 몬스터가 사용할 비헤이비어 트리를 할당할 수 있게 뚫어줍니다.
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TObjectPtr<class UBehaviorTree> DefaultBehaviorTree;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Audio|SFX")
-	TObjectPtr<class USoundBase> HitSound;
 
 	// 몬스터가 죽을 때 나는 소리
 	UPROPERTY(EditDefaultsOnly, Category = "Audio|SFX")
