@@ -6,6 +6,14 @@
 
 
 UENUM(BlueprintType)
+enum class ER1TelegraphShape : uint8
+{
+	Circle,
+	Cone,
+	Rectangle
+};
+
+UENUM(BlueprintType)
 enum class ER1CharacterClass : uint8
 {
 	Knight,
