@@ -49,7 +49,7 @@ public:
 	TObjectPtr<class UR1AttributeSet> CoreAttributeSet;
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TObjectPtr<class UAnimMontage> DeathAnimMontage;
 
 	UAnimMontage* GetHitReactMontage() const { return HitReactMontage; }
