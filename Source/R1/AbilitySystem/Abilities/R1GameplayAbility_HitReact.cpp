@@ -37,8 +37,6 @@ void UR1GameplayAbility_HitReact::ActivateAbility(const FGameplayAbilitySpecHand
 		Monster->GetCharacterMovement()->StopMovementImmediately();
 	}
 
-	UAnimMontage* MontageToPlay = Monster->GetHitReactMontage();
-
 	if (MontageToPlay)
 	{
 		// 1. 몽타주 재생 태스크 생성

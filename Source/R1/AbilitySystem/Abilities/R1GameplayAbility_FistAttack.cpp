@@ -33,7 +33,7 @@ void UR1GameplayAbility_FistAttack::ActivateAbility(const FGameplayAbilitySpecHa
 
 	AR1Character* Attacker = Cast<AR1Character>(ActorInfo->AvatarActor);
 
-	if (Attacker && FistMontage)
+	if (Attacker && MontageToPlay)
 	{
 		Attacker->SetCreatureState(ECreatureState::Casting);
 		float AttackRate = 1.0f; // 기본 속도
@@ -54,7 +54,7 @@ void UR1GameplayAbility_FistAttack::ActivateAbility(const FGameplayAbilitySpecHa
 		UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this,
 			NAME_None,
-			FistMontage, // 재생할 몽타주
+			MontageToPlay, // 재생할 몽타주
 			AttackRate,
 			StartSectionName,
 			false
@@ -159,8 +159,6 @@ void UR1GameplayAbility_FistAttack::OnAttackEventReceived(FGameplayEventData Pay
 
 					// 나 자신에게 이벤트를 보내서, 내 몸에 장착된 패시브 GA들이 듣고 반응하게 합니다.
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceCharacter, HitEventTag, PayloadData);
-
-					USoundBase* SoundToPlay = (ComboIndex == 0) ? HitSound1 : HitSound2;
 
 					if (SoundToPlay)
 					{

@@ -110,16 +110,10 @@ public:
 	TArray<TSubclassOf<class UGameplayAbility>> StartupAbilities;
 
 	UPROPERTY(EditAnywhere, Category = "Abilities")
-	TSubclassOf<class UGameplayAbility> AttackAbilityClass;
-
-	UPROPERTY(EditAnywhere, Category = "Abilities")
-	TSubclassOf<class UGameplayAbility> FistAttackAbilityClass;
+	TSubclassOf<class UGameplayAbility> DefaultAttackAbilityClass;
 
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	TArray<TSubclassOf<class UGameplayEffect>> StartupEffects;
-
-	UPROPERTY(EditAnywhere, Category="Animation")
-	TObjectPtr<class UAnimMontage> AttackMontage;
 
 private:
 	FGameplayAbilitySpecHandle AttackAbilityHandle;

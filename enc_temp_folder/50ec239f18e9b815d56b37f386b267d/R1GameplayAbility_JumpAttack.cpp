@@ -316,7 +316,43 @@ void UR1GameplayAbility_JumpAttack::OnJumpAttackEventReceived(FGameplayEventData
 			PayloadData.Instigator = AvatarActor;
 			PayloadData.Target = CachedTarget;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AvatarActor, HitEventTag, PayloadData);
+
+			// [오디오 트리거] 장착된 무기에서 소리를 가져와 GameplayCue를 실행합니다.
+			if (GameplayCueTag.IsValid() && AudioTag.IsValid())
+			{
+				if (AR1Player* Player = Cast<AR1Player>(AvatarActor))
+				{
+					if (UR1EquipmentManagerComponent* EquipManager = Player->GetEquipmentComponent())
+					{
+						SoundToPlay = EquipManager->GetSoundByTag(ER1EquipmentSlot::Weapon, AudioTag);
+					}
+				}
+
+				if (SoundToPlay)
+				{
+					FGameplayCueParameters CueParams;
+					CueParams.SourceObject = SoundToPlay;
+					CueParams.Instigator = AvatarActor;
+					CueParams.Location = CachedTarget->GetActorLocation();
+					SourceASC->ExecuteGameplayCue(GameplayCueTag, CueParams);
+				}
+			}
 		}
+
+		/*AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor.Get());
+		if (Attacker)
+		{
+			if (Attacker->GetCreatureState() == ECreatureState::Dead)
+			{
+				Attacker->SetCreatureState(ECreatureState::Dead);
+				UE_LOG(LogTemp, Warning, TEXT("Dead"));
+			}
+			else
+			{
+				Attacker->SetCreatureState(ECreatureState::Moving);
+				UE_LOG(LogTemp, Warning, TEXT("Moving"));
+			}
+		}*/
 	}
 }
 

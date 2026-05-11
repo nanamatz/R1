@@ -27,7 +27,17 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	ER1SkillType SkillType = ER1SkillType::Passive;
+
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	TObjectPtr<class UAnimMontage> MontageToPlay;
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TObjectPtr<class USoundBase> SoundToPlay;
+
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tooltip", meta = (MultiLine = true))
 	FText AbilityDescription;
+
+	UAnimMontage* GetMontageToPlay() const { return MontageToPlay; }
+	USoundBase* GetSoundToPlay() const { return SoundToPlay; }
 };
