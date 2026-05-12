@@ -31,16 +31,13 @@ void UBTService_PrepareSkill::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 	AR1Boss* BossCharacter = Cast<AR1Boss>(AIC->GetPawn());
 	if (!BossCharacter) return;
 
-	// =========================================================
-	// 2. 근접 공격 가능 여부(CanAttack) 직접 계산
-	// =========================================================
 	bool bCanAttack = false;
 	AR1Character* Target = Cast<AR1Character>(BlackboardComp->GetValueAsObject(BBKey_TargetActor.SelectedKeyName));
 	UAbilitySystemComponent* ASC = BossCharacter->GetAbilitySystemComponent();
 
 	if (Target && ASC)
 	{
-		float AttackRange = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
+		float AttackRange = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute()) * DistanceMargin;
 		float Distance = Target->GetDistanceTo(BossCharacter);
 
 		Distance -= BossCharacter->GetCapsuleComponent()->GetScaledCapsuleRadius();
@@ -61,9 +58,6 @@ void UBTService_PrepareSkill::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 		}
 	}
 
-	// =========================================================
-	// 3. 조건에 맞는 어빌리티 배열 가져와서 랜덤 뽑기
-	// =========================================================
 	TArray<TSubclassOf<UGameplayAbility>> AbilityList = bCanAttack ? BossCharacter->GetDefaultSkillList() : BossCharacter->GetAdditionalSkillList();
 
 	if (AbilityList.Num() > 0)

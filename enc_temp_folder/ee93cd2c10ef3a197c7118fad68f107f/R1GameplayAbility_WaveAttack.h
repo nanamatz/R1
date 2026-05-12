@@ -20,7 +20,4 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
 	TObjectPtr<UParticleSystem> WaveEffect;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
-	TObjectPtr<UParticleSystem> ImpactEffect;
 };

@@ -16,7 +16,7 @@ public:
 
 	/** Circle: X=Radius, Cone: X=Radius Y=Angle, Rectangle: X=Length Y=Width */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telegraph")
-	FVector2D TelegraphSize = FVector2D(500.f, 500.f);
+	FVector2D TelegraphSize = FVector2D(5.f, 5.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telegraph")
 	float Duration = 2.0f;

@@ -51,22 +51,40 @@ void AR1TelegraphActor::InitializeTelegraph(UR1TelegraphData* InData)
 		DecalComponent->SetDecalMaterial(DecalMID);
 	}
 
+	float DecalDepth = 500.0f;
+
 	// Set size and offset based on shape
 	switch (TelegraphData->Shape)
 	{
-	case ER1TelegraphShape::Circle:
-		DecalComponent->DecalSize = FVector(100.0f, TelegraphData->TelegraphSize.X, TelegraphData->TelegraphSize.X);
-		DecalComponent->SetRelativeLocation(FVector::ZeroVector);
-		break;
-	case ER1TelegraphShape::Rectangle:
-		// X = Length (Forward), Y = Width (Side)
-		DecalComponent->DecalSize = FVector(100.0f, TelegraphData->TelegraphSize.Y, TelegraphData->TelegraphSize.X);
-		// Offset by Half-Length so the "start" of the decal is at the boss's feet
-		DecalComponent->SetRelativeLocation(FVector(TelegraphData->TelegraphSize.X / 2.0f, 0.0f, 0.0f));
-		break;
-	case ER1TelegraphShape::Cone:
-		DecalComponent->DecalSize = FVector(100.0f, TelegraphData->TelegraphSize.X, TelegraphData->TelegraphSize.X);
-		DecalComponent->SetRelativeLocation(FVector(TelegraphData->TelegraphSize.X / 2.0f, 0.0f, 0.0f));
-		break;
+		case ER1TelegraphShape::Circle:
+		{
+			// TelegraphSize.X 가 이미 반지름(Radius)이므로 그대로 사용합니다.
+			DecalComponent->DecalSize = FVector(DecalDepth, TelegraphData->TelegraphSize.X, TelegraphData->TelegraphSize.X);
+			DecalComponent->SetRelativeLocation(FVector::ZeroVector);
+			break;
+		}
+		case ER1TelegraphShape::Rectangle:
+		{
+			// [수정 포인트 3] 직사각형: X=전체길이, Y=전체너비 라고 가정할 때, 
+			// 데칼에는 절반(Half-Extents) 값으로 넣어야 크기가 정확히 맞습니다.
+			float HalfLength = TelegraphData->TelegraphSize.X / 2.0f;
+			float HalfWidth = TelegraphData->TelegraphSize.Y / 2.0f;
+
+			// 주의: DecalSize 구조는 FVector(깊이, 너비, 길이) 순서로 적용됩니다.
+			DecalComponent->DecalSize = FVector(DecalDepth, HalfWidth, HalfLength);
+
+			// 절반의 길이만큼 앞으로 밀어주면 보스 발끝에서부터 장판이 시작됩니다.
+			DecalComponent->SetRelativeLocation(FVector(HalfLength, 0.0f, 0.0f));
+			break;
+		}
+
+		case ER1TelegraphShape::Cone:
+		{
+			// 부채꼴도 마찬가지로 전체 길이를 절반으로 나누어 넣어야 합니다.
+			float HalfLength = TelegraphData->TelegraphSize.X / 2.0f;
+			DecalComponent->DecalSize = FVector(DecalDepth, HalfLength, HalfLength);
+			DecalComponent->SetRelativeLocation(FVector(HalfLength, 0.0f, 0.0f));
+			break;
+		}
 	}
 }

@@ -13,13 +13,18 @@ AR1Character::AR1Character()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
 void AR1Character::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (GetMesh())
+	{
+		GetMesh()->bReceivesDecals = false;
+	}
+
 	AddCharacterAbility();
 	ApplyCharacterEffect();
 

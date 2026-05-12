@@ -36,7 +36,10 @@ void UR1GameplayAbility_BossAttackBase::ActivateAbility(const FGameplayAbilitySp
 		SpawnParams.Owner = AvatarActor;
 		SpawnParams.Instigator = Cast<APawn>(AvatarActor);
 
-		AR1TelegraphActor* TelegraphActor = GetWorld()->SpawnActor<AR1TelegraphActor>(TelegraphActorClass, AvatarActor->GetActorLocation(), AvatarActor->GetActorRotation(), SpawnParams);
+		FRotator SpawnRotation = FRotator(0.0f, AvatarActor->GetActorRotation().Yaw, 0.0f);
+		FVector SpawnLocation = AvatarActor->GetActorLocation();
+
+		AR1TelegraphActor* TelegraphActor = GetWorld()->SpawnActor<AR1TelegraphActor>(TelegraphActorClass, SpawnLocation, SpawnRotation, SpawnParams);
 		if (TelegraphActor)
 		{
 			TelegraphActor->InitializeTelegraph(TelegraphData);

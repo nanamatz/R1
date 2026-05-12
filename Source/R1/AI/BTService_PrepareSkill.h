@@ -27,4 +27,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	struct FBlackboardKeySelector BBKey_TargetAbilityClass;
+
+
+	UPROPERTY(EditAnywhere)
+	float DistanceMargin = 0.8;
 };
