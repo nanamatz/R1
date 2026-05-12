@@ -31,6 +31,10 @@ void UBTService_PrepareSkill::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 	AR1Boss* BossCharacter = Cast<AR1Boss>(AIC->GetPawn());
 	if (!BossCharacter) return;
 
+	// 1. 이미 선택된 어빌리티가 있다면 스킵
+	UClass* CurrentTargetClass = BlackboardComp->GetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName);
+	if (CurrentTargetClass) return;
+
 	// =========================================================
 	// 2. 근접 공격 가능 여부(CanAttack) 직접 계산
 	// =========================================================

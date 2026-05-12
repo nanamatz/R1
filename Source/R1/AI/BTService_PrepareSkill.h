@@ -18,11 +18,12 @@ public:
 
 protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+	virtual void OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 public:
-	// 에디터에서 지정할 블랙보드 키
+	// 거리를 계산할 타겟(플레이어)을 가리키는 블랙보드 키
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
-	struct FBlackboardKeySelector BBKey_CanAttack;
+	struct FBlackboardKeySelector BBKey_TargetActor;
 
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	struct FBlackboardKeySelector BBKey_TargetAbilityClass;

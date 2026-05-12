@@ -1,4 +1,4 @@
-#include "AbilitySystem/Abilities/R1GameplayAbility_GroundAttack.h"
+#include "AbilitySystem/Abilities/R1GameplayAbility_WaveAttack.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Character/R1Player.h"
 #include "Data/R1TelegraphData.h"
@@ -6,7 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "R1GameplayTags.h"
 
-void UR1GameplayAbility_GroundAttack::OnAttackEventReceived(FGameplayEventData Payload)
+void UR1GameplayAbility_WaveAttack::OnAttackEventReceived(FGameplayEventData Payload)
 {
 	AActor* AvatarActor = GetAvatarActorFromActorInfo();
 	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
@@ -16,8 +16,16 @@ void UR1GameplayAbility_GroundAttack::OnAttackEventReceived(FGameplayEventData P
 		return;
 	}
 
-	FVector AttackLocation = AvatarActor->GetActorLocation();
-	float Radius = TelegraphData->TelegraphSize.X;
+	FVector BossLoc = AvatarActor->GetActorLocation();
+	FVector BossForward = AvatarActor->GetActorForwardVector();
+
+	float Length = TelegraphData->TelegraphSize.X;
+	float Width = TelegraphData->TelegraphSize.Y;
+
+	// The Box Overlap center should be Half-Length in front of the boss
+	FVector BoxCenter = BossLoc + (BossForward * (Length / 2.0f));
+	// Box Extent is half-size in each dimension
+	FVector BoxExtent = FVector(Length / 2.0f, Width / 2.0f, 100.0f); 
 
 	// Create Effect Spec
 	FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
@@ -34,7 +42,7 @@ void UR1GameplayAbility_GroundAttack::OnAttackEventReceived(FGameplayEventData P
 		return;
 	}
 
-	// Overlap Check
+	// Overlap Check (Box)
 	TArray<AActor*> IgnoreActors;
 	IgnoreActors.Add(AvatarActor);
 
@@ -42,7 +50,7 @@ void UR1GameplayAbility_GroundAttack::OnAttackEventReceived(FGameplayEventData P
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
 
-	UKismetSystemLibrary::SphereOverlapActors(GetWorld(), AttackLocation, Radius, ObjectTypes, AR1Player::StaticClass(), IgnoreActors, OverlappedActors);
+	UKismetSystemLibrary::BoxOverlapActors(GetWorld(), BoxCenter, BoxExtent, ObjectTypes, AR1Player::StaticClass(), IgnoreActors, OverlappedActors);
 
 	for (AActor* OverlappedActor : OverlappedActors)
 	{
@@ -53,5 +61,5 @@ void UR1GameplayAbility_GroundAttack::OnAttackEventReceived(FGameplayEventData P
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("GroundAttack: Hit %d actors"), OverlappedActors.Num());
+	UE_LOG(LogTemp, Log, TEXT("WaveAttack (Laser): Hit %d actors"), OverlappedActors.Num());
 }

@@ -29,7 +29,13 @@ EBTNodeResult::Type UBTTask_ExecuteSkill::ExecuteTask(UBehaviorTreeComponent& Ow
 
 	// 1. 블랙보드에서 실행할 어빌리티 클래스 읽어오기
 	UClass* TargetClass = BlackboardComp->GetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName);
-	if (!TargetClass) return EBTNodeResult::Failed;
+	if (!TargetClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BTTask_ExecuteSkill: TargetAbilityClass is NULL! (KeyName: %s)"), *BBKey_TargetAbilityClass.SelectedKeyName.ToString());
+		return EBTNodeResult::Failed;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("BTTask_ExecuteSkill: Executing Ability %s"), *GetNameSafe(TargetClass));
 
 	MyMemory->ExecutingClass = TargetClass;
 	MyMemory->CachedOwnerComp = &OwnerComp;

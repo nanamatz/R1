@@ -24,7 +24,22 @@ protected:
 	UFUNCTION()
 	void OnMontageEnded();
 
+	virtual void OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
+	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+	virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
+
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skill Data")
+	FName SkillID;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Skill Data")
+	TSubclassOf<class UGameplayEffect> CostEffectClass;
+
+	float CachedDamage = 0.0f;
+	float CachedManaCost = 0.0f;
+	float CachedCooldown = 0.0f;
+	float CachedRange = 0.0f;
+
 	UPROPERTY(EditAnywhere, Category = "Telegraph")
 	TObjectPtr<UR1TelegraphData> TelegraphData;
 

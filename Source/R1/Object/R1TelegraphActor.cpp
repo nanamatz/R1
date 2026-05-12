@@ -51,19 +51,22 @@ void AR1TelegraphActor::InitializeTelegraph(UR1TelegraphData* InData)
 		DecalComponent->SetDecalMaterial(DecalMID);
 	}
 
-	// Set size based on shape
+	// Set size and offset based on shape
 	switch (TelegraphData->Shape)
 	{
 	case ER1TelegraphShape::Circle:
-		// Decal Size: X is depth (thickness), Y and Z are width and height of the box.
-		// For a circle on the ground, Y and Z are the radius.
 		DecalComponent->DecalSize = FVector(100.0f, TelegraphData->TelegraphSize.X, TelegraphData->TelegraphSize.X);
+		DecalComponent->SetRelativeLocation(FVector::ZeroVector);
 		break;
 	case ER1TelegraphShape::Rectangle:
+		// X = Length (Forward), Y = Width (Side)
 		DecalComponent->DecalSize = FVector(100.0f, TelegraphData->TelegraphSize.Y, TelegraphData->TelegraphSize.X);
+		// Offset by Half-Length so the "start" of the decal is at the boss's feet
+		DecalComponent->SetRelativeLocation(FVector(TelegraphData->TelegraphSize.X / 2.0f, 0.0f, 0.0f));
 		break;
 	case ER1TelegraphShape::Cone:
 		DecalComponent->DecalSize = FVector(100.0f, TelegraphData->TelegraphSize.X, TelegraphData->TelegraphSize.X);
+		DecalComponent->SetRelativeLocation(FVector(TelegraphData->TelegraphSize.X / 2.0f, 0.0f, 0.0f));
 		break;
 	}
 }

@@ -4,6 +4,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "R1GameplayTags.h"
+#include "System/R1GameInstance.h"
 
 UR1GameplayAbility_BossAttackBase::UR1GameplayAbility_BossAttackBase()
 {
@@ -14,6 +15,13 @@ void UR1GameplayAbility_BossAttackBase::ActivateAbility(const FGameplayAbilitySp
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	// 1. Commit Ability (Check Cost and Cooldown)
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
 	AActor* AvatarActor = GetAvatarActorFromActorInfo();
 	if (!AvatarActor)
 	{
@@ -21,7 +29,7 @@ void UR1GameplayAbility_BossAttackBase::ActivateAbility(const FGameplayAbilitySp
 		return;
 	}
 
-	// 1. Spawn Telegraph Actor
+	// 2. Spawn Telegraph Actor
 	if (TelegraphData && TelegraphActorClass)
 	{
 		FActorSpawnParameters SpawnParams;
@@ -35,7 +43,7 @@ void UR1GameplayAbility_BossAttackBase::ActivateAbility(const FGameplayAbilitySp
 		}
 	}
 
-	// 2. Play Montage
+	// 3. Play Montage
 	UAbilityTask_PlayMontageAndWait* PlayMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("AttackMontage"), MontageToPlay);
 	if (PlayMontageTask)
 	{
@@ -45,7 +53,7 @@ void UR1GameplayAbility_BossAttackBase::ActivateAbility(const FGameplayAbilitySp
 		PlayMontageTask->ReadyForActivation();
 	}
 
-	// 3. Wait for Gameplay Event
+	// 4. Wait for Gameplay Event
 	UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AttackEventTag);
 	if (WaitEventTask)
 	{
@@ -62,4 +70,56 @@ void UR1GameplayAbility_BossAttackBase::OnAttackEventReceived(FGameplayEventData
 void UR1GameplayAbility_BossAttackBase::OnMontageEnded()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UR1GameplayAbility_BossAttackBase::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
+{
+	Super::OnAvatarSet(ActorInfo, Spec);
+
+	if (SkillID.IsNone()) return;
+
+	if (ActorInfo == nullptr || !ActorInfo->AvatarActor.IsValid()) return;
+
+	UWorld* World = ActorInfo->AvatarActor->GetWorld();
+	if (!World) return;
+
+	if (UR1GameInstance* GI = Cast<UR1GameInstance>(World->GetGameInstance()))
+	{
+		if (const FSkillDataRow* Data = GI->GetSkillData(SkillID))
+		{
+			CachedDamage = Data->Damage;
+			CachedManaCost = Data->ManaCost;
+			CachedCooldown = Data->Cooldown;
+			CachedRange = Data->Range;
+		}
+	}
+}
+
+bool UR1GameplayAbility_BossAttackBase::CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (!Super::CheckCost(Handle, ActorInfo, OptionalRelevantTags)) return false;
+
+	if (CachedManaCost <= 0.0f) return true;
+
+	if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())
+	{
+		// Bosses might use a different AttributeSet or no mana at all. 
+		// For now, let's follow the Player pattern but be careful.
+		// If we want bosses to have costs, we need to ensure they have the Mana attribute.
+	}
+
+	return true;
+}
+
+void UR1GameplayAbility_BossAttackBase::ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	if (CostEffectClass && CachedManaCost > 0.0f)
+	{
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, CostEffectClass, GetAbilityLevel(Handle, ActorInfo));
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Skill_Cost, -CachedManaCost);
+			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+		}
+	}
 }
