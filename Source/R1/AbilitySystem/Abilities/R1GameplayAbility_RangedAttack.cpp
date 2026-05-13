@@ -10,6 +10,11 @@ void UR1GameplayAbility_RangedAttack::OnAttackEventReceived(FGameplayEventData P
     AR1RangerMonster* SourceCharacter = Cast<AR1RangerMonster>(GetAvatarActorFromActorInfo());
     if (!SourceCharacter || !SourceCharacter->ProjectileClass) return;
 
+    if (SoundToPlay)
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, SourceCharacter->GetActorLocation());
+    }
+
     UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
     if (!SourceASC || !DamageEffect) return;
 
