@@ -1,12 +1,12 @@
 
 
-
 #include "AbilitySystem/Abilities/R1GameplayAbility_HitReact.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "R1GameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Character/R1Monster.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "Kismet/GameplayStatics.h"
 
 UR1GameplayAbility_HitReact::UR1GameplayAbility_HitReact(const FObjectInitializer& ObjectInitializer)
 {
@@ -24,6 +24,11 @@ void UR1GameplayAbility_HitReact::ActivateAbility(const FGameplayAbilitySpecHand
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	AR1Monster* Monster = Cast<AR1Monster>(ActorInfo->AvatarActor.Get());
+
+	if (Monster && SoundToPlay)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, Monster->GetActorLocation());
+	}
 
 	if (Monster && Monster->GetCreatureState() == ECreatureState::Dead)
 	{
