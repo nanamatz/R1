@@ -67,8 +67,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<class UWidgetComponent> ExpBarComponent;
 
-	float AttackRange;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TSubclassOf<class UGameplayEffect> LevelUpEffect;
 

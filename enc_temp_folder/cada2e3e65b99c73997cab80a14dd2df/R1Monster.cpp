@@ -47,13 +47,17 @@ void AR1Monster::BeginPlay()
 	
 	InitAttributes();
 	
-	AR1Monster* Monster = Cast<AR1Monster>(this);
-
 	if (GetMesh())
 	{
-		// 메시의 0번 슬롯 머티리얼을 조종 가능한 '다이내믹'으로 변환해서 저장합니다.
-		DissolveMaterial = GetMesh()->CreateDynamicMaterialInstance(0);
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *DissolveMaterial.GetName());
+		int32 NumMaterials = GetMesh()->GetNumMaterials();
+		for (int32 i = 0; i < NumMaterials; ++i)
+		{
+			UMaterialInstanceDynamic* DynamicMat = GetMesh()->CreateDynamicMaterialInstance(i);
+			if (DynamicMat)
+			{
+				DissolveMaterials.Add(DynamicMat);
+			}
+		}
 	}
 }
 

@@ -24,7 +24,7 @@ EBTNodeResult::Type UBTTask_DefaultAttack::ExecuteTask(UBehaviorTreeComponent& O
         // 1. 공격 어빌리티 실행 (Tag 기반)
         AR1Monster* Monster = Cast<AR1Monster>(AIC->GetPawn());
 
-        Monster->ActivateAbility(R1GameplayTags::Ability_Attack);
+        Monster->ActivateAbility(R1GameplayTags::Ability_Monster_Attack);
 
         return EBTNodeResult::Succeeded;
     }

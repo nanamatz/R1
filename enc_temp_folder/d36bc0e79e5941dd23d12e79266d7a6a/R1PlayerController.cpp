@@ -1,12 +1,11 @@
 #include "Player/R1PlayerController.h"
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
-#include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 
 #include "Character/R1Player.h"
 #include "Character/R1Monster.h"
-#include "Components/CapsuleComponent.h"
+
 #include "Data/R1InputData.h"
 
 #include "EnhancedInputComponent.h"
@@ -385,19 +384,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(R1Player->GetActorLocation(), TargetAttackActor->GetActorLocation());
 		R1Player->SetActorRotation(Rotation);
 
-		float TargetRadius = 0.0f;
-		if (TargetAttackActor->GetCapsuleComponent())
-		{
-			TargetRadius = TargetAttackActor->GetCapsuleComponent()->GetScaledCapsuleRadius();
-		}
-
-		float CurrentAttackRange = 200.0f;
-		if (UAbilitySystemComponent* ASC = R1Player->GetAbilitySystemComponent())
-		{
-			CurrentAttackRange = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
-		}
-
-		if (Direction.Length() < (CurrentAttackRange + TargetRadius))
+		if (Direction.Length() < R1Player->AttackRange)
 		{
 			StopMovement();
 			if (TargetAttackActor->GetCreatureState() == ECreatureState::Dead) return;

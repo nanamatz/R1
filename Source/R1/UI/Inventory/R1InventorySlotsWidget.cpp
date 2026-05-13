@@ -231,9 +231,9 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 				Inventory->MoveItemInGrid(DragDrop->ItemInstance, DragDrop->FromItemSlotPos, ToItemSlotPos);
 				Inventory->OnInventoryUpdated.Broadcast();
 
-				if (DragDrop->ItemInstance->GetItemData() && DragDrop->ItemInstance->GetItemData()->DropSound)
+				if (DragDrop->ItemInstance->GetItemData() && DragDrop->ItemInstance->GetItemData()->InventoryDropSound)
 				{
-					UGameplayStatics::PlaySound2D(this, DragDrop->ItemInstance->GetItemData()->DropSound);
+					UGameplayStatics::PlaySound2D(this, DragDrop->ItemInstance->GetItemData()->InventoryDropSound);
 				}
 
 				return true;

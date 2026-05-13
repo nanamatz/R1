@@ -29,8 +29,6 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_JumpAttack);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Monster_Attack);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Monster_Skill_WaveAttack);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Monster_Skill_GroundAttack);
 
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LevelUp);
@@ -40,8 +38,6 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Dead);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Casting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_HitReact);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_UnInterruptable);
-
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Skill_Magnitude);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Skill_Cost);

@@ -85,7 +85,7 @@ public:
 	FName EquipSocketName;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|UI")
-	TObjectPtr<USoundBase> DropSound;  
+	TObjectPtr<USoundBase> InventoryDropSound;  
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|UI")
 	TObjectPtr<USoundBase> EquipSound;  
@@ -94,7 +94,7 @@ public:
 	TObjectPtr<USoundBase> UnEquipSound;  
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|Gameplay")
-	TObjectPtr<USoundBase> PickupSound;
+	TObjectPtr<USoundBase> WorldLootingSound;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio|Gameplay")
 	TObjectPtr<USoundBase> WorldDropSound;

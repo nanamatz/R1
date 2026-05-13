@@ -121,7 +121,6 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 
 	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 
-
 	AActor* TargetActor = nullptr;
 
 	if (DamageEffect && SourceASC)
@@ -135,164 +134,77 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 			return;
 		}
 
-		if (SourceCharacter->IsPlayerControlled())
+		if (AR1PlayerController* PC = Cast<AR1PlayerController>(SourceCharacter->GetController()))
 		{
-			if (AR1PlayerController* PC = Cast<AR1PlayerController>(SourceCharacter->GetController()))
+			if (PC->TargetAttackActor)
 			{
-				if (PC->TargetAttackActor)
+				TargetActor = PC->TargetAttackActor;
+
+				UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+
+				if (TargetASC)
 				{
-					TargetActor = PC->TargetAttackActor;
+					SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
 
-					UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+					FGameplayEventData PayloadData;
+					PayloadData.Instigator = SourceCharacter;
+					PayloadData.Target = TargetActor;
 
-					if (TargetASC)
+					FGameplayTag HitEventTag = R1GameplayTags::Ability_Attack;
+
+					// 나 자신에게 이벤트를 보내서, 내 몸에 장착된 패시브 GA들이 듣고 반응하게 합니다.
+					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceCharacter, HitEventTag, PayloadData);
+
+					// [오디오 트리거] 장착된 무기에서 소리를 가져와 GameplayCue를 실행합니다.
+					if (GameplayCueTag.IsValid() && AudioTag.IsValid())
 					{
-						SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
-
-						FGameplayEventData PayloadData;
-						PayloadData.Instigator = SourceCharacter;
-						PayloadData.Target = TargetActor;         
-
-						FGameplayTag HitEventTag = R1GameplayTags::Ability_Attack;
-
-						// 나 자신에게 이벤트를 보내서, 내 몸에 장착된 패시브 GA들이 듣고 반응하게 합니다.
-						UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceCharacter, HitEventTag, PayloadData);
-
-						// [오디오 트리거] 장착된 무기에서 소리를 가져와 GameplayCue를 실행합니다.
-						if (GameplayCueTag.IsValid() && AudioTag.IsValid())
+						if (AR1Player* Player = Cast<AR1Player>(SourceCharacter))
 						{
-							if (AR1Player* Player = Cast<AR1Player>(SourceCharacter))
+							if (UR1EquipmentManagerComponent* EquipManager = Player->GetEquipmentComponent())
 							{
-								if (UR1EquipmentManagerComponent* EquipManager = Player->GetEquipmentComponent())
-								{
-									SoundToPlay = EquipManager->GetSoundByTag(ER1EquipmentSlot::Weapon, AudioTag);
-								}
+								SoundToPlay = EquipManager->GetSoundByTag(ER1EquipmentSlot::Weapon, AudioTag);
+							}
+						}
+
+						if (SoundToPlay)
+						{
+							FGameplayCueParameters CueParams;
+							CueParams.SourceObject = SoundToPlay;
+							CueParams.Instigator = SourceCharacter;
+
+
+							FVector StartLoc = SourceCharacter->GetActorLocation() + FVector(0, 0, 50.0f); // 명치를 향하도록 Z축 보정
+							FVector EndLoc = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
+
+							FHitResult HitResult;
+							FCollisionQueryParams TraceParams;
+							TraceParams.AddIgnoredActor(SourceCharacter);
+
+							// 공격자의 명치에서 타겟의 명치로 보이지 않는 선을 긋습니다.
+							bool bHit = SourceCharacter->GetWorld()->LineTraceSingleByChannel(
+								HitResult, StartLoc, EndLoc, ECC_Visibility, TraceParams);
+
+							if (bHit)
+							{
+								// 캡슐(피부)에 맞았다면 그 정확한 표면 지점과 각도를 사용합니다.
+								CueParams.Location = HitResult.ImpactPoint;
+								CueParams.Normal = HitResult.ImpactNormal;
+							}
+							else
+							{
+								// 만약 장애물 등으로 빗나갔다면(예외 상황) 기본 위치로 세팅
+								CueParams.Location = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
+								CueParams.Normal = (StartLoc - EndLoc).GetSafeNormal();
 							}
 
-							if (SoundToPlay)
-							{
-								FGameplayCueParameters CueParams;
-								CueParams.SourceObject = SoundToPlay;
-								CueParams.Instigator = SourceCharacter;
-
-
-								FVector StartLoc = SourceCharacter->GetActorLocation() + FVector(0, 0, 50.0f); // 명치를 향하도록 Z축 보정
-								FVector EndLoc = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
-
-								FHitResult HitResult;
-								FCollisionQueryParams TraceParams;
-								TraceParams.AddIgnoredActor(SourceCharacter);
-
-								// 공격자의 명치에서 타겟의 명치로 보이지 않는 선을 긋습니다.
-								bool bHit = SourceCharacter->GetWorld()->LineTraceSingleByChannel(
-									HitResult, StartLoc, EndLoc, ECC_Visibility, TraceParams);
-
-								if (bHit)
-								{
-									// 캡슐(피부)에 맞았다면 그 정확한 표면 지점과 각도를 사용합니다.
-									CueParams.Location = HitResult.ImpactPoint;
-									CueParams.Normal = HitResult.ImpactNormal;
-								}
-								else
-								{
-									// 만약 장애물 등으로 빗나갔다면(예외 상황) 기본 위치로 세팅
-									CueParams.Location = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
-									CueParams.Normal = (StartLoc - EndLoc).GetSafeNormal();
-								}
-
-								SourceASC->ExecuteGameplayCue(GameplayCueTag, CueParams);
-							}
+							SourceASC->ExecuteGameplayCue(GameplayCueTag, CueParams);
 						}
 					}
 				}
-				else
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Player Attacked, But TargetActor is NULL!"));
-				}
 			}
-		}
-		else
-		{
-			CheckAndApplyDamage_Sector(EffectSpecHandle, SourceCharacter, SourceASC);
-		}
-	}
-}
-
-void UR1GameplayAbility_Attack::CheckAndApplyDamage_Sector(const FGameplayEffectSpecHandle& SpecHandle, AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC)
-{
-	if (SourceCharacter == nullptr || SourceASC == nullptr)
-	{
-		return;
-	}
-
-	if (SpecHandle.IsValid() == false || SpecHandle.Data.IsValid() == false)
-	{
-		return;
-	}
-
-	UWorld* World = SourceCharacter->GetWorld();
-	if (World == nullptr)
-	{
-		return;
-	}
-
-	float AttackRange = SourceASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
-	float AttackRadius = SourceASC->GetNumericAttribute(UR1AttributeSet::GetAttackRadiusAttribute());
-	if (AttackRange <= KINDA_SMALL_NUMBER || AttackRadius <= KINDA_SMALL_NUMBER)
-	{
-		return;
-	}
-
-	TArray<FOverlapResult> OverlapResults;
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(SourceCharacter);
-
-	bool bResult = World->OverlapMultiByChannel(
-		OverlapResults,
-		SourceCharacter->GetActorLocation(),
-		FQuat::Identity,
-		ECC_GameTraceChannel2, 
-		FCollisionShape::MakeSphere(AttackRange),
-		Params
-	);
-
-	if (!bResult)
-	{
-		return;
-	}
-
-	// 2. 각도 계산 (Dot Product)
-	float DotThreshold = FMath::Cos(FMath::DegreesToRadians(AttackRadius / 2.0f));
-
-	FVector MyForward = SourceCharacter->GetActorForwardVector();
-	TSet<AActor*> ProcessedActors;
-
-	for (const FOverlapResult& Result : OverlapResults)
-	{
-		AActor* TargetActor = Result.GetActor();
-		if (!TargetActor) continue;
-
-		if (ProcessedActors.Contains(TargetActor))
-		{
-			continue; // 이미 처리한 액터는 건너뜁니다.
-		}
-
-		// 내적 계산
-		AR1Player* TargetPlayer = Cast<AR1Player>(TargetActor);
-		if (!TargetPlayer) continue;
-
-		FVector DirToTarget = (TargetPlayer->GetActorLocation() - SourceCharacter->GetActorLocation()).GetSafeNormal();
-		float DotResult = FVector::DotProduct(MyForward, DirToTarget);
-
-		// 각도 안에 있다면
-		if (DotResult >= DotThreshold)
-		{
-			// 데미지 적용
-			UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetPlayer);
-			if (TargetASC)
+			else
 			{
-				SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-				ProcessedActors.Add(TargetPlayer);
+				UE_LOG(LogTemp, Warning, TEXT("Player Attacked, But TargetActor is NULL!"));
 			}
 		}
 	}

@@ -35,8 +35,6 @@ void AR1Boss::OnDead(const TObjectPtr<AR1Character> Attacker)
             HUD->HideBossInfo();
         }
     }
-
-    //TurnOff();
 }
 
 void AR1Boss::AddCharacterAbility()
