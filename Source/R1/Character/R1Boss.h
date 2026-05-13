@@ -23,9 +23,6 @@ protected:
 	virtual void AddCharacterAbility() override;
 
 protected:
-	void OnDeathMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
-protected:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<class UGameplayAbility>> DefaultSkillAbilities;
 

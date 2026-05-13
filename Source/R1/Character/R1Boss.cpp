@@ -35,26 +35,8 @@ void AR1Boss::OnDead(const TObjectPtr<AR1Character> Attacker)
             HUD->HideBossInfo();
         }
     }
-
-    if (DeathAnimMontage)
-    {
-        UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-        if (AnimInstance)
-        {
-            FOnMontageEnded MontageEndedDelegate;
-            MontageEndedDelegate.BindUObject(this, &AR1Boss::OnDeathMontageEnded);
-            AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, DeathAnimMontage);
-        }
-    }
 }
 
-void AR1Boss::OnDeathMontageEnded(UAnimMontage* Montage, bool bInterrupted)
-{
-    if (Montage == DeathAnimMontage)
-    {
-        GetMesh()->bPauseAnims = true;
-    }
-}
 
 void AR1Boss::AddCharacterAbility()
 {
