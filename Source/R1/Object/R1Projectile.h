@@ -23,6 +23,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
 	TObjectPtr<class UParticleSystem> ImpactEffect;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	TObjectPtr<class USoundBase> ImpactSound;
+
 	FGameplayEffectSpecHandle DamageSpecHandle;
 
 protected:
