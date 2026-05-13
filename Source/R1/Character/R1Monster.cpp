@@ -51,9 +51,15 @@ void AR1Monster::BeginPlay()
 
 	if (GetMesh())
 	{
-		// 메시의 0번 슬롯 머티리얼을 조종 가능한 '다이내믹'으로 변환해서 저장합니다.
-		DissolveMaterial = GetMesh()->CreateDynamicMaterialInstance(0);
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *DissolveMaterial.GetName());
+		int32 NumMaterials = GetMesh()->GetNumMaterials();
+		for (int32 i = 0; i < NumMaterials; ++i)
+		{
+			UMaterialInstanceDynamic* DynamicMaterial = GetMesh()->CreateDynamicMaterialInstance(i);
+			if (DynamicMaterial)
+			{
+				DissolveMaterials.Add(DynamicMaterial);
+			}
+		}
 	}
 }
 
@@ -134,9 +140,12 @@ void AR1Monster::UpdateDissolve()
 	// 한 번 실행될 때마다 지워지는 양을 0.05씩(5%) 올립니다.
 	CurrentDissolve += DissolveConstant;
 	// 리모컨의 버튼을 눌러서, 언리얼에서 만든 "DissolveAmount" 다이얼 수치를 변경합니다.
-	if (DissolveMaterial)
+	for (UMaterialInstanceDynamic* Material : DissolveMaterials)
 	{
-		DissolveMaterial->SetScalarParameterValue(FName("DissolveAmount"), CurrentDissolve);
+		if (Material)
+		{
+			Material->SetScalarParameterValue(FName("DissolveAmount"), CurrentDissolve);
+		}
 	}
 
 	// 다이얼이 1.0(100%) 이상 올라가서 몬스터가 완전히 투명해졌다면?
@@ -287,9 +296,12 @@ void AR1Monster::WakeUp()
 
 	// 8. 디졸브 원상복구
 	CurrentDissolve = 0.0f;
-	if (DissolveMaterial)
+	for (UMaterialInstanceDynamic* Material : DissolveMaterials)
 	{
-		DissolveMaterial->SetScalarParameterValue(FName("DissolveAmount"), 0.0f);
+		if (Material)
+		{
+			Material->SetScalarParameterValue(FName("DissolveAmount"), 0.0f);
+		}
 	}
 
 	// 진행 중이던 데스 애니메이션 등 취소

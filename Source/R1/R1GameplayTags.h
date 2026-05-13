@@ -29,6 +29,7 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_JumpAttack);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Monster_Attack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Monster_SpecialAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Monster_Skill_WaveAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Monster_Skill_GroundAttack);
 

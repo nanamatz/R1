@@ -28,10 +28,18 @@ bool UBTDecorator_IsTooClose::CalculateRawConditionValue(UBehaviorTreeComponent&
 		if (UAbilitySystemComponent* ASC = SourceCharacter->GetAbilitySystemComponent())
 		{
 			float AttackRange = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
-			FinalTooCloseDistance = AttackRange * 0.3f;
+			float BuffuredDistance = AttackRange * 0.3f;
+			if (TooCloseDistance > BuffuredDistance)
+			{
+				FinalTooCloseDistance = TooCloseDistance;
+			}
+			else
+			{
+				FinalTooCloseDistance = BuffuredDistance;
+			}
 		}
 	}
-
+	float Distance = ControllingPawn->GetDistanceTo(Target);
 	// 거리가 계산된 값보다 작거나 같으면 true!
-	return ControllingPawn->GetDistanceTo(Target) <= FinalTooCloseDistance;
+	return Distance <= FinalTooCloseDistance;
 }

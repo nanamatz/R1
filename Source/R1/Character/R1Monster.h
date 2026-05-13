@@ -65,7 +65,7 @@ protected:
 	TSubclassOf<class UGameplayEffect> MonsterInitStatEffectClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Material")
-	TObjectPtr<class UMaterialInstanceDynamic> DissolveMaterial;
+	TArray<TObjectPtr<class UMaterialInstanceDynamic>> DissolveMaterials;
 
 	struct FTimerHandle DissolveTimerHandle;
 
