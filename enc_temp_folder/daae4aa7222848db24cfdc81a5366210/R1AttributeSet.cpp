@@ -102,9 +102,9 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 				AActor* Instigator = Data.EffectSpec.GetContext().GetEffectCauser();
 				if (AR1Character* Attacker = Cast<AR1Character>(Instigator))
 				{
-					Attacker->ApplyHitStop(0.02f);
+					Attacker->ApplyHitStop(0.08f);
 				}
-				Character->ApplyHitStop(0.03f);
+				Character->ApplyHitStop(0.08f);
 
 				if (TargetASC)
 				{

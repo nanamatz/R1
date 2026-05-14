@@ -56,6 +56,8 @@ public:
 	virtual void OnHealthChanged(float Ratio, bool bIsDamage);
 	float GetHealthRatio() const;
 
+	void ApplyHitStop(float Duration);
+
 public:
 	// 변수를 부모로 이동
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
