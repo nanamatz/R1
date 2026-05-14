@@ -139,6 +139,7 @@ void UR1GameplayAbility_FistAttack::OnAttackEventReceived(FGameplayEventData Pay
 		{
 			return;
 		}
+
 		if (AR1PlayerController* PC = Cast<AR1PlayerController>(SourceCharacter->GetController()))
 		{
 			if (PC->TargetAttackActor)
