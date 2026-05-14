@@ -33,6 +33,14 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 		UnEquipItem(EquipSlot);
 	}
 
+	// 💡 무기를 장착할 때는 기존의 기본 공격(Fist 등)을 제거합니다.
+	if (EquipSlot == ER1EquipmentSlot::Weapon && DefaultAttackAbilityHandle.IsValid())
+	{
+		ASC->ClearAbility(DefaultAttackAbilityHandle);
+		DefaultAttackAbilityHandle = FGameplayAbilitySpecHandle();
+		UpdateWeaponState(true);
+	}
+
 	FR1EquipmentActiveHandles NewHandles;
 
 	for (const TSubclassOf<UR1GameplayAbility>& AbilityClass : ItemData->GrantedAbilities)
@@ -187,6 +195,17 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 			// 맵에서 기록을 지웁니다.
 			EquippedMeshesMap.Remove(EquipSlot);
 		}
+
+		// 💡 무기를 해제했다면 다시 기본 공격을 부여합니다.
+		if (EquipSlot == ER1EquipmentSlot::Weapon)
+		{
+			if (DefaultAttackAbilityClass)
+			{
+				DefaultAttackAbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(DefaultAttackAbilityClass, 1));
+			}
+			UpdateWeaponState(false);
+		}
+
 		UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
 	}
 }
@@ -245,13 +264,30 @@ void UR1EquipmentManagerComponent::AutoAssignToEmptySlot(FGameplayAbilitySpecHan
 	UE_LOG(LogTemp, Warning, TEXT("⚠️ 스킬 단축키가 모두 꽉 찼습니다! (Q,W,E,R 모두 사용 중)"));
 }
 
+void UR1EquipmentManagerComponent::UpdateWeaponState(bool bIsEquipped)
+{
+	if (AR1Player* Player = Cast<AR1Player>(GetOwner()))
+	{
+		Player->SetIsWeaponEquipped(bIsEquipped);
+	}
+}
+
 // Called when the game starts
 void UR1EquipmentManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	ASC = Cast<UR1AbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner()));
-	
+
+	// 💡 시작할 때 무기가 장착되어 있지 않다면 기본 공격 부여
+	if (ASC && !EquippedItemsMap.Contains(ER1EquipmentSlot::Weapon))
+	{
+		if (DefaultAttackAbilityClass)
+		{
+			DefaultAttackAbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(DefaultAttackAbilityClass, 1));
+		}
+		UpdateWeaponState(false);
+	}
 }
 
 

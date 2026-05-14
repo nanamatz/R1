@@ -53,7 +53,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AssignSkillToSlot(ER1SkillSlot Slot, FGameplayAbilitySpecHandle AbilityHandle);
 
+public:
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+	TSubclassOf<class UGameplayAbility> DefaultAttackAbilityClass;
+
 private:
+	FGameplayAbilitySpecHandle DefaultAttackAbilityHandle;
+
+	void UpdateWeaponState(bool bIsEquipped);
+
 	UPROPERTY()
 	TMap<ER1SkillSlot, FGameplayAbilitySpecHandle> SkillSlotsMap;
 

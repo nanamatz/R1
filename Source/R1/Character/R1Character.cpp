@@ -6,7 +6,6 @@
 #include "GameplayEffect.h"
 #include "DataTable/CharacterStatsRow.h"
 #include "R1GameplayTags.h"
-#include "Item/R1InventorySubsystem.h"
 
 // Sets default values
 AR1Character::AR1Character()
@@ -27,18 +26,6 @@ void AR1Character::BeginPlay()
 
 	AddCharacterAbility();
 	ApplyCharacterEffect();
-
-	if (IsPlayerControlled())
-	{
-		if (UR1InventorySubsystem* InventorySubsystem = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
-		{
-			InventorySubsystem->OnWeaponChanged.AddDynamic(this, &AR1Character::OnWeaponChanged);
-
-			// Initial state
-			bool bHasWeapon = (InventorySubsystem->GetEquippedItem(ER1EquipmentSlot::Weapon) != nullptr);
-			OnWeaponChanged(bHasWeapon);
-		}
-	}
 }
 
 // Called every frame
@@ -236,26 +223,4 @@ void AR1Character::AddCharacterAbility()
 
 	ASC->AddCharacterAbilities(StartupAbilities);
 
-}
-
-void AR1Character::OnWeaponChanged(bool bIsEquipped)
-{
-	bIsWeaponEquipped = bIsEquipped;
-
-	if (AbilitySystemComponent)
-	{
-		// 1. 기존에 부여된 기본 공격 어빌리티가 있다면 제거
-		if (AttackAbilityHandle.IsValid())
-		{
-			AbilitySystemComponent->ClearAbility(AttackAbilityHandle);
-			AttackAbilityHandle = FGameplayAbilitySpecHandle();
-		}
-
-		// 2. 무기가 없을 때만 기본 공격(Fist 등) 부여
-		if (!bIsEquipped && DefaultAttackAbilityClass)
-		{
-			AttackAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAttackAbilityClass, 1));
-		}
-		// 무기를 장착했을 때는 UR1EquipmentManagerComponent에서 아이템 데이터를 보고 어빌리티를 직접 꽂아줍니다.
-	}
 }

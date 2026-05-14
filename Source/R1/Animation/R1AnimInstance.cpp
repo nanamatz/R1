@@ -37,5 +37,12 @@ void UR1AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bShouldMove = GroundSpeed > 3.f;
 	bIsFalling = MovementComponent->IsFalling();
 
-	bWeaponEquiped = Character->GetIsWeaponEquipped();
+	if (AR1Player* Player = Cast<AR1Player>(Character))
+	{
+		bWeaponEquiped = Player->GetIsWeaponEquipped();
+	}
+	else
+	{
+		bWeaponEquiped = false;
+	}
 }

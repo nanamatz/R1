@@ -50,6 +50,9 @@ public:
 public:
 	class UR1AttributeSet* GetR1AttributeSet() const { return CommonAttributeSet; }
 
+	bool GetIsWeaponEquipped() const { return bIsWeaponEquipped; }
+	void SetIsWeaponEquipped(bool bEquipped) { bIsWeaponEquipped = bEquipped; }
+
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
 
@@ -75,6 +78,8 @@ public:
 
 private:
 	void InitExpBar();
+
+	bool bIsWeaponEquipped = false;
 
 protected:
 	virtual void InitAttributes() override;
