@@ -53,15 +53,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TObjectPtr<class UAnimMontage> DeathAnimMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS")
 	TSubclassOf<class UGameplayEffect> XpEffect;
 
 protected:
-	virtual void OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker) override;
+	virtual void OnHealthChanged(float Ratio, bool bIsDamage) override;
 	virtual void InitAttributes() override;
 
 	// 몬스터 전용 초기화 GE (GE_InitMonsterStats 할당)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	TSubclassOf<class UGameplayEffect> MonsterInitStatEffectClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Material")
@@ -99,7 +99,7 @@ protected:
 
 	virtual void RewardExperience(const TObjectPtr<class AR1Character> Attacker);
 public:
-	UPROPERTY(BlueprintAssignable, Category = "Events")
+	UPROPERTY(BlueprintAssignable, Category = "Pool")
 	FOnMonsterReadyToSleep OnReadyToSleep;
 
 	UFUNCTION(BlueprintCallable, Category = "Pool")
@@ -114,11 +114,18 @@ protected:
 	TObjectPtr<class UBehaviorTree> DefaultBehaviorTree;
 
 	// 몬스터가 죽을 때 나는 소리
-	UPROPERTY(EditDefaultsOnly, Category = "Audio|SFX")
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
 	TObjectPtr<class USoundBase> DeathSound;
-
 
 public:
 	// 컨트롤러가 가져갈 수 있게 Getter 함수 제공
 	class UBehaviorTree* GetBehaviorTree() const { return DefaultBehaviorTree; }
+
+protected:
+	// 블루프린트에서 방금 만든 M_HitFlashOverlay 머티리얼을 할당받을 변수
+	UPROPERTY(EditAnywhere, Category = "Material")
+	TObjectPtr<UMaterialInterface> HitFlashOverlayMaterial;
+
+	FTimerHandle HitFlashTimerHandle;
+	void ResetHitFlash();
 };

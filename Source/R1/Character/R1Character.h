@@ -39,7 +39,6 @@ public:
 	virtual void Highlight() override;
 	virtual void UnHighlight() override;
 
-	virtual void OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker);
 	virtual void OnDead(const TObjectPtr<AR1Character> Attacker);
 
 public:
@@ -54,7 +53,7 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "State")
 	FOnDeadDelegate OnDeadDelegate;
 
-	virtual void OnHealthChanged(float Ratio);
+	virtual void OnHealthChanged(float Ratio, bool bIsDamage);
 	float GetHealthRatio() const;
 
 public:

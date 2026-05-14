@@ -32,7 +32,7 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void InitAbilitySystem() override;
 
-	virtual void OnHealthChanged(float Ratio) override;
+	virtual void OnHealthChanged(float Ratio, bool bIsDamage) override;
 protected:
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
 

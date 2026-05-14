@@ -121,10 +121,10 @@ void AR1Player::InitAbilitySystem()
 	}
 }
 
-void AR1Player::OnHealthChanged(float Ratio)
+void AR1Player::OnHealthChanged(float Ratio, bool bIsDamage)
 {
 	// 부모(AR1Character)의 UI 갱신 로직 실행
-	Super::OnHealthChanged(Ratio);
+	Super::OnHealthChanged(Ratio, bIsDamage);
 
 	// 플레이어 화면 붉어짐 효과 업데이트!
 	UpdateLowHealthEffect(Ratio);

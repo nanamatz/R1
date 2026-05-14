@@ -73,29 +73,6 @@ void AR1Character::UnHighlight()
 	GetMesh()->SetRenderCustomDepth(false);
 }
 
-void AR1Character::OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker)
-{
-	if (CommonAttributeSet == nullptr) return;
-
-	float Hp = CommonAttributeSet->GetHealth();
-	float MaxHp = CommonAttributeSet->GetMaxHealth();
-
-
-	Hp = FMath::Clamp(Hp - Damage, 0, MaxHp);
-	CommonAttributeSet->SetHealth(Hp);
-	
-	float Ratio = static_cast<float>(Hp) / MaxHp;
-
-	//OnHealthChanged(Ratio);//이 부분을 뺴고 나중에 GameplayEffect로 대신해줘야 함.
-
-	if (Hp == 0)
-	{
-		OnDead(Attacker);
-	}
-	//RefreshHpRatio();
-}
-
-
 void AR1Character::OnDead(TObjectPtr<AR1Character> Attacker)
 {
 	if (CreatureState == ECreatureState::Dead)
@@ -123,7 +100,7 @@ void AR1Character::InitAbilitySystem()
 	}
 }
 
-void AR1Character::OnHealthChanged(float Ratio)
+void AR1Character::OnHealthChanged(float Ratio, bool bIsDamage)
 {
 	// 값이 변하면 델리게이트를 통해 UI들에게 알림!
 	if(OnHpChanged.IsBound())

@@ -90,9 +90,10 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 		if (Character)
 		{
 			float Ratio = static_cast<float>(GetHealth()) / GetMaxHealth();
-			Character->OnHealthChanged(Ratio);
+			bool bIsDamage = (Data.EvaluatedData.Magnitude < 0.0f);
+			Character->OnHealthChanged(Ratio, bIsDamage);
 
-			if (Data.EvaluatedData.Magnitude < 0.0f && Character->GetCreatureState() != ECreatureState::Dead)
+			if (bIsDamage && Character->GetCreatureState() != ECreatureState::Dead)
 			{
 				UE_LOG(LogTemp, Error, TEXT("Damage : %f"), Data.EvaluatedData.Magnitude);
 				UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();

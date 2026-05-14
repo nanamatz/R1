@@ -188,17 +188,29 @@ void AR1Monster::DropGold()
 	}
 }
 
-void AR1Monster::OnDamaged(int32 Damage, TObjectPtr<AR1Character> Attacker)
+void AR1Monster::OnHealthChanged(float Ratio, bool bIsDamage)
 {
-	Super::OnDamaged(Damage, Attacker);
+	Super::OnHealthChanged(Ratio, bIsDamage);
 
-	if (AbilitySystemComponent)
+	if (bIsDamage && AbilitySystemComponent)
 	{
-		FGameplayEventData Payload;
-		Payload.Instigator = Attacker;
-		Payload.Target = this;
+		// 1. 피격 머티리얼 입히기
+		if (USkeletalMeshComponent* MeshComp = GetMesh())
+		{
+			if (HitFlashOverlayMaterial)
+			{
+				MeshComp->SetOverlayMaterial(HitFlashOverlayMaterial);
+			}
 
-		AbilitySystemComponent->HandleGameplayEvent(R1GameplayTags::Event_HitReact, &Payload);
+			// 2. 0.15초 뒤에 덧옷을 벗기는 타이머 실행
+			GetWorld()->GetTimerManager().SetTimer(
+				HitFlashTimerHandle,
+				this,
+				&AR1Monster::ResetHitFlash,
+				0.15f,
+				false
+			);
+		}
 	}
 }
 
@@ -332,6 +344,15 @@ void AR1Monster::GoToSleep()
 	//{
 	//	HpBarComponent->SetHiddenInGame(true);
 	//}
+}
+
+void AR1Monster::ResetHitFlash()
+{
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		// 3. 오버레이 머티리얼에 nullptr을 넣으면 덧옷이 사라지고 원래 모습만 남습니다.
+		MeshComp->SetOverlayMaterial(nullptr);
+	}
 }
 
 void AR1Monster::Highlight()
