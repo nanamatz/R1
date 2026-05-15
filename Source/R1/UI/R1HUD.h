@@ -20,6 +20,7 @@ public:
     void ToggleCharacterStatUI();
     void UpdateGameOverUI();
     void ToggleGameMenu();
+    void ToggleOptionsUI();
 
     void ShowMonsterInfo(class AR1Monster* Monster);
     void HideMonsterInfo();
@@ -43,6 +44,7 @@ public:
     bool bIsGameOverUIVisible;
     bool bIsGameMenuUIVisible;
     bool bIsCharacterStatUIVisible;
+    bool bIsOptionsUIVisible;
 
     UPROPERTY(EditAnywhere, Category = "UI")
     TSubclassOf<class UR1FloorGuideSceneWidget> FloorGuideSceneWidgetClass;
@@ -95,6 +97,9 @@ protected:
     TSubclassOf<UUserWidget> GameMenuUIWidgetClass;
 
     UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> OptionsWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<class UR1MonsterInfoSceneWidget> MonsterInfoWidgetClass;
 
     UPROPERTY(EditDefaultsOnly, Category = "UI")
@@ -117,6 +122,9 @@ protected:
 
     UPROPERTY(EditDefaultsOnly)
     TObjectPtr<UUserWidget> GameMenuUIWidget = nullptr;
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<UUserWidget> OptionsUIWidget = nullptr;
 
 private:
     bool bIsFloorGuidePending = false;

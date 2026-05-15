@@ -26,6 +26,7 @@ void AR1HUD::BeginPlay()
         bIsGameOverUIVisible = false;
         bIsGameMenuUIVisible = false;
         bIsCharacterStatUIVisible = false;
+        bIsOptionsUIVisible = false;
 
         if (!InventoryUIWidget)
         {
@@ -81,6 +82,20 @@ void AR1HUD::BeginPlay()
             else
             {
                 UE_LOG(LogTemp, Warning, TEXT("Failed to create GameMenuUIWidget"));
+            }
+        }
+        if (!OptionsUIWidget)
+        {
+            OptionsUIWidget = CreateWidget<UUserWidget>(PC, OptionsWidgetClass);
+            if (OptionsUIWidget)
+            {
+                OptionsUIWidget->AddToViewport(20); // 옵션이 가장 위에 오도록 설정
+                OptionsUIWidget->SetVisibility(ESlateVisibility::Hidden);
+                bIsOptionsUIVisible = false;
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Failed to create OptionsUIWidget"));
             }
         }
         if (!MiniMapUIWidget)
@@ -296,6 +311,22 @@ void AR1HUD::ToggleGameMenu()
     {
         GameMenuUIWidget->SetVisibility(ESlateVisibility::Visible);
         bIsGameMenuUIVisible = true;
+    }
+}
+
+void AR1HUD::ToggleOptionsUI()
+{
+    if (!OptionsWidgetClass || !OptionsUIWidget) return;
+
+    if (bIsOptionsUIVisible)
+    {
+        OptionsUIWidget->SetVisibility(ESlateVisibility::Hidden);
+        bIsOptionsUIVisible = false;
+    }
+    else
+    {
+        OptionsUIWidget->SetVisibility(ESlateVisibility::Visible);
+        bIsOptionsUIVisible = true;
     }
 }
 
