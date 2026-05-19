@@ -597,6 +597,15 @@ void AR1PlayerController::OnCharacterStatUIToggle()
 	}
 }
 
+void AR1PlayerController::OnOptionsUIToggle()
+{
+	AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
+	if (MyR1HUD)
+	{
+		MyR1HUD->ToggleOptionsUI();
+	}
+}
+
 void AR1PlayerController::OnQSkill()
 {
 	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)

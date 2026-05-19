@@ -40,7 +40,10 @@ void UR1GameMenuWIdget::OnResumeButtonClicked()
 
 void UR1GameMenuWIdget::OnOptionsButtonClicked()
 {
-	//TODO: 옵션 메뉴로 이동하는 로직 추가
+	if (AR1PlayerController* PC = Cast<AR1PlayerController>(GetOwningPlayer()))
+	{
+		PC->OnOptionsUIToggle();
+	}
 }
 
 void UR1GameMenuWIdget::OnExitButtonClicked()

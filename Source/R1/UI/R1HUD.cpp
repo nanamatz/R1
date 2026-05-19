@@ -12,13 +12,14 @@
 #include "Character/R1Monster.h"
 #include "Character/R1Boss.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "Player/R1PlayerController.h"
 
 void AR1HUD::BeginPlay()
 {
     Super::BeginPlay();
 
     // 안전 검사: 클래스와 플레이어 컨트롤러가 유효할 때만 생성
-    APlayerController* PC = GetOwningPlayerController();
+    AR1PlayerController* PC = Cast<AR1PlayerController>(GetOwningPlayerController());
     if (PC)
     {
         bIsInventoryUIVisible = false;
