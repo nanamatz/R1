@@ -11,11 +11,7 @@ void UR1SettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UR1SettingsSubsystem::ApplySettings()
 {
-    if (UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
-    {
-        UserSettings->ApplySettings(false);
-    }
-
+    ApplyGraphicsSettings();
     ApplyAudioSettings();
     ApplyGameplaySettings();
     ApplyControlSettings();
@@ -49,6 +45,30 @@ void UR1SettingsSubsystem::LoadSettings()
     }
 
     ApplySettings();
+}
+
+void UR1SettingsSubsystem::ApplyGraphicsSettings()
+{
+    if (UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
+    {
+        if (CurrentSettings)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[R1Settings] Applying Graphics: Res %dx%d, Mode %d, FPS %f, VSync %d"), 
+                CurrentSettings->Resolution.X, CurrentSettings->Resolution.Y, 
+                (int32)CurrentSettings->WindowMode.GetValue(), 
+                CurrentSettings->FrameRateLimit, 
+                CurrentSettings->bVSyncEnabled);
+
+            UserSettings->SetScreenResolution(CurrentSettings->Resolution);
+            UserSettings->SetFullscreenMode(CurrentSettings->WindowMode);
+            UserSettings->SetFrameRateLimit(CurrentSettings->FrameRateLimit);
+            UserSettings->SetVSyncEnabled(CurrentSettings->bVSyncEnabled);
+        }
+
+        // false: Standalone 모드 실행 시 에디터가 넘겨주는 명령행 인자(-windowed 등)를 무시하고 
+        // 우리가 설정한 값을 강제로 적용합니다.
+        UserSettings->ApplySettings(false); 
+    }
 }
 
 void UR1SettingsSubsystem::ApplyAudioSettings()
