@@ -36,7 +36,7 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
-
+public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UComboBoxString> ComboBox_Resolution;
 
@@ -44,7 +44,7 @@ protected:
 	TObjectPtr<class UComboBoxString> ComboBox_WindowMode;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UCheckBox> WBP_CheckBox_VSync;
+	TObjectPtr<class UR1SettingRow_CheckBox> WBP_CheckBox_VSync;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UR1SettingRow_Slider> WBP_Slider_FPS;

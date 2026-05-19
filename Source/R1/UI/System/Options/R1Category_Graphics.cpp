@@ -3,7 +3,7 @@
 
 #include "UI/System/Options/R1Category_Graphics.h"
 #include "Components/ComboBoxString.h"
-#include "Components/CheckBox.h"
+#include "UI/System/Options/R1SettingRow_CheckBox.h"
 #include "UI/System/Options/R1SettingRow_Slider.h"
 
 
@@ -23,12 +23,13 @@ void UR1Category_Graphics::NativeConstruct()
 
 	if (WBP_CheckBox_VSync)
 	{
+		WBP_CheckBox_VSync->InitCheckBox(FText::FromString(TEXT("VSync")), false);
 		WBP_CheckBox_VSync->OnCheckStateChanged.AddDynamic(this, &UR1Category_Graphics::HandleVSyncStateChanged);
 	}
 
 	if (WBP_Slider_FPS)
 	{
-		WBP_Slider_FPS->InitSlider(FText::FromString(TEXT("프레임 제한")), 30.0f, 144.0f, 60.0f);
+		WBP_Slider_FPS->InitSlider(FText::FromString(TEXT("Max Frame Rate")), 30.0f, 144.0f, 60.0f);
 		WBP_Slider_FPS->OnValueChanged.AddDynamic(this, &UR1Category_Graphics::HandleFPSValueChanged);
 	}
 }

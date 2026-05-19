@@ -5,6 +5,10 @@
 #include "GameFramework/GameUserSettings.h"
 #include "R1OptionsMenuWidget.generated.h"
 
+class UR1Category_Audio;
+class UR1Category_Gameplay;
+class UR1Category_Controls;
+
 UCLASS()
 class R1_API UR1OptionsMenuWidget : public UR1UserWidget
 {
@@ -45,6 +49,27 @@ protected:
 
     UFUNCTION()
     void SetTempFPS(float NewFPS);
+
+    UFUNCTION()
+    void SetTempMasterVolume(float NewVolume);
+
+    UFUNCTION()
+    void SetTempBGMVolume(float NewVolume);
+
+    UFUNCTION()
+    void SetTempSFXVolume(float NewVolume);
+
+    UFUNCTION()
+    void SetTempMinimapOpacity(float NewOpacity);
+
+    UFUNCTION()
+    void SetTempShowDamageText(bool bEnabled);
+
+    UFUNCTION()
+    void SetTempCameraShakeIntensity(float NewIntensity);
+
+    UFUNCTION()
+    void SetTempConfineMouse(bool bEnabled);
 
 protected:
     virtual void NativeConstruct() override;
@@ -87,6 +112,15 @@ protected:
 protected:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<class UR1Category_Graphics> WBP_Category_Graphics;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UR1Category_Audio> WBP_Category_Audio;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UR1Category_Gameplay> WBP_Category_Gameplay;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UR1Category_Controls> WBP_Category_Controls;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<class UButton> Button_Apply;

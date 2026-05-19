@@ -49,6 +49,7 @@ void UR1SettingRow_Slider::UpdateDisplay(float Value)
 {
     if (Text_ValueDisplay)
     {
-        Text_ValueDisplay->SetText(FText::FromString(FString::Printf(TEXT("%.0f"), Value)));
+        float ScaledValue = Value * DisplayMultiplier;
+        Text_ValueDisplay->SetText(FText::FromString(FString::Printf(TEXT("%.0f"), ScaledValue)));
     }
 }

@@ -14,6 +14,9 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "R1|Events")
     FOnSliderRowValueChangedSignature OnValueChanged;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "R1|UI")
+    float DisplayMultiplier = 1.0f;
+
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
     void InitSlider(const FText& InOptionName, float MinValue, float MaxValue, float InitialValue);
 

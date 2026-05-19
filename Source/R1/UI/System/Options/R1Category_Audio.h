@@ -23,9 +23,7 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "R1|Events")
 	FOnSFXVolumeChangedSignature OnSFXVolumeChanged;
 
-protected:
-	virtual void NativeConstruct() override;
-
+public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UR1SettingRow_Slider> WBP_Slider_Master;
 
@@ -34,6 +32,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UR1SettingRow_Slider> WBP_Slider_SFX;
+
+protected:
+	virtual void NativeConstruct() override;
 
 private:
 	UFUNCTION()

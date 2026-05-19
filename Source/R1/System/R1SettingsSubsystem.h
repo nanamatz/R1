@@ -35,6 +35,4 @@ private:
     void ApplyAudioSettings();
     void ApplyGameplaySettings();
     void ApplyControlSettings();
-
-    void ApplyControlSettings();
 };

@@ -4,6 +4,11 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/GameUserSettings.h"
 #include "UI/System/Options/R1Category_Graphics.h"
+#include "UI/System/Options/R1Category_Audio.h"
+#include "UI/System/Options/R1Category_Gameplay.h"
+#include "UI/System/Options/R1Category_Controls.h"
+#include "UI/System/Options/R1SettingRow_Slider.h"
+#include "UI/System/Options/R1SettingRow_CheckBox.h"
 #include "UI/R1HUD.h"
 #include "Components/Button.h"
 #include "Player/R1MainMenuController.h"
@@ -21,6 +26,25 @@ void UR1OptionsMenuWidget::NativeConstruct()
         WBP_Category_Graphics->OnWindowModeSelected.AddDynamic(this, &UR1OptionsMenuWidget::SetTempWindowModeByIndex);
         WBP_Category_Graphics->OnVSyncChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempVSync);
         WBP_Category_Graphics->OnFPSChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempFPS);
+    }
+
+    if (WBP_Category_Audio)
+    {
+        WBP_Category_Audio->OnMasterVolumeChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempMasterVolume);
+        WBP_Category_Audio->OnBGMVolumeChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempBGMVolume);
+        WBP_Category_Audio->OnSFXVolumeChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempSFXVolume);
+    }
+
+    if (WBP_Category_Gameplay)
+    {
+        WBP_Category_Gameplay->OnMinimapOpacityChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempMinimapOpacity);
+        WBP_Category_Gameplay->OnShowDamageTextChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempShowDamageText);
+    }
+
+    if (WBP_Category_Controls)
+    {
+        WBP_Category_Controls->OnCameraShakeChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempCameraShakeIntensity);
+        WBP_Category_Controls->OnConfineMouseChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempConfineMouse);
     }
 
     if (Button_Apply)
@@ -97,6 +121,41 @@ void UR1OptionsMenuWidget::SetTempFPS(float NewFPS)
     TempFrameRateLimit = NewFPS;
 }
 
+void UR1OptionsMenuWidget::SetTempMasterVolume(float NewVolume)
+{
+    TempMasterVolume = NewVolume;
+}
+
+void UR1OptionsMenuWidget::SetTempBGMVolume(float NewVolume)
+{
+    TempBGMVolume = NewVolume;
+}
+
+void UR1OptionsMenuWidget::SetTempSFXVolume(float NewVolume)
+{
+    TempSFXVolume = NewVolume;
+}
+
+void UR1OptionsMenuWidget::SetTempMinimapOpacity(float NewOpacity)
+{
+    TempMinimapOpacity = NewOpacity;
+}
+
+void UR1OptionsMenuWidget::SetTempShowDamageText(bool bEnabled)
+{
+    bTempShowDamageText = bEnabled;
+}
+
+void UR1OptionsMenuWidget::SetTempCameraShakeIntensity(float NewIntensity)
+{
+    TempCameraShakeIntensity = NewIntensity;
+}
+
+void UR1OptionsMenuWidget::SetTempConfineMouse(bool bEnabled)
+{
+    bTempConfineMouse = bEnabled;
+}
+
 void UR1OptionsMenuWidget::OnApplyButtonClicked()
 {
     ApplyAndSaveSettings();
@@ -132,6 +191,31 @@ void UR1OptionsMenuWidget::SyncUIFromSettings()
         TempWindowMode = UserSettings->GetFullscreenMode();
         TempFrameRateLimit = UserSettings->GetFrameRateLimit();
         bTempVSyncEnabled = UserSettings->IsVSyncEnabled();
+    }
+
+    // Update child widgets
+    if (WBP_Category_Graphics)
+    {
+        if (WBP_Category_Graphics->WBP_CheckBox_VSync) WBP_Category_Graphics->WBP_CheckBox_VSync->SetIsChecked(bTempVSyncEnabled);
+    }
+
+    if (WBP_Category_Audio)
+    {
+        if (WBP_Category_Audio->WBP_Slider_Master) WBP_Category_Audio->WBP_Slider_Master->SetValue(TempMasterVolume);
+        if (WBP_Category_Audio->WBP_Slider_BGM) WBP_Category_Audio->WBP_Slider_BGM->SetValue(TempBGMVolume);
+        if (WBP_Category_Audio->WBP_Slider_SFX) WBP_Category_Audio->WBP_Slider_SFX->SetValue(TempSFXVolume);
+    }
+
+    if (WBP_Category_Gameplay)
+    {
+        if (WBP_Category_Gameplay->WBP_Slider_MinimapOpacity) WBP_Category_Gameplay->WBP_Slider_MinimapOpacity->SetValue(TempMinimapOpacity);
+        if (WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText) WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText->SetIsChecked(bTempShowDamageText);
+    }
+
+    if (WBP_Category_Controls)
+    {
+        if (WBP_Category_Controls->WBP_Slider_CameraShake) WBP_Category_Controls->WBP_Slider_CameraShake->SetValue(TempCameraShakeIntensity);
+        if (WBP_Category_Controls->WBP_CheckBox_ConfineMouse) WBP_Category_Controls->WBP_CheckBox_ConfineMouse->SetIsChecked(bTempConfineMouse);
     }
 }
 
