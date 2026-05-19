@@ -41,7 +41,7 @@ protected:
     void SetTempWindowModeByIndex(int32 SelectedIndex);
 
     UFUNCTION()
-    void SetTempVSync(bool bIsEnabled);
+    void SetTempVSync(bool bEnabled);
 
     UFUNCTION()
     void SetTempFPS(float NewFPS);

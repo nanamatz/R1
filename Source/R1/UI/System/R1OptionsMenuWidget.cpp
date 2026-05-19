@@ -87,9 +87,9 @@ void UR1OptionsMenuWidget::SetTempWindowModeByIndex(int32 SelectedIndex)
     }
 }
 
-void UR1OptionsMenuWidget::SetTempVSync(bool bIsEnabled)
+void UR1OptionsMenuWidget::SetTempVSync(bool bEnabled)
 {
-    bTempVSyncEnabled = bIsEnabled;
+    bTempVSyncEnabled = bEnabled;
 }
 
 void UR1OptionsMenuWidget::SetTempFPS(float NewFPS)
