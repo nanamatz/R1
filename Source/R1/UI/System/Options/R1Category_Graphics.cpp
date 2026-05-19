@@ -4,7 +4,7 @@
 #include "UI/System/Options/R1Category_Graphics.h"
 #include "Components/ComboBoxString.h"
 #include "Components/CheckBox.h"
-#include "Components/Slider.h"
+#include "UI/System/Options/R1SettingRow_Slider.h"
 
 
 void UR1Category_Graphics::NativeConstruct()
@@ -21,14 +21,15 @@ void UR1Category_Graphics::NativeConstruct()
 		ComboBox_WindowMode->OnSelectionChanged.AddDynamic(this, &UR1Category_Graphics::HandleWindowModeSelectionChanged);
 	}
 
-	if (CheckBox_VSync)
+	if (WBP_CheckBox_VSync)
 	{
-		CheckBox_VSync->OnCheckStateChanged.AddDynamic(this, &UR1Category_Graphics::HandleVSyncStateChanged);
+		WBP_CheckBox_VSync->OnCheckStateChanged.AddDynamic(this, &UR1Category_Graphics::HandleVSyncStateChanged);
 	}
 
-	if (Slider_FPS)
+	if (WBP_Slider_FPS)
 	{
-		Slider_FPS->OnValueChanged.AddDynamic(this, &UR1Category_Graphics::HandleFPSValueChanged);
+		WBP_Slider_FPS->InitSlider(FText::FromString(TEXT("프레임 제한")), 30.0f, 144.0f, 60.0f);
+		WBP_Slider_FPS->OnValueChanged.AddDynamic(this, &UR1Category_Graphics::HandleFPSValueChanged);
 	}
 }
 

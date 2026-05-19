@@ -44,10 +44,10 @@ protected:
 	TObjectPtr<class UComboBoxString> ComboBox_WindowMode;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UCheckBox> CheckBox_VSync;
+	TObjectPtr<class UCheckBox> WBP_CheckBox_VSync;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class USlider> Slider_FPS;
+	TObjectPtr<class UR1SettingRow_Slider> WBP_Slider_FPS;
 
 private:
 	UFUNCTION()
