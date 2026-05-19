@@ -37,6 +37,16 @@ public:
     void SetTempResolutionByIndex(int32 SelectedIndex);
 
 protected:
+    UFUNCTION()
+    void SetTempWindowModeByIndex(int32 SelectedIndex);
+
+    UFUNCTION()
+    void SetTempVSync(bool bIsEnabled);
+
+    UFUNCTION()
+    void SetTempFPS(float NewFPS);
+
+protected:
     virtual void NativeConstruct() override;
 
     // Temporary variables for UI state (before Apply)

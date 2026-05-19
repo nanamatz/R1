@@ -18,6 +18,9 @@ void UR1OptionsMenuWidget::NativeConstruct()
         WBP_Category_Graphics->InitResolutions(GenerateResolutionList());
 
         WBP_Category_Graphics->OnResolutionSelected.AddDynamic(this, &UR1OptionsMenuWidget::SetTempResolutionByIndex);
+        WBP_Category_Graphics->OnWindowModeSelected.AddDynamic(this, &UR1OptionsMenuWidget::SetTempWindowModeByIndex);
+        WBP_Category_Graphics->OnVSyncChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempVSync);
+        WBP_Category_Graphics->OnFPSChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempFPS);
     }
 
     if (Button_Apply)
@@ -64,6 +67,34 @@ void UR1OptionsMenuWidget::SetTempResolutionByIndex(int32 SelectedIndex)
     {
         TempResolution = SupportedResolutions[SelectedIndex];
     }
+}
+
+void UR1OptionsMenuWidget::SetTempWindowModeByIndex(int32 SelectedIndex)
+{
+    switch (SelectedIndex)
+    {
+    case 0:
+        TempWindowMode = EWindowMode::Fullscreen;
+        break;
+    case 1:
+        TempWindowMode = EWindowMode::WindowedFullscreen;
+        break;
+    case 2:
+        TempWindowMode = EWindowMode::Windowed;
+        break;
+    default:
+        break;
+    }
+}
+
+void UR1OptionsMenuWidget::SetTempVSync(bool bIsEnabled)
+{
+    bTempVSyncEnabled = bIsEnabled;
+}
+
+void UR1OptionsMenuWidget::SetTempFPS(float NewFPS)
+{
+    TempFrameRateLimit = NewFPS;
 }
 
 void UR1OptionsMenuWidget::OnApplyButtonClicked()
