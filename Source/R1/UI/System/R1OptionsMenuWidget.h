@@ -16,6 +16,25 @@ public:
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
     void ApplyAndSaveSettings();
 
+    UFUNCTION(BlueprintCallable, Category = "R1|UI")
+    void OnApplyButtonClicked();
+
+    UFUNCTION(BlueprintCallable, Category = "R1|UI")
+    void OnCloseButtonClicked();
+
+protected:
+    // 모니터가 지원하는 실제 해상도(X, Y) 값을 보관할 배열
+    TArray<FIntPoint> SupportedResolutions;
+
+public:
+    // UI 콤보박스를 채우기 위한 문자열 배열 반환 함수
+    UFUNCTION(BlueprintCallable, Category = "R1|UI|Graphics")
+    TArray<FString> GenerateResolutionList();
+
+    // 콤보박스에서 선택한 인덱스를 기반으로 해상도 즉시 적용
+    UFUNCTION(BlueprintCallable, Category = "R1|UI|Graphics")
+    void ApplyResolutionByIndex(int32 SelectedIndex);
+
 protected:
     virtual void NativeConstruct() override;
 
@@ -40,4 +59,14 @@ protected:
 
     UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
     float TempCameraShakeIntensity;
+
+protected:
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UR1Category_Graphics> WBP_Category_Graphics;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UButton> Btn_Apply;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UButton> Btn_Close;
 };
