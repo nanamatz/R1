@@ -11,11 +11,7 @@ void UR1SettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UR1SettingsSubsystem::ApplySettings()
 {
-    if (UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
-    {
-        UserSettings->ApplySettings(false);
-    }
-
+    ApplyGraphicsSettings();
     ApplyAudioSettings();
     ApplyGameplaySettings();
     ApplyControlSettings();
@@ -49,6 +45,22 @@ void UR1SettingsSubsystem::LoadSettings()
     }
 
     ApplySettings();
+}
+
+void UR1SettingsSubsystem::ApplyGraphicsSettings()
+{
+    if (UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
+    {
+        if (CurrentSettings)
+        {
+            UserSettings->SetScreenResolution(CurrentSettings->Resolution);
+            UserSettings->SetFullscreenMode(CurrentSettings->WindowMode);
+            UserSettings->SetFrameRateLimit(CurrentSettings->FrameRateLimit);
+            UserSettings->SetVSyncEnabled(CurrentSettings->bVSyncEnabled);
+        }
+
+        UserSettings->ApplySettings(true);
+    }
 }
 
 void UR1SettingsSubsystem::ApplyAudioSettings()

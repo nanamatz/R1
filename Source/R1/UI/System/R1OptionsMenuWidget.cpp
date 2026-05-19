@@ -149,18 +149,13 @@ void UR1OptionsMenuWidget::ApplyAndSaveSettings()
             Settings->bConfineMouseToWindow = bTempConfineMouse;
             Settings->CameraShakeIntensity = TempCameraShakeIntensity;
 
+            // Graphics
+            Settings->Resolution = TempResolution;
+            Settings->WindowMode = TempWindowMode;
+            Settings->FrameRateLimit = TempFrameRateLimit;
+            Settings->bVSyncEnabled = bTempVSyncEnabled;
+
             SettingsSubsystem->SaveSettings();
         }
-    }
-
-    if (UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
-    {
-        UserSettings->SetScreenResolution(TempResolution);
-        UserSettings->SetFullscreenMode(TempWindowMode);
-        UserSettings->SetFrameRateLimit(TempFrameRateLimit);
-        UserSettings->SetVSyncEnabled(bTempVSyncEnabled);
-
-        // true: saves to GameUserSettings.ini and applies resolution changes
-        UserSettings->ApplySettings(true);
     }
 }

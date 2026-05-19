@@ -34,4 +34,17 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Controls")
     float CameraShakeIntensity = 1.0f;
+
+    // --- Graphics ---
+    UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
+    FIntPoint Resolution = FIntPoint(1920, 1080);
+
+    UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
+    TEnumAsByte<EWindowMode::Type> WindowMode = EWindowMode::WindowedFullscreen;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
+    float FrameRateLimit = 60.0f;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
+    bool bVSyncEnabled = true;
 };
