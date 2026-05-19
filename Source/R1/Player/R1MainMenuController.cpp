@@ -6,6 +6,7 @@
 #include "UI/System/R1TitleScreenWidget.h"
 #include "UI/System/R1TitleWidget.h"
 #include "UI/System/R1MainMenuWidget.h"
+#include "UI/System/R1OptionsMenuWidget.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "UI/Progression/R1MetaUpgradeWidget.h"
 
@@ -113,6 +114,11 @@ void AR1MainMenuController::ShowMainMenuScreen()
 		if (TitleScreenWidget->WBP_UpgradeWidget)
 		{
 			TitleScreenWidget->WBP_UpgradeWidget->SetVisibility(ESlateVisibility::Hidden);
+		}
+
+		if (TitleScreenWidget->WBP_OptionWidget)
+		{
+			TitleScreenWidget->WBP_OptionWidget->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 
