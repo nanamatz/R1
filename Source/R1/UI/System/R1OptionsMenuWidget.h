@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/R1UserWidget.h"
+#include "GameFramework/GameUserSettings.h"
 #include "R1OptionsMenuWidget.generated.h"
 
 UCLASS()
@@ -31,9 +32,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "R1|UI|Graphics")
     TArray<FString> GenerateResolutionList();
 
-    // 콤보박스에서 선택한 인덱스를 기반으로 해상도 즉시 적용
+    // 콤보박스에서 선택한 인덱스를 기반으로 임시 해상도 설정
     UFUNCTION(BlueprintCallable, Category = "R1|UI|Graphics")
-    void ApplyResolutionByIndex(int32 SelectedIndex);
+    void SetTempResolutionByIndex(int32 SelectedIndex);
 
 protected:
     virtual void NativeConstruct() override;
@@ -60,13 +61,26 @@ protected:
     UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
     float TempCameraShakeIntensity;
 
+    // --- Graphics Temp Variables ---
+    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp|Graphics")
+    FIntPoint TempResolution;
+
+    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp|Graphics")
+    TEnumAsByte<EWindowMode::Type> TempWindowMode;
+
+    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp|Graphics")
+    float TempFrameRateLimit;
+
+    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp|Graphics")
+    bool bTempVSyncEnabled;
+
 protected:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<class UR1Category_Graphics> WBP_Category_Graphics;
 
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<class UButton> Btn_Apply;
+    TObjectPtr<class UButton> Button_Apply;
 
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<class UButton> Btn_Close;
+    TObjectPtr<class UButton> Button_Close;
 };

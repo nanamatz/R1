@@ -6,6 +6,7 @@
 #include "UI/System/Options/R1Category_Graphics.h"
 #include "UI/R1HUD.h"
 #include "Components/Button.h"
+#include "Player/R1MainMenuController.h"
 
 void UR1OptionsMenuWidget::NativeConstruct()
 {
@@ -16,17 +17,17 @@ void UR1OptionsMenuWidget::NativeConstruct()
     {
         WBP_Category_Graphics->InitResolutions(GenerateResolutionList());
 
-        WBP_Category_Graphics->OnResolutionSelected.AddDynamic(this, &UR1OptionsMenuWidget::ApplyResolutionByIndex);
+        WBP_Category_Graphics->OnResolutionSelected.AddDynamic(this, &UR1OptionsMenuWidget::SetTempResolutionByIndex);
     }
 
-    if (Btn_Apply)
+    if (Button_Apply)
     {
-        Btn_Apply->OnClicked.AddDynamic(this, &UR1OptionsMenuWidget::OnApplyButtonClicked);
+        Button_Apply->OnClicked.AddDynamic(this, &UR1OptionsMenuWidget::OnApplyButtonClicked);
     }
 
-    if (Btn_Close)
+    if (Button_Close)
     {
-        Btn_Close->OnClicked.AddDynamic(this, &UR1OptionsMenuWidget::OnCloseButtonClicked);
+        Button_Close->OnClicked.AddDynamic(this, &UR1OptionsMenuWidget::OnCloseButtonClicked);
     }
 }
 
@@ -56,19 +57,12 @@ TArray<FString> UR1OptionsMenuWidget::GenerateResolutionList()
     return StringList;
 }
 
-void UR1OptionsMenuWidget::ApplyResolutionByIndex(int32 SelectedIndex)
+void UR1OptionsMenuWidget::SetTempResolutionByIndex(int32 SelectedIndex)
 {
     // 유효한 인덱스인지 안전 검사
     if (SupportedResolutions.IsValidIndex(SelectedIndex))
     {
-        if (UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
-        {
-            // 1. 엔진 세팅 객체에 해상도 값 입력
-            UserSettings->SetScreenResolution(SupportedResolutions[SelectedIndex]);
-
-            // 2. 화면에 즉시 적용 (인자 값 false: ini 파일에 영구 저장하지는 않음)
-            UserSettings->ApplyResolutionSettings(false);
-        }
+        TempResolution = SupportedResolutions[SelectedIndex];
     }
 }
 
@@ -79,12 +73,9 @@ void UR1OptionsMenuWidget::OnApplyButtonClicked()
 
 void UR1OptionsMenuWidget::OnCloseButtonClicked()
 {
-    if (APlayerController* PC = GetOwningPlayer())
+    if (AR1MainMenuController* MenuPC = Cast<AR1MainMenuController>(GetOwningPlayer()))
     {
-        if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
-        {
-            HUD->ToggleOptionsUI();
-        }
+        MenuPC->GoBack();
     }
 }
 
@@ -102,6 +93,14 @@ void UR1OptionsMenuWidget::SyncUIFromSettings()
             bTempConfineMouse = Settings->bConfineMouseToWindow;
             TempCameraShakeIntensity = Settings->CameraShakeIntensity;
         }
+    }
+
+    if (UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
+    {
+        TempResolution = UserSettings->GetScreenResolution();
+        TempWindowMode = UserSettings->GetFullscreenMode();
+        TempFrameRateLimit = UserSettings->GetFrameRateLimit();
+        bTempVSyncEnabled = UserSettings->IsVSyncEnabled();
     }
 }
 
@@ -121,5 +120,16 @@ void UR1OptionsMenuWidget::ApplyAndSaveSettings()
 
             SettingsSubsystem->SaveSettings();
         }
+    }
+
+    if (UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
+    {
+        UserSettings->SetScreenResolution(TempResolution);
+        UserSettings->SetFullscreenMode(TempWindowMode);
+        UserSettings->SetFrameRateLimit(TempFrameRateLimit);
+        UserSettings->SetVSyncEnabled(bTempVSyncEnabled);
+
+        // true: saves to GameUserSettings.ini and applies resolution changes
+        UserSettings->ApplySettings(true);
     }
 }
