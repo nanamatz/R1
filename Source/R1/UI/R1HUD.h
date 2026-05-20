@@ -27,6 +27,9 @@ public:
     void ShowBossInfo(class AR1Boss* InBoss);
     void HideBossInfo();
 
+    // 옵션 메뉴 취소(ESC) 요청
+    void CloseOptionsUIWithCancel();
+
     //UUserWidget* GetInventoryWidget() const { return InventoryUIWidget; }
     //UUserWidget* GetBaseUIWidget() const { return BaseUIWidget; }
     //UUserWidget* GetGameOverUIWidget() const { return GameOverUIWidget; }
@@ -57,6 +60,9 @@ public:
 
     UFUNCTION()
     void HandleLoadingScreenHidden();
+
+    UFUNCTION()
+    void SyncGameplaySettings();
 
 public:
     // NPC가 호출할 상점 오픈 함수
@@ -124,7 +130,7 @@ protected:
     TObjectPtr<UUserWidget> GameMenuUIWidget = nullptr;
 
     UPROPERTY(EditDefaultsOnly)
-    TObjectPtr<UUserWidget> OptionsUIWidget = nullptr;
+    TObjectPtr<class UR1GameOptionsMenuSceneWidget> GameOptionsSceneWidget = nullptr;
 
 private:
     bool bIsFloorGuidePending = false;

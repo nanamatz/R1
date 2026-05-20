@@ -28,31 +28,34 @@ public:
     void LoadSettingsToTemp();
 
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
+    void UpdateOriginalSettingsFromTemp();
+
+    UFUNCTION(BlueprintCallable, Category = "R1|UI")
     void UpdateWidgetsFromTemp();
 
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
     void ApplyAndSaveSettings(bool bSaveToDisk);
 
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
-    void OnDefaultsButtonClicked();
+    virtual void OnDefaultsButtonClicked();
 
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
-    void OnApplyButtonClicked();
+    virtual void OnApplyButtonClicked();
 
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
-    void OnConfirmButtonClicked();
+    virtual void OnConfirmButtonClicked();
 
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
-    void OnCancelButtonClicked();
+    virtual void OnCancelButtonClicked();
 
     UFUNCTION()
-    void OnConfirmCancellation();
+    virtual void OnConfirmCancellation();
 
     UFUNCTION(BlueprintPure, Category = "R1|UI")
     bool IsSettingsChanged() const;
 
     UFUNCTION()
-    void OnCancelModalDismissed();
+    virtual void OnCancelModalDismissed();
 protected:
     UPROPERTY()
     TObjectPtr<class UR1SaveGame_Settings> OriginalSettings;

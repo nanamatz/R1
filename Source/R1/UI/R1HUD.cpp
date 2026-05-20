@@ -15,15 +15,31 @@
 #include "UI/Shop/R1ShopWidget.h"
 #include "UI/System/R1FloorGuideSceneWidget.h"
 #include "UI/System/R1OptionsMenuWidget.h"
+#include "UI/System/R1GameOptionsMenuWidget.h"
+#include "UI/System/Options/R1GameOptionsMenuSceneWidget.h"
 
 #include "Character/R1Monster.h"
 #include "Character/R1Boss.h"
 #include "Player/R1PlayerController.h"
 
 
+#include "System/R1SettingsSubsystem.h"
+#include "System/R1SaveGame_Settings.h"
+
 void AR1HUD::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (UGameInstance* GameInstance = GetGameInstance())
+    {
+        if (UR1SettingsSubsystem* SettingsSubsystem = GameInstance->GetSubsystem<UR1SettingsSubsystem>())
+        {
+            SettingsSubsystem->OnGameplaySettingsChanged.AddDynamic(this, &AR1HUD::SyncGameplaySettings);
+            
+            // 초기 설정 적용
+            SyncGameplaySettings();
+        }
+    }
 
     // 안전 검사: 클래스와 플레이어 컨트롤러가 유효할 때만 생성
     AR1PlayerController* PC = Cast<AR1PlayerController>(GetOwningPlayerController());
@@ -92,26 +108,6 @@ void AR1HUD::BeginPlay()
                 UE_LOG(LogTemp, Warning, TEXT("Failed to create GameMenuUIWidget"));
             }
         }
-        if (!OptionsUIWidget)
-        {
-            OptionsUIWidget = CreateWidget<UUserWidget>(PC, OptionsWidgetClass);
-            if (OptionsUIWidget)
-            {
-                OptionsUIWidget->AddToViewport(20); // 옵션이 가장 위에 오도록 설정
-                OptionsUIWidget->SetVisibility(ESlateVisibility::Hidden);
-                bIsOptionsUIVisible = false;
-
-                // 옵션 창의 닫기 요청 이벤트 바인딩
-                if (UR1OptionsMenuWidget* R1OptionsWidget = Cast<UR1OptionsMenuWidget>(OptionsUIWidget))
-                {
-                    R1OptionsWidget->OnCloseRequested.AddDynamic(this, &AR1HUD::ToggleOptionsUI);
-                }
-            }
-            else
-            {
-                UE_LOG(LogTemp, Warning, TEXT("Failed to create OptionsUIWidget"));
-            }
-        }
         if (!MiniMapUIWidget)
         {
             MiniMapUIWidget = CreateWidget<UUserWidget>(PC, MiniMapUIWidgetClass);
@@ -121,7 +117,7 @@ void AR1HUD::BeginPlay()
             }
             else
             {
-                UE_LOG(LogTemp, Warning, TEXT("Failed to create GameMenuUIWidget"));
+                UE_LOG(LogTemp, Warning, TEXT("Failed to create MiniMapUIWidget"));
             }
         }
         if (!FloorGuideSceneWidget && FloorGuideSceneWidgetClass)
@@ -174,6 +170,15 @@ void AR1HUD::BeginPlay()
                 CharacterStatUISceneWidget->SetVisibility(ESlateVisibility::Hidden);
             }
         }
+        if (OptionsWidgetClass && !GameOptionsSceneWidget)
+        {
+            GameOptionsSceneWidget = CreateWidget<UR1GameOptionsMenuSceneWidget>(PC, OptionsWidgetClass);
+            if (GameOptionsSceneWidget)
+            {
+                GameOptionsSceneWidget->AddToViewport(20);
+                GameOptionsSceneWidget->SetVisibility(ESlateVisibility::Hidden);
+            }
+        }
 
         if (AR1MapGenerator* MapGen = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
         {
@@ -208,6 +213,27 @@ void AR1HUD::HandleLoadingScreenHidden()
         FloorGuideSceneWidget->ShowFloorGuide(PendingFloorLevel);
 
         bIsFloorGuidePending = false;
+    }
+}
+
+void AR1HUD::SyncGameplaySettings()
+{
+    if (UGameInstance* GameInstance = GetGameInstance())
+    {
+        if (UR1SettingsSubsystem* SettingsSubsystem = GameInstance->GetSubsystem<UR1SettingsSubsystem>())
+        {
+            if (UR1SaveGame_Settings* Settings = SettingsSubsystem->GetCustomSettings())
+            {
+                // 미니맵 위젯이 있다면 투명도 적용
+                if (MiniMapUIWidget)
+                {
+                    MiniMapUIWidget->SetRenderOpacity(Settings->MinimapOpacity);
+                }
+
+                // 추가적인 게임플레이 설정 반영 (데미지 텍스트 표시 여부 등)
+                // bShowDamageText는 데미지 위젯 생성 시점에서 Subsystem을 참조하도록 구현하는 것이 일반적입니다.
+            }
+        }
     }
 }
 
@@ -330,14 +356,18 @@ void AR1HUD::ToggleGameMenu()
 
 void AR1HUD::ToggleOptionsUI()
 {
-    if (!OptionsWidgetClass || !OptionsUIWidget) return;
+    if (!OptionsWidgetClass || !GameOptionsSceneWidget) return;
 
     if (bIsOptionsUIVisible)
     {
-        OptionsUIWidget->SetVisibility(ESlateVisibility::Hidden);
+        // 닫기 요청 시 처리 (Remove)
+        if (GameOptionsSceneWidget)
+        {
+            GameOptionsSceneWidget->SetVisibility(ESlateVisibility::Hidden);
+        }
         bIsOptionsUIVisible = false;
 
-        // 옵션을 닫을 때 게임 메뉴가 열려있었다면 다시 표시
+        // 일시정지 메뉴 다시 표시
         if (bIsGameMenuUIVisible && GameMenuUIWidget)
         {
             GameMenuUIWidget->SetVisibility(ESlateVisibility::Visible);
@@ -345,20 +375,30 @@ void AR1HUD::ToggleOptionsUI()
     }
     else
     {
-        // 옵션을 열 때 게임 메뉴가 열려있다면 숨김
-        if (bIsGameMenuUIVisible && GameMenuUIWidget)
+        if (GameOptionsSceneWidget)
         {
-            GameMenuUIWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
+            GameOptionsSceneWidget->SetVisibility(ESlateVisibility::Visible);
 
-        OptionsUIWidget->SetVisibility(ESlateVisibility::Visible);
-        bIsOptionsUIVisible = true;
+            bIsOptionsUIVisible = true;
 
-        // 최신 설정값으로 UI 동기화
-        if (UR1OptionsMenuWidget* R1OptionsWidget = Cast<UR1OptionsMenuWidget>(OptionsUIWidget))
-        {
-            R1OptionsWidget->SyncUIFromSettings();
+            // 일시정지 메뉴 숨김
+            if (bIsGameMenuUIVisible && GameMenuUIWidget)
+            {
+                GameMenuUIWidget->SetVisibility(ESlateVisibility::Hidden);
+            }
+
+            // 이벤트 바인딩 및 동기화
+            GameOptionsSceneWidget->GameOptionsMenuWidget->OnCloseRequested.AddDynamic(this, &AR1HUD::ToggleOptionsUI);
+            GameOptionsSceneWidget->GameOptionsMenuWidget->SyncUIFromSettings();
         }
+    }
+}
+
+void AR1HUD::CloseOptionsUIWithCancel()
+{
+    if (bIsOptionsUIVisible && GameOptionsSceneWidget)
+    {
+        GameOptionsSceneWidget->GameOptionsMenuWidget->OnCancelButtonClicked();
     }
 }
 

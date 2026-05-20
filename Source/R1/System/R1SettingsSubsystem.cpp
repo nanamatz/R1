@@ -73,15 +73,31 @@ void UR1SettingsSubsystem::ApplyGraphicsSettings()
 
 void UR1SettingsSubsystem::ApplyAudioSettings()
 {
-    // TODO: Implement audio volume setting logic (e.g., via SoundMix or AudioDevice)
+    // 오디오 설정은 사운드 클래스 믹스 등을 조절해야 하지만, 
+    // 시스템 레벨에서는 변경되었음을 알리고 필요한 곳(HUD 등)에서 대응하게 합니다.
+    if (OnAudioSettingsChanged.IsBound())
+    {
+        OnAudioSettingsChanged.Broadcast();
+    }
 }
 
 void UR1SettingsSubsystem::ApplyGameplaySettings()
 {
-    // TODO: Implement gameplay setting application logic
+    // 게임플레이 설정(미니맵 투명도 등)도 변경 알림을 보냅니다.
+    if (OnGameplaySettingsChanged.IsBound())
+    {
+        OnGameplaySettingsChanged.Broadcast();
+    }
 }
 
 void UR1SettingsSubsystem::ApplyControlSettings()
 {
-    // TODO: Implement control/accessibility application logic
+    if (!CurrentSettings) return;
+
+    // 마우스 커서 가두기 설정 적용
+    if (UGameViewportClient* ViewportClient = GetGameInstance()->GetGameViewportClient())
+    {
+        EMouseLockMode LockMode = CurrentSettings->bConfineMouseToWindow ? EMouseLockMode::LockAlways : EMouseLockMode::DoNotLock;
+        ViewportClient->SetMouseLockMode(LockMode);
+    }
 }

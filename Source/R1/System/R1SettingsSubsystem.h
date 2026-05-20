@@ -4,6 +4,9 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "R1SettingsSubsystem.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAudioSettingsChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameplaySettingsChanged);
+
 UCLASS()
 class R1_API UR1SettingsSubsystem : public UGameInstanceSubsystem
 {
@@ -11,6 +14,12 @@ class R1_API UR1SettingsSubsystem : public UGameInstanceSubsystem
 
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+    UPROPERTY(BlueprintAssignable, Category = "R1|Settings")
+    FOnAudioSettingsChanged OnAudioSettingsChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "R1|Settings")
+    FOnGameplaySettingsChanged OnGameplaySettingsChanged;
 
     UFUNCTION(BlueprintCallable, Category = "R1|Settings")
     void ApplySettings();

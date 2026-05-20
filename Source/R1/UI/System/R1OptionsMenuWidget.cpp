@@ -342,6 +342,7 @@ void UR1OptionsMenuWidget::OnCancelModalDismissed()
 void UR1OptionsMenuWidget::SyncUIFromSettings()
 {
     LoadSettingsToTemp();
+    UpdateOriginalSettingsFromTemp(); // 매번 로드 시점의 값을 원본으로 기록 (변경 감지 기준점)
     UpdateWidgetsFromTemp();
 }
 
@@ -368,6 +369,28 @@ void UR1OptionsMenuWidget::LoadSettingsToTemp()
         TempFrameRateLimit = UserSettings->GetFrameRateLimit();
         bTempVSyncEnabled = UserSettings->IsVSyncEnabled();
     }
+}
+
+void UR1OptionsMenuWidget::UpdateOriginalSettingsFromTemp()
+{
+    if (!OriginalSettings)
+    {
+        OriginalSettings = NewObject<UR1SaveGame_Settings>(this);
+    }
+
+    // 현재 Temp에 로드된 값을 '최초 원본'으로 복사
+    OriginalSettings->MasterVolume = TempMasterVolume;
+    OriginalSettings->BGMVolume = TempBGMVolume;
+    OriginalSettings->SFXVolume = TempSFXVolume;
+    OriginalSettings->bShowDamageText = bTempShowDamageText;
+    OriginalSettings->MinimapOpacity = TempMinimapOpacity;
+    OriginalSettings->bConfineMouseToWindow = bTempConfineMouse;
+    OriginalSettings->CameraShakeIntensity = TempCameraShakeIntensity;
+
+    OriginalSettings->Resolution = TempResolution;
+    OriginalSettings->WindowMode = TempWindowMode;
+    OriginalSettings->FrameRateLimit = TempFrameRateLimit;
+    OriginalSettings->bVSyncEnabled = bTempVSyncEnabled;
 }
 
 void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()

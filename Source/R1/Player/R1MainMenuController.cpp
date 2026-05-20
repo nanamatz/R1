@@ -6,7 +6,7 @@
 #include "UI/System/R1TitleScreenWidget.h"
 #include "UI/System/R1TitleWidget.h"
 #include "UI/System/R1MainMenuWidget.h"
-#include "UI/System/R1OptionsMenuWidget.h"
+#include "UI/System/R1TitleOptionsMenuWidget.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "UI/Progression/R1MetaUpgradeWidget.h"
 
@@ -233,9 +233,17 @@ void AR1MainMenuController::OnGlobalInputPressed()
 			// 타이틀 화면에서 ESC 누르면 게임 종료!
 			UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, false);
 		}
+		else if (CurrentMenuState == EMenuState::Options)
+		{
+			// 옵션 화면에서 ESC 누르면 위젯의 Cancel 로직(모달 체크 등)을 직접 호출
+			if (TitleScreenWidget && TitleScreenWidget->WBP_OptionWidget)
+			{
+				TitleScreenWidget->WBP_OptionWidget->OnCancelButtonClicked();
+			}
+		}
 		else
 		{
-			// 메인 메뉴나 옵션 등 다른 화면이면 뒤로 가기!
+			// 메인 메뉴 등 다른 화면이면 뒤로 가기!
 			GoBack();
 		}
 		return; // ESC 처리를 했으니 여기서 함수 끝

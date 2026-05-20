@@ -671,6 +671,13 @@ void AR1PlayerController::OnGameMenuToggle()
 	AR1HUD* MyR1HUD = GetHUD<AR1HUD>();
 	if (MyR1HUD)
 	{
+		if (MyR1HUD->bIsOptionsUIVisible)
+		{
+			// 옵션 UI가 열려있다면 ESC 누를 때 취소(Cancel) 로직(모달 체크 등)을 실행하도록 요청
+			MyR1HUD->CloseOptionsUIWithCancel();
+			return; // 옵션만 처리하고 게임 메뉴나 일시정지 상태는 건드리지 않음
+		}
+
 		MyR1HUD->ToggleGameMenu();
 	}
 

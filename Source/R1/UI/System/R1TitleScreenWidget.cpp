@@ -5,7 +5,7 @@
 #include "UI/System/R1TitleWidget.h"
 #include "UI/System/R1MainMenuWidget.h"
 #include "UI/Progression/R1MetaUpgradeWidget.h"
-#include "UI/System/R1OptionsMenuWidget.h"
+#include "UI/System/R1TitleOptionsMenuWidget.h"
 
 void UR1TitleScreenWidget::SwitchToTitle()
 {
