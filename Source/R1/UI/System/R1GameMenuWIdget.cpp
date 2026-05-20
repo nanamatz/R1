@@ -9,24 +9,25 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Map/R1MapGenerator.h"
 #include "EngineUtils.h"
+#include "UI/R1CommonButton.h"
 
 void UR1GameMenuWIdget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (Button_Resume)
+	if (Button_Resume && Button_Resume->CommonButton)
 	{
-		Button_Resume->OnClicked.AddDynamic(this, &UR1GameMenuWIdget::OnResumeButtonClicked);
+		Button_Resume->CommonButton->OnClicked.AddDynamic(this, &UR1GameMenuWIdget::OnResumeButtonClicked);
 	}
 
-	if (Button_Options)
+	if (Button_Options && Button_Options->CommonButton)
 	{
-		Button_Options->OnClicked.AddDynamic(this, &UR1GameMenuWIdget::OnOptionsButtonClicked);
+		Button_Options->CommonButton->OnClicked.AddDynamic(this, &UR1GameMenuWIdget::OnOptionsButtonClicked);
 	}
 
-	if (Button_Exit)
+	if (Button_Exit && Button_Exit->CommonButton)
 	{
-		Button_Exit->OnClicked.AddDynamic(this, &UR1GameMenuWIdget::OnExitButtonClicked);
+		Button_Exit->CommonButton->OnClicked.AddDynamic(this, &UR1GameMenuWIdget::OnExitButtonClicked);
 	}
 }
 

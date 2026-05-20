@@ -1,18 +1,25 @@
 #include "UI/R1HUD.h"
 #include "Blueprint/UserWidget.h"
-#include "UI/System/R1FloorGuideSceneWidget.h"
+#include "AbilitySystem/Attribute/R1AttributeSet.h"
+
 #include "Map/R1MapGenerator.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/R1LoadingSubSystem.h"
+
 #include "Item/R1InventorySubsystem.h"
 #include "Object/R1MerchantNPC.h"
-#include "UI/Shop/R1ShopWidget.h"
+
 #include "Blueprint/WidgetTree.h"
+
 #include "UI/System/R1MonsterInfoSceneWidget.h"
+#include "UI/Shop/R1ShopWidget.h"
+#include "UI/System/R1FloorGuideSceneWidget.h"
+#include "UI/System/R1OptionsMenuWidget.h"
+
 #include "Character/R1Monster.h"
 #include "Character/R1Boss.h"
-#include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "Player/R1PlayerController.h"
+
 
 void AR1HUD::BeginPlay()
 {
@@ -93,6 +100,12 @@ void AR1HUD::BeginPlay()
                 OptionsUIWidget->AddToViewport(20); // 옵션이 가장 위에 오도록 설정
                 OptionsUIWidget->SetVisibility(ESlateVisibility::Hidden);
                 bIsOptionsUIVisible = false;
+
+                // 옵션 창의 닫기 요청 이벤트 바인딩
+                if (UR1OptionsMenuWidget* R1OptionsWidget = Cast<UR1OptionsMenuWidget>(OptionsUIWidget))
+                {
+                    R1OptionsWidget->OnCloseRequested.AddDynamic(this, &AR1HUD::ToggleOptionsUI);
+                }
             }
             else
             {
@@ -323,11 +336,29 @@ void AR1HUD::ToggleOptionsUI()
     {
         OptionsUIWidget->SetVisibility(ESlateVisibility::Hidden);
         bIsOptionsUIVisible = false;
+
+        // 옵션을 닫을 때 게임 메뉴가 열려있었다면 다시 표시
+        if (bIsGameMenuUIVisible && GameMenuUIWidget)
+        {
+            GameMenuUIWidget->SetVisibility(ESlateVisibility::Visible);
+        }
     }
     else
     {
+        // 옵션을 열 때 게임 메뉴가 열려있다면 숨김
+        if (bIsGameMenuUIVisible && GameMenuUIWidget)
+        {
+            GameMenuUIWidget->SetVisibility(ESlateVisibility::Hidden);
+        }
+
         OptionsUIWidget->SetVisibility(ESlateVisibility::Visible);
         bIsOptionsUIVisible = true;
+
+        // 최신 설정값으로 UI 동기화
+        if (UR1OptionsMenuWidget* R1OptionsWidget = Cast<UR1OptionsMenuWidget>(OptionsUIWidget))
+        {
+            R1OptionsWidget->SyncUIFromSettings();
+        }
     }
 }
 

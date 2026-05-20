@@ -8,6 +8,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "R1GameMenuWIdget.h"
 #include "Player/R1MainMenuController.h"
+#include "UI/R1CommonButton.h"
 
 void UR1MainMenuWidget::NativeConstruct()
 {
@@ -15,28 +16,29 @@ void UR1MainMenuWidget::NativeConstruct()
 
 	SetIsFocusable(true);
 
-	if (Button_NewRun)
+	if (Button_NewRun && Button_NewRun->CommonButton)
 	{
-		Button_NewRun->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnNewRunButtonClicked);
+		Button_NewRun->CommonButton->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnNewRunButtonClicked);
 	}
 
-	if (Button_Continue)
+	if (Button_Continue && Button_Continue->CommonButton)
 	{
-		Button_Continue->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnContinueButtonClicked);
+		Button_Continue->CommonButton->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnContinueButtonClicked);
 	}
 
-	if (Button_Options)
+	if (Button_Options && Button_Options->CommonButton)
 	{
-		Button_Options->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnOptionsButtonClicked);
+		Button_Options->CommonButton->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnOptionsButtonClicked);
 	}
 
-	if (Button_Exit)
+	if (Button_Exit && Button_Exit->CommonButton)
 	{
-		Button_Exit->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnExitButtonClicked);
+		Button_Exit->CommonButton->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnExitButtonClicked);
 	}
-	if (Button_Upgrade)
+
+	if (Button_Upgrade && Button_Upgrade->CommonButton)
 	{
-		Button_Upgrade->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnUpgradeButtonClicked);
+		Button_Upgrade->CommonButton->OnClicked.AddDynamic(this, &UR1MainMenuWidget::OnUpgradeButtonClicked);
 	}
 
 	if (UGameInstance* GameInstance = GetGameInstance())
@@ -46,9 +48,9 @@ void UR1MainMenuWidget::NativeConstruct()
 			// 세이브 파일이 있으면 true, 없으면 false
 			bool bHasSave = SaveSystem->HasSavedRun();
 
-			if (Button_Continue)
+			if (Button_Continue && Button_Continue->CommonButton)
 			{
-				Button_Continue->SetIsEnabled(bHasSave);
+				Button_Continue->CommonButton->SetIsEnabled(bHasSave);
 			}
 		}
 	}

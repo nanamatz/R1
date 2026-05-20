@@ -60,6 +60,12 @@ void AR1MainMenuController::BeginPlay()
 		if (TitleScreenWidget)
 		{
 			TitleScreenWidget->AddToViewport();
+
+			// 옵션 창의 닫기 요청 이벤트 바인딩
+			if (TitleScreenWidget->WBP_OptionWidget)
+			{
+				TitleScreenWidget->WBP_OptionWidget->OnCloseRequested.AddDynamic(this, &AR1MainMenuController::GoBack);
+			}
 		}
 	}
 

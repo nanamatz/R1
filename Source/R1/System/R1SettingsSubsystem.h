@@ -30,7 +30,7 @@ private:
 
     const FString SettingsSaveSlotName = TEXT("Settings");
     const int32 SettingsUserIndex = 0;
-
+public:
     void ApplyGraphicsSettings();
     void ApplyAudioSettings();
     void ApplyGameplaySettings();

@@ -46,6 +46,19 @@ void UR1Category_Graphics::InitResolutions(const TArray<FString>& InResList)
 	}
 }
 
+void UR1Category_Graphics::SetSelectedIndexes(int32 ResIndex, int32 WindowModeIndex)
+{
+	if (ComboBox_Resolution)
+	{
+		ComboBox_Resolution->SetSelectedIndex(ResIndex);
+	}
+
+	if (ComboBox_WindowMode)
+	{
+		ComboBox_WindowMode->SetSelectedIndex(WindowModeIndex);
+	}
+}
+
 void UR1Category_Graphics::HandleResolutionSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
 	if (!ComboBox_Resolution) return;

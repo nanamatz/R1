@@ -6,6 +6,8 @@
 #include "UI/R1UserWidget.h"
 #include "R1GameOverWidget.generated.h"
 
+class UR1CommonButton;
+
 /**
  * 
  */
@@ -19,10 +21,10 @@ protected:
 	virtual void NativeConstruct() override;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UButton> Button_Retry;
+	TObjectPtr<class UR1CommonButton> Button_Retry;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UButton> Button_Exit;
+	TObjectPtr<class UR1CommonButton> Button_Exit;
 
 private:
 	UFUNCTION()

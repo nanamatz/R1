@@ -8,6 +8,9 @@
 class UR1Category_Audio;
 class UR1Category_Gameplay;
 class UR1Category_Controls;
+class UR1CommonButton;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnOptionsCloseRequested);
 
 UCLASS()
 class R1_API UR1OptionsMenuWidget : public UR1UserWidget
@@ -15,18 +18,50 @@ class R1_API UR1OptionsMenuWidget : public UR1UserWidget
     GENERATED_BODY()
 
 public:
+    UPROPERTY(BlueprintAssignable, Category = "R1|UI|Events")
+    FOnOptionsCloseRequested OnCloseRequested;
+
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
     void SyncUIFromSettings();
 
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
-    void ApplyAndSaveSettings();
+    void LoadSettingsToTemp();
+
+    UFUNCTION(BlueprintCallable, Category = "R1|UI")
+    void UpdateWidgetsFromTemp();
+
+    UFUNCTION(BlueprintCallable, Category = "R1|UI")
+    void ApplyAndSaveSettings(bool bSaveToDisk);
+
+    UFUNCTION(BlueprintCallable, Category = "R1|UI")
+    void OnDefaultsButtonClicked();
 
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
     void OnApplyButtonClicked();
 
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
-    void OnCloseButtonClicked();
+    void OnConfirmButtonClicked();
 
+    UFUNCTION(BlueprintCallable, Category = "R1|UI")
+    void OnCancelButtonClicked();
+
+    UFUNCTION()
+    void OnConfirmCancellation();
+
+    UFUNCTION(BlueprintPure, Category = "R1|UI")
+    bool IsSettingsChanged() const;
+
+    UFUNCTION()
+    void OnCancelModalDismissed();
+protected:
+    UPROPERTY()
+    TObjectPtr<class UR1SaveGame_Settings> OriginalSettings;
+
+    UPROPERTY(EditDefaultsOnly, Category = "R1|UI")
+    TSubclassOf<class UR1ConfirmModalSceneWidget> ConfirmModalClass;
+
+    UPROPERTY()
+    TObjectPtr<class UR1ConfirmModalSceneWidget> ActiveConfirmModalScene;
 protected:
     // 모니터가 지원하는 실제 해상도(X, Y) 값을 보관할 배열
     TArray<FIntPoint> SupportedResolutions;
@@ -123,8 +158,14 @@ protected:
     TObjectPtr<class UR1Category_Controls> WBP_Category_Controls;
 
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<class UButton> Button_Apply;
+    TObjectPtr<class UR1CommonButton> Button_Defaults;
 
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<class UButton> Button_Close;
+    TObjectPtr<class UR1CommonButton> Button_Apply;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UR1CommonButton> Button_Confirm;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UR1CommonButton> Button_Cancel;
 };

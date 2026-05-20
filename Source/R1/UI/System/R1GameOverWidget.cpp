@@ -3,23 +3,22 @@
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/R1SaveSystem.h"
-#include "Item/R1InventorySubsystem.h"
-#include "Camera/PlayerCameraManager.h"
-#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "UI/R1CommonButton.h"
+#include "Item/R1InventorySubsystem.h"
 
 void UR1GameOverWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (Button_Retry)
+	if (Button_Retry && Button_Retry->CommonButton)
 	{
-		Button_Retry->OnClicked.AddDynamic(this, &UR1GameOverWidget::OnRetryClicked);
+		Button_Retry->CommonButton->OnClicked.AddDynamic(this, &UR1GameOverWidget::OnRetryClicked);
 	}
 
-	if (Button_Exit)
+	if (Button_Exit && Button_Exit->CommonButton)
 	{
-		Button_Exit->OnClicked.AddDynamic(this, &UR1GameOverWidget::OnExitClicked);
+		Button_Exit->CommonButton->OnClicked.AddDynamic(this, &UR1GameOverWidget::OnExitClicked);
 	}
 }
 
@@ -37,8 +36,8 @@ void UR1GameOverWidget::OnRetryClicked()
 		if (UR1InventorySubsystem* InventorySubsystem = World->GetSubsystem<UR1InventorySubsystem>())
 		{
 			InventorySubsystem->ClearInventory();
-			// InventorySubsystem->AddDefaultItem(); // GameMode::InitGame에서 레벨 로드 시 어차피 호출됨
 		}
+
 		if (APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0))
 		{
 			CameraManager->StartCameraFade(0.0f, 1.0f, 1.0f, FLinearColor::Black, false, true);

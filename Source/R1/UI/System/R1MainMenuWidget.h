@@ -6,6 +6,8 @@
 #include "UI/R1UserWidget.h"
 #include "R1MainMenuWidget.generated.h"
 
+class UR1CommonButton;
+
 /**
  * 
  */
@@ -21,19 +23,19 @@ protected:
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UButton> Button_NewRun;
+	TObjectPtr<class UR1CommonButton> Button_NewRun;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UButton> Button_Continue;
+	TObjectPtr<class UR1CommonButton> Button_Continue;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UButton> Button_Upgrade;
+	TObjectPtr<class UR1CommonButton> Button_Upgrade;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UButton> Button_Options;
+	TObjectPtr<class UR1CommonButton> Button_Options;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UButton> Button_Exit;
+	TObjectPtr<class UR1CommonButton> Button_Exit;
 
 	UFUNCTION()
 	void OnUpgradeButtonClicked();

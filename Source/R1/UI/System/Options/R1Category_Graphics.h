@@ -34,6 +34,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "R1|UI|Graphics")
 	void InitResolutions(const TArray<FString>& InResList);
 
+	UFUNCTION(BlueprintCallable, Category = "R1|UI|Graphics")
+	void SetSelectedIndexes(int32 ResIndex, int32 WindowModeIndex);
+
 protected:
 	virtual void NativeConstruct() override;
 public:
