@@ -177,6 +177,10 @@ void AR1HUD::BeginPlay()
             {
                 GameOptionsSceneWidget->AddToViewport(20);
                 GameOptionsSceneWidget->SetVisibility(ESlateVisibility::Hidden);
+                if (GameOptionsSceneWidget->GameOptionsMenuWidget)
+                {
+                    GameOptionsSceneWidget->GameOptionsMenuWidget->OnCloseRequested.AddUniqueDynamic(this, &AR1HUD::ToggleOptionsUI);
+                }
             }
         }
 
@@ -387,8 +391,6 @@ void AR1HUD::ToggleOptionsUI()
                 GameMenuUIWidget->SetVisibility(ESlateVisibility::Hidden);
             }
 
-            // 이벤트 바인딩 및 동기화
-            GameOptionsSceneWidget->GameOptionsMenuWidget->OnCloseRequested.AddDynamic(this, &AR1HUD::ToggleOptionsUI);
             GameOptionsSceneWidget->GameOptionsMenuWidget->SyncUIFromSettings();
         }
     }

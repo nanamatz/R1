@@ -2,10 +2,18 @@
 #include "System/R1SaveGame_Settings.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/GameUserSettings.h"
+#include "Sound/SoundClass.h"
+#include "Sound/SoundMix.h"
 
 void UR1SettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+ 
+    MasterSoundMix = Cast<USoundMix>(StaticLoadObject(USoundMix::StaticClass(), nullptr, TEXT("/Script/Engine.SoundMix'/Game/Blueprints/Audio/SM_Main.SM_Main'")));
+    MasterSoundClass = Cast<USoundClass>(StaticLoadObject(USoundClass::StaticClass(), nullptr, TEXT("/Script/Engine.SoundClass'/Game/Blueprints/Audio/SC_Master.SC_Master'")));
+    BGMSoundClass = Cast<USoundClass>(StaticLoadObject(USoundClass::StaticClass(), nullptr, TEXT("/Script/Engine.SoundClass'/Game/Blueprints/Audio/SC_BGM.SC_BGM'")));
+    SFXSoundClass = Cast<USoundClass>(StaticLoadObject(USoundClass::StaticClass(), nullptr, TEXT("/Script/Engine.SoundClass'/Game/Blueprints/Audio/SC_SFX.SC_SFX'")));
+
     LoadSettings();
 }
 
@@ -73,8 +81,33 @@ void UR1SettingsSubsystem::ApplyGraphicsSettings()
 
 void UR1SettingsSubsystem::ApplyAudioSettings()
 {
-    // 오디오 설정은 사운드 클래스 믹스 등을 조절해야 하지만, 
-    // 시스템 레벨에서는 변경되었음을 알리고 필요한 곳(HUD 등)에서 대응하게 합니다.
+    if (CurrentSettings)
+    {
+        // 월드가 현재 존재하는지(레벨 이동 중이 아닌지) 안전 검사
+        if (UWorld* World = GetWorld())
+        {
+            if (MasterSoundMix)
+            {
+                if (MasterSoundClass)
+                {
+                    UGameplayStatics::SetSoundMixClassOverride(World, MasterSoundMix, MasterSoundClass, CurrentSettings->MasterVolume, 1.0f, 0.0f, true);
+                }
+                if (BGMSoundClass)
+                {
+                    UGameplayStatics::SetSoundMixClassOverride(World, MasterSoundMix, BGMSoundClass, CurrentSettings->BGMVolume, 1.0f, 0.0f, true);
+                }
+                if (SFXSoundClass)
+                {
+                    UGameplayStatics::SetSoundMixClassOverride(World, MasterSoundMix, SFXSoundClass, CurrentSettings->SFXVolume, 1.0f, 0.0f, true);
+                }
+
+                // 변경된 믹스 세팅을 엔진에 푸시(적용)
+                UGameplayStatics::PushSoundMixModifier(World, MasterSoundMix);
+            }
+        }
+    }
+
+    // UI 동기화 등을 위한 브로드캐스트
     if (OnAudioSettingsChanged.IsBound())
     {
         OnAudioSettingsChanged.Broadcast();

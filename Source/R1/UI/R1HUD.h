@@ -20,6 +20,8 @@ public:
     void ToggleCharacterStatUI();
     void UpdateGameOverUI();
     void ToggleGameMenu();
+
+    UFUNCTION()
     void ToggleOptionsUI();
 
     void ShowMonsterInfo(class AR1Monster* Monster);

@@ -100,11 +100,6 @@ void UR1GameplayAbility_MonsterComboAttack::OnAttackEventReceived(FGameplayEvent
 
 	if (!SourceCharacter) return;
 
-	if (SoundToPlay)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, SourceCharacter->GetActorLocation());
-	}
-
 	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 
 	if (DamageEffect && SourceASC)
@@ -169,6 +164,11 @@ void UR1GameplayAbility_MonsterComboAttack::CheckAndApplyDamage_Sector(const FGa
 			{
 				SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 				ProcessedActors.Add(TargetPlayer);
+
+				if (SoundToPlay)
+				{
+					UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, TargetPlayer->GetActorLocation());
+				}
 			}
 		}
 	}

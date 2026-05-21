@@ -33,6 +33,20 @@ public:
     UFUNCTION(BlueprintPure, Category = "R1|Settings")
     class UR1SaveGame_Settings* GetCustomSettings() const { return CurrentSettings; }
 
+protected:
+    // 한 번만 로드해서 담아둘 캐싱 변수들
+    UPROPERTY()
+    TObjectPtr<class USoundMix> MasterSoundMix;
+
+    UPROPERTY()
+    TObjectPtr<class USoundClass> MasterSoundClass;
+
+    UPROPERTY()
+    TObjectPtr<class USoundClass> BGMSoundClass;
+
+    UPROPERTY()
+    TObjectPtr<class USoundClass> SFXSoundClass;
+
 private:
     UPROPERTY()
     TObjectPtr<class UR1SaveGame_Settings> CurrentSettings;
