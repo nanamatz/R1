@@ -1,5 +1,6 @@
 #include "System/R1SettingsSubsystem.h"
 #include "System/R1SaveGame_Settings.h"
+#include "System/R1LocalizationSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Sound/SoundClass.h"
@@ -7,8 +8,9 @@
 
 void UR1SettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+    Collection.InitializeDependency<UR1LocalizationSubsystem>();
     Super::Initialize(Collection);
- 
+
     MasterSoundMix = Cast<USoundMix>(StaticLoadObject(USoundMix::StaticClass(), nullptr, TEXT("/Script/Engine.SoundMix'/Game/Blueprints/Audio/SM_Main.SM_Main'")));
     MasterSoundClass = Cast<USoundClass>(StaticLoadObject(USoundClass::StaticClass(), nullptr, TEXT("/Script/Engine.SoundClass'/Game/Blueprints/Audio/SC_Master.SC_Master'")));
     BGMSoundClass = Cast<USoundClass>(StaticLoadObject(USoundClass::StaticClass(), nullptr, TEXT("/Script/Engine.SoundClass'/Game/Blueprints/Audio/SC_BGM.SC_BGM'")));
@@ -116,7 +118,14 @@ void UR1SettingsSubsystem::ApplyAudioSettings()
 
 void UR1SettingsSubsystem::ApplyGameplaySettings()
 {
-    // 게임플레이 설정(미니맵 투명도 등)도 변경 알림을 보냅니다.
+    if (CurrentSettings)
+    {
+        if (UR1LocalizationSubsystem* LocSub = GetGameInstance()->GetSubsystem<UR1LocalizationSubsystem>())
+        {
+            LocSub->SetLanguage(CurrentSettings->Language);
+        }
+    }
+
     if (OnGameplaySettingsChanged.IsBound())
     {
         OnGameplaySettingsChanged.Broadcast();
