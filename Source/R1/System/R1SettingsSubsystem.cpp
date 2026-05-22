@@ -120,9 +120,12 @@ void UR1SettingsSubsystem::ApplyGameplaySettings()
 {
     if (CurrentSettings)
     {
-        if (UR1LocalizationSubsystem* LocSub = GetGameInstance()->GetSubsystem<UR1LocalizationSubsystem>())
+        if (UGameInstance* GI = GetGameInstance())
         {
-            LocSub->SetLanguage(CurrentSettings->Language);
+            if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+            {
+                LocSub->SetLanguage(CurrentSettings->Language);
+            }
         }
     }
 

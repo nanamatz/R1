@@ -6,6 +6,6 @@
 UENUM(BlueprintType)
 enum class ER1Language : uint8
 {
-    English UMETA(DisplayName = "English"),
-    Korean  UMETA(DisplayName = "한국어")
+    English = 0 UMETA(DisplayName = "English"),
+    Korean  = 1 UMETA(DisplayName = "한국어")
 };
