@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "System/R1LanguageTypes.h"
 #include "R1SaveGame_Settings.generated.h"
 
 UCLASS()
@@ -27,6 +28,9 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Gameplay")
     float MinimapOpacity = 0.5f;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Settings|Gameplay")
+    ER1Language Language = ER1Language::English;
 
     // --- Controls/Accessibility ---
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Controls")
