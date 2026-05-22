@@ -4,6 +4,7 @@
 
 void UR1LocalizationSubsystem::SetLanguage(ER1Language NewLanguage)
 {
+    if (CurrentLanguage == NewLanguage) return;
     CurrentLanguage = NewLanguage;
     OnLanguageChanged.Broadcast();
 }
@@ -34,9 +35,13 @@ UDataTable* UR1LocalizationSubsystem::GetTable() const
 
     if (!LocalizationTablePath.IsNull())
     {
-        UR1LocalizationSubsystem* MutableThis = const_cast<UR1LocalizationSubsystem*>(this);
-        MutableThis->LocalizationTable = Cast<UDataTable>(LocalizationTablePath.TryLoad());
-        return MutableThis->LocalizationTable;
+        LocalizationTable = Cast<UDataTable>(LocalizationTablePath.TryLoad());
+        if (!LocalizationTable)
+        {
+            UE_LOG(LogTemp, Error, TEXT("UR1LocalizationSubsystem: Failed to load localization table at '%s'"), *LocalizationTablePath.ToString());
+            LocalizationTablePath.Reset();
+        }
+        return LocalizationTable;
     }
 
     return nullptr;

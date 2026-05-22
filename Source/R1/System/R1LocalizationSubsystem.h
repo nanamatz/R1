@@ -25,7 +25,7 @@ private:
     FSoftObjectPath LocalizationTablePath;
 
     UPROPERTY()
-    TObjectPtr<UDataTable> LocalizationTable;
+    mutable TObjectPtr<UDataTable> LocalizationTable;
 
     ER1Language CurrentLanguage = ER1Language::English;
 
