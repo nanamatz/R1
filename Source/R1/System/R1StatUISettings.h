@@ -16,12 +16,6 @@ struct FR1StatUIInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
-	FText StatName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
-	FName LocalizationKey;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TObjectPtr<UTexture2D> StatIcon;
 };
 /**

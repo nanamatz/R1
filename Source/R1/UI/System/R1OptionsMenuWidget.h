@@ -10,6 +10,7 @@ class UR1Category_Audio;
 class UR1Category_Gameplay;
 class UR1Category_Controls;
 class UR1CommonButton;
+class UTextBlock;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnOptionsCloseRequested);
 
@@ -115,7 +116,12 @@ protected:
 
 protected:
     virtual void NativeConstruct() override;
+    virtual void NativeDestruct() override;
 
+private:
+    void RefreshLocalization();
+
+protected:
     // Temporary variables for UI state (before Apply)
     UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
     float TempMasterVolume;
@@ -166,6 +172,18 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<class UR1Category_Controls> WBP_Category_Controls;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> Text_Graphics;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> Text_Audio;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> Text_Gameplay;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> Text_Controls;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<class UR1CommonButton> Button_Defaults;

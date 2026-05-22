@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "GameplayTagContainer.h"
 #include "R1Define.h"
 #include "R1ItemFunctionLibrary.generated.h"
 
@@ -27,4 +28,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "UI", meta = (WorldContext = "WorldContextObject"))
 	static FText GetEquipSlotText(UObject* WorldContextObject, ER1EquipmentSlot EquipSlot);
+
+	static FName GetStatLocalizationKey(const FGameplayTag& Tag);
 };

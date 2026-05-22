@@ -46,6 +46,9 @@ public:
 	FName ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
+	FName LocalizationKey;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
 	TObjectPtr<class UTexture2D> ItemIcon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")

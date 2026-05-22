@@ -15,6 +15,7 @@
 #include "UI/System/R1ConfirmModal.h"
 #include "UI/System/R1ConfirmModalSceneWidget.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 
 void UR1OptionsMenuWidget::NativeConstruct()
 {
@@ -100,6 +101,40 @@ void UR1OptionsMenuWidget::NativeConstruct()
     {
         Button_Cancel->CommonButton->OnClicked.AddDynamic(this, &UR1OptionsMenuWidget::OnCancelButtonClicked);
     }
+
+    if (UGameInstance* GI = GetGameInstance())
+    {
+        if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+        {
+            LocSub->OnLanguageChanged.AddUObject(this, &UR1OptionsMenuWidget::RefreshLocalization);
+        }
+    }
+
+    RefreshLocalization();
+}
+
+void UR1OptionsMenuWidget::NativeDestruct()
+{
+    if (UGameInstance* GI = GetGameInstance())
+    {
+        if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+        {
+            LocSub->OnLanguageChanged.RemoveAll(this);
+        }
+    }
+    Super::NativeDestruct();
+}
+
+void UR1OptionsMenuWidget::RefreshLocalization()
+{
+    UGameInstance* GI = GetGameInstance();
+    UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+    if (!LocSub) return;
+
+    if (Text_Graphics) Text_Graphics->SetText(LocSub->GetText("Tab_Graphics"));
+    if (Text_Audio)    Text_Audio->SetText(LocSub->GetText("Tab_Audio"));
+    if (Text_Gameplay) Text_Gameplay->SetText(LocSub->GetText("Tab_Gameplay"));
+    if (Text_Controls) Text_Controls->SetText(LocSub->GetText("Tab_Controls"));
 }
 
 

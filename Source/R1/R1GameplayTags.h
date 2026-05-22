@@ -74,11 +74,13 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_EquipDefence);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_DamageMultiplier);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_DefenceMultiplier);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Ability);
 
 	//monster only
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Xp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AggroRange);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_AttackAngle);
+
 
 	//Meta Progression
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Meta_Upgrade_MaxHealth);

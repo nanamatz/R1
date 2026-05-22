@@ -28,7 +28,12 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
+private:
+	void RefreshLocalization();
+
+protected:
 	UFUNCTION()
 	void OnConfirmClicked();
 
@@ -38,6 +43,12 @@ protected:
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UTextBlock> Text_Message;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> Text_Message_Title;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> Text_Message_SubTitle;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UR1CommonButton> Button_OK;

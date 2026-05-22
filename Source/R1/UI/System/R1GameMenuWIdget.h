@@ -17,6 +17,14 @@ class R1_API UR1GameMenuWIdget : public UR1UserWidget
 	GENERATED_BODY()
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
+
+private:
+	void RefreshLocalization();
+
+protected:
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> Text_Paused;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UR1CommonButton> Button_Resume;

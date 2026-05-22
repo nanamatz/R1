@@ -233,8 +233,9 @@ void AR1ItemActor::UpdateTooltipUI()
 			UWorld* World = GetWorld();
 			UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
 			UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
-			FText DisplayName = (LocSub && !ItemData->ItemName.IsNone())
-				? LocSub->GetText(ItemData->ItemName)
+			FName NameKey = !ItemData->LocalizationKey.IsNone() ? ItemData->LocalizationKey : ItemData->ItemName;
+			FText DisplayName = (LocSub && !NameKey.IsNone())
+				? LocSub->GetText(NameKey)
 				: FText::FromName(ItemData->ItemName);
 
 			Tooltip->SetItemInfo(

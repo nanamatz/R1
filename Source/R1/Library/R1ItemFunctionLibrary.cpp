@@ -3,6 +3,7 @@
 
 #include "Library/R1ItemFunctionLibrary.h"
 #include "System/R1LocalizationSubsystem.h"
+#include "R1GameplayTags.h"
 
 FSlateColor UR1ItemFunctionLibrary::GetRarityColor(EItemRarity Rarity)
 {
@@ -80,4 +81,29 @@ FText UR1ItemFunctionLibrary::GetEquipSlotText(UObject* WorldContextObject, ER1E
 	}
 	UR1LocalizationSubsystem* LocSub = GetLocSub(WorldContextObject);
 	return LocSub ? LocSub->GetText(Key) : Fallback;
+}
+
+FName UR1ItemFunctionLibrary::GetStatLocalizationKey(const FGameplayTag& Tag)
+{
+	using namespace R1GameplayTags;
+	if (Tag == Data_Attribute_MaxHealth)             return "Stat_MaxHealth";
+	if (Tag == Data_Attribute_Health)                return "Stat_Health";
+	if (Tag == Data_Attribute_HealthRegeneration)    return "Stat_HealthRegen";
+	if (Tag == Data_Attribute_MoveSpeed)             return "Stat_MoveSpeed";
+	if (Tag == Data_Attribute_BaseDamage)            return "Stat_BaseDamage";
+	if (Tag == Data_Attribute_BaseDefence)           return "Stat_BaseDefence";
+	if (Tag == Data_Attribute_AttackRange)           return "Stat_AttackRange";
+	if (Tag == Data_Attribute_AttackRadius)          return "Stat_AttackRadius";
+	if (Tag == Data_Attribute_AttackSpeed)           return "Stat_AttackSpeed";
+	if (Tag == Data_Attribute_CriticalHitChance)     return "Stat_CritChance";
+	if (Tag == Data_Attribute_CriticalHitMultiplier) return "Stat_CritMultiplier";
+	if (Tag == Data_Attribute_MaxMana)               return "Stat_MaxMana";
+	if (Tag == Data_Attribute_Mana)                  return "Stat_Mana";
+	if (Tag == Data_Attribute_ManaRegeneration)      return "Stat_ManaRegen";
+	if (Tag == Data_Attribute_WeaponDamage)          return "Stat_WeaponDamage";
+	if (Tag == Data_Attribute_EquipDefence)          return "Stat_EquipDefence";
+	if (Tag == Data_Attribute_DamageMultiplier)      return "Stat_DamageMultiplier";
+	if (Tag == Data_Attribute_DefenceMultiplier)     return "Stat_DefenceMultiplier";
+	if (Tag == Data_Attribute_Ability)               return "Stat_Ability";
+	return NAME_None;
 }

@@ -74,8 +74,9 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 	// 1. 아이템 명 & 색상
 	if (Text_ItemName)
 	{
-		FText DisplayName = (LocSub && !Data->ItemName.IsNone())
-			? LocSub->GetText(Data->ItemName)
+		FName NameKey = !Data->LocalizationKey.IsNone() ? Data->LocalizationKey : Data->ItemName;
+		FText DisplayName = (LocSub && !NameKey.IsNone())
+			? LocSub->GetText(NameKey)
 			: FText::FromName(Data->ItemName);
 
 		Text_ItemName->SetText(DisplayName);
@@ -92,7 +93,15 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 	// 3. 아이템 분류 (장비, 소모품 등)
 	if (Text_ItemType)
 	{
-		Text_ItemType->SetText(UR1ItemFunctionLibrary::GetItemTypeText(this, Data->ItemType));
+		if (Data->ItemType == ER1ItemType::Equipment)
+		{
+			Text_ItemType->SetVisibility(ESlateVisibility::Collapsed);
+		}
+		else
+		{
+			Text_ItemType->SetText(UR1ItemFunctionLibrary::GetItemTypeText(this, Data->ItemType));
+			Text_ItemType->SetVisibility(ESlateVisibility::Visible);
+		}
 	}
 
 	// 4. 장비 부위 (장비가 아니면 레이아웃에서 압축하여 숨김)
@@ -126,22 +135,23 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 				FText StatNameText;
 				UTexture2D* StatIcon = nullptr;
 
-				// 태그 검색 및 매핑
+				FName StatKey = UR1ItemFunctionLibrary::GetStatLocalizationKey(Tag);
+				if (!StatKey.IsNone() && LocSub)
+				{
+					StatNameText = LocSub->GetText(StatKey);
+				}
+				//else
+				//{
+				//	StatNameText = FText::FromString(Tag.GetTagName().ToString().Replace(TEXT("Data.Attribute."), TEXT("")));
+				//}
+
 				if (const FR1StatUIInfo* FoundInfo = StatSettings->StatUIMap.Find(Tag))
 				{
 					StatIcon = FoundInfo->StatIcon;
-					StatNameText = (LocSub && !FoundInfo->LocalizationKey.IsNone())
-						? LocSub->GetText(FoundInfo->LocalizationKey)
-						: FoundInfo->StatName;
-				}
-				else
-				{
-					StatNameText = FText::FromString(Tag.GetTagName().ToString().Replace(TEXT("Data.Attribute."), TEXT("")));
 				}
 
 				FString ValueString = TEXT("");
 
-				// 🌟 Ability면 수치 텍스트를 비워둡니다.
 				if (!Tag.GetTagName().ToString().Contains(TEXT("Ability")))
 				{
 					if (Tag.GetTagName().ToString().Contains(TEXT("Multiplier")))
@@ -174,31 +184,27 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 	}
 	if (Text_Skill)
 	{
-		if (Data->GrantedAbilities.Num() > 0)
+		FString SkillString = TEXT("");
+
+		for (const TSubclassOf<UR1GameplayAbility>& AbilityClass : Data->GrantedAbilities)
 		{
-			FString AbilityString = TEXT("");
-
-			// 배열에 들어있는 클래스(TSubclassOf)들을 순회합니다.
-			for (const TSubclassOf<UR1GameplayAbility>& AbilityClass : Data->GrantedAbilities)
+			if (AbilityClass)
 			{
-				if (AbilityClass)
+				const UR1GameplayAbility* DefaultAbility = AbilityClass.GetDefaultObject();
+				if (DefaultAbility && !DefaultAbility->SkillNameKey.IsNone())
 				{
-					// 🌟 핵심: 클래스를 스폰하지 않고, 메모리에 떠 있는 기본값(CDO) 껍데기만 쏙 가져옵니다!
-					const UR1GameplayAbility* DefaultAbility = AbilityClass.GetDefaultObject();
-
-					// 설명이 적혀있을 때만 추가
-					if (DefaultAbility && !DefaultAbility->AbilityDescription.IsEmpty())
-					{
-						AbilityString += FString::Printf(TEXT("%s\n"), *DefaultAbility->AbilityDescription.ToString());
-					}
+					FText SkillName = LocSub ? LocSub->GetText(DefaultAbility->SkillNameKey) : FText::FromName(DefaultAbility->SkillNameKey);
+					SkillString += FString::Printf(TEXT("%s\n"), *SkillName.ToString());
 				}
 			}
+		}
 
-			// 맨 마지막 줄바꿈 제거
-			AbilityString = AbilityString.TrimEnd();
+		SkillString = SkillString.TrimEnd();
 
-			Text_Skill->SetText(FText::FromString(AbilityString));
-			Text_Skill->SetJustification(ETextJustify::Center); 
+		if (!SkillString.IsEmpty())
+		{
+			Text_Skill->SetText(FText::FromString(SkillString));
+			Text_Skill->SetJustification(ETextJustify::Center);
 			Text_Skill->SetVisibility(ESlateVisibility::Visible);
 		}
 		else

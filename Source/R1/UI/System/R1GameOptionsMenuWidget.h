@@ -13,7 +13,4 @@ class R1_API UR1GameOptionsMenuWidget : public UR1OptionsMenuWidget
 {
 	GENERATED_BODY()
 
-//public:
-//	virtual void OnConfirmButtonClicked() override;
-//	virtual void OnCancelButtonClicked() override;
 };
