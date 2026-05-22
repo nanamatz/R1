@@ -39,6 +39,11 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
+
+private:
+	void RefreshLocalization();
+
 public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UComboBoxString> ComboBox_Resolution;

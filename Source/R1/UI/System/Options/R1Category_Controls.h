@@ -28,8 +28,11 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 private:
+	void RefreshLocalization();
+
 	UFUNCTION()
 	void HandleCameraShakeChanged(float Value);
 

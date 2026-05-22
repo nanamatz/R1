@@ -1,5 +1,6 @@
 #include "UI/System/R1OptionsMenuWidget.h"
 #include "System/R1SettingsSubsystem.h"
+#include "System/R1LocalizationSubsystem.h"
 #include "System/R1SaveGame_Settings.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/GameUserSettings.h"
@@ -276,7 +277,10 @@ void UR1OptionsMenuWidget::OnCancelButtonClicked()
             {
                 if (ActiveConfirmModalScene->WBP_ConfirmModal)
                 {
-                    ActiveConfirmModalScene->WBP_ConfirmModal->SetMessage(FText::FromString(TEXT("There are unsaved changes. Are you sure you want to cancel?")));
+                    if (UR1LocalizationSubsystem* LocSub = GetGameInstance()->GetSubsystem<UR1LocalizationSubsystem>())
+                    {
+                        ActiveConfirmModalScene->WBP_ConfirmModal->SetMessage(LocSub->GetText(TEXT("Modal_UnsavedChanges")));
+                    }
 
                     ActiveConfirmModalScene->WBP_ConfirmModal->OnConfirm.AddDynamic(this, &UR1OptionsMenuWidget::OnConfirmCancellation);
                     ActiveConfirmModalScene->WBP_ConfirmModal->OnCancel.AddDynamic(this, &UR1OptionsMenuWidget::OnCancelModalDismissed);
