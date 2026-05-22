@@ -24,6 +24,7 @@ void UR1Category_Gameplay::NativeConstruct()
 
     if (WBP_ComboBox_Language)
     {
+        // Language names are invariant identity strings; they must show native script regardless of active language.
         WBP_ComboBox_Language->SetOptions({ TEXT("English"), TEXT("한국어") });
         WBP_ComboBox_Language->OnSelectionChanged.AddDynamic(this, &UR1Category_Gameplay::HandleLanguageSelectionChanged);
     }
@@ -82,24 +83,15 @@ void UR1Category_Gameplay::SetSelectedLanguage(ER1Language Language)
 
 void UR1Category_Gameplay::HandleMinimapOpacityChanged(float Value)
 {
-    if (OnMinimapOpacityChanged.IsBound())
-    {
-        OnMinimapOpacityChanged.Broadcast(Value);
-    }
+    OnMinimapOpacityChanged.Broadcast(Value);
 }
 
 void UR1Category_Gameplay::HandleShowDamageTextChanged(bool bIsChecked)
 {
-    if (OnShowDamageTextChanged.IsBound())
-    {
-        OnShowDamageTextChanged.Broadcast(bIsChecked);
-    }
+    OnShowDamageTextChanged.Broadcast(bIsChecked);
 }
 
 void UR1Category_Gameplay::HandleLanguageSelectionChanged(int32 SelectedIndex)
 {
-    if (OnLanguageChanged.IsBound())
-    {
-        OnLanguageChanged.Broadcast((ER1Language)SelectedIndex);
-    }
+    OnLanguageChanged.Broadcast((ER1Language)SelectedIndex);
 }
