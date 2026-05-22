@@ -277,9 +277,12 @@ void UR1OptionsMenuWidget::OnCancelButtonClicked()
             {
                 if (ActiveConfirmModalScene->WBP_ConfirmModal)
                 {
-                    if (UR1LocalizationSubsystem* LocSub = GetGameInstance()->GetSubsystem<UR1LocalizationSubsystem>())
+                    if (UGameInstance* GI = GetGameInstance())
                     {
-                        ActiveConfirmModalScene->WBP_ConfirmModal->SetMessage(LocSub->GetText(TEXT("Modal_UnsavedChanges")));
+                        if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+                        {
+                            ActiveConfirmModalScene->WBP_ConfirmModal->SetMessage(LocSub->GetText(TEXT("Modal_UnsavedChanges")));
+                        }
                     }
 
                     ActiveConfirmModalScene->WBP_ConfirmModal->OnConfirm.AddDynamic(this, &UR1OptionsMenuWidget::OnConfirmCancellation);
