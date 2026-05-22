@@ -38,6 +38,10 @@
 		{
 			"Name": "AudioGameplayVolume",
 			"Enabled": true
+		},
+		{
+			"Name": "RemoteControl",
+			"Enabled": true
 		}
 	]
 }

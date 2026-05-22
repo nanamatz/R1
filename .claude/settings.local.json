@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where uv *)",
+      "Bash(pip --version)",
+      "PowerShell(Get-Command *)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "unreal-mcp"
+  ]
+}
