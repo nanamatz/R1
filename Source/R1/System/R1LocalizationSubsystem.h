@@ -7,27 +7,24 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnLanguageChanged);
 
-UCLASS(Config=Game)
+UCLASS()
 class R1_API UR1LocalizationSubsystem : public UGameInstanceSubsystem
 {
     GENERATED_BODY()
 
 public:
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
     void SetLanguage(ER1Language NewLanguage);
     ER1Language GetLanguage() const { return CurrentLanguage; }
 
-    FText GetText(FName Key) const;
+    FText GetText(FName Key);
 
     FOnLanguageChanged OnLanguageChanged;
 
 private:
-    UPROPERTY(Config)
-    FSoftObjectPath LocalizationTablePath;
-
     UPROPERTY()
-    mutable TObjectPtr<UDataTable> LocalizationTable;
+    TObjectPtr<UDataTable> LocalizationTable;
 
     ER1Language CurrentLanguage = ER1Language::English;
-
-    UDataTable* GetTable() const;
 };

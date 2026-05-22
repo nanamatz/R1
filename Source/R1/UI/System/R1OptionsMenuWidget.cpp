@@ -24,6 +24,7 @@ void UR1OptionsMenuWidget::NativeConstruct()
     if (WBP_Category_Graphics)
     {
         WBP_Category_Graphics->InitResolutions(GenerateResolutionList());
+        WBP_Category_Graphics->InitWindowModes({TEXT("Windowed"), TEXT("Fullscreen"), TEXT("Fullscreen Windowed")});
 
         WBP_Category_Graphics->OnResolutionSelected.AddDynamic(this, &UR1OptionsMenuWidget::SetTempResolutionByIndex);
         WBP_Category_Graphics->OnWindowModeSelected.AddDynamic(this, &UR1OptionsMenuWidget::SetTempWindowModeByIndex);
@@ -161,17 +162,10 @@ void UR1OptionsMenuWidget::SetTempWindowModeByIndex(int32 SelectedIndex)
 {
     switch (SelectedIndex)
     {
-    case 0:
-        TempWindowMode = EWindowMode::Fullscreen;
-        break;
-    case 1:
-        TempWindowMode = EWindowMode::WindowedFullscreen;
-        break;
-    case 2:
-        TempWindowMode = EWindowMode::Windowed;
-        break;
-    default:
-        break;
+    case 0: TempWindowMode = EWindowMode::Windowed;          break;
+    case 1: TempWindowMode = EWindowMode::Fullscreen;         break;
+    case 2: TempWindowMode = EWindowMode::WindowedFullscreen; break;
+    default: break;
     }
 }
 
@@ -419,8 +413,14 @@ void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()
         if (WBP_Category_Graphics->WBP_CheckBox_VSync) WBP_Category_Graphics->WBP_CheckBox_VSync->SetIsChecked(bTempVSyncEnabled);
         if (WBP_Category_Graphics->WBP_Slider_FPS) WBP_Category_Graphics->WBP_Slider_FPS->SetValue(TempFrameRateLimit);
 
-        // 창 모드 인덱스 계산 (EWindowMode::Fullscreen=0, WindowedFullscreen=1, Windowed=2)
-        int32 WindowModeIdx = (int32)TempWindowMode.GetValue();
+        // 창 모드 인덱스 계산 (콤보박스 순서: 0=Windowed, 1=Fullscreen, 2=WindowedFullscreen)
+        int32 WindowModeIdx = 0;
+        switch (TempWindowMode.GetValue())
+        {
+        case EWindowMode::Windowed:           WindowModeIdx = 0; break;
+        case EWindowMode::Fullscreen:         WindowModeIdx = 1; break;
+        case EWindowMode::WindowedFullscreen: WindowModeIdx = 2; break;
+        }
 
         // 해상도 인덱스 찾기
         int32 ResIdx = SupportedResolutions.Find(TempResolution);

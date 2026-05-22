@@ -17,6 +17,7 @@ public:
 	AR1ItemActor();
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	virtual void Highlight() override;
@@ -65,7 +66,11 @@ public:
 
 protected:
 	bool bHighlighted = false;
+
+private:
+	void RefreshLocalization();
 	// 🌟 2. 통합 전리품 연출(Loot Effect) 나이아가라 컴포넌트 추가
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<class UNiagaraComponent> HaloEffect;
 

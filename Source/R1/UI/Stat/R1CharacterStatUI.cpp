@@ -1,4 +1,5 @@
 #include "UI/Stat/R1CharacterStatUI.h"
+#include "System/R1LocalizationSubsystem.h"
 
 #include "Components/PanelWidget.h"
 #include "Components/TextBlock.h"
@@ -63,7 +64,27 @@ void UR1CharacterStatUI::NativeConstruct()
 		Button_Close->OnClicked.AddUniqueDynamic(this, &UR1CharacterStatUI::OnCloseButtonClicked);
 	}
 
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.AddUObject(this, &UR1CharacterStatUI::RefreshUI);
+		}
+	}
+
 	RefreshUI();
+}
+
+void UR1CharacterStatUI::NativeDestruct()
+{
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.RemoveAll(this);
+		}
+	}
+	Super::NativeDestruct();
 }
 
 void UR1CharacterStatUI::RefreshUI()
@@ -77,6 +98,9 @@ void UR1CharacterStatUI::RefreshUI()
 
 	if (!RunUpgradeComp || !ASC || !PlayerAS) return;
 
+	UGameInstance* GI = GetGameInstance();
+	UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+
 	// Update Available Points
 	int32 CurrentPoints = RunUpgradeComp->GetAvailablePoints();
 	if (Text_RemainPointAmount)
@@ -87,7 +111,7 @@ void UR1CharacterStatUI::RefreshUI()
 	// Update Level/Exp/Class text
 	if (Text_ClassName)
 	{
-		Text_ClassName->SetText(GetCharacterClassName(PS->GetPlayerClass())); 
+		Text_ClassName->SetText(GetCharacterClassName(PS->GetPlayerClass()));
 	}
 
 	if (Text_LevelAmount)
@@ -122,7 +146,8 @@ void UR1CharacterStatUI::RefreshUI()
 					if (RowStatName.Equals(Data->StatName.ToString(), ESearchCase::IgnoreCase))
 					{
 						int32 Count = RunUpgradeComp->GetInvestmentCount(Data->StatTag);
-						Row->InjectData(Data->StatName, Count);
+						FText DisplayName = (LocSub && !Data->LocalizationKey.IsNone()) ? LocSub->GetText(Data->LocalizationKey) : Data->StatName;
+						Row->InjectData(DisplayName, Count);
 						Row->SetStatTag(Data->StatTag);
 						Row->SetButtonEnabled(CurrentPoints > 0);
 						Row->OnUpgradeRowClicked.AddUniqueDynamic(this, &UR1CharacterStatUI::OnUpgradeStatClicked);
@@ -174,7 +199,8 @@ void UR1CharacterStatUI::RefreshUI()
 							FormattedValue = UR1StatFormattingLibrary::FormatStatValue(AttrValue, Data->DisplayType);
 						}
 
-						Row->InjectData(Data->StatName, FormattedValue);
+						FText StatDisplayName = (LocSub && !Data->LocalizationKey.IsNone()) ? LocSub->GetText(Data->LocalizationKey) : Data->StatName;
+						Row->InjectData(StatDisplayName, FormattedValue);
 						break;
 					}
 				}
@@ -184,16 +210,22 @@ void UR1CharacterStatUI::RefreshUI()
 }
 
 
-FText UR1CharacterStatUI::GetCharacterClassName(ER1CharacterClass InClass) const
+FText UR1CharacterStatUI::GetCharacterClassName(ER1CharacterClass InClass)
 {
+	UGameInstance* GI = GetGameInstance();
+	UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+
+	FName Key;
 	switch (InClass)
 	{
-	case ER1CharacterClass::Knight: return FText::FromString(TEXT("Knight"));
-	case ER1CharacterClass::OutLaw: return FText::FromString(TEXT("OutLaw"));
-	case ER1CharacterClass::Fighter: return FText::FromString(TEXT("Fighter"));
-	case ER1CharacterClass::Wizard: return FText::FromString(TEXT("Wizard"));
+	case ER1CharacterClass::Knight:  Key = TEXT("Class_Knight");  break;
+	case ER1CharacterClass::OutLaw:  Key = TEXT("Class_OutLaw");  break;
+	case ER1CharacterClass::Fighter: Key = TEXT("Class_Fighter"); break;
+	case ER1CharacterClass::Wizard:  Key = TEXT("Class_Wizard");  break;
+	default:                         Key = TEXT("Class_Unknown"); break;
 	}
-	return FText::FromString(TEXT("Tennis Player"));
+
+	return LocSub ? LocSub->GetText(Key) : FText::FromName(Key);
 }
 
 void UR1CharacterStatUI::HandleAvailablePointsChanged(int32 NewPoints)

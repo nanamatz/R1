@@ -10,11 +10,41 @@
 #include "UI/R1HUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "Data/R1ShopNPCData.h"
+#include "System/R1LocalizationSubsystem.h"
 
 UR1ShopWidget::UR1ShopWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+}
 
+void UR1ShopWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	if (Button_Close)
+	{
+		Button_Close->OnClicked.AddUniqueDynamic(this, &UR1ShopWidget::OnCloseButtonClicked);
+	}
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.AddUObject(this, &UR1ShopWidget::RefreshLocalization);
+		}
+	}
+}
+
+void UR1ShopWidget::NativeDestruct()
+{
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.RemoveAll(this);
+		}
+	}
+	Super::NativeDestruct();
 }
 
 void UR1ShopWidget::InitShop(AR1MerchantNPC* InNPC)
@@ -23,9 +53,8 @@ void UR1ShopWidget::InitShop(AR1MerchantNPC* InNPC)
 
 	ShopSlotsWidget->InitShopGrid(InNPC);
 
-	// 새로운 NPC를 만날 때만 대사를 새로 뽑을 수 있도록 캐시를 초기화할 수도 있지만,
-	// 여기서는 InitShopNPC 내부에서 판단하도록 넘깁니다.
-	CachedGreeting = FText::GetEmpty();
+	// 새 NPC를 만날 때마다 인사말 재추첨
+	CachedGreetingIndex = -1;
 
 	if (InNPC->CurrentNPCData)
 	{
@@ -37,10 +66,18 @@ void UR1ShopWidget::InitShopNPC(UR1ShopNPCData* NPCData)
 {
 	if (!NPCData) return;
 
+	CachedNPCData = NPCData;
+
+	UGameInstance* GI = GetGameInstance();
+	UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+
 	// 1. 이름 세팅
 	if (Text_ShopNPC)
 	{
-		Text_ShopNPC->SetText(NPCData->NPCName);
+		FText Name = (LocSub && !NPCData->NPCNameKey.IsNone())
+			? LocSub->GetText(NPCData->NPCNameKey)
+			: NPCData->NPCName;
+		Text_ShopNPC->SetText(Name);
 		Text_ShopNPC->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	}
 
@@ -54,26 +91,39 @@ void UR1ShopWidget::InitShopNPC(UR1ShopNPCData* NPCData)
 		}
 		else
 		{
-			// 이미지가 없는 NPC라면 가려줍니다.
 			Image_NPC_Portrait->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
 
+	// 3. 인사말 세팅
 	if (Text_Greeting)
 	{
-		// 이미 대사가 캐싱되어 있다면 (구매 시 리프레시 등) 새로 뽑지 않고 그대로 씁니다.
-		if (CachedGreeting.IsEmpty())
+		// 아직 추첨하지 않았다면 랜덤 인덱스 선택
+		if (CachedGreetingIndex < 0)
 		{
-			if (NPCData->GreetingDialogues.Num() > 0)
+			int32 MaxIndex = FMath::Max(NPCData->GreetingKeys.Num(), NPCData->GreetingDialogues.Num()) - 1;
+			if (MaxIndex >= 0)
 			{
-				int32 RandomIndex = FMath::RandRange(0, NPCData->GreetingDialogues.Num() - 1);
-				CachedGreeting = NPCData->GreetingDialogues[RandomIndex];
+				CachedGreetingIndex = FMath::RandRange(0, MaxIndex);
 			}
 		}
 
-		if (!CachedGreeting.IsEmpty())
+		FText Greeting = FText::GetEmpty();
+		if (CachedGreetingIndex >= 0)
 		{
-			Text_Greeting->SetText(CachedGreeting);
+			if (LocSub && NPCData->GreetingKeys.IsValidIndex(CachedGreetingIndex) && !NPCData->GreetingKeys[CachedGreetingIndex].IsNone())
+			{
+				Greeting = LocSub->GetText(NPCData->GreetingKeys[CachedGreetingIndex]);
+			}
+			else if (NPCData->GreetingDialogues.IsValidIndex(CachedGreetingIndex))
+			{
+				Greeting = NPCData->GreetingDialogues[CachedGreetingIndex];
+			}
+		}
+
+		if (!Greeting.IsEmpty())
+		{
+			Text_Greeting->SetText(Greeting);
 			Text_Greeting->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 		}
 		else
@@ -84,20 +134,17 @@ void UR1ShopWidget::InitShopNPC(UR1ShopNPCData* NPCData)
 	}
 }
 
-void UR1ShopWidget::NativeConstruct()
+void UR1ShopWidget::RefreshLocalization()
 {
-	Super::NativeConstruct();
-
-	if (Button_Close)
+	if (CachedNPCData)
 	{
-		Button_Close->OnClicked.AddUniqueDynamic(this, &UR1ShopWidget::OnCloseButtonClicked);
+		InitShopNPC(CachedNPCData);
 	}
 }
 
 FReply UR1ShopWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
-
 	return FReply::Handled();
 }
 

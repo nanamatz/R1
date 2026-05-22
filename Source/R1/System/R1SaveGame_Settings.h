@@ -41,10 +41,10 @@ public:
 
     // --- Graphics ---
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
-    FIntPoint Resolution = FIntPoint(1920, 1080);
+    FIntPoint Resolution = FIntPoint(1280, 720);
 
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
-    TEnumAsByte<EWindowMode::Type> WindowMode = EWindowMode::WindowedFullscreen;
+    TEnumAsByte<EWindowMode::Type> WindowMode = EWindowMode::Windowed;
 
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
     float FrameRateLimit = 60.0f;

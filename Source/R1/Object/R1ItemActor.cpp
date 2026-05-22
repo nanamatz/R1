@@ -14,6 +14,7 @@
 #include "NiagaraComponent.h"
 #include "Library/R1ItemFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "System/R1LocalizationSubsystem.h"
 
 const FName AR1ItemActor::RarityColorParamName = FName("User.RarityColor");
 const FName AR1ItemActor::IsLegendaryParamName = FName("User.IsLegendary");
@@ -58,7 +59,37 @@ AR1ItemActor::AR1ItemActor()
 void AR1ItemActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+			{
+				LocSub->OnLanguageChanged.AddUObject(this, &AR1ItemActor::RefreshLocalization);
+			}
+		}
+	}
+}
+
+void AR1ItemActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+			{
+				LocSub->OnLanguageChanged.RemoveAll(this);
+			}
+		}
+	}
+	Super::EndPlay(EndPlayReason);
+}
+
+void AR1ItemActor::RefreshLocalization()
+{
+	UpdateTooltipUI();
 }
 
 void AR1ItemActor::Highlight()
@@ -199,9 +230,15 @@ void AR1ItemActor::UpdateTooltipUI()
 	{
 		if (ItemData)
 		{
-			// 유저님의 완벽한 툴팁 포맷팅 함수 재활용
+			UWorld* World = GetWorld();
+			UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
+			UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+			FText DisplayName = (LocSub && !ItemData->ItemName.IsNone())
+				? LocSub->GetText(ItemData->ItemName)
+				: FText::FromName(ItemData->ItemName);
+
 			Tooltip->SetItemInfo(
-				FText::FromName(ItemData->ItemName),
+				DisplayName,
 				ItemRarity,
 				ItemCount,
 				ItemData->ItemType,

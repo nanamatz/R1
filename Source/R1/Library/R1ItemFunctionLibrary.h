@@ -19,12 +19,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "UI")
 	static FSlateColor GetRarityColor(EItemRarity Rarity);
 
-	UFUNCTION(BlueprintPure, Category = "UI")
-	static FText GetRarityText(EItemRarity Rarity);
+	UFUNCTION(BlueprintPure, Category = "UI", meta = (WorldContext = "WorldContextObject"))
+	static FText GetRarityText(UObject* WorldContextObject, EItemRarity Rarity);
 
-	UFUNCTION(BlueprintPure, Category = "UI")
-	static FText GetItemTypeText(ER1ItemType ItemType);
+	UFUNCTION(BlueprintPure, Category = "UI", meta = (WorldContext = "WorldContextObject"))
+	static FText GetItemTypeText(UObject* WorldContextObject, ER1ItemType ItemType);
 
-	UFUNCTION(BlueprintPure, Category = "UI")
-	static FText GetEquipSlotText(ER1EquipmentSlot EquipSlot);
+	UFUNCTION(BlueprintPure, Category = "UI", meta = (WorldContext = "WorldContextObject"))
+	static FText GetEquipSlotText(UObject* WorldContextObject, ER1EquipmentSlot EquipSlot);
 };

@@ -10,8 +10,8 @@ UR1SaveGame_Settings::UR1SaveGame_Settings()
     bConfineMouseToWindow = true;
     CameraShakeIntensity = 1.0f;
 
-    Resolution = FIntPoint(1920, 1080);
-    WindowMode = EWindowMode::WindowedFullscreen;
+    Resolution = FIntPoint(1280, 720);
+    WindowMode = EWindowMode::Windowed;
     FrameRateLimit = 60.0f;
     bVSyncEnabled = true;
 }

@@ -11,17 +11,60 @@
 #include "AbilitySystem/Abilities/R1GameplayAbility.h"
 #include "UI/Inventory/Item/R1StatRowWidget.h"
 #include "System/R1StatUISettings.h"
+#include "System/R1LocalizationSubsystem.h"
+
+void UR1InventoryItemTooltipWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.AddUObject(this, &UR1InventoryItemTooltipWidget::RefreshLocalization);
+		}
+	}
+}
+
+void UR1InventoryItemTooltipWidget::NativeDestruct()
+{
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.RemoveAll(this);
+		}
+	}
+	Super::NativeDestruct();
+}
+
+void UR1InventoryItemTooltipWidget::RefreshLocalization()
+{
+	if (CachedItemInstance.IsValid())
+	{
+		SetupTooltip(CachedItemInstance.Get(), bCachedIsShopContext, bCachedIsEquipped);
+	}
+}
 
 void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, bool bIsShopContext, bool bIsEquipped)
 {
 	if (!ItemInstance || !ItemInstance->GetItemData()) return;
 
+	CachedItemInstance = ItemInstance;
+	bCachedIsShopContext = bIsShopContext;
+	bCachedIsEquipped = bIsEquipped;
+
 	UR1ItemAssetData* Data = ItemInstance->GetItemData();
+
+	UGameInstance* GI = GetGameInstance();
+	UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+
 	if (Text_IsEquipped)
 	{
 		if (bIsEquipped)
 		{
-			Text_IsEquipped->SetText(FText::FromString(FString::Printf(TEXT("(Equipped)"))));
+			FText EquippedLabel = LocSub ? LocSub->GetText("Label_Equipped") : FText::FromString(TEXT("(Equipped)"));
+			Text_IsEquipped->SetText(EquippedLabel);
 		}
 		else
 		{
@@ -31,23 +74,25 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 	// 1. 아이템 명 & 색상
 	if (Text_ItemName)
 	{
-		FString DisplayName = Data->ItemName.ToString();
+		FText DisplayName = (LocSub && !Data->ItemName.IsNone())
+			? LocSub->GetText(Data->ItemName)
+			: FText::FromName(Data->ItemName);
 
-		Text_ItemName->SetText(FText::FromString(DisplayName));
+		Text_ItemName->SetText(DisplayName);
 		Text_ItemName->SetColorAndOpacity(UR1ItemFunctionLibrary::GetRarityColor(ItemInstance->ItemRarity));
 	}
 
 	// 2. 희귀도 텍스트 & 색상
 	if (Text_Rarity)
 	{
-		Text_Rarity->SetText(UR1ItemFunctionLibrary::GetRarityText(ItemInstance->ItemRarity));
+		Text_Rarity->SetText(UR1ItemFunctionLibrary::GetRarityText(this, ItemInstance->ItemRarity));
 		Text_Rarity->SetColorAndOpacity(UR1ItemFunctionLibrary::GetRarityColor(ItemInstance->ItemRarity));
 	}
 
 	// 3. 아이템 분류 (장비, 소모품 등)
 	if (Text_ItemType)
 	{
-		Text_ItemType->SetText(UR1ItemFunctionLibrary::GetItemTypeText(Data->ItemType));
+		Text_ItemType->SetText(UR1ItemFunctionLibrary::GetItemTypeText(this, Data->ItemType));
 	}
 
 	// 4. 장비 부위 (장비가 아니면 레이아웃에서 압축하여 숨김)
@@ -55,7 +100,7 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 	{
 		if (Data->ItemType == ER1ItemType::Equipment && Data->EquipSlots.Num() > 0)
 		{
-			Text_EquipSlotType->SetText(UR1ItemFunctionLibrary::GetEquipSlotText(Data->EquipSlots[0]));
+			Text_EquipSlotType->SetText(UR1ItemFunctionLibrary::GetEquipSlotText(this, Data->EquipSlots[0]));
 			Text_EquipSlotType->SetVisibility(ESlateVisibility::Visible);
 		}
 		else
@@ -78,18 +123,20 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 				FGameplayTag Tag = ModifierPair.Key;
 				float StatValue = ModifierPair.Value;
 
-				FString StatNameStr = TEXT("None");
+				FText StatNameText;
 				UTexture2D* StatIcon = nullptr;
 
 				// 태그 검색 및 매핑
 				if (const FR1StatUIInfo* FoundInfo = StatSettings->StatUIMap.Find(Tag))
 				{
-					StatNameStr = FoundInfo->StatName.ToString();
 					StatIcon = FoundInfo->StatIcon;
+					StatNameText = (LocSub && !FoundInfo->LocalizationKey.IsNone())
+						? LocSub->GetText(FoundInfo->LocalizationKey)
+						: FoundInfo->StatName;
 				}
 				else
 				{
-					StatNameStr = Tag.GetTagName().ToString().Replace(TEXT("Data.Attribute."), TEXT(""));
+					StatNameText = FText::FromString(Tag.GetTagName().ToString().Replace(TEXT("Data.Attribute."), TEXT("")));
 				}
 
 				FString ValueString = TEXT("");
@@ -113,7 +160,7 @@ void UR1InventoryItemTooltipWidget::SetupTooltip(UR1ItemInstance* ItemInstance, 
 				UR1StatRowWidget* StatRow = CreateWidget<UR1StatRowWidget>(this, StatRowClass);
 				if (StatRow)
 				{
-					StatRow->InitStatRow(StatIcon, StatNameStr,ValueString);
+					StatRow->InitStatRow(StatIcon, StatNameText.ToString(), ValueString);
 					VerticalBox_Stats->AddChildToVerticalBox(StatRow);
 				}
 			}

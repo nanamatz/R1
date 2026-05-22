@@ -5,16 +5,22 @@
 #include "Blueprint/UserWidget.h"
 #include "R1MonsterInfoWidget.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class R1_API UR1MonsterInfoWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
-	void UpdateMonsterInfo(const FString& Name, float HpRatio);
+	void UpdateMonsterInfo(FName CharacterRowName, float HpRatio);
+
+protected:
+	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
+
+private:
+	void RefreshLocalization();
+
+	FName CachedMonsterRowName;
 
 protected:
 	UPROPERTY(meta = (BindWidget), BlueprintReadWrite)

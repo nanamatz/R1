@@ -33,7 +33,13 @@ public:
 	// Enum 값을 받아서 텍스트로 바꾸고 애니메이션을 재생하는 함수
 	void PlayAnnouncement(ER1FloorLevel FloorLevel);
 
+protected:
+	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
+
 private:
-	// Enum을 예쁜 텍스트로 바꿔주는 헬퍼 함수
+	void RefreshLocalization();
 	FText GetFloorText(ER1FloorLevel FloorLevel);
+
+	ER1FloorLevel LastAnnouncedFloor = ER1FloorLevel::Laboratory;
 };

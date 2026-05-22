@@ -22,6 +22,18 @@ public:
 	// bIsShopContext가 true면 '구매가(BaseValue)', false면 '판매가(GetSellPrice)'를 표시합니다.
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void SetupTooltip(UR1ItemInstance* ItemInstance, bool bIsShopContext, bool bIsEquipped = false);
+
+protected:
+	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
+
+private:
+	void RefreshLocalization();
+
+	TWeakObjectPtr<UR1ItemInstance> CachedItemInstance;
+	bool bCachedIsShopContext = false;
+	bool bCachedIsEquipped = false;
+
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> Text_IsEquipped;
