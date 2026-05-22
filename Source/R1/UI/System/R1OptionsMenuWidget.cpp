@@ -55,6 +55,7 @@ void UR1OptionsMenuWidget::NativeConstruct()
             OriginalSettings->WindowMode = CurrentSettings->WindowMode;
             OriginalSettings->FrameRateLimit = CurrentSettings->FrameRateLimit;
             OriginalSettings->bVSyncEnabled = CurrentSettings->bVSyncEnabled;
+            OriginalSettings->Language = CurrentSettings->Language;
         }
     }
 
@@ -69,6 +70,7 @@ void UR1OptionsMenuWidget::NativeConstruct()
     {
         WBP_Category_Gameplay->OnMinimapOpacityChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempMinimapOpacity);
         WBP_Category_Gameplay->OnShowDamageTextChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempShowDamageText);
+        WBP_Category_Gameplay->OnLanguageChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempLanguage);
     }
 
     if (WBP_Category_Controls)
@@ -217,6 +219,11 @@ void UR1OptionsMenuWidget::SetTempConfineMouse(bool bEnabled)
     bTempConfineMouse = bEnabled;
 }
 
+void UR1OptionsMenuWidget::SetTempLanguage(ER1Language NewLanguage)
+{
+    TempLanguage = NewLanguage;
+}
+
 void UR1OptionsMenuWidget::OnDefaultsButtonClicked()
 {
     // USaveGame 클래스의 기본값을 가져오기 위해 새 객체 생성
@@ -235,6 +242,7 @@ void UR1OptionsMenuWidget::OnDefaultsButtonClicked()
         TempWindowMode = DefaultSettings->WindowMode;
         TempFrameRateLimit = DefaultSettings->FrameRateLimit;
         bTempVSyncEnabled = DefaultSettings->bVSyncEnabled;
+        TempLanguage = DefaultSettings->Language;
 
         // UI 갱신
         UpdateWidgetsFromTemp();
@@ -325,6 +333,7 @@ bool UR1OptionsMenuWidget::IsSettingsChanged() const
     if (TempWindowMode != OriginalSettings->WindowMode) return true;
     if (!FMath::IsNearlyEqual(TempFrameRateLimit, OriginalSettings->FrameRateLimit)) return true;
     if (bTempVSyncEnabled != OriginalSettings->bVSyncEnabled) return true;
+    if (TempLanguage != OriginalSettings->Language) return true;
 
     return false;
 }
@@ -359,6 +368,7 @@ void UR1OptionsMenuWidget::LoadSettingsToTemp()
             TempMinimapOpacity = Settings->MinimapOpacity;
             bTempConfineMouse = Settings->bConfineMouseToWindow;
             TempCameraShakeIntensity = Settings->CameraShakeIntensity;
+            TempLanguage = Settings->Language;
         }
     }
 
@@ -391,6 +401,7 @@ void UR1OptionsMenuWidget::UpdateOriginalSettingsFromTemp()
     OriginalSettings->WindowMode = TempWindowMode;
     OriginalSettings->FrameRateLimit = TempFrameRateLimit;
     OriginalSettings->bVSyncEnabled = bTempVSyncEnabled;
+    OriginalSettings->Language = TempLanguage;
 }
 
 void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()
@@ -422,6 +433,7 @@ void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()
     {
         if (WBP_Category_Gameplay->WBP_Slider_MinimapOpacity) WBP_Category_Gameplay->WBP_Slider_MinimapOpacity->SetValue(TempMinimapOpacity);
         if (WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText) WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText->SetIsChecked(bTempShowDamageText);
+        WBP_Category_Gameplay->SetSelectedLanguage(TempLanguage);
     }
 
     if (WBP_Category_Controls)
@@ -450,6 +462,7 @@ void UR1OptionsMenuWidget::ApplyAndSaveSettings(bool bSaveToDisk)
             Settings->WindowMode = TempWindowMode;
             Settings->FrameRateLimit = TempFrameRateLimit;
             Settings->bVSyncEnabled = bTempVSyncEnabled;
+            Settings->Language = TempLanguage;
 
             // 서브시스템에 현재 Temp 값들을 적용하라고 명령 (Subsystem 내부에 Apply 로직이 있어야 함)
             SettingsSubsystem->ApplyGraphicsSettings();
@@ -477,6 +490,7 @@ void UR1OptionsMenuWidget::ApplyAndSaveSettings(bool bSaveToDisk)
                     OriginalSettings->WindowMode = Settings->WindowMode;
                     OriginalSettings->FrameRateLimit = Settings->FrameRateLimit;
                     OriginalSettings->bVSyncEnabled = Settings->bVSyncEnabled;
+                    OriginalSettings->Language = Settings->Language;
                 }
             }
         }

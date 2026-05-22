@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UI/R1UserWidget.h"
 #include "GameFramework/GameUserSettings.h"
+#include "System/R1LanguageTypes.h"
 #include "R1OptionsMenuWidget.generated.h"
 
 class UR1Category_Audio;
@@ -109,6 +110,9 @@ protected:
     UFUNCTION()
     void SetTempConfineMouse(bool bEnabled);
 
+    UFUNCTION()
+    void SetTempLanguage(ER1Language NewLanguage);
+
 protected:
     virtual void NativeConstruct() override;
 
@@ -146,6 +150,9 @@ protected:
 
     UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp|Graphics")
     bool bTempVSyncEnabled;
+
+    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
+    ER1Language TempLanguage = ER1Language::English;
 
 protected:
     UPROPERTY(meta = (BindWidget))
