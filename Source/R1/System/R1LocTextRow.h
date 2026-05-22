@@ -9,9 +9,9 @@ struct R1_API FR1LocTextRow : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Localization")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Localization")
     FText English;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Localization")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Localization")
     FText Korean;
 };
