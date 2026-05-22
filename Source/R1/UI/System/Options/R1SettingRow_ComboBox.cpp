@@ -22,12 +22,13 @@ void UR1SettingRow_ComboBox::SetOptionName(const FText& InOptionName)
 
 void UR1SettingRow_ComboBox::SetOptions(const TArray<FString>& InOptions)
 {
-    if (!ComboBox_Value) return;
-
-    ComboBox_Value->ClearOptions();
-    for (const FString& Option : InOptions)
+    if (ComboBox_Value)
     {
-        ComboBox_Value->AddOption(Option);
+        ComboBox_Value->ClearOptions();
+        for (const FString& Option : InOptions)
+        {
+            ComboBox_Value->AddOption(Option);
+        }
     }
 }
 
@@ -49,5 +50,6 @@ void UR1SettingRow_ComboBox::HandleInternalSelectionChanged(FString SelectedItem
 {
     if (!ComboBox_Value) return;
     int32 Index = ComboBox_Value->FindOptionIndex(SelectedItem);
+    if (Index == INDEX_NONE) return;
     OnSelectionChanged.Broadcast(Index);
 }
