@@ -21,6 +21,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
     void SetIsChecked(bool bIsChecked);
 
+    UFUNCTION(BlueprintCallable, Category = "R1|UI")
+    void SetOptionName(const FText& InOptionName);
+
 protected:
     virtual void NativeConstruct() override;
 
