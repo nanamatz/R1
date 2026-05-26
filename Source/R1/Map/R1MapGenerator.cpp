@@ -20,6 +20,7 @@
 #include "Player/R1PlayerController.h"
 #include "System/R1LoadingSubSystem.h"
 #include "UI/System/R1LoadingScreenWidget.h"
+#include "Map/R1PlayerSpawnMarker.h"
 
 AR1MapGenerator::AR1MapGenerator()
 {
@@ -734,7 +735,18 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 			}
 			else
 			{
-				FinalLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
+				// Look for a designer-placed spawn marker in the freshly loaded sublevel.
+				AActor* SpawnMarker = UGameplayStatics::GetActorOfClass(GetWorld(), AR1PlayerSpawnMarker::StaticClass());
+				if (SpawnMarker)
+				{
+					FinalLocation = SpawnMarker->GetActorLocation();
+					FinalRotation = SpawnMarker->GetActorRotation();
+				}
+				else
+				{
+					// Fallback: room streaming origin + Z offset (preserves original behaviour).
+					FinalLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
+				}
 			}
 
 			PlayerCharacter->TeleportToRoom(FinalLocation);
