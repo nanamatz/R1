@@ -1,60 +1,76 @@
 
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "R1CameraOcclusionComponent.generated.h"
 
+/** 인스턴스 단위 투명도 상태 */
 USTRUCT()
-struct FOcclusionData
+struct FOcclusionInstanceData
 {
 	GENERATED_BODY()
 
-	// 교체된 다이내믹 머티리얼 인스턴스(MID) 배열
-	UPROPERTY()
-	TArray<class UMaterialInstanceDynamic*> MIDs;
-
+	int32 InstanceIndex = INDEX_NONE;
 	float CurrentOpacity = 1.0f;
 	float TargetOpacity = 1.0f;
 };
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+/** 컴포넌트 단위 오클루전 데이터 (ISM/HISM과 일반 StaticMesh 모두 지원) */
+USTRUCT()
+struct FOcclusionComponentData
+{
+	GENERATED_BODY()
+
+	// 인스턴스 인덱스별 상태 (일반 StaticMesh는 INDEX_NONE 하나만 들어감)
+	TMap<int32, FOcclusionInstanceData> Instances;
+
+	// 일반 StaticMesh 전용 MID (ISM이 아닌 경우에만 사용)
+	UPROPERTY()
+	TArray<class UMaterialInstanceDynamic*> MIDs;
+
+	bool bIsISM = false;
+};
+
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class R1_API UR1CameraOcclusionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
+public:
 	UR1CameraOcclusionComponent();
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
+public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 protected:
-	// 🌟 설정 변수들
 	UPROPERTY(EditAnywhere, Category = "Occlusion")
-	float OccludedOpacity = 0.2f; // 벽이 가려졌을 때의 투명도
+	float OccludedOpacity = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Occlusion")
-	float FadeSpeed = 5.0f; // 투명해지고 다시 원래대로 돌아오는 속도
+	float FadeSpeed = 5.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Occlusion")
 	float CheckRadius = 300.0f;
 
+	/** 일반 StaticMesh 머티리얼의 Opacity 파라미터 이름 */
 	UPROPERTY(EditAnywhere, Category = "Occlusion")
-	FName OpacityParamName = TEXT("Opacity"); // 머티리얼의 파라미터 이름
+	FName OpacityParamName = TEXT("Opacity");
 
-	// 현재 투명화 처리 중인 액터들을 관리하는 맵
+	/** ISM/HISM PerInstanceCustomData의 DataIndex (머티리얼 설정값과 일치해야 함) */
+	UPROPERTY(EditAnywhere, Category = "Occlusion")
+	int32 PerInstanceDataIndex = 0;
+
+	/** 컴포넌트 + 인스턴스 단위로 관리하는 오클루전 맵 */
 	UPROPERTY()
-	TMap<class UPrimitiveComponent*, FOcclusionData> OccludedComponentMap;
+	TMap<class UPrimitiveComponent*, FOcclusionComponentData> OccludedComponentMap;
 
 private:
-	// 다이내믹 머티리얼 인스턴스를 생성하고 저장하는 함수
-	void InitializeComponentMIDs(class UPrimitiveComponent* TargetComp);
+	/** 컴포넌트/인스턴스를 맵에 등록 (최초 히트 시 호출) */
+	void RegisterOccludedComponent(class UPrimitiveComponent* Comp, int32 InstanceIndex);
+
+	float ReadActualInstanceOpacity(class UPrimitiveComponent* Comp, int32 InstanceIndex) const;
 };

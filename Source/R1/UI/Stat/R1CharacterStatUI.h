@@ -23,12 +23,13 @@ class R1_API UR1CharacterStatUI : public UR1UserWidget
 
 public:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 	UFUNCTION(BlueprintCallable, Category = "R1|UI")
 	void RefreshUI();
 
 protected:
-	FText GetCharacterClassName(ER1CharacterClass InClass) const;
+	FText GetCharacterClassName(ER1CharacterClass InClass);
 
 	UFUNCTION()
 	void HandleAvailablePointsChanged(int32 NewPoints);

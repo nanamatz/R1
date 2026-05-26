@@ -1,5 +1,6 @@
 #include "UI/System/R1OptionsMenuWidget.h"
 #include "System/R1SettingsSubsystem.h"
+#include "System/R1LocalizationSubsystem.h"
 #include "System/R1SaveGame_Settings.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/GameUserSettings.h"
@@ -14,6 +15,7 @@
 #include "UI/System/R1ConfirmModal.h"
 #include "UI/System/R1ConfirmModalSceneWidget.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 
 void UR1OptionsMenuWidget::NativeConstruct()
 {
@@ -23,6 +25,7 @@ void UR1OptionsMenuWidget::NativeConstruct()
     if (WBP_Category_Graphics)
     {
         WBP_Category_Graphics->InitResolutions(GenerateResolutionList());
+        WBP_Category_Graphics->InitWindowModes({TEXT("Windowed"), TEXT("Fullscreen"), TEXT("Fullscreen Windowed")});
 
         WBP_Category_Graphics->OnResolutionSelected.AddDynamic(this, &UR1OptionsMenuWidget::SetTempResolutionByIndex);
         WBP_Category_Graphics->OnWindowModeSelected.AddDynamic(this, &UR1OptionsMenuWidget::SetTempWindowModeByIndex);
@@ -55,6 +58,7 @@ void UR1OptionsMenuWidget::NativeConstruct()
             OriginalSettings->WindowMode = CurrentSettings->WindowMode;
             OriginalSettings->FrameRateLimit = CurrentSettings->FrameRateLimit;
             OriginalSettings->bVSyncEnabled = CurrentSettings->bVSyncEnabled;
+            OriginalSettings->Language = CurrentSettings->Language;
         }
     }
 
@@ -69,6 +73,7 @@ void UR1OptionsMenuWidget::NativeConstruct()
     {
         WBP_Category_Gameplay->OnMinimapOpacityChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempMinimapOpacity);
         WBP_Category_Gameplay->OnShowDamageTextChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempShowDamageText);
+        WBP_Category_Gameplay->OnLanguageChanged.AddDynamic(this, &UR1OptionsMenuWidget::SetTempLanguage);
     }
 
     if (WBP_Category_Controls)
@@ -96,6 +101,40 @@ void UR1OptionsMenuWidget::NativeConstruct()
     {
         Button_Cancel->CommonButton->OnClicked.AddDynamic(this, &UR1OptionsMenuWidget::OnCancelButtonClicked);
     }
+
+    if (UGameInstance* GI = GetGameInstance())
+    {
+        if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+        {
+            LocSub->OnLanguageChanged.AddUObject(this, &UR1OptionsMenuWidget::RefreshLocalization);
+        }
+    }
+
+    RefreshLocalization();
+}
+
+void UR1OptionsMenuWidget::NativeDestruct()
+{
+    if (UGameInstance* GI = GetGameInstance())
+    {
+        if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+        {
+            LocSub->OnLanguageChanged.RemoveAll(this);
+        }
+    }
+    Super::NativeDestruct();
+}
+
+void UR1OptionsMenuWidget::RefreshLocalization()
+{
+    UGameInstance* GI = GetGameInstance();
+    UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+    if (!LocSub) return;
+
+    if (Text_Graphics) Text_Graphics->SetText(LocSub->GetText("Tab_Graphics"));
+    if (Text_Audio)    Text_Audio->SetText(LocSub->GetText("Tab_Audio"));
+    if (Text_Gameplay) Text_Gameplay->SetText(LocSub->GetText("Tab_Gameplay"));
+    if (Text_Controls) Text_Controls->SetText(LocSub->GetText("Tab_Controls"));
 }
 
 
@@ -158,17 +197,10 @@ void UR1OptionsMenuWidget::SetTempWindowModeByIndex(int32 SelectedIndex)
 {
     switch (SelectedIndex)
     {
-    case 0:
-        TempWindowMode = EWindowMode::Fullscreen;
-        break;
-    case 1:
-        TempWindowMode = EWindowMode::WindowedFullscreen;
-        break;
-    case 2:
-        TempWindowMode = EWindowMode::Windowed;
-        break;
-    default:
-        break;
+    case 0: TempWindowMode = EWindowMode::Windowed;          break;
+    case 1: TempWindowMode = EWindowMode::Fullscreen;         break;
+    case 2: TempWindowMode = EWindowMode::WindowedFullscreen; break;
+    default: break;
     }
 }
 
@@ -217,6 +249,11 @@ void UR1OptionsMenuWidget::SetTempConfineMouse(bool bEnabled)
     bTempConfineMouse = bEnabled;
 }
 
+void UR1OptionsMenuWidget::SetTempLanguage(ER1Language NewLanguage)
+{
+    TempLanguage = NewLanguage;
+}
+
 void UR1OptionsMenuWidget::OnDefaultsButtonClicked()
 {
     // USaveGame 클래스의 기본값을 가져오기 위해 새 객체 생성
@@ -235,6 +272,7 @@ void UR1OptionsMenuWidget::OnDefaultsButtonClicked()
         TempWindowMode = DefaultSettings->WindowMode;
         TempFrameRateLimit = DefaultSettings->FrameRateLimit;
         bTempVSyncEnabled = DefaultSettings->bVSyncEnabled;
+        TempLanguage = DefaultSettings->Language;
 
         // UI 갱신
         UpdateWidgetsFromTemp();
@@ -268,7 +306,13 @@ void UR1OptionsMenuWidget::OnCancelButtonClicked()
             {
                 if (ActiveConfirmModalScene->WBP_ConfirmModal)
                 {
-                    ActiveConfirmModalScene->WBP_ConfirmModal->SetMessage(FText::FromString(TEXT("There are unsaved changes. Are you sure you want to cancel?")));
+                    if (UGameInstance* GI = GetGameInstance())
+                    {
+                        if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+                        {
+                            ActiveConfirmModalScene->WBP_ConfirmModal->SetMessage(LocSub->GetText(TEXT("Modal_UnsavedChanges")));
+                        }
+                    }
 
                     ActiveConfirmModalScene->WBP_ConfirmModal->OnConfirm.AddDynamic(this, &UR1OptionsMenuWidget::OnConfirmCancellation);
                     ActiveConfirmModalScene->WBP_ConfirmModal->OnCancel.AddDynamic(this, &UR1OptionsMenuWidget::OnCancelModalDismissed);
@@ -325,6 +369,7 @@ bool UR1OptionsMenuWidget::IsSettingsChanged() const
     if (TempWindowMode != OriginalSettings->WindowMode) return true;
     if (!FMath::IsNearlyEqual(TempFrameRateLimit, OriginalSettings->FrameRateLimit)) return true;
     if (bTempVSyncEnabled != OriginalSettings->bVSyncEnabled) return true;
+    if (TempLanguage != OriginalSettings->Language) return true;
 
     return false;
 }
@@ -359,6 +404,7 @@ void UR1OptionsMenuWidget::LoadSettingsToTemp()
             TempMinimapOpacity = Settings->MinimapOpacity;
             bTempConfineMouse = Settings->bConfineMouseToWindow;
             TempCameraShakeIntensity = Settings->CameraShakeIntensity;
+            TempLanguage = Settings->Language;
         }
     }
 
@@ -391,6 +437,7 @@ void UR1OptionsMenuWidget::UpdateOriginalSettingsFromTemp()
     OriginalSettings->WindowMode = TempWindowMode;
     OriginalSettings->FrameRateLimit = TempFrameRateLimit;
     OriginalSettings->bVSyncEnabled = bTempVSyncEnabled;
+    OriginalSettings->Language = TempLanguage;
 }
 
 void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()
@@ -401,8 +448,14 @@ void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()
         if (WBP_Category_Graphics->WBP_CheckBox_VSync) WBP_Category_Graphics->WBP_CheckBox_VSync->SetIsChecked(bTempVSyncEnabled);
         if (WBP_Category_Graphics->WBP_Slider_FPS) WBP_Category_Graphics->WBP_Slider_FPS->SetValue(TempFrameRateLimit);
 
-        // 창 모드 인덱스 계산 (EWindowMode::Fullscreen=0, WindowedFullscreen=1, Windowed=2)
-        int32 WindowModeIdx = (int32)TempWindowMode.GetValue();
+        // 창 모드 인덱스 계산 (콤보박스 순서: 0=Windowed, 1=Fullscreen, 2=WindowedFullscreen)
+        int32 WindowModeIdx = 0;
+        switch (TempWindowMode.GetValue())
+        {
+        case EWindowMode::Windowed:           WindowModeIdx = 0; break;
+        case EWindowMode::Fullscreen:         WindowModeIdx = 1; break;
+        case EWindowMode::WindowedFullscreen: WindowModeIdx = 2; break;
+        }
 
         // 해상도 인덱스 찾기
         int32 ResIdx = SupportedResolutions.Find(TempResolution);
@@ -422,6 +475,7 @@ void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()
     {
         if (WBP_Category_Gameplay->WBP_Slider_MinimapOpacity) WBP_Category_Gameplay->WBP_Slider_MinimapOpacity->SetValue(TempMinimapOpacity);
         if (WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText) WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText->SetIsChecked(bTempShowDamageText);
+        WBP_Category_Gameplay->SetSelectedLanguage(TempLanguage);
     }
 
     if (WBP_Category_Controls)
@@ -450,6 +504,7 @@ void UR1OptionsMenuWidget::ApplyAndSaveSettings(bool bSaveToDisk)
             Settings->WindowMode = TempWindowMode;
             Settings->FrameRateLimit = TempFrameRateLimit;
             Settings->bVSyncEnabled = bTempVSyncEnabled;
+            Settings->Language = TempLanguage;
 
             // 서브시스템에 현재 Temp 값들을 적용하라고 명령 (Subsystem 내부에 Apply 로직이 있어야 함)
             SettingsSubsystem->ApplyGraphicsSettings();
@@ -477,6 +532,7 @@ void UR1OptionsMenuWidget::ApplyAndSaveSettings(bool bSaveToDisk)
                     OriginalSettings->WindowMode = Settings->WindowMode;
                     OriginalSettings->FrameRateLimit = Settings->FrameRateLimit;
                     OriginalSettings->bVSyncEnabled = Settings->bVSyncEnabled;
+                    OriginalSettings->Language = Settings->Language;
                 }
             }
         }

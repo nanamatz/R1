@@ -1,11 +1,13 @@
 
 #include "UI/System/R1GameOverWidget.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "System/R1SaveSystem.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "UI/R1CommonButton.h"
 #include "Item/R1InventorySubsystem.h"
+#include "System/R1LocalizationSubsystem.h"
 
 void UR1GameOverWidget::NativeConstruct()
 {
@@ -20,6 +22,37 @@ void UR1GameOverWidget::NativeConstruct()
 	{
 		Button_Exit->CommonButton->OnClicked.AddDynamic(this, &UR1GameOverWidget::OnExitClicked);
 	}
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.AddUObject(this, &UR1GameOverWidget::RefreshLocalization);
+		}
+	}
+
+	RefreshLocalization();
+}
+
+void UR1GameOverWidget::NativeDestruct()
+{
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.RemoveAll(this);
+		}
+	}
+	Super::NativeDestruct();
+}
+
+void UR1GameOverWidget::RefreshLocalization()
+{
+	UGameInstance* GI = GetGameInstance();
+	UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+	if (!LocSub) return;
+
+	if (Text_YouDied) Text_YouDied->SetText(LocSub->GetText("Label_YouDied"));
 }
 
 void UR1GameOverWidget::OnRetryClicked()

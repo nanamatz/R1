@@ -3,7 +3,9 @@
     "allow": [
       "Bash(where uv *)",
       "Bash(pip --version)",
-      "PowerShell(Get-Command *)"
+      "PowerShell(Get-Command *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   },
   "enabledMcpjsonServers": [

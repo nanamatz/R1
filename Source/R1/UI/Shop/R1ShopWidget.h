@@ -9,6 +9,7 @@
 class UR1ShopSlotsWidget;
 class UButton;
 class AR1MerchantNPC;
+class UR1ShopNPCData;
 /**
  * 
  */
@@ -26,7 +27,10 @@ public:
 	void InitShopNPC(class UR1ShopNPCData* NPCData);
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
+	void RefreshLocalization();
 
 	// 닫기 버튼 클릭 시 호출
 	UFUNCTION()
@@ -48,6 +52,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UTextBlock> Text_Greeting;
 
-	// 현재 표시 중인 대사를 저장하여 리프레시 시에도 바뀌지 않게 합니다.
-	FText CachedGreeting;
+	UPROPERTY()
+	TObjectPtr<UR1ShopNPCData> CachedNPCData;
+
+	// 랜덤으로 선택된 인사말 인덱스 (-1 = 미선택)
+	int32 CachedGreetingIndex = -1;
 };

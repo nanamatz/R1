@@ -16,6 +16,7 @@ class R1_API UR1MetaUpgradeWidget : public UR1UserWidget
 	GENERATED_BODY()
 public:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 	// 화면을 켤 때마다 최신 세이브 데이터를 바탕으로 갱신
@@ -49,7 +50,7 @@ protected:
 	TObjectPtr<class UDataTable> MetaDataTable;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<class UButton> Button_Back;
+	TObjectPtr<class UR1CommonButton> Button_Back;
 
 protected:
 	UFUNCTION()

@@ -18,6 +18,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	// 🌟 컴포넌트 구성
 	UPROPERTY(VisibleAnywhere, Category = "Gold")
@@ -67,4 +68,7 @@ protected:
 
 protected:
 	bool bHighlighted = false;
+
+private:
+	void RefreshLocalization();
 };

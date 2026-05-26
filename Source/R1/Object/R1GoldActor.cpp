@@ -6,6 +6,7 @@
 #include "Item/R1ItemTooltip.h"
 #include "Components/WidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "System/R1LocalizationSubsystem.h"
 
 // Sets default values
 AR1GoldActor::AR1GoldActor()
@@ -44,9 +45,40 @@ void AR1GoldActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+			{
+				LocSub->OnLanguageChanged.AddUObject(this, &AR1GoldActor::RefreshLocalization);
+			}
+		}
+	}
+
 	UpdateTooltipUI();
 
 	PopEffect();
+}
+
+void AR1GoldActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+			{
+				LocSub->OnLanguageChanged.RemoveAll(this);
+			}
+		}
+	}
+	Super::EndPlay(EndPlayReason);
+}
+
+void AR1GoldActor::RefreshLocalization()
+{
+	UpdateTooltipUI();
 }
 
 void AR1GoldActor::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -167,8 +199,13 @@ void AR1GoldActor::UpdateTooltipUI()
 		UR1ItemTooltip* Tooltip = Cast<UR1ItemTooltip>(UserWidget);
 		if (Tooltip)
 		{
+			UWorld* World = GetWorld();
+			UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
+			UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+			FText GoldName = LocSub ? LocSub->GetText("Item_Gold") : FText::FromString(TEXT("Gold"));
+
 			Tooltip->SetItemInfo(
-				FText::FromString(TEXT("Gold")),
+				GoldName,
 				EItemRarity::Common,
 				GoldAmount,
 				ER1ItemType::Consumable,

@@ -2,8 +2,10 @@
 
 
 #include "UI/Progression/R1MetaUpgradeWidget.h"
+#include "System/R1LocalizationSubsystem.h"
 #include "UI/Progression/R1MetaUpgradeSlotWidget.h"
 #include "Components/TextBlock.h"
+#include "UI/R1CommonButton.h"
 #include "Components/Button.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
@@ -18,12 +20,32 @@ void UR1MetaUpgradeWidget::NativeConstruct()
 
 	SetIsFocusable(true);
 
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.AddUObject(this, &UR1MetaUpgradeWidget::RefreshUI);
+		}
+	}
+
 	RefreshUI();
 
-	if (Button_Back)
+	if (Button_Back && Button_Back->CommonButton)
 	{
-		Button_Back->OnClicked.AddDynamic(this, &UR1MetaUpgradeWidget::OnButtonBackClicked);
+		Button_Back->CommonButton->OnClicked.AddDynamic(this, &UR1MetaUpgradeWidget::OnButtonBackClicked);
 	}
+}
+
+void UR1MetaUpgradeWidget::NativeDestruct()
+{
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.RemoveAll(this);
+		}
+	}
+	Super::NativeDestruct();
 }
 
 FReply UR1MetaUpgradeWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
@@ -43,7 +65,9 @@ void UR1MetaUpgradeWidget::RefreshUI()
 {
 	if (!Panel_SkillList || !SlotWidgetClass || !MetaDataTable) return;
 
-	UR1SaveSystem* SaveSystem = GetGameInstance()->GetSubsystem<UR1SaveSystem>();
+	UGameInstance* GI = GetGameInstance();
+	UR1SaveSystem* SaveSystem = GI->GetSubsystem<UR1SaveSystem>();
+	UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>();
 	if (!SaveSystem) return;
 
 	// 1. 금고에서 현재 데이터 가져오기
@@ -89,7 +113,10 @@ void UR1MetaUpgradeWidget::RefreshUI()
 		UR1MetaUpgradeSlotWidget* NewSlot = CreateWidget<UR1MetaUpgradeSlotWidget>(this, SlotWidgetClass);
 		if (NewSlot)
 		{
-			NewSlot->InitSlot(UpgradeData->UpgradeTag, UpgradeData->UpgradeName, CurrentLevel, UpgradeData->MaxLevel,UpgradeData->RequiredPlayerLevel, UpgradeData->UpgradeIcon,bHasPoints,bHasLocked);
+			FText DisplayName = (LocSub && !UpgradeData->LocalizationKey.IsNone())
+				? LocSub->GetText(UpgradeData->LocalizationKey)
+				: UpgradeData->UpgradeName;
+			NewSlot->InitSlot(UpgradeData->UpgradeTag, DisplayName, CurrentLevel, UpgradeData->MaxLevel, UpgradeData->RequiredPlayerLevel, UpgradeData->UpgradeIcon, bHasPoints, bHasLocked);
 			NewSlot->OnUpgradeButtonClicked.AddDynamic(this, &UR1MetaUpgradeWidget::HandleUpgradeRequest);
 
 			// 🌟 1. 격자 패널에 위젯을 추가하고, 그 반환값을 UniformGridSlot으로 받습니다.

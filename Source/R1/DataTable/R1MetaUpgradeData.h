@@ -23,6 +23,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meta")
 	FText UpgradeName;
 
+	// DT_Localization 조회 키 (비어 있으면 UpgradeName 사용)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meta")
+	FName LocalizationKey;
+
 	// 이 스킬을 찍기 위해 필요한 플레이어의 최소 레벨
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meta")
 	int32 RequiredPlayerLevel = 1;

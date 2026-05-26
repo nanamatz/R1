@@ -3,6 +3,8 @@
 
 #include "UI/System/R1GameMenuWIdget.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
+#include "System/R1LocalizationSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "Player/R1PlayerController.h"
@@ -29,6 +31,37 @@ void UR1GameMenuWIdget::NativeConstruct()
 	{
 		Button_Exit->CommonButton->OnClicked.AddDynamic(this, &UR1GameMenuWIdget::OnExitButtonClicked);
 	}
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.AddUObject(this, &UR1GameMenuWIdget::RefreshLocalization);
+		}
+	}
+
+	RefreshLocalization();
+}
+
+void UR1GameMenuWIdget::NativeDestruct()
+{
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.RemoveAll(this);
+		}
+	}
+	Super::NativeDestruct();
+}
+
+void UR1GameMenuWIdget::RefreshLocalization()
+{
+	UGameInstance* GI = GetGameInstance();
+	UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+	if (!LocSub) return;
+
+	if (Text_Paused) Text_Paused->SetText(LocSub->GetText("Label_Paused"));
 }
 
 void UR1GameMenuWIdget::OnResumeButtonClicked()

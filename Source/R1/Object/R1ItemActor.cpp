@@ -14,6 +14,7 @@
 #include "NiagaraComponent.h"
 #include "Library/R1ItemFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "System/R1LocalizationSubsystem.h"
 
 const FName AR1ItemActor::RarityColorParamName = FName("User.RarityColor");
 const FName AR1ItemActor::IsLegendaryParamName = FName("User.IsLegendary");
@@ -45,11 +46,9 @@ AR1ItemActor::AR1ItemActor()
 	MeshComp->SetupAttachment(RootComponent);
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 메시는 충돌 끄기
 
-	// 🌟 5. 통합 전리품 연출(Loot Effect) 나이아가라 컴포넌트 생성 및 메시 아래 부착
 	HaloEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("HaloEffect"));
 	HaloEffect->SetupAttachment(MeshComp); // 메시 바로 아래 붙여서 메시 중앙 바닥에 위치하게 함
 
-	// 💡 부모 메시가 스케일 조정(반지 등)이 되더라도 후광 크기는 일정하게 유지하기 위해 절대 스케일 사용
 	HaloEffect->SetAbsolute(false, false, true);
 	HaloEffect->SetAutoActivate(false);
 	Tags.Add(FName("Item"));
@@ -58,7 +57,37 @@ AR1ItemActor::AR1ItemActor()
 void AR1ItemActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+			{
+				LocSub->OnLanguageChanged.AddUObject(this, &AR1ItemActor::RefreshLocalization);
+			}
+		}
+	}
+}
+
+void AR1ItemActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+			{
+				LocSub->OnLanguageChanged.RemoveAll(this);
+			}
+		}
+	}
+	Super::EndPlay(EndPlayReason);
+}
+
+void AR1ItemActor::RefreshLocalization()
+{
+	UpdateTooltipUI();
 }
 
 void AR1ItemActor::Highlight()
@@ -120,7 +149,6 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 			MeshComp->SetRenderCustomDepth(true);
 			MeshComp->SetCustomDepthStencilValue(249);
 
-			// 🌟 2. 메시 크기에 맞춰 박스 콜리전 크기 자동 조절!
 			FVector MinBounds, MaxBounds;
 			MeshComp->GetLocalBounds(MinBounds, MaxBounds);
 
@@ -151,13 +179,7 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 		TargetColor *= Intensity;
 		TargetColor.A = 0.3f; // 알파값 고정
 
-		// 🌟 2. 나이아가라 색상 파라미터("User.RarityColor") 주입
 		HaloEffect->SetVariableLinearColor(TEXT("User.RarityColor"), TargetColor);
-
-		// 🌟 3. [신규 핵심] 전설 등급 여부 판단 후 부울 파라미터("User.IsLegendary") 주입
-		bool bIsLegendary = (ItemRarity == EItemRarity::Legendary);
-		HaloEffect->SetVariableBool(TEXT("User.IsLegendary"), bIsLegendary);
-
 	}
 
 	UpdateTooltipUI();
@@ -188,20 +210,25 @@ void AR1ItemActor::UpdateTooltipUI()
 {
 	if (!TooltipWidget) return;
 
-	// 🌟 1. UI 알맹이가 생성 대기 중이라면, 지금 당장 만들라고 강제!
 	if (!TooltipWidget->GetUserWidgetObject())
 	{
 		TooltipWidget->InitWidget();
 	}
 
-	// 🌟 2. 안전하게 가져와서 데이터 주입
 	if (UR1ItemTooltip* Tooltip = Cast<UR1ItemTooltip>(TooltipWidget->GetUserWidgetObject()))
 	{
 		if (ItemData)
 		{
-			// 유저님의 완벽한 툴팁 포맷팅 함수 재활용
+			UWorld* World = GetWorld();
+			UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
+			UR1LocalizationSubsystem* LocSub = GI ? GI->GetSubsystem<UR1LocalizationSubsystem>() : nullptr;
+			FName NameKey = !ItemData->LocalizationKey.IsNone() ? ItemData->LocalizationKey : ItemData->ItemName;
+			FText DisplayName = (LocSub && !NameKey.IsNone())
+				? LocSub->GetText(NameKey)
+				: FText::FromName(ItemData->ItemName);
+
 			Tooltip->SetItemInfo(
-				FText::FromName(ItemData->ItemName),
+				DisplayName,
 				ItemRarity,
 				ItemCount,
 				ItemData->ItemType,

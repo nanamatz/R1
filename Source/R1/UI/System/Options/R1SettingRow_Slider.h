@@ -23,6 +23,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "R1|UI")
     void SetValue(float NewValue);
 
+    UFUNCTION(BlueprintCallable, Category = "R1|UI")
+    void SetOptionName(const FText& InOptionName);
+
 protected:
     virtual void NativeConstruct() override;
 

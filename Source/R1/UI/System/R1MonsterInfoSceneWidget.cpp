@@ -17,7 +17,7 @@ void UR1MonsterInfoSceneWidget::SetMonster(AR1Monster* InMonster)
 		TargetMonster->OnHpChanged.AddDynamic(this, &UR1MonsterInfoSceneWidget::HandleHpChanged);
 
 		// 초기 값 설정
-		MonsterInfoWidget->UpdateMonsterInfo(TargetMonster->GetCharacterRowName().ToString(), TargetMonster->GetHealthRatio());
+		MonsterInfoWidget->UpdateMonsterInfo(TargetMonster->GetCharacterRowName(), TargetMonster->GetHealthRatio());
 	}
 }
 
@@ -25,6 +25,6 @@ void UR1MonsterInfoSceneWidget::HandleHpChanged(float Ratio)
 {
 	if (TargetMonster.IsValid() && MonsterInfoWidget)
 	{
-		MonsterInfoWidget->UpdateMonsterInfo(TargetMonster->GetCharacterRowName().ToString(), Ratio);
+		MonsterInfoWidget->UpdateMonsterInfo(TargetMonster->GetCharacterRowName(), Ratio);
 	}
 }

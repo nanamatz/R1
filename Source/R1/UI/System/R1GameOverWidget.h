@@ -17,8 +17,15 @@ class R1_API UR1GameOverWidget : public UR1UserWidget
 	GENERATED_BODY()
 
 protected:
-	// 위젯이 생성될 때 한 번 호출되는 초기화 함수 (BeginPlay와 비슷한 역할)
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
+
+private:
+	void RefreshLocalization();
+
+protected:
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UTextBlock> Text_YouDied;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<class UR1CommonButton> Button_Retry;

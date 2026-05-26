@@ -69,6 +69,7 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_EquipDefence, "Data.Attribute.EquipDefence");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_DamageMultiplier, "Data.Attribute.DamageMultiplier");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_DefenceMultiplier, "Data.Attribute.DefenceMultiplier");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_Ability, "Data.Attribute.Ability");
 
 	//monster only
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_Xp, "Data.Attribute.Xp");

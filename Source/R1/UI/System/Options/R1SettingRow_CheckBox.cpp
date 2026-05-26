@@ -30,6 +30,14 @@ void UR1SettingRow_CheckBox::SetIsChecked(bool bIsChecked)
     }
 }
 
+void UR1SettingRow_CheckBox::SetOptionName(const FText& InOptionName)
+{
+    if (Text_OptionName)
+    {
+        Text_OptionName->SetText(InOptionName);
+    }
+}
+
 void UR1SettingRow_CheckBox::HandleInternalCheckStateChanged(bool bIsChecked)
 {
     OnCheckStateChanged.Broadcast(bIsChecked);

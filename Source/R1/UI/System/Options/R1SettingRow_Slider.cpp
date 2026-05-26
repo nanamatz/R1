@@ -29,6 +29,14 @@ void UR1SettingRow_Slider::SetValue(float NewValue)
     UpdateDisplay(NewValue);
 }
 
+void UR1SettingRow_Slider::SetOptionName(const FText& InOptionName)
+{
+    if (Text_OptionName)
+    {
+        Text_OptionName->SetText(InOptionName);
+    }
+}
+
 void UR1SettingRow_Slider::NativeConstruct()
 {
     Super::NativeConstruct();

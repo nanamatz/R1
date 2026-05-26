@@ -1,100 +1,117 @@
 
-
-
 #include "UI/System/Options/R1Category_Graphics.h"
-#include "Components/ComboBoxString.h"
+#include "UI/System/Options/R1SettingRow_ComboBox.h"
 #include "UI/System/Options/R1SettingRow_CheckBox.h"
 #include "UI/System/Options/R1SettingRow_Slider.h"
+#include "System/R1LocalizationSubsystem.h"
 
 
 void UR1Category_Graphics::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (ComboBox_Resolution)
+	if (WBP_ComboBox_Resolution)
 	{
-		ComboBox_Resolution->OnSelectionChanged.AddDynamic(this, &UR1Category_Graphics::HandleResolutionSelectionChanged);
+		WBP_ComboBox_Resolution->OnSelectionChanged.AddDynamic(this, &UR1Category_Graphics::HandleResolutionSelectionChanged);
 	}
 
-	if (ComboBox_WindowMode)
+	if (WBP_ComboBox_WindowMode)
 	{
-		ComboBox_WindowMode->OnSelectionChanged.AddDynamic(this, &UR1Category_Graphics::HandleWindowModeSelectionChanged);
+		WBP_ComboBox_WindowMode->OnSelectionChanged.AddDynamic(this, &UR1Category_Graphics::HandleWindowModeSelectionChanged);
 	}
 
 	if (WBP_CheckBox_VSync)
 	{
-		WBP_CheckBox_VSync->InitCheckBox(FText::FromString(TEXT("VSync")), false);
+		WBP_CheckBox_VSync->InitCheckBox(FText::GetEmpty(), false);
 		WBP_CheckBox_VSync->OnCheckStateChanged.AddDynamic(this, &UR1Category_Graphics::HandleVSyncStateChanged);
 	}
 
 	if (WBP_Slider_FPS)
 	{
-		WBP_Slider_FPS->InitSlider(FText::FromString(TEXT("Max Frame Rate")), 30.0f, 144.0f, 60.0f);
+		WBP_Slider_FPS->InitSlider(FText::GetEmpty(), 30.0f, 144.0f, 60.0f);
 		WBP_Slider_FPS->OnValueChanged.AddDynamic(this, &UR1Category_Graphics::HandleFPSValueChanged);
 	}
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.AddUObject(this, &UR1Category_Graphics::RefreshLocalization);
+		}
+	}
+	RefreshLocalization();
+}
+
+void UR1Category_Graphics::NativeDestruct()
+{
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>())
+		{
+			LocSub->OnLanguageChanged.RemoveAll(this);
+		}
+	}
+	Super::NativeDestruct();
+}
+
+void UR1Category_Graphics::RefreshLocalization()
+{
+	UGameInstance* GI = GetGameInstance();
+	if (!GI) return;
+	UR1LocalizationSubsystem* LocSub = GI->GetSubsystem<UR1LocalizationSubsystem>();
+	if (!LocSub) return;
+
+	if (WBP_ComboBox_Resolution) WBP_ComboBox_Resolution->SetOptionName(LocSub->GetText(TEXT("Option_Resolution")));
+	if (WBP_ComboBox_WindowMode) WBP_ComboBox_WindowMode->SetOptionName(LocSub->GetText(TEXT("Option_WindowMode")));
+	if (WBP_CheckBox_VSync)      WBP_CheckBox_VSync->SetOptionName(LocSub->GetText(TEXT("Option_VSync")));
+	if (WBP_Slider_FPS)          WBP_Slider_FPS->SetOptionName(LocSub->GetText(TEXT("Option_MaxFrameRate")));
 }
 
 void UR1Category_Graphics::InitResolutions(const TArray<FString>& InResList)
 {
-	if (!ComboBox_Resolution) return;
-
-	ComboBox_Resolution->ClearOptions();
-
-	for (const FString& ResString : InResList)
+	if (WBP_ComboBox_Resolution)
 	{
-		ComboBox_Resolution->AddOption(ResString);
+		WBP_ComboBox_Resolution->SetOptions(InResList);
+	}
+}
+
+void UR1Category_Graphics::InitWindowModes(const TArray<FString>& InModeList)
+{
+	if (WBP_ComboBox_WindowMode)
+	{
+		WBP_ComboBox_WindowMode->SetOptions(InModeList);
 	}
 }
 
 void UR1Category_Graphics::SetSelectedIndexes(int32 ResIndex, int32 WindowModeIndex)
 {
-	if (ComboBox_Resolution)
+	if (WBP_ComboBox_Resolution)
 	{
-		ComboBox_Resolution->SetSelectedIndex(ResIndex);
+		WBP_ComboBox_Resolution->SetSelectedIndex(ResIndex);
 	}
 
-	if (ComboBox_WindowMode)
+	if (WBP_ComboBox_WindowMode)
 	{
-		ComboBox_WindowMode->SetSelectedIndex(WindowModeIndex);
-	}
-}
-
-void UR1Category_Graphics::HandleResolutionSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
-{
-	if (!ComboBox_Resolution) return;
-
-	int32 SelectedIndex = ComboBox_Resolution->FindOptionIndex(SelectedItem);
-
-	if (OnResolutionSelected.IsBound())
-	{
-		OnResolutionSelected.Broadcast(SelectedIndex);
+		WBP_ComboBox_WindowMode->SetSelectedIndex(WindowModeIndex);
 	}
 }
 
-void UR1Category_Graphics::HandleWindowModeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
+void UR1Category_Graphics::HandleResolutionSelectionChanged(int32 SelectedIndex)
 {
-	if (!ComboBox_WindowMode) return;
+	OnResolutionSelected.Broadcast(SelectedIndex);
+}
 
-	int32 SelectedIndex = ComboBox_WindowMode->FindOptionIndex(SelectedItem);
-
-	if (OnWindowModeSelected.IsBound())
-	{
-		OnWindowModeSelected.Broadcast(SelectedIndex);
-	}
+void UR1Category_Graphics::HandleWindowModeSelectionChanged(int32 SelectedIndex)
+{
+	OnWindowModeSelected.Broadcast(SelectedIndex);
 }
 
 void UR1Category_Graphics::HandleVSyncStateChanged(bool bIsChecked)
 {
-	if (OnVSyncChanged.IsBound())
-	{
-		OnVSyncChanged.Broadcast(bIsChecked);
-	}
+	OnVSyncChanged.Broadcast(bIsChecked);
 }
 
 void UR1Category_Graphics::HandleFPSValueChanged(float Value)
 {
-	if (OnFPSChanged.IsBound())
-	{
-		OnFPSChanged.Broadcast(Value);
-	}
+	OnFPSChanged.Broadcast(Value);
 }

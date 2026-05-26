@@ -35,8 +35,8 @@ protected:
 	TObjectPtr<class USoundBase> SoundToPlay;
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tooltip", meta = (MultiLine = true))
-	FText AbilityDescription;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tooltip")
+	FName SkillNameKey;
 
 	UAnimMontage* GetMontageToPlay() const { return MontageToPlay; }
 	USoundBase* GetSoundToPlay() const { return SoundToPlay; }

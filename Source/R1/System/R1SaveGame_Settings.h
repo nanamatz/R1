@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "System/R1LanguageTypes.h"
 #include "R1SaveGame_Settings.generated.h"
 
 UCLASS()
@@ -28,6 +29,9 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Gameplay")
     float MinimapOpacity = 0.5f;
 
+    UPROPERTY(BlueprintReadWrite, Category = "Settings|Gameplay")
+    ER1Language Language = ER1Language::English;
+
     // --- Controls/Accessibility ---
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Controls")
     bool bConfineMouseToWindow = true;
@@ -37,10 +41,10 @@ public:
 
     // --- Graphics ---
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
-    FIntPoint Resolution = FIntPoint(1920, 1080);
+    FIntPoint Resolution = FIntPoint(1280, 720);
 
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
-    TEnumAsByte<EWindowMode::Type> WindowMode = EWindowMode::WindowedFullscreen;
+    TEnumAsByte<EWindowMode::Type> WindowMode = EWindowMode::Windowed;
 
     UPROPERTY(BlueprintReadWrite, Category = "Settings|Graphics")
     float FrameRateLimit = 60.0f;
