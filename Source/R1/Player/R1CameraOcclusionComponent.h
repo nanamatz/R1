@@ -72,4 +72,11 @@ protected:
 private:
 	/** 컴포넌트/인스턴스를 맵에 등록 (최초 히트 시 호출) */
 	void RegisterOccludedComponent(class UPrimitiveComponent* Comp, int32 InstanceIndex);
+
+	/**
+	 * ISM의 경우 PerInstanceSMCustomData에서 실제 현재 opacity 값을 읽어 반환.
+	 * 값을 알 수 없을 경우(비ISM, 배열 범위 초과) 1.0f 반환.
+	 * — 버그2 수정: CurrentOpacity 1.0f 하드코딩 대신 실제값을 사용해 등록 시 pop 방지.
+	 */
+	float ReadActualInstanceOpacity(class UPrimitiveComponent* Comp, int32 InstanceIndex) const;
 };
