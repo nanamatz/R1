@@ -19,9 +19,6 @@ void UR1CameraOcclusionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 월드의 모든 ISM/HISM 컴포넌트를 순회하며 PerInstanceDataIndex 슬롯을 1.0(불투명)으로 초기화.
-	// ★ 핵심: NumCustomDataFloats가 이미 충분해도 실제 데이터(PerInstanceSMCustomData)는
-	//   0으로 기본 초기화되어 있을 수 있으므로, continue 없이 항상 값을 강제 기록한다.
 	const int32 RequiredSlots = PerInstanceDataIndex + 1;
 
 	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
