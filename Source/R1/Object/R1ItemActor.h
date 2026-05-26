@@ -37,7 +37,6 @@ protected:
 	UFUNCTION()
 	void OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 public:
-	// 🌟 머리 위에 아이템 이름을 띄워줄 UI 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
 	TObjectPtr<class UWidgetComponent> TooltipWidget;
 
@@ -69,7 +68,6 @@ protected:
 
 private:
 	void RefreshLocalization();
-	// 🌟 2. 통합 전리품 연출(Loot Effect) 나이아가라 컴포넌트 추가
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<class UNiagaraComponent> HaloEffect;
