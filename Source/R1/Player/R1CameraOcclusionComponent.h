@@ -49,7 +49,7 @@ public:
 protected:
 	// 🌟 설정 변수들
 	UPROPERTY(EditAnywhere, Category = "Occlusion")
-	float OccludedOpacity = 0.2f;
+	float OccludedOpacity = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Occlusion")
 	float FadeSpeed = 5.0f;
