@@ -1,33 +1,22 @@
 
-
-
 #include "Player/R1CameraOcclusionComponent.h"
 #include "Character/R1Character.h"
 #include "Camera/CameraComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/MeshComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 
-// Sets default values for this component's properties
 UR1CameraOcclusionComponent::UR1CameraOcclusionComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
 
-
-// Called when the game starts
 void UR1CameraOcclusionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// ...
-	
 }
 
 void UR1CameraOcclusionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -40,17 +29,16 @@ void UR1CameraOcclusionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	UCameraComponent* CameraComp = PlayerCharacter->FindComponentByClass<UCameraComponent>();
 	if (!CameraComp) return;
 
-	// 1. 카메라에서 플레이어 머리 쪽으로 레이저 발사 (발보다는 몸통/머리가 자연스러움)
+	// 1. 카메라 → 플레이어 몸통 방향으로 Sphere Sweep
 	FVector StartLocation = CameraComp->GetComponentLocation();
 	FVector EndLocation = PlayerCharacter->GetActorLocation() + FVector(0.f, 0.f, 50.f);
 
 	TArray<FHitResult> HitResults;
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(PlayerCharacter);
+	QueryParams.bReturnFaceIndex = true; // ISM 인스턴스 인덱스(Hit.Item) 획득에 필요
 
 	FCollisionShape CollisionShape = FCollisionShape::MakeSphere(CheckRadius);
-
-	// SweepMultiByChannel 함수를 사용하여 CheckRadius 반경 내에 있는 모든 벽을 감지합니다.
 	GetWorld()->SweepMultiByChannel(
 		HitResults,
 		StartLocation,
@@ -61,85 +49,155 @@ void UR1CameraOcclusionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 		QueryParams
 	);
 
-	TSet<UPrimitiveComponent*> CurrentHitComponents;
+	// 2. 이번 프레임에 히트된 (컴포넌트, 인스턴스) 쌍 수집
+	TMap<UPrimitiveComponent*, TSet<int32>> CurrentHits;
 
 	for (const FHitResult& Hit : HitResults)
 	{
 		UPrimitiveComponent* HitComp = Hit.GetComponent();
-		if (HitComp)
-		{
-			CurrentHitComponents.Add(HitComp);
+		if (!HitComp) continue;
 
-			// 아직 맵에 없는 녀석이면 새로 등록하고 타겟 투명도를 설정
-			if (!OccludedComponentMap.Contains(HitComp))
+		// ISM이면 Hit.Item = 인스턴스 인덱스, 일반 Mesh이면 INDEX_NONE
+		UInstancedStaticMeshComponent* ISMComp = Cast<UInstancedStaticMeshComponent>(HitComp);
+		int32 InstanceIdx = ISMComp ? Hit.Item : INDEX_NONE;
+
+		CurrentHits.FindOrAdd(HitComp).Add(InstanceIdx);
+
+		// 처음 히트된 경우 등록
+		RegisterOccludedComponent(HitComp, InstanceIdx);
+
+		// 타깃 투명도 설정
+		if (FOcclusionComponentData* CompData = OccludedComponentMap.Find(HitComp))
+		{
+			if (FOcclusionInstanceData* InstData = CompData->Instances.Find(InstanceIdx))
 			{
-				InitializeComponentMIDs(HitComp);
+				InstData->TargetOpacity = OccludedOpacity;
 			}
-			OccludedComponentMap[HitComp].TargetOpacity = OccludedOpacity;
 		}
 	}
 
 	// 3. 투명도 보간(Fading) 및 복구 로직
-	for (auto It = OccludedComponentMap.CreateIterator(); It; ++It)
+	for (auto CompIt = OccludedComponentMap.CreateIterator(); CompIt; ++CompIt)
 	{
-		UPrimitiveComponent* Comp = It.Key();
-		FOcclusionData& Data = It.Value();
+		UPrimitiveComponent* Comp = CompIt.Key();
+		FOcclusionComponentData& CompData = CompIt.Value();
 
-		// 이번 프레임에 레이저에 안 맞았다면 다시 원래대로(1.0) 복구 준비
-		if (!CurrentHitComponents.Contains(Comp))
+		bool bAllRestored = true;
+
+		for (auto& InstPair : CompData.Instances)
 		{
-			Data.TargetOpacity = 1.0f;
-		}
+			int32 InstIdx = InstPair.Key;
+			FOcclusionInstanceData& InstData = InstPair.Value;
 
-		// 투명도 서서히 변경 (FInterpTo)
-		Data.CurrentOpacity = FMath::FInterpTo(Data.CurrentOpacity, Data.TargetOpacity, DeltaTime, FadeSpeed);
-
-		// 실제 머티리얼 파라미터에 적용
-		for (UMaterialInstanceDynamic* MID : Data.MIDs)
-		{
-			if (MID)
+			// 이번 프레임 히트에 없으면 복구 준비
+			TSet<int32>* HitSet = CurrentHits.Find(Comp);
+			if (!HitSet || !HitSet->Contains(InstIdx))
 			{
-				MID->SetScalarParameterValue(OpacityParamName, Data.CurrentOpacity);
+				InstData.TargetOpacity = 1.0f;
+			}
+
+			// 부드러운 투명도 전환
+			InstData.CurrentOpacity = FMath::FInterpTo(
+				InstData.CurrentOpacity, InstData.TargetOpacity, DeltaTime, FadeSpeed);
+
+			// 실제 머티리얼 적용
+			if (CompData.bIsISM)
+			{
+				// ISM/HISM: 인스턴스별 CustomData로 개별 제어
+				if (UInstancedStaticMeshComponent* ISMComp = Cast<UInstancedStaticMeshComponent>(Comp))
+				{
+					ISMComp->SetCustomDataValue(InstIdx, PerInstanceDataIndex, InstData.CurrentOpacity, /*bMarkRenderStateDirty=*/true);
+				}
+			}
+			else
+			{
+				// 일반 StaticMesh: MID 파라미터 업데이트
+				for (UMaterialInstanceDynamic* MID : CompData.MIDs)
+				{
+					if (MID) MID->SetScalarParameterValue(OpacityParamName, InstData.CurrentOpacity);
+				}
+			}
+
+			// 완전 복구 여부 체크
+			if (!(InstData.TargetOpacity >= 1.0f && FMath::IsNearlyEqual(InstData.CurrentOpacity, 1.0f, 0.01f)))
+			{
+				bAllRestored = false;
 			}
 		}
 
-		// 완전히 원래대로 돌아왔다면 맵에서 제거 (최적화)
-		if (Data.TargetOpacity == 1.0f && FMath::IsNearlyEqual(Data.CurrentOpacity, 1.0f, 0.01f))
+		// 모든 인스턴스가 완전 복구됐으면 맵에서 제거 (최적화)
+		if (bAllRestored)
 		{
-			for (UMaterialInstanceDynamic* MID : Data.MIDs)
+			if (CompData.bIsISM)
 			{
-				if (MID) MID->SetScalarParameterValue(OpacityParamName, 1.0f);
+				if (UInstancedStaticMeshComponent* ISMComp = Cast<UInstancedStaticMeshComponent>(Comp))
+				{
+					for (auto& InstPair : CompData.Instances)
+					{
+						ISMComp->SetCustomDataValue(InstPair.Key, PerInstanceDataIndex, 1.0f, true);
+					}
+				}
 			}
-			It.RemoveCurrent();
+			else
+			{
+				for (UMaterialInstanceDynamic* MID : CompData.MIDs)
+				{
+					if (MID) MID->SetScalarParameterValue(OpacityParamName, 1.0f);
+				}
+			}
+			CompIt.RemoveCurrent();
 		}
 	}
 }
 
-void UR1CameraOcclusionComponent::InitializeComponentMIDs(UPrimitiveComponent* TargetComp)
+void UR1CameraOcclusionComponent::RegisterOccludedComponent(UPrimitiveComponent* Comp, int32 InstanceIndex)
 {
-	FOcclusionData NewData;
-	UMeshComponent* MeshComp = Cast<UMeshComponent>(TargetComp);
-
-	if (MeshComp)
+	// 이미 등록된 컴포넌트라면 인스턴스 인덱스만 추가
+	if (FOcclusionComponentData* Existing = OccludedComponentMap.Find(Comp))
 	{
-		int32 NumMaterials = MeshComp->GetNumMaterials();
-		for (int32 i = 0; i < NumMaterials; ++i)
+		if (!Existing->Instances.Contains(InstanceIndex))
 		{
-			UMaterialInterface* Mat = MeshComp->GetMaterial(i);
-			UMaterialInstanceDynamic* MID = Cast<UMaterialInstanceDynamic>(Mat);
+			Existing->Instances.Add(InstanceIndex, FOcclusionInstanceData{ InstanceIndex, 1.0f, OccludedOpacity });
+		}
+		return;
+	}
 
-			if (!MID && Mat)
-			{
-				MID = MeshComp->CreateDynamicMaterialInstance(i, Mat);
-			}
+	// 신규 등록
+	FOcclusionComponentData NewData;
+	UInstancedStaticMeshComponent* ISMComp = Cast<UInstancedStaticMeshComponent>(Comp);
 
-			if (MID)
+	if (ISMComp)
+	{
+		// ISM/HISM 경로: PerInstanceCustomData 방식
+		NewData.bIsISM = true;
+
+		if (ISMComp->NumCustomDataFloats < (PerInstanceDataIndex + 1))
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("R1CameraOcclusion: ISM '%s'의 NumCustomDataFloats(%d)가 부족합니다."
+					 " 에디터에서 NumCustomDataFloats를 최소 %d 이상으로 설정해주세요."),
+				*Comp->GetName(), ISMComp->NumCustomDataFloats, PerInstanceDataIndex + 1);
+		}
+	}
+	else
+	{
+		// 일반 StaticMesh 경로: 항상 새 MID 생성 (공유 MID 버그 수정)
+		NewData.bIsISM = false;
+		if (UMeshComponent* MeshComp = Cast<UMeshComponent>(Comp))
+		{
+			for (int32 i = 0; i < MeshComp->GetNumMaterials(); ++i)
 			{
-				NewData.MIDs.Add(MID);
+				UMaterialInterface* Mat = MeshComp->GetMaterial(i);
+				if (Mat)
+				{
+					// ★ 기존 MID 여부와 관계없이 항상 새 MID를 생성해 공유 문제 방지
+					UMaterialInstanceDynamic* NewMID = MeshComp->CreateDynamicMaterialInstance(i, Mat);
+					if (NewMID) NewData.MIDs.Add(NewMID);
+				}
 			}
 		}
 	}
 
-	OccludedComponentMap.Add(TargetComp, NewData);
+	NewData.Instances.Add(InstanceIndex, FOcclusionInstanceData{ InstanceIndex, 1.0f, OccludedOpacity });
+	OccludedComponentMap.Add(Comp, NewData);
 }
-
