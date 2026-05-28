@@ -5,7 +5,9 @@
       "Bash(pip --version)",
       "PowerShell(Get-Command *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\owner\\\\Documents\\\\GitHub\\\\R1\\\\.vs\\\\R1\\\\v17\" -Force)",
+      "Bash(Select-Object Name, Attributes)"
     ]
   },
   "enabledMcpjsonServers": [
