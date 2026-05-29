@@ -8,6 +8,8 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "EngineUtils.h"
+#include "Engine/World.h"
+#include "Engine/Level.h"
 
 
 UR1CameraOcclusionComponent::UR1CameraOcclusionComponent()
@@ -19,71 +21,112 @@ void UR1CameraOcclusionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const int32 RequiredSlots = PerInstanceDataIndex + 1;
-
+	// 이미 로드된 모든 액터의 ISM 초기화
 	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
 	{
-		TArray<UInstancedStaticMeshComponent*> ISMComps;
-		(*It)->GetComponents<UInstancedStaticMeshComponent>(ISMComps);
+		InitializeActorISMs(*It);
+	}
 
-		for (UInstancedStaticMeshComponent* ISMComp : ISMComps)
+	// 스트리밍으로 나중에 로드되는 서브레벨(던전 룸 등)의 ISM도 초기화되도록 델리게이트 등록.
+	// BeginPlay는 플레이어 스폰 시 1회만 실행되므로, 이후 스트림인되는 ISM은 이 훅에서 처리한다.
+	LevelAddedHandle = FWorldDelegates::LevelAddedToWorld.AddUObject(
+		this, &UR1CameraOcclusionComponent::OnLevelAddedToWorld);
+}
+
+void UR1CameraOcclusionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (LevelAddedHandle.IsValid())
+	{
+		FWorldDelegates::LevelAddedToWorld.Remove(LevelAddedHandle);
+		LevelAddedHandle.Reset();
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void UR1CameraOcclusionComponent::OnLevelAddedToWorld(ULevel* InLevel, UWorld* InWorld)
+{
+	// 우리 월드에서 추가된 레벨만 처리 (PIE 등 다른 월드의 브로드캐스트 제외)
+	if (!InLevel || InWorld != GetWorld()) return;
+
+	for (AActor* Actor : InLevel->Actors)
+	{
+		InitializeActorISMs(Actor);
+	}
+}
+
+void UR1CameraOcclusionComponent::InitializeActorISMs(AActor* Actor)
+{
+	if (!Actor) return;
+
+	TArray<UInstancedStaticMeshComponent*> ISMComps;
+	Actor->GetComponents<UInstancedStaticMeshComponent>(ISMComps);
+
+	for (UInstancedStaticMeshComponent* ISMComp : ISMComps)
+	{
+		InitializeISMComponent(ISMComp);
+	}
+}
+
+void UR1CameraOcclusionComponent::InitializeISMComponent(UInstancedStaticMeshComponent* ISMComp)
+{
+	if (!ISMComp) return;
+
+	const int32 NumInstances = ISMComp->GetInstanceCount();
+	if (NumInstances == 0) return;
+
+	const int32 RequiredSlots = PerInstanceDataIndex + 1;
+	bool bDirty = false;
+
+	// ── Step 1: NumCustomDataFloats 슬롯 수 확보 (배열 재구성 필요) ──────────
+	if (ISMComp->NumCustomDataFloats < RequiredSlots)
+	{
+		const int32 OldSlots = ISMComp->NumCustomDataFloats;
+		ISMComp->NumCustomDataFloats = RequiredSlots;
+
+		TArray<float> NewData;
+		NewData.SetNumZeroed(NumInstances * RequiredSlots);
+
+		for (int32 i = 0; i < NumInstances; ++i)
 		{
-			const int32 NumInstances = ISMComp->GetInstanceCount();
-			if (NumInstances == 0) continue;
-
-			bool bDirty = false;
-
-			// ── Step 1: NumCustomDataFloats 슬롯 수 확보 (배열 재구성 필요) ──────────
-			if (ISMComp->NumCustomDataFloats < RequiredSlots)
+			// 기존 슬롯 데이터 유지
+			for (int32 j = 0; j < OldSlots; ++j)
 			{
-				const int32 OldSlots = ISMComp->NumCustomDataFloats;
-				ISMComp->NumCustomDataFloats = RequiredSlots;
-
-				TArray<float> NewData;
-				NewData.SetNumZeroed(NumInstances * RequiredSlots);
-
-				for (int32 i = 0; i < NumInstances; ++i)
-				{
-					// 기존 슬롯 데이터 유지
-					for (int32 j = 0; j < OldSlots; ++j)
-					{
-						const int32 OldIdx = i * OldSlots + j;
-						if (ISMComp->PerInstanceSMCustomData.IsValidIndex(OldIdx))
-							NewData[i * RequiredSlots + j] = ISMComp->PerInstanceSMCustomData[OldIdx];
-					}
-					// 신규 슬롯은 아래 Step 3에서 1.0으로 덮어씀
-				}
-
-				ISMComp->PerInstanceSMCustomData = MoveTemp(NewData);
-				bDirty = true;
+				const int32 OldIdx = i * OldSlots + j;
+				if (ISMComp->PerInstanceSMCustomData.IsValidIndex(OldIdx))
+					NewData[i * RequiredSlots + j] = ISMComp->PerInstanceSMCustomData[OldIdx];
 			}
-
-			// ── Step 2: 배열 크기 보정 (NumCustomDataFloats 충분해도 배열이 비어있을 수 있음) ──
-			const int32 ExpectedSize = NumInstances * ISMComp->NumCustomDataFloats;
-			if (ISMComp->PerInstanceSMCustomData.Num() < ExpectedSize)
-			{
-				ISMComp->PerInstanceSMCustomData.SetNumZeroed(ExpectedSize);
-				bDirty = true;
-			}
-
-			// ── Step 3: PerInstanceDataIndex 슬롯을 1.0(불투명)으로 강제 기록 ──────────
-			// NumCustomDataFloats가 이미 충분했더라도(Step 1 스킵) 데이터는 0일 수 있으므로
-			// 항상 덮어써야 한다. 이것이 버그1(continue)의 수정 핵심.
-			for (int32 i = 0; i < NumInstances; ++i)
-			{
-				const int32 DataIdx = i * ISMComp->NumCustomDataFloats + PerInstanceDataIndex;
-				if (ISMComp->PerInstanceSMCustomData.IsValidIndex(DataIdx))
-				{
-					ISMComp->PerInstanceSMCustomData[DataIdx] = 1.0f;
-					bDirty = true;
-				}
-			}
-
-			if (bDirty)
-			{
-				ISMComp->MarkRenderStateDirty();
-			}
+			// 신규 슬롯은 아래 Step 3에서 1.0으로 덮어씀
 		}
+
+		ISMComp->PerInstanceSMCustomData = MoveTemp(NewData);
+		bDirty = true;
+	}
+
+	// ── Step 2: 배열 크기 보정 (NumCustomDataFloats 충분해도 배열이 비어있을 수 있음) ──
+	const int32 ExpectedSize = NumInstances * ISMComp->NumCustomDataFloats;
+	if (ISMComp->PerInstanceSMCustomData.Num() < ExpectedSize)
+	{
+		ISMComp->PerInstanceSMCustomData.SetNumZeroed(ExpectedSize);
+		bDirty = true;
+	}
+
+	// ── Step 3: PerInstanceDataIndex 슬롯을 1.0(불투명)으로 강제 기록 ──────────
+	// NumCustomDataFloats가 이미 충분했더라도(Step 1 스킵) 데이터는 0일 수 있으므로
+	// 항상 덮어써야 한다. 이것이 버그1(continue)의 수정 핵심.
+	for (int32 i = 0; i < NumInstances; ++i)
+	{
+		const int32 DataIdx = i * ISMComp->NumCustomDataFloats + PerInstanceDataIndex;
+		if (ISMComp->PerInstanceSMCustomData.IsValidIndex(DataIdx))
+		{
+			ISMComp->PerInstanceSMCustomData[DataIdx] = 1.0f;
+			bDirty = true;
+		}
+	}
+
+	if (bDirty)
+	{
+		ISMComp->MarkRenderStateDirty();
 	}
 }
 
