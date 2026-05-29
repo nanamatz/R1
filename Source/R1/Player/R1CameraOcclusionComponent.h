@@ -42,6 +42,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -73,4 +74,16 @@ private:
 	void RegisterOccludedComponent(class UPrimitiveComponent* Comp, int32 InstanceIndex);
 
 	float ReadActualInstanceOpacity(class UPrimitiveComponent* Comp, int32 InstanceIndex) const;
+
+	/** 단일 ISM/HISM의 NumCustomDataFloats 슬롯 확보 및 오클루전 슬롯 초기화 */
+	void InitializeISMComponent(class UInstancedStaticMeshComponent* ISMComp);
+
+	/** 액터가 가진 모든 ISM/HISM 컴포넌트를 초기화 */
+	void InitializeActorISMs(class AActor* Actor);
+
+	/** 스트리밍으로 새 서브레벨이 월드에 추가될 때 호출 (스트림인 ISM 초기화) */
+	void OnLevelAddedToWorld(class ULevel* InLevel, class UWorld* InWorld);
+
+	/** LevelAddedToWorld 델리게이트 핸들 (EndPlay에서 해제) */
+	FDelegateHandle LevelAddedHandle;
 };
