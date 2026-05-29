@@ -78,6 +78,10 @@ DerivedDataCache/*
 Content/Art/
 Content/Sound/
 
+# Megascans raw source download — not a runtime asset, too large for GitHub
+Content/MS_Blood/Megascans_Blood_Source.zip
+*.zip
+
 GEMINI.md
 Design.md
 Portfolio.md
