@@ -2,6 +2,7 @@
 
 
 #include "UI/PlayerInfo/R1HpOrbWidget.h"
+#include "UI/PlayerInfo/R1HpTextUI.h"
 #include "Components/Image.h"
 #include "Character/R1Player.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -28,6 +29,31 @@ void UR1HpOrbWidget::NativeConstruct()
         UE_LOG(LogTemp, Error, TEXT("R1HpOrbWidget: Failed to find AR1Player during NativeConstruct!"));
     }
 
+    // 기본은 숨김 — 호버 시에만 표시
+    if (HpTextUI)
+    {
+        HpTextUI->SetVisibility(ESlateVisibility::Collapsed);
+    }
+}
+
+void UR1HpOrbWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+    Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
+
+    if (HpTextUI)
+    {
+        HpTextUI->SetVisibility(ESlateVisibility::Visible);
+    }
+}
+
+void UR1HpOrbWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+    Super::NativeOnMouseLeave(InMouseEvent);
+
+    if (HpTextUI)
+    {
+        HpTextUI->SetVisibility(ESlateVisibility::Collapsed);
+    }
 }
 
 void UR1HpOrbWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
