@@ -2,6 +2,7 @@
 
 
 #include "UI/PlayerInfo/R1MpOrbWidget.h"
+#include "UI/PlayerInfo/R1MpTextUI.h"
 #include "Components/Image.h"
 #include "Character/R1Player.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -26,6 +27,20 @@ void UR1MpOrbWidget::NativeConstruct()
     else
     {
         UE_LOG(LogTemp, Error, TEXT("R1HpOrbWidget: Failed to find AR1Player during NativeConstruct!"));
+    }
+
+    // 기본은 숨김 — 호버 시에만 표시
+    if (MpTextUI)
+    {
+        MpTextUI->SetVisibility(ESlateVisibility::Collapsed);
+    }
+}
+
+void UR1MpOrbWidget::SetMpTextVisible(bool bVisible)
+{
+    if (MpTextUI)
+    {
+        MpTextUI->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
 }
 

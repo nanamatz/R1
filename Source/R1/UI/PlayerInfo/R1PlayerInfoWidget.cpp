@@ -3,6 +3,7 @@
 
 #include "UI/PlayerInfo/R1PlayerInfoWidget.h"
 #include "UI/PlayerInfo/R1HpOrbWidget.h"
+#include "UI/PlayerInfo/R1MpOrbWidget.h"
 #include "Components/Button.h"
 
 void UR1PlayerInfoWidget::NativeConstruct()
@@ -23,6 +24,21 @@ void UR1PlayerInfoWidget::NativeConstruct()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("R1PlayerInfoWidget: HpOrbWidget not bound — cannot toggle HP text."));
 	}
+
+	if (Btn_MpOrbHover)
+	{
+		Btn_MpOrbHover->OnHovered.AddUniqueDynamic(this, &UR1PlayerInfoWidget::OnMpOrbHitBoxHovered);
+		Btn_MpOrbHover->OnUnhovered.AddUniqueDynamic(this, &UR1PlayerInfoWidget::OnMpOrbHitBoxUnhovered);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("R1PlayerInfoWidget: Btn_MpOrbHover not bound — MP text hover will not work."));
+	}
+
+	if (!MpOrbWidget)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("R1PlayerInfoWidget: MpOrbWidget not bound — cannot toggle MP text."));
+	}
 }
 
 void UR1PlayerInfoWidget::OnHpOrbHitBoxHovered()
@@ -38,5 +54,21 @@ void UR1PlayerInfoWidget::OnHpOrbHitBoxUnhovered()
 	if (HpOrbWidget)
 	{
 		HpOrbWidget->SetHpTextVisible(false);
+	}
+}
+
+void UR1PlayerInfoWidget::OnMpOrbHitBoxHovered()
+{
+	if (MpOrbWidget)
+	{
+		MpOrbWidget->SetMpTextVisible(true);
+	}
+}
+
+void UR1PlayerInfoWidget::OnMpOrbHitBoxUnhovered()
+{
+	if (MpOrbWidget)
+	{
+		MpOrbWidget->SetMpTextVisible(false);
 	}
 }

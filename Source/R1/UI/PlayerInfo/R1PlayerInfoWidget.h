@@ -26,6 +26,12 @@ private:
 	UFUNCTION()
 	void OnHpOrbHitBoxUnhovered();
 
+	UFUNCTION()
+	void OnMpOrbHitBoxHovered();
+
+	UFUNCTION()
+	void OnMpOrbHitBoxUnhovered();
+
 private:
 	// 이 위젯 안의 HP 오브 위젯 (이름 일치 필수: HpOrbWidget)
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -34,4 +40,12 @@ private:
 	// 오브 위(스킬 프레임보다 앞)에 덮은 투명 버튼. 호버 감지용 (이름 일치 필수: Btn_HpOrbHover)
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<class UButton> Btn_HpOrbHover;
+
+	// 이 위젯 안의 MP 오브 위젯 (이름 일치 필수: MpOrbWidget)
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<class UR1MpOrbWidget> MpOrbWidget;
+
+	// MP 오브 위에 덮은 투명 버튼. 호버 감지용 (이름 일치 필수: Btn_MpOrbHover)
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<class UButton> Btn_MpOrbHover;
 };
