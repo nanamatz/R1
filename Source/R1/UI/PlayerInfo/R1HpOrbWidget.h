@@ -17,12 +17,13 @@ class R1_API UR1HpOrbWidget : public UUserWidget
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
-	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 public:
 	// 캐릭터의 델리게이트가 호출할 함수
 	UFUNCTION()
 	void UpdateHpOrb(float Ratio);
+
+	// HP 텍스트 오버레이 표시 토글 (호버 히트박스 등 외부에서 호출)
+	void SetHpTextVisible(bool bVisible);
 
 protected:
 	// 1. UMG에 배치된 이미지 (이름 일치 필수: HpOrbImage)

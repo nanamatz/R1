@@ -36,23 +36,11 @@ void UR1HpOrbWidget::NativeConstruct()
     }
 }
 
-void UR1HpOrbWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+void UR1HpOrbWidget::SetHpTextVisible(bool bVisible)
 {
-    Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
-
     if (HpTextUI)
     {
-        HpTextUI->SetVisibility(ESlateVisibility::Visible);
-    }
-}
-
-void UR1HpOrbWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
-{
-    Super::NativeOnMouseLeave(InMouseEvent);
-
-    if (HpTextUI)
-    {
-        HpTextUI->SetVisibility(ESlateVisibility::Collapsed);
+        HpTextUI->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
 }
 
