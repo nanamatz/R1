@@ -20,6 +20,7 @@
 #include "Item/R1InventorySubsystem.h"
 #include "Item/R1ItemInstance.h"
 #include "Interface/R1InteractionInterface.h"
+#include "Library/R1NavSmoothingLibrary.h"
 
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
@@ -279,7 +280,7 @@ void AR1PlayerController::OnSetDestinationTriggered()
 			}
 
 			// 이제 거리가 50 이상 변했을 때만 이동 명령을 내립니다!
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+			UR1NavSmoothingLibrary::SmoothMoveTo(this, CacheDestination);
 		}
 	}
 }
@@ -311,7 +312,7 @@ void AR1PlayerController::OnSetDestinationReleased()
 			{
 				R1Player->SetCreatureState(ECreatureState::Moving);
 			}
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+			UR1NavSmoothingLibrary::SmoothMoveTo(this, CacheDestination);
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CacheDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
 		}
 	}
@@ -408,7 +409,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		else
 		{
 			CacheDestination = TargetAttackActor->GetActorLocation();
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+			UR1NavSmoothingLibrary::SmoothMoveTo(this, CacheDestination);
 		}
 	}
 	else if (IR1InteractionInterface* InteractableTarget = Cast<IR1InteractionInterface>(TargetActor))
@@ -425,7 +426,7 @@ void AR1PlayerController::ChaseTargetAndAttack()
 		else
 		{
 			CacheDestination = TargetActor->GetActorLocation();
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CacheDestination);
+			UR1NavSmoothingLibrary::SmoothMoveTo(this, CacheDestination);
 		}
 	}
 
