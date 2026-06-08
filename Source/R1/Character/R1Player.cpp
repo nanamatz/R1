@@ -36,8 +36,14 @@ AR1Player::AR1Player()
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
 
-	GetCharacterMovement()->bOrientRotationToMovement = true;	// 캐릭터의 움직임에 따라 바라보는 방향을 동기화
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
+	// 캐릭터의 움직임에 따라 바라보는 방향을 동기화 (Stage 3: 부드러운 회전/가감속)
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	MoveComp->bOrientRotationToMovement = true;
+	MoveComp->RotationRate = FRotator(0.f, SmoothRotationRateYaw, 0.f);
+	MoveComp->MaxAcceleration = SmoothMaxAcceleration;
+	MoveComp->BrakingDecelerationWalking = SmoothBrakingDeceleration;
+	MoveComp->bUseSeparateBrakingFriction = true;
+	MoveComp->BrakingFriction = SmoothBrakingFriction;
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArm->SetupAttachment(GetCapsuleComponent());
