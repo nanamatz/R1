@@ -25,6 +25,21 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UCameraComponent> Camera;
+
+protected:
+	// --- Stage 3: movement feel (tunable in BP) ---
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Feel")
+	float SmoothRotationRateYaw = 720.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Feel")
+	float SmoothMaxAcceleration = 2048.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Feel")
+	float SmoothBrakingDeceleration = 2048.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement|Feel")
+	float SmoothBrakingFriction = 8.f;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
