@@ -13,6 +13,9 @@ void UR1LoadingSubSystem::ShowLoadingScreen(TSubclassOf<UR1LoadingScreenWidget> 
 {
 	if (!WidgetClass) return;
 
+	bSceneDone = false;
+	bContentReady = false;
+
 	if (!LoadingWidget)
 	{
 		LoadingWidget = CreateWidget<UR1LoadingScreenWidget>(GetWorld(), WidgetClass);
@@ -100,6 +103,21 @@ void UR1LoadingSubSystem::HideLoadingScreen()
 
 void UR1LoadingSubSystem::OnVisualsCompleted()
 {
+	bSceneDone = true;
+	TryHideLoadingScreen();
+}
+
+void UR1LoadingSubSystem::NotifyContentReady()
+{
+	bContentReady = true;
+	TryHideLoadingScreen();
+}
+
+void UR1LoadingSubSystem::TryHideLoadingScreen()
+{
+	if (!bSceneDone || !bContentReady) return;
+	if (!LoadingWidget) return; // 이미 내려갔으면 중복 방지
+
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UR1LoadingSubSystem::HideLoadingScreen, 0.7f, false);
 }

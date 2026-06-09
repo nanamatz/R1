@@ -22,6 +22,12 @@ private:
 	UPROPERTY()
 	TObjectPtr<class UR1LoadingScreenWidget> LoadingWidget;
 
+	// 로딩 화면 해제 게이트: 두 조건이 모두 충족되어야 화면을 내립니다.
+	bool bSceneDone = false;     // 위젯 연출(OnSceneFinished) 완료
+	bool bContentReady = false;  // 모든 방 로드 완료(NotifyContentReady)
+
+	void TryHideLoadingScreen();
+
 public:
 	// 1. 로딩 화면을 띄우고 맵 제너레이터와 연결하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Loading")
@@ -37,6 +43,10 @@ public:
 
 	UFUNCTION()
 	void OnVisualsCompleted();
+
+	// 맵 제너레이터가 "이 층의 모든 방 로드가 끝났다"고 알릴 때 호출. 게이트의 두 번째 조건.
+	UFUNCTION(BlueprintCallable, Category = "Loading")
+	void NotifyContentReady();
 
 public:
 	// 🌟 로딩 화면이 사라질 때 울릴 방송
