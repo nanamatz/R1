@@ -63,19 +63,12 @@ USTRUCT()
 struct FR1RoomRuntimeState
 {
 	GENERATED_BODY()
-	// [추가] 메모리 해제 시 참조할 원본 데이터
+
 	UPROPERTY()
 	TObjectPtr<UR1RoomDefinitionData> RoomDefinition = nullptr;
 
-	ER1RoomThermalState ThermalState = ER1RoomThermalState::Cold;
-
 	UPROPERTY()
 	TObjectPtr<ULevelStreamingDynamic> StreamingLevel = nullptr;
-
-	double LastTouchedTime = 0.0;
-
-	// [추가] 비동기 로드된 에셋들의 메모리 해제를 관리할 핸들
-	TSharedPtr<struct FStreamableHandle> PreloadHandle = nullptr;
 };
 
 /**
@@ -94,28 +87,32 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
 	ULevelStreamingDynamic* SpawnRoomLevel(UR1RoomDefinitionData* RoomDefinition, FVector Location, FRotator Rotation);
 
-	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
+	UE_DEPRECATED(5.3, "Thermal streaming retired; floor loads whole at once. No-op.")
+	UFUNCTION(BlueprintCallable, Category = "Room Streaming", meta = (DeprecatedFunction))
 	void SetRuntimeBudget(const FR1RuntimeBudget& InBudget);
 
-	UFUNCTION(BlueprintPure, Category = "Room Streaming")
+	UE_DEPRECATED(5.3, "Thermal streaming retired. Returns default budget.")
+	UFUNCTION(BlueprintPure, Category = "Room Streaming", meta = (DeprecatedFunction))
 	FR1RuntimeBudget GetRuntimeBudget() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
+	UE_DEPRECATED(5.3, "Whole floor is preloaded; preload-on-demand retired. No-op.")
+	UFUNCTION(BlueprintCallable, Category = "Room Streaming", meta = (DeprecatedFunction))
 	void QueuePreloadRooms(const TArray<UR1RoomDefinitionData*>& CandidateRooms);
 
-	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
+	UE_DEPRECATED(5.3, "Activation moved to AR1MapGenerator::ActivateRoom. No-op.")
+	UFUNCTION(BlueprintCallable, Category = "Room Streaming", meta = (DeprecatedFunction))
 	void MarkRoomGameplayReady(UR1RoomDefinitionData* RoomDefinition);
 
-	UFUNCTION(BlueprintPure, Category = "Room Streaming")
+	UE_DEPRECATED(5.3, "Thermal state retired. Always returns Hot.")
+	UFUNCTION(BlueprintPure, Category = "Room Streaming", meta = (DeprecatedFunction))
 	ER1RoomThermalState GetRoomState(UR1RoomDefinitionData* RoomDefinition) const;
 
-	//UFUNCTION(BlueprintCallable, Category = "Room Streaming")
-	//bool CanOpenDoorImmediately(UR1RoomDefinitionData* RoomDefinition) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
+	UE_DEPRECATED(5.3, "Cache policy retired. No-op.")
+	UFUNCTION(BlueprintCallable, Category = "Room Streaming", meta = (DeprecatedFunction))
 	void TickRoomCachePolicy();
 
-	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
+	UE_DEPRECATED(5.3, "Rooms stay resident for the whole floor. No-op.")
+	UFUNCTION(BlueprintCallable, Category = "Room Streaming", meta = (DeprecatedFunction))
 	void MarkRoomAsLeft(UR1RoomDefinitionData* RoomDefinition);
 
 	UFUNCTION(BlueprintCallable, Category = "Room Streaming")
@@ -128,10 +125,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Room Streaming")
 	FR1RuntimeBudget Budget;
 
-	// [추가] 라벨 기반 로딩을 관리할 글로벌 에셋 데이터
-	UPROPERTY(EditAnywhere, Category = "Room Streaming")
-	TObjectPtr<UR1AssetData> GlobalAssetData;
-
 	UPROPERTY()
 	TMap<FName, FR1RoomRuntimeState> RoomStates;
 
@@ -140,7 +133,5 @@ private:
 	void UnloadRoomInternal(FR1RoomRuntimeState& State);
 
 private:
-	void BeginPreload(UR1RoomDefinitionData* RoomDefinition);
-	void TrimPreloadIfNeeded();
 	FName MakeRoomKey(const UR1RoomDefinitionData* RoomDefinition) const;
 };

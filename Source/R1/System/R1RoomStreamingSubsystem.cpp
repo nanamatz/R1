@@ -1,15 +1,13 @@
 /**
- * UR1RoomStreamingSubsystem의 구현부입니다.
- * 비동기 에셋 로딩(Async Loading), 룸 상태 변경 알림, 캐시 유지 정책(TickRoomCachePolicy) 등을 
- * 실제로 처리하는 로직을 담고 있습니다.
+ * UR1RoomStreamingSubsystem — 슬림 버전.
+ * 층(Floor) 단위 전체 로딩 모델로 전환하면서, 룸 레벨 인스턴스의 스폰/언로드만
+ * 담당합니다. 기존 열적(thermal) 상태 머신/예산(budget)/선로딩 로직은 폐기되었고,
+ * 블루프린트 호환을 위해 시그니처만 deprecated no-op으로 남겨 둡니다.
  */
 
 #include "System/R1RoomStreamingSubsystem.h"
 #include "Data/R1RoomDefinitionData.h"
 #include "Engine/LevelStreamingDynamic.h"
-#include "System/R1AssetManager.h"
-#include "Data/R1AssetData.h" // 만들어두신 헤더 추가
-#include "Engine/StreamableManager.h"
 
 void UR1RoomStreamingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -30,7 +28,6 @@ ULevelStreamingDynamic* UR1RoomStreamingSubsystem::SpawnRoomLevel(UR1RoomDefinit
 	const FName RoomKey = MakeRoomKey(RoomDefinition);
 	FR1RoomRuntimeState& State = RoomStates.FindOrAdd(RoomKey);
 	State.RoomDefinition = RoomDefinition;
-	State.LastTouchedTime = FPlatformTime::Seconds();
 
 	if (State.StreamingLevel) return State.StreamingLevel;
 
@@ -42,255 +39,35 @@ ULevelStreamingDynamic* UR1RoomStreamingSubsystem::SpawnRoomLevel(UR1RoomDefinit
 	return State.StreamingLevel;
 }
 
-void UR1RoomStreamingSubsystem::SetRuntimeBudget(const FR1RuntimeBudget& InBudget)
-{
-	Budget = InBudget;
-	TrimPreloadIfNeeded();
-}
-
-FR1RuntimeBudget UR1RoomStreamingSubsystem::GetRuntimeBudget() const
-{
-	return Budget;
-}
-
-void UR1RoomStreamingSubsystem::QueuePreloadRooms(const TArray<UR1RoomDefinitionData*>& CandidateRooms)
-{
-	for (UR1RoomDefinitionData* Candidate : CandidateRooms)
-	{
-		BeginPreload(Candidate);
-	}
-
-	TrimPreloadIfNeeded();
-}
-
-void UR1RoomStreamingSubsystem::MarkRoomGameplayReady(UR1RoomDefinitionData* RoomDefinition)
-{
-	if (RoomDefinition == nullptr)
-	{
-		return;
-	}
-
-	const FName RoomKey = MakeRoomKey(RoomDefinition);
-	if (FR1RoomRuntimeState* State = RoomStates.Find(RoomKey))
-	{
-		State->ThermalState = ER1RoomThermalState::Hot;
-		State->LastTouchedTime = FPlatformTime::Seconds();
-		OnRoomBecameHot.Broadcast(RoomKey);
-	}
-}
-
-ER1RoomThermalState UR1RoomStreamingSubsystem::GetRoomState(UR1RoomDefinitionData* RoomDefinition) const
-{
-	if (RoomDefinition == nullptr)
-	{
-		return ER1RoomThermalState::Cold;
-	}
-
-	const FName RoomKey = MakeRoomKey(RoomDefinition);
-	if (const FR1RoomRuntimeState* State = RoomStates.Find(RoomKey))
-	{
-		return State->ThermalState;
-	}
-
-	return ER1RoomThermalState::Cold;
-}
-
-//bool UR1RoomStreamingSubsystem::CanOpenDoorImmediately(UR1RoomDefinitionData* RoomDefinition) const
-//{
-//	const ER1RoomThermalState State = GetRoomState(RoomDefinition);
-//	return State == ER1RoomThermalState::Hot;
-//}
-
-void UR1RoomStreamingSubsystem::TickRoomCachePolicy()
-{
-	const double Now = FPlatformTime::Seconds();
-
-	for (auto& Pair : RoomStates)
-	{
-		FR1RoomRuntimeState& State = Pair.Value;
-		if (State.ThermalState == ER1RoomThermalState::Cold) continue;
-
-		// Hot(현재 플레이 중인 방)은 시간 갱신만 하고 절대 언로드하지 않음
-		if (State.ThermalState == ER1RoomThermalState::Hot)
-		{
-			State.LastTouchedTime = Now;
-			continue;
-		}
-
-		// 지정된 시간이 지나면 메모리에서 완전히 해제
-		if (Now - State.LastTouchedTime > Budget.UnloadGraceSeconds)
-		{
-			UnloadRoomInternal(State);
-		}
-	}
-	TrimPreloadIfNeeded();
-}
-
-void UR1RoomStreamingSubsystem::MarkRoomAsLeft(UR1RoomDefinitionData* RoomDefinition)
-{
-
-	if (RoomDefinition == nullptr) return;
-
-	const FName RoomKey = MakeRoomKey(RoomDefinition);
-	if (FR1RoomRuntimeState* State = RoomStates.Find(RoomKey))
-	{
-		// 방 상태가 Hot이었다면 Warm으로 낮추고, 
-		// LastTouchedTime을 갱신하여 이때부터 'UnloadGraceSeconds(예: 5초)' 카운트다운을 시작하게 합니다!
-		if (State->ThermalState == ER1RoomThermalState::Hot)
-		{
-			State->ThermalState = ER1RoomThermalState::Warm;
-			State->LastTouchedTime = FPlatformTime::Seconds();
-			UE_LOG(LogTemp, Warning, TEXT("[%s] 플레이어가 방을 떠났습니다. 쿨다운(Warm) 타이머를 시작합니다."), *RoomKey.ToString());
-		}
-	}
-}
-
 void UR1RoomStreamingSubsystem::UnloadAllRooms()
 {
 	UWorld* World = GetWorld();
 	if (!World) return;
 
-	// 월드에 로드되어 있는 모든 스트리밍 레벨을 순회합니다.
 	const TArray<ULevelStreaming*>& StreamingLevels = World->GetStreamingLevels();
-
 	for (ULevelStreaming* Level : StreamingLevels)
 	{
-		// 동적으로 생성된 방(ULevelStreamingDynamic)들만 골라서 파괴 지시
 		if (ULevelStreamingDynamic* DynamicLevel = Cast<ULevelStreamingDynamic>(Level))
 		{
 			DynamicLevel->SetShouldBeLoaded(false);
 			DynamicLevel->SetShouldBeVisible(false);
-			DynamicLevel->SetIsRequestingUnloadAndRemoval(true); // 메모리에서 완전히 파괴
+			DynamicLevel->SetIsRequestingUnloadAndRemoval(true);
 		}
 	}
+
+	// [중요] 다음 층에서 SpawnRoomLevel이 '제거 중'인 옛 인스턴스를 재사용(dedup)하지
+	// 않도록 룸 상태 캐시를 비웁니다.
+	RoomStates.Reset();
 
 	UE_LOG(LogTemp, Warning, TEXT("[RoomStreaming] 이전 층의 모든 방을 메모리에서 해제했습니다."));
 }
 
 void UR1RoomStreamingSubsystem::UnloadRoomInternal(FR1RoomRuntimeState& State)
 {
-	if (State.ThermalState == ER1RoomThermalState::Cold) return;
-
 	if (State.StreamingLevel)
 	{
 		State.StreamingLevel->SetIsRequestingUnloadAndRemoval(true);
 		State.StreamingLevel = nullptr;
-	}
-
-	// [수정] BeginPreload에서 PreloadPrimaryAssets/라벨/룸 레벨을 모두 하나의
-	// StreamableHandle(PreloadHandle)로 로드하므로, 핸들 취소 한 번으로 전부 해제된다.
-	// (이전의 UnloadPrimaryAssets 호출은 LoadPrimaryAssets로 로드한 적이 없어 no-op이었으므로 제거)
-	if (State.PreloadHandle.IsValid())
-	{
-		State.PreloadHandle->CancelHandle();
-		State.PreloadHandle.Reset();
-	}
-
-	State.ThermalState = ER1RoomThermalState::Cold;
-}
-
-void UR1RoomStreamingSubsystem::BeginPreload(UR1RoomDefinitionData* RoomDefinition)
-{
-	if (!RoomDefinition) return;
-
-	const FName RoomKey = MakeRoomKey(RoomDefinition);
-	FR1RoomRuntimeState& State = RoomStates.FindOrAdd(RoomKey);
-
-	State.RoomDefinition = RoomDefinition; // 포인터 저장
-	State.LastTouchedTime = FPlatformTime::Seconds();
-
-	if (State.ThermalState == ER1RoomThermalState::Hot || State.ThermalState == ER1RoomThermalState::Warm) return;
-
-	State.ThermalState = ER1RoomThermalState::Preloading;
-
-	// [수정] 서브시스템은 에디터에서 GlobalAssetData를 세팅할 수 없으므로(인스턴스가 없음),
-	// 부트 시점에 AssetManager가 로드해 둔 전역 PDA_AssetData를 지연 연결한다.
-	if (!GlobalAssetData)
-	{
-		GlobalAssetData = UR1AssetManager::GetLoadedAssetData();
-	}
-
-	// 1. 비동기 로딩할 에셋 경로들을 담을 배열
-	TArray<FSoftObjectPath> PathsToLoad;
-
-	// [수정] 방의 실제 월드(RoomLevel) 패키지도 미리 메모리에 올려 둔다.
-	// 이렇게 해 두면 문을 통과할 때 SpawnRoomLevel(LoadLevelInstance...)이
-	// 디스크 로드 없이 인스턴싱만 하므로 첫 진입 끊김(hitch)이 크게 줄어든다.
-	if (!RoomDefinition->RoomLevel.IsNull())
-	{
-		PathsToLoad.AddUnique(RoomDefinition->RoomLevel.ToSoftObjectPath());
-	}
-
-	if (!RoomDefinition->PreloadPrimaryAssets.IsEmpty())
-	{
-		for (const FPrimaryAssetId& AssetId : RoomDefinition->PreloadPrimaryAssets)
-		{
-			FSoftObjectPath Path = UR1AssetManager::Get().GetPrimaryAssetPath(AssetId);
-			if (Path.IsValid()) PathsToLoad.AddUnique(Path);
-		}
-	}
-	// [통합 2] 질문자님의 UR1AssetData 라벨(Label) 연동 방식!
-	if (GlobalAssetData && !RoomDefinition->PreloadAssetLabels.IsEmpty())
-	{
-		for (const FName& Label : RoomDefinition->PreloadAssetLabels)
-		{
-			// 라벨로 묶인 에셋 세트를 가져옵니다.
-			const FAssetSet& AssetSet = GlobalAssetData->GetAssetSetByLabel(Label);
-
-			// 세트 안의 모든 에셋 경로를 로딩 목록에 추가합니다.
-			for (const FAssetEntry& Entry : AssetSet.AssetEntries)
-			{
-				PathsToLoad.AddUnique(Entry.AssetPath);
-			}
-		}
-	}
-
-	if (PathsToLoad.Num() > 0)
-	{
-		UE_LOG(LogTemp, Log, TEXT("[%s] 방의 에셋 선로딩을 시작합니다. (총 %d개)"), *RoomKey.ToString(), PathsToLoad.Num());
-
-		// [수정] RequestAsyncLoad가 반환하는 핸들을 State.PreloadHandle에 저장합니다!
-		State.PreloadHandle = UR1AssetManager::Get().GetStreamableManager().RequestAsyncLoad(
-			PathsToLoad,
-			FStreamableDelegate::CreateWeakLambda(this, [this, RoomKey]()
-				{
-					if (FR1RoomRuntimeState* RuntimeState = RoomStates.Find(RoomKey))
-					{
-						RuntimeState->ThermalState = ER1RoomThermalState::Warm;
-						RuntimeState->LastTouchedTime = FPlatformTime::Seconds();
-						UE_LOG(LogTemp, Warning, TEXT("[%s] 에셋 선로딩 완료! (Warm 상태 진입)"), *RoomKey.ToString());
-					}
-				})
-		);
-	}
-	else
-	{
-		State.ThermalState = ER1RoomThermalState::Warm;
-	}
-}
-
-void UR1RoomStreamingSubsystem::TrimPreloadIfNeeded()
-{
-	TArray<TPair<FName, FR1RoomRuntimeState*>> CachedRooms;
-	for (auto& Pair : RoomStates)
-	{
-		// [수정] Hot(현재 플레이 중인 방)은 강제 삭제 대상에서 절대적으로 제외합니다.
-		if (Pair.Value.ThermalState != ER1RoomThermalState::Cold &&
-			Pair.Value.ThermalState != ER1RoomThermalState::Hot)
-		{
-			CachedRooms.Emplace(Pair.Key, &Pair.Value);
-		}
-	}
-
-	CachedRooms.Sort([](const auto& A, const auto& B)
-		{
-			return A.Value->LastTouchedTime > B.Value->LastTouchedTime;
-		});
-
-	for (int32 Index = Budget.MaxPreloadedRooms; Index < CachedRooms.Num(); ++Index)
-	{
-		// [수정] 단순 상태 변경이 아니라, 진짜로 메모리를 비우는 함수를 호출합니다!
-		UnloadRoomInternal(*(CachedRooms[Index].Value));
 	}
 }
 
@@ -300,6 +77,28 @@ FName UR1RoomStreamingSubsystem::MakeRoomKey(const UR1RoomDefinitionData* RoomDe
 	{
 		return NAME_None;
 	}
-
 	return FName(*RoomDefinition->GetPrimaryAssetId().ToString());
 }
+
+// ---- 이하 deprecated no-op 스텁 (블루프린트 호환 목적; 실제 동작 없음) ----
+
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
+
+void UR1RoomStreamingSubsystem::SetRuntimeBudget(const FR1RuntimeBudget& InBudget) {}
+
+FR1RuntimeBudget UR1RoomStreamingSubsystem::GetRuntimeBudget() const { return Budget; }
+
+void UR1RoomStreamingSubsystem::QueuePreloadRooms(const TArray<UR1RoomDefinitionData*>& CandidateRooms) {}
+
+void UR1RoomStreamingSubsystem::MarkRoomGameplayReady(UR1RoomDefinitionData* RoomDefinition) {}
+
+ER1RoomThermalState UR1RoomStreamingSubsystem::GetRoomState(UR1RoomDefinitionData* RoomDefinition) const
+{
+	return ER1RoomThermalState::Hot;
+}
+
+void UR1RoomStreamingSubsystem::TickRoomCachePolicy() {}
+
+void UR1RoomStreamingSubsystem::MarkRoomAsLeft(UR1RoomDefinitionData* RoomDefinition) {}
+
+PRAGMA_ENABLE_DEPRECATION_WARNINGS
