@@ -170,9 +170,11 @@ public:
 private:
 	void UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID);
 
-	// 각 룸 레벨 인스턴스의 OnLevelLoaded에 바인딩되는 카운터 콜백.
+	// 각 룸 레벨 인스턴스의 OnLevelShown에 바인딩되는 카운터 콜백.
+	// (OnLevelShown은 AddToWorld/BeginPlay 이후에 브로드캐스트되므로, 카운트가
+	//  끝난 시점엔 모든 방의 DungeonManager가 ActiveManagers에 등록되어 있다.)
 	UFUNCTION()
-	void HandleFloorRoomLoaded();
+	void HandleFloorRoomShown();
 
 	// 모든 방 로드가 끝났을 때 1회 실행: 진행도 100%, 시작/복귀 방 활성화, 로딩 게이트 해제.
 	void OnFloorFullyLoaded();

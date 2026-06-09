@@ -463,15 +463,6 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 	if (NextNodeID == -1) return;
 	if (PendingNodeID != -1) return;
 
-	AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
-	if (PlayerCharacter)
-	{
-		if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
-		{
-			PC->ResetMovementState();
-		}
-	}
-
 	if (GeneratedMap[NextNodeID].RoomDefinition &&
 		GeneratedMap[NextNodeID].RoomDefinition->RoomType == ER1RoomContentType::Treasure)
 	{
@@ -678,17 +669,20 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 	}
 
 	// 3. 플레이어 텔레포트
+	// 세이브 복귀 위치는 한 번만 사용. 플레이어 포인터 유효성과 무관하게 즉시 소비(리셋)한다.
+	const bool bWasLoadingFromSave = bIsLoadingFromSave;
+	bIsLoadingFromSave = false;
+
 	AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	if (PlayerCharacter)
 	{
 		FVector FinalLocation;
 		FRotator FinalRotation = FRotator::ZeroRotator;
 
-		if (bIsLoadingFromSave)
+		if (bWasLoadingFromSave)
 		{
 			FinalLocation = LoadedPlayerLocation;
 			FinalRotation = LoadedPlayerRotation;
-			bIsLoadingFromSave = false;
 		}
 		else if (TargetDoorToSpawnAt)
 		{
@@ -743,8 +737,10 @@ void AR1MapGenerator::SpawnFloorAndWait()
 	ExpectedFloorRoomCount = 0;
 	LoadedFloorRoomCount = 0;
 
-	// 1패스: 모든 방 스폰 + 기대 카운트 확정 (실패한 스폰은 카운트에서 제외)
-	TArray<ULevelStreamingDynamic*> SpawnedLevels;
+	// 1패스: 모든 방 스폰. SpawnRoomLevel은 같은 RoomDefinition에 대해 동일한
+	// 인스턴스를 캐시/반환하므로, 중복 포인터는 한 번만 카운트해야 카운터가
+	// 영원히 미완료로 멈추는 것을 방지할 수 있다.
+	TArray<ULevelStreamingDynamic*> UniqueLevels;
 	for (const FR1MapNode& Node : GeneratedMap)
 	{
 		if (!Node.RoomDefinition) continue;
@@ -753,8 +749,9 @@ void AR1MapGenerator::SpawnFloorAndWait()
 			Node.RoomDefinition, Node.SpawnLocation, FRotator::ZeroRotator);
 		if (!Level) continue;
 
+		if (UniqueLevels.Contains(Level)) continue;
+		UniqueLevels.Add(Level);
 		ExpectedFloorRoomCount++;
-		SpawnedLevels.Add(Level);
 	}
 
 	if (ExpectedFloorRoomCount == 0)
@@ -763,16 +760,19 @@ void AR1MapGenerator::SpawnFloorAndWait()
 		return;
 	}
 
-	// 2패스: 이미 로드된 건 즉시 카운트, 나머지는 OnLevelLoaded에 바인딩
-	for (ULevelStreamingDynamic* Level : SpawnedLevels)
+	// 2패스: 이미 표시(visible)된 건 즉시 카운트, 나머지는 OnLevelShown에 바인딩.
+	// OnLevelShown은 AddToWorld(=액터 BeginPlay) 이후 호출되므로, 완료 시점에
+	// 모든 DungeonManager가 등록되어 ActivateRoom이 안전하다.
+	for (ULevelStreamingDynamic* Level : UniqueLevels)
 	{
-		if (Level->IsLevelLoaded())
+		if (Level->IsLevelVisible())
 		{
 			LoadedFloorRoomCount++;
 		}
 		else
 		{
-			Level->OnLevelLoaded.AddDynamic(this, &AR1MapGenerator::HandleFloorRoomLoaded);
+			Level->OnLevelShown.RemoveDynamic(this, &AR1MapGenerator::HandleFloorRoomShown);
+			Level->OnLevelShown.AddDynamic(this, &AR1MapGenerator::HandleFloorRoomShown);
 		}
 	}
 
@@ -782,7 +782,7 @@ void AR1MapGenerator::SpawnFloorAndWait()
 	}
 }
 
-void AR1MapGenerator::HandleFloorRoomLoaded()
+void AR1MapGenerator::HandleFloorRoomShown()
 {
 	LoadedFloorRoomCount++;
 	if (!bFloorActivated && LoadedFloorRoomCount >= ExpectedFloorRoomCount)
