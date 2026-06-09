@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Engine/TimerHandle.h"
 #include "R1LoadingSubSystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLoadingScreenHiddenSignature);
@@ -25,6 +26,9 @@ private:
 	// 로딩 화면 해제 게이트: 두 조건이 모두 충족되어야 화면을 내립니다.
 	bool bSceneDone = false;     // 위젯 연출(OnSceneFinished) 완료
 	bool bContentReady = false;  // 모든 방 로드 완료(NotifyContentReady)
+
+	// 화면 해제 예약 타이머 핸들. 멤버로 보관해야 다음 층 재로딩 시 취소할 수 있습니다.
+	FTimerHandle HideTimerHandle;
 
 	void TryHideLoadingScreen();
 
