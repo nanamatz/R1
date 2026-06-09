@@ -20,7 +20,6 @@
 
 class ULevelStreamingDynamic;
 class UR1RoomDefinitionData;
-class UR1AssetData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FR1RoomStateChanged, FName, RoomKey);
 
