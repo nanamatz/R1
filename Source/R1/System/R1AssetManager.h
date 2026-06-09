@@ -27,6 +27,9 @@ public:
 public:
 	static void Initialize();
 
+	// 부트 시점에 로드된 전역 PDA_AssetData(UR1AssetData)를 반환. 라벨 기반 프리로드 등에서 재사용.
+	static UR1AssetData* GetLoadedAssetData();
+
 	template<typename AssetType>
 	static AssetType* GetAssetByName(const FName& AssetName);
 

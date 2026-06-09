@@ -23,6 +23,11 @@ void UR1AssetManager::Initialize()
 	Get().LoadPreloadAssets();
 }
 
+UR1AssetData* UR1AssetManager::GetLoadedAssetData()
+{
+	return Get().LoadedAssetData;
+}
+
 void UR1AssetManager::LoadSyncByPath(const FSoftObjectPath& AssetPath)
 {
 	if (AssetPath.IsValid())

@@ -13,6 +13,14 @@ void UR1LoadingSubSystem::ShowLoadingScreen(TSubclassOf<UR1LoadingScreenWidget> 
 {
 	if (!WidgetClass) return;
 
+	bSceneDone = false;
+	bContentReady = false;
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(HideTimerHandle);
+	}
+
 	if (!LoadingWidget)
 	{
 		LoadingWidget = CreateWidget<UR1LoadingScreenWidget>(GetWorld(), WidgetClass);
@@ -67,6 +75,8 @@ void UR1LoadingSubSystem::OnProgressUpdated(float CurrentProgress)
 
 void UR1LoadingSubSystem::HideLoadingScreen()
 {
+	if (!LoadingWidget) return; // 이미 해제됨 — 부작용 중복 실행 방지
+
 	if (LoadingWidget)
 	{
 		LoadingWidget->RemoveFromParent();
@@ -100,6 +110,23 @@ void UR1LoadingSubSystem::HideLoadingScreen()
 
 void UR1LoadingSubSystem::OnVisualsCompleted()
 {
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UR1LoadingSubSystem::HideLoadingScreen, 0.7f, false);
+	bSceneDone = true;
+	TryHideLoadingScreen();
+}
+
+void UR1LoadingSubSystem::NotifyContentReady()
+{
+	bContentReady = true;
+	TryHideLoadingScreen();
+}
+
+void UR1LoadingSubSystem::TryHideLoadingScreen()
+{
+	if (!bSceneDone || !bContentReady) return;
+	if (!LoadingWidget) return; // 이미 내려갔으면 중복 방지
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(HideTimerHandle, this, &UR1LoadingSubSystem::HideLoadingScreen, 0.7f, false);
+	}
 }
