@@ -62,15 +62,6 @@ void UR1RoomStreamingSubsystem::UnloadAllRooms()
 	UE_LOG(LogTemp, Warning, TEXT("[RoomStreaming] 이전 층의 모든 방을 메모리에서 해제했습니다."));
 }
 
-void UR1RoomStreamingSubsystem::UnloadRoomInternal(FR1RoomRuntimeState& State)
-{
-	if (State.StreamingLevel)
-	{
-		State.StreamingLevel->SetIsRequestingUnloadAndRemoval(true);
-		State.StreamingLevel = nullptr;
-	}
-}
-
 FName UR1RoomStreamingSubsystem::MakeRoomKey(const UR1RoomDefinitionData* RoomDefinition) const
 {
 	if (RoomDefinition == nullptr)
