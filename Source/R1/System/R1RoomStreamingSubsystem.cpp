@@ -177,12 +177,9 @@ void UR1RoomStreamingSubsystem::UnloadRoomInternal(FR1RoomRuntimeState& State)
 		State.StreamingLevel = nullptr;
 	}
 
-	if (State.RoomDefinition && !State.RoomDefinition->PreloadPrimaryAssets.IsEmpty())
-	{
-		UR1AssetManager::Get().UnloadPrimaryAssets(State.RoomDefinition->PreloadPrimaryAssets);
-	}
-
-	// [수정] 라벨을 통해 로드했던 에셋들의 핸들을 취소하고 메모리를 놓아줍니다.
+	// [수정] BeginPreload에서 PreloadPrimaryAssets/라벨/룸 레벨을 모두 하나의
+	// StreamableHandle(PreloadHandle)로 로드하므로, 핸들 취소 한 번으로 전부 해제된다.
+	// (이전의 UnloadPrimaryAssets 호출은 LoadPrimaryAssets로 로드한 적이 없어 no-op이었으므로 제거)
 	if (State.PreloadHandle.IsValid())
 	{
 		State.PreloadHandle->CancelHandle();
@@ -206,8 +203,23 @@ void UR1RoomStreamingSubsystem::BeginPreload(UR1RoomDefinitionData* RoomDefiniti
 
 	State.ThermalState = ER1RoomThermalState::Preloading;
 
+	// [수정] 서브시스템은 에디터에서 GlobalAssetData를 세팅할 수 없으므로(인스턴스가 없음),
+	// 부트 시점에 AssetManager가 로드해 둔 전역 PDA_AssetData를 지연 연결한다.
+	if (!GlobalAssetData)
+	{
+		GlobalAssetData = UR1AssetManager::GetLoadedAssetData();
+	}
+
 	// 1. 비동기 로딩할 에셋 경로들을 담을 배열
 	TArray<FSoftObjectPath> PathsToLoad;
+
+	// [수정] 방의 실제 월드(RoomLevel) 패키지도 미리 메모리에 올려 둔다.
+	// 이렇게 해 두면 문을 통과할 때 SpawnRoomLevel(LoadLevelInstance...)이
+	// 디스크 로드 없이 인스턴싱만 하므로 첫 진입 끊김(hitch)이 크게 줄어든다.
+	if (!RoomDefinition->RoomLevel.IsNull())
+	{
+		PathsToLoad.AddUnique(RoomDefinition->RoomLevel.ToSoftObjectPath());
+	}
 
 	if (!RoomDefinition->PreloadPrimaryAssets.IsEmpty())
 	{

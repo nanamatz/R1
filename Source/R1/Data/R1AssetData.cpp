@@ -50,6 +50,13 @@ FSoftObjectPath UR1AssetData::GetAssetPathByName(const FName& AssetName)
 const FAssetSet& UR1AssetData::GetAssetSetByLabel(const FName& Label)
 {
 	const FAssetSet* AssetSet = AssetLabelToSet.Find(Label);
-	ensureAlwaysMsgf(AssetSet, TEXT("Can't find Asset Set from Label [%s]."), *Label.ToString());
+	if (AssetSet == nullptr)
+	{
+		// 라벨이 없으면 크래시(널 역참조) 대신 빈 세트를 반환한다.
+		// ensure로 개발 중에는 알리되, 런타임은 비어 있는 세트로 안전하게 진행.
+		ensureAlwaysMsgf(false, TEXT("Can't find Asset Set from Label [%s]."), *Label.ToString());
+		static const FAssetSet EmptyAssetSet;
+		return EmptyAssetSet;
+	}
 	return *AssetSet;
 }
