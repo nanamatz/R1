@@ -8,6 +8,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMapGenerateProgress, float, CurrentProgress);
 class UR1RoomDefinitionData;
 class UR1AssetData;
+class AR1PlayerSpawnMarker;
 
 USTRUCT(BlueprintType)
 struct FFloorData
@@ -140,8 +141,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map Generation")
 	void LoadMapFromSaveData(const TArray<struct FR1MapNodeSaveData>& SavedNodes, int32 SavedFloorIndex, int32 SavedActiveNodeID, FVector SavedLocation = FVector::ZeroVector, FRotator SavedRotation = FRotator::ZeroRotator);
 
-	UFUNCTION()
-	void OnSavedRoomLoaded();
 private:
 	// 라벨 이름으로 로드된 풀(Pool)에서 방 데이터를 찾아주는 도우미 함수
 	class UR1RoomDefinitionData* FindRoomDefinitionByLabel(FName Label);
@@ -162,8 +161,32 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Map Generation")
 	bool IsLastFloor() const;
 
+	// 전체 층의 모든 방을 스폰하고, 전부 로드되면 OnFloorFullyLoaded를 호출합니다.
+	void SpawnFloorAndWait();
+
+	// 방 진입 시 명시적으로 호출: 전투 시작/문 잠금/플레이어 텔레포트.
+	void ActivateRoom(int32 NodeID);
+
 private:
 	void UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID);
+
+	// 각 룸 레벨 인스턴스의 OnLevelLoaded에 바인딩되는 카운터 콜백.
+	UFUNCTION()
+	void HandleFloorRoomLoaded();
+
+	// 모든 방 로드가 끝났을 때 1회 실행: 진행도 100%, 시작/복귀 방 활성화, 로딩 게이트 해제.
+	void OnFloorFullyLoaded();
+
+	// NodeID 방의 SpawnLocation에 가장 가까운 플레이어 스폰 마커를 찾습니다.
+	AR1PlayerSpawnMarker* FindSpawnMarkerForNode(int32 NodeID) const;
+
+	// 층 로딩 진행 카운터
+	int32 ExpectedFloorRoomCount = 0;
+	int32 LoadedFloorRoomCount = 0;
+	bool bFloorActivated = false;
+
+	// 로딩 완료 후 활성화할 방(신규 층=0, 세이브 복귀=저장된 방).
+	int32 PendingActivateNodeID = 0;
 
 private:
 	// 내부적으로 알아서 채워 쓸 풀 (에디터 노출 안 함, 임시 보관용 Transient)
@@ -212,10 +235,6 @@ private:
 
 	// [추가] 도착지 방에서 '반대편 문'을 찾기 위해, 플레이어가 밟았던 문의 방향을 기억해둡니다.
 	ER1DoorDirection PendingDoorDirection = ER1DoorDirection::None;
-
-	// [추가] 새 방의 로딩이 완료되었을 때 호출될 텔레포트 전용 함수
-	UFUNCTION()
-	void OnTransitionRoomLoaded();
 
 	// [추가] 동->서, 남->북 등 반대 방향을 계산해주는 헬퍼 함수
 	ER1DoorDirection GetOppositeDirection(ER1DoorDirection InDir);

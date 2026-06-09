@@ -66,12 +66,8 @@ void AR1MapGenerator::InitializeMap()
 		HighestAchievedProgress = 0.5f;
 		OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
 
-		// 0번 방 스폰 로직 (기존 코드 유지)
-		UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
-		if (GeneratedMap.Num() > 0 && GeneratedMap[0].RoomDefinition != nullptr && RoomSubsystem)
-		{
-			RoomSubsystem->SpawnRoomLevel(GeneratedMap[0].RoomDefinition, GeneratedMap[0].SpawnLocation, FRotator::ZeroRotator);
-		}
+		PendingActivateNodeID = 0;
+		SpawnFloorAndWait();
 	}
 }
 
@@ -464,58 +460,29 @@ int32 AR1MapGenerator::GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorD
 void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 {
 	int32 NextNodeID = GetConnectedNodeInDirection(CurrentActiveNodeID, Direction);
+	if (NextNodeID == -1) return;
+	if (PendingNodeID != -1) return;
 
-	if (NextNodeID != -1)
+	AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	if (PlayerCharacter)
 	{
-		if (PendingNodeID != -1) return;
-
-		AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
-		if (PlayerCharacter)
+		if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
 		{
-			if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
-			{
-				PC->ResetMovementState(); // 목적지 초기화 및 이동 중지
-			}
-		}
-
-		if (GeneratedMap[NextNodeID].RoomDefinition &&
-			GeneratedMap[NextNodeID].RoomDefinition->RoomType == ER1RoomContentType::Treasure)
-		{
-			GeneratedMap[NextNodeID].bIsTreasureUnlocked = true;
-		}
-
-		PendingNodeID = NextNodeID;
-		PendingDoorDirection = Direction;
-
-		UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
-		if (RoomSubsystem)
-		{
-			// 서브시스템에 다음 방 스폰(또는 기존 방 가져오기) 요청
-			ULevelStreamingDynamic* StreamingLevel = RoomSubsystem->SpawnRoomLevel(
-				GeneratedMap[NextNodeID].RoomDefinition,
-				GeneratedMap[NextNodeID].SpawnLocation,
-				FRotator::ZeroRotator
-			);
-
-			if (StreamingLevel)
-			{
-				// 방이 이미 로드되어 있다면 즉시 텔레포트 함수 호출
-				if (StreamingLevel->IsLevelLoaded())
-				{
-					OnTransitionRoomLoaded();
-				}
-				// 아니라면 로딩 완료 시점에 호출되도록 델리게이트 연결
-				else
-				{
-					StreamingLevel->OnLevelLoaded.AddDynamic(this, &AR1MapGenerator::OnTransitionRoomLoaded);
-				}
-			}
-			else
-			{
-				PendingNodeID = -1;
-			}
+			PC->ResetMovementState();
 		}
 	}
+
+	if (GeneratedMap[NextNodeID].RoomDefinition &&
+		GeneratedMap[NextNodeID].RoomDefinition->RoomType == ER1RoomContentType::Treasure)
+	{
+		GeneratedMap[NextNodeID].bIsTreasureUnlocked = true;
+	}
+
+	PendingNodeID = NextNodeID;
+	PendingDoorDirection = Direction;
+
+	// 층 전체가 이미 메모리에 있으므로 스트리밍 대기 없이 즉시 활성화 (= 끊김 없음).
+	ActivateRoom(NextNodeID);
 }
 
 
@@ -560,40 +527,11 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 		GeneratedMap.Add(NewNode);
 	}
 
-	// 5. 플레이어가 껐을 때 마지막으로 있던 방(CurrentActiveNodeID) 스폰!
-	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
-	if (RoomSubsystem && GeneratedMap.IsValidIndex(CurrentActiveNodeID) && GeneratedMap[CurrentActiveNodeID].RoomDefinition != nullptr)
-	{
-		ULevelStreamingDynamic* StreamingLevel = RoomSubsystem->SpawnRoomLevel(
-			GeneratedMap[CurrentActiveNodeID].RoomDefinition,
-			GeneratedMap[CurrentActiveNodeID].SpawnLocation,
-			FRotator::ZeroRotator
-		);
+	// 5. 층 전체를 스폰하고, 모두 로드되면 저장된 방을 활성화 (위치는 LoadedPlayerLocation 사용)
+	PendingActivateNodeID = CurrentActiveNodeID;
+	SpawnFloorAndWait();
 
-		if (StreamingLevel)
-		{
-			// 로드 완료 시 OnSavedRoomLoaded 호출
-			if (StreamingLevel->IsLevelLoaded())
-			{
-				OnSavedRoomLoaded();
-			}
-			else
-			{
-				StreamingLevel->OnLevelLoaded.AddDynamic(this, &AR1MapGenerator::OnSavedRoomLoaded);
-			}
-		}
-
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 📂 %d층 %d번 방에서 이어서 시작합니다!"), CurrentFloorIndex + 1, CurrentActiveNodeID);
-	}
-}
-
-void AR1MapGenerator::OnSavedRoomLoaded()
-{
-	// Instead of TActorIterator, use the check-in mechanism (ActiveManagers map)
-	if (ActiveManagers.Contains(CurrentActiveNodeID))
-	{
-		RegisterRoomManager(ActiveManagers[CurrentActiveNodeID], CurrentActiveNodeID);
-	}
+	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 📂 %d층 %d번 방에서 이어서 시작합니다!"), CurrentFloorIndex + 1, CurrentActiveNodeID);
 }
 
 UR1RoomDefinitionData* AR1MapGenerator::FindRoomDefinitionByLabel(FName AssetName)
@@ -624,9 +562,8 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 {
 	if (!IsValid(Manager)) return;
 
-	// 1. 이 매니저가 현재 지도의 몇 번 방 매니저인지 '위치(Location)' 또는 명시적인 ID로 신원 파악을 합니다.
+	// 1. 위치 또는 명시적 ID로 이 매니저가 몇 번 방인지 식별
 	int32 MatchedNodeID = RoomNodeID;
-	
 	if (MatchedNodeID == -1)
 	{
 		for (int32 i = 0; i < GeneratedMap.Num(); ++i)
@@ -639,32 +576,26 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 		}
 	}
 
-	if (MatchedNodeID == -1 || !GeneratedMap.IsValidIndex(MatchedNodeID)) return; // 맵에 없는 유령 방이면 무시
+	if (MatchedNodeID == -1 || !GeneratedMap.IsValidIndex(MatchedNodeID)) return;
 
 	ActiveManagers.Add(MatchedNodeID, Manager);
-
-	// GUARD: If this node is already initialized and we aren't explicitly transitioning to it, skip.
-	// This prevents the redundant registration during level streaming callbacks.
-	if (InitializedNodeIDs.Contains(MatchedNodeID) && MatchedNodeID != PendingNodeID) return;
 
 	if (GeneratedMap[MatchedNodeID].RoomDefinition)
 	{
 		Manager->InitializeRoomData(GeneratedMap[MatchedNodeID].RoomDefinition);
 	}
 
-	AR1Door* TargetDoorToSpawnAt = nullptr;
-	ER1DoorDirection OppositeDir = GetOppositeDirection(PendingDoorDirection);
-
 	Manager->RoomNodeID = MatchedNodeID;
 	Manager->OnRoomCleared.RemoveDynamic(this, &AR1MapGenerator::OnRoomClearedCallback);
 	Manager->OnRoomCleared.AddDynamic(this, &AR1MapGenerator::OnRoomClearedCallback);
 
+	// 2. 모든 문 연결 설정 + 입장 델리게이트 바인딩 (수동/패시브 — 전투/텔레포트 없음)
 	for (AR1Door* Door : Manager->RoomDoors)
 	{
 		if (!IsValid(Door)) continue;
 
 		int32 TargetNode = GetConnectedNodeInDirection(MatchedNodeID, Door->DoorDirection);
-		
+
 		ER1RoomContentType TargetRoomType = ER1RoomContentType::None;
 		if (TargetNode != -1 && GeneratedMap.IsValidIndex(TargetNode) && GeneratedMap[TargetNode].RoomDefinition)
 		{
@@ -689,18 +620,34 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 			Door->OnDoorEntered.RemoveDynamic(this, &AR1MapGenerator::OnPlayerEnteredDoor);
 			Door->OnDoorEntered.AddDynamic(this, &AR1MapGenerator::OnPlayerEnteredDoor);
 		}
-
-		if (Door->DoorDirection == OppositeDir)
-		{
-			TargetDoorToSpawnAt = Door;
-		}
 	}
 
+	// 3. 이미 클리어된 방은 문을 열어 둔 시각 상태로. (전투/텔레포트는 ActivateRoom에서)
 	if (GeneratedMap[MatchedNodeID].bIsCleared)
 	{
 		Manager->bIsCleared = true;
 		Manager->UnlockRoomDoors();
-		//Manager->UnlockRoomDoorsInstantly();
+	}
+}
+
+void AR1MapGenerator::ActivateRoom(int32 NodeID)
+{
+	if (!GeneratedMap.IsValidIndex(NodeID)) return;
+
+	ADungeonManager* Manager = ActiveManagers.FindRef(NodeID);
+	if (!IsValid(Manager))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] ActivateRoom: %d번 방 매니저가 아직 등록되지 않았습니다."), NodeID);
+		return;
+	}
+
+	const int32 PrevRoomID = CurrentActiveNodeID;
+
+	// 1. 전투 시작 / 문 잠금 (아직 클리어되지 않은 방만)
+	if (GeneratedMap[NodeID].bIsCleared)
+	{
+		Manager->bIsCleared = true;
+		Manager->UnlockRoomDoors();
 	}
 	else
 	{
@@ -715,130 +662,174 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 		}
 	}
 
-	//플레이어 텔레포트 및 UI 갱신
+	// 2. 문을 통한 진입이면, 반대편 문 옆으로 스폰하기 위해 그 문을 찾습니다.
+	AR1Door* TargetDoorToSpawnAt = nullptr;
+	if (PendingDoorDirection != ER1DoorDirection::None)
+	{
+		const ER1DoorDirection OppositeDir = GetOppositeDirection(PendingDoorDirection);
+		for (AR1Door* Door : Manager->RoomDoors)
+		{
+			if (IsValid(Door) && Door->DoorDirection == OppositeDir)
+			{
+				TargetDoorToSpawnAt = Door;
+				break;
+			}
+		}
+	}
+
+	// 3. 플레이어 텔레포트
 	AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
-
-	if (PendingNodeID == -1)
+	if (PlayerCharacter)
 	{
-		if (PlayerCharacter)
+		FVector FinalLocation;
+		FRotator FinalRotation = FRotator::ZeroRotator;
+
+		if (bIsLoadingFromSave)
 		{
-			FVector FinalLocation;
-			FRotator FinalRotation = FRotator::ZeroRotator;
-
-			// [Modified] 세이브 로딩 중이라면 저장된 위치 사용
-			if (bIsLoadingFromSave)
-			{
-				FinalLocation = LoadedPlayerLocation;
-				FinalRotation = LoadedPlayerRotation;
-				bIsLoadingFromSave = false; // 일회성 처리
-				UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 세이브된 위치로 플레이어를 복구합니다: %s"), *FinalLocation.ToString());
-			}
-			else
-			{
-				// Look for a designer-placed spawn marker in the freshly loaded sublevel.
-				AActor* SpawnMarker = UGameplayStatics::GetActorOfClass(GetWorld(), AR1PlayerSpawnMarker::StaticClass());
-				if (SpawnMarker)
-				{
-					FinalLocation = SpawnMarker->GetActorLocation();
-					FinalRotation = SpawnMarker->GetActorRotation();
-				}
-				else
-				{
-					// Fallback: room streaming origin + Z offset (preserves original behaviour).
-					FinalLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
-				}
-			}
-
-			PlayerCharacter->TeleportToRoom(FinalLocation);
-			PlayerCharacter->SetActorRotation(FinalRotation);
-
-			HighestAchievedProgress = 1.0f;
-			OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
-
-			if (OnMapGenerated.IsBound())
-			{
-				OnMapGenerated.Broadcast(GeneratedMap);
-			}
+			FinalLocation = LoadedPlayerLocation;
+			FinalRotation = LoadedPlayerRotation;
+			bIsLoadingFromSave = false;
+		}
+		else if (TargetDoorToSpawnAt)
+		{
+			const FVector DirectionToCenter =
+				(GeneratedMap[NodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
+			FinalLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
+		}
+		else if (AR1PlayerSpawnMarker* Marker = FindSpawnMarkerForNode(NodeID))
+		{
+			FinalLocation = Marker->GetActorLocation();
+			FinalRotation = Marker->GetActorRotation();
+		}
+		else
+		{
+			FinalLocation = GeneratedMap[NodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
 		}
 
-		UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
-		if (RoomSubsystem)
+		if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
 		{
-			RoomSubsystem->MarkRoomGameplayReady(GeneratedMap[MatchedNodeID].RoomDefinition);
-
-			TArray<UR1RoomDefinitionData*> AdjacentRooms;
-			for (int32 ConnectedID : GeneratedMap[MatchedNodeID].ConnectedNodeIDs)
-			{
-				if (GeneratedMap.IsValidIndex(ConnectedID) && GeneratedMap[ConnectedID].RoomDefinition != nullptr)
-				{
-					AdjacentRooms.Add(GeneratedMap[ConnectedID].RoomDefinition);
-				}
-			}
-			RoomSubsystem->QueuePreloadRooms(AdjacentRooms);
+			PC->ResetMovementState();
 		}
 
-		UpdateMinimapState(MatchedNodeID, -1);
-
-		if (OnMapGenerated.IsBound())
-		{
-			OnMapGenerated.Broadcast(GeneratedMap); 
-		}
+		PlayerCharacter->TeleportToRoom(FinalLocation);
+		PlayerCharacter->SetActorRotation(FinalRotation);
 	}
-	//문을 타고 다른 방으로 이동했을 때 세팅 
-	else if (MatchedNodeID == PendingNodeID)
+
+	// 4. 상태 갱신 + 미니맵 + 오토세이브
+	CurrentActiveNodeID = NodeID;
+	PendingNodeID = -1;
+	PendingDoorDirection = ER1DoorDirection::None;
+	InitializedNodeIDs.Add(NodeID);
+
+	UpdateMinimapState(NodeID, PrevRoomID);
+	if (OnPlayerMovedRoom.IsBound())
 	{
-		int32 PrevRoomID = CurrentActiveNodeID;
-		CurrentActiveNodeID = MatchedNodeID;
+		OnPlayerMovedRoom.Broadcast(NodeID, PrevRoomID);
+	}
 
-		if (PlayerCharacter) // TargetDoorToSpawnAt 검사를 안쪽으로 분리
+	TriggerAutoSave();
+}
+
+void AR1MapGenerator::SpawnFloorAndWait()
+{
+	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
+	if (!RoomSubsystem)
+	{
+		OnFloorFullyLoaded();
+		return;
+	}
+
+	bFloorActivated = false;
+	ExpectedFloorRoomCount = 0;
+	LoadedFloorRoomCount = 0;
+
+	// 1패스: 모든 방 스폰 + 기대 카운트 확정 (실패한 스폰은 카운트에서 제외)
+	TArray<ULevelStreamingDynamic*> SpawnedLevels;
+	for (const FR1MapNode& Node : GeneratedMap)
+	{
+		if (!Node.RoomDefinition) continue;
+
+		ULevelStreamingDynamic* Level = RoomSubsystem->SpawnRoomLevel(
+			Node.RoomDefinition, Node.SpawnLocation, FRotator::ZeroRotator);
+		if (!Level) continue;
+
+		ExpectedFloorRoomCount++;
+		SpawnedLevels.Add(Level);
+	}
+
+	if (ExpectedFloorRoomCount == 0)
+	{
+		OnFloorFullyLoaded();
+		return;
+	}
+
+	// 2패스: 이미 로드된 건 즉시 카운트, 나머지는 OnLevelLoaded에 바인딩
+	for (ULevelStreamingDynamic* Level : SpawnedLevels)
+	{
+		if (Level->IsLevelLoaded())
 		{
-			FVector SafeLocation;
-			if (TargetDoorToSpawnAt)
-			{
-				// 맞는 문을 찾았을 때 (기존 로직)
-				FVector DirectionToCenter = (GeneratedMap[MatchedNodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
-				SafeLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
-			}
-			else
-			{
-				// 특수 방의 문 핏(Fit)이 안 맞아서 문을 못 찾은 경우, 방의 중앙 지점으로 스폰!
-				SafeLocation = GeneratedMap[MatchedNodeID].SpawnLocation + FVector(0.0f, 0.0f, 100.0f);
-				UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 문을 찾지 못해 방 중앙으로 강제 텔레포트 시킵니다!"));
-			}
-
-			if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
-			{
-				PC->ResetMovementState();
-			}
-
-			PlayerCharacter->TeleportToRoom(SafeLocation);
-			PlayerCharacter->GetVelocity() = FVector::ZeroVector;
+			LoadedFloorRoomCount++;
 		}
-
-		UpdateMinimapState(CurrentActiveNodeID, PrevRoomID);
-		if (OnPlayerMovedRoom.IsBound())
+		else
 		{
-			OnPlayerMovedRoom.Broadcast(CurrentActiveNodeID, PrevRoomID); // 미니맵 UI 갱신 방송!
-		}
-
-		PendingNodeID = -1;
-
-		UR1RoomStreamingSubsystem* InnerRoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
-		if (InnerRoomSubsystem)
-		{
-			InnerRoomSubsystem->MarkRoomGameplayReady(GeneratedMap[CurrentActiveNodeID].RoomDefinition);
-
-			// 다음 인접 방 프리로드 (메모리 최적화)
-			TArray<UR1RoomDefinitionData*> AdjacentRooms;
-			for (int32 ConnectedID : GeneratedMap[CurrentActiveNodeID].ConnectedNodeIDs)
-			{
-				AdjacentRooms.Add(GeneratedMap[ConnectedID].RoomDefinition);
-			}
-			InnerRoomSubsystem->QueuePreloadRooms(AdjacentRooms);
+			Level->OnLevelLoaded.AddDynamic(this, &AR1MapGenerator::HandleFloorRoomLoaded);
 		}
 	}
 
-	InitializedNodeIDs.Add(MatchedNodeID);
+	if (LoadedFloorRoomCount >= ExpectedFloorRoomCount)
+	{
+		OnFloorFullyLoaded();
+	}
+}
+
+void AR1MapGenerator::HandleFloorRoomLoaded()
+{
+	LoadedFloorRoomCount++;
+	if (!bFloorActivated && LoadedFloorRoomCount >= ExpectedFloorRoomCount)
+	{
+		OnFloorFullyLoaded();
+	}
+}
+
+void AR1MapGenerator::OnFloorFullyLoaded()
+{
+	if (bFloorActivated) return;
+	bFloorActivated = true;
+
+	HighestAchievedProgress = 1.0f;
+	OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
+
+	if (OnMapGenerated.IsBound())
+	{
+		OnMapGenerated.Broadcast(GeneratedMap);
+	}
+
+	if (UR1LoadingSubSystem* LoadingSubsystem = GetGameInstance()->GetSubsystem<UR1LoadingSubSystem>())
+	{
+		LoadingSubsystem->NotifyContentReady();
+	}
+
+	ActivateRoom(PendingActivateNodeID);
+}
+
+AR1PlayerSpawnMarker* AR1MapGenerator::FindSpawnMarkerForNode(int32 NodeID) const
+{
+	if (!GeneratedMap.IsValidIndex(NodeID)) return nullptr;
+
+	const FVector RoomCenter = GeneratedMap[NodeID].SpawnLocation;
+	AR1PlayerSpawnMarker* Best = nullptr;
+	double BestDistSq = TNumericLimits<double>::Max();
+
+	for (TActorIterator<AR1PlayerSpawnMarker> It(GetWorld()); It; ++It)
+	{
+		const double DistSq = FVector::DistSquared(It->GetActorLocation(), RoomCenter);
+		if (DistSq < BestDistSq)
+		{
+			BestDistSq = DistSq;
+			Best = *It;
+		}
+	}
+	return Best;
 }
 
 void AR1MapGenerator::GoToNextFloor()
@@ -885,20 +876,9 @@ void AR1MapGenerator::GoToNextFloor()
 	HighestAchievedProgress = 0.5f;
 	OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
 
-	// 4. 새로운 층의 0번 방 스폰 지시
-	if (GeneratedMap.Num() > 0 && GeneratedMap[0].RoomDefinition != nullptr && RoomSubsystem)
-	{
-		ULevelStreamingDynamic* StreamingLevel = RoomSubsystem->SpawnRoomLevel(
-			GeneratedMap[0].RoomDefinition,
-			GeneratedMap[0].SpawnLocation,
-			FRotator::ZeroRotator
-		);
-
-		if (StreamingLevel)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] %d층 0번 방 스폰 지시 완료!"), CurrentFloorIndex + 1);
-		}
-	}
+	// 4. 새 층의 모든 방을 스폰하고, 모두 로드되면 0번(시작) 방을 활성화
+	PendingActivateNodeID = 0;
+	SpawnFloorAndWait();
 }
 
 bool AR1MapGenerator::IsLastFloor() const
@@ -935,26 +915,6 @@ void AR1MapGenerator::UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID)
 			}
 		}
 	}
-}
-
-void AR1MapGenerator::OnTransitionRoomLoaded()
-{
-	if (PendingNodeID == -1) return;
-
-	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
-
-	if (RoomSubsystem)
-	{
-		RoomSubsystem->MarkRoomAsLeft(GeneratedMap[CurrentActiveNodeID].RoomDefinition);
-	}
-
-	// Instead of TActorIterator, use the check-in mechanism
-	if (ActiveManagers.Contains(PendingNodeID))
-	{
-		RegisterRoomManager(ActiveManagers[PendingNodeID], PendingNodeID);
-	}
-
-	TriggerAutoSave();
 }
 
 ER1DoorDirection AR1MapGenerator::GetOppositeDirection(ER1DoorDirection InDir)
