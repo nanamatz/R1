@@ -17,7 +17,6 @@ void UR1ProgressWidget::NativeConstruct()
 	{
 		ProgressMaterial = Image_Ring->GetDynamicMaterial();
 	}
-
 }
 
 void UR1ProgressWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -27,17 +26,11 @@ void UR1ProgressWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 	{
 		CurrentVisualProgress = FMath::FInterpTo(CurrentVisualProgress, TargetVisualProgress, InDeltaTime, 3.0f);
 
-		// (기존의 머티리얼 링과 텍스트 퍼센트 업데이트 코드 유지)
+		// 링(프로그레스 바) 머티리얼만 갱신. 퍼센트 텍스트는 더 이상 표시하지 않는다.
 		if (ProgressMaterial)
 		{
 			ProgressMaterial->SetScalarParameterValue(FName("Percent"), CurrentVisualProgress);
 		}
-
-		if (Text_Percent)
-		{
-			Text_Percent->SetText(FText::AsNumber(FMath::RoundToInt(CurrentVisualProgress * 100.0f)));
-		}
-
 	}
 
 	if (CurrentVisualProgress >= 0.99f && TargetVisualProgress >= 1.0f && !bHasFiredFinished)
@@ -50,12 +43,6 @@ void UR1ProgressWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 		{
 			ProgressMaterial->SetScalarParameterValue(FName("Percent"), 1.0f);
 		}
-
-		if (Text_Percent)
-		{
-			Text_Percent->SetText(FText::AsNumber(100));
-		}
-
 
 		if (OnFinished.IsBound())
 		{

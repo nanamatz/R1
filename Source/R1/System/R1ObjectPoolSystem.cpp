@@ -47,3 +47,8 @@ void UR1ObjectPoolSystem::ReturnMonster(AR1Monster* ReturningMonster)
 	TSubclassOf<AR1Monster> ClassType = ReturningMonster->GetClass();
 	MonsterPools.FindOrAdd(ClassType).Pool.Add(ReturningMonster);
 }
+
+void UR1ObjectPoolSystem::ClearAllPools()
+{
+	MonsterPools.Empty();
+}

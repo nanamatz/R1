@@ -38,4 +38,7 @@ public:
 	// 몬스터가 죽고 디졸브 처리가 끝난 뒤 대기실로 돌아올 때 호출하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Object Pool")
 	void ReturnMonster(AR1Monster* ReturningMonster);
+
+	// 층 전환 시 풀의 잔여 참조(이미 파괴된 액터)를 비워 다음 층을 빈 풀로 시작
+	void ClearAllPools();
 };

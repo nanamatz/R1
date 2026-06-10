@@ -151,7 +151,8 @@ void UR1GameplayAbility_JumpAttack::ActivateAbility(const FGameplayAbilitySpecHa
 				false
 			);
 
-		//DashTask->OnFinished.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashFinished);
+		// 착지 처리는 몽타주가 아니라 실제 루트모션(대시) 종료 시점에 맞춘다.
+		DashTask->OnFinished.AddDynamic(this, &UR1GameplayAbility_JumpAttack::OnDashRootMotionFinished);
 
 		DashTask->ReadyForActivation();
 	}
@@ -168,6 +169,9 @@ void UR1GameplayAbility_JumpAttack::EndAbility(const FGameplayAbilitySpecHandle 
 	if (AR1Player* Player = Cast<AR1Player>(ActorInfo->AvatarActor.Get()))
 	{
 		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		// ActivateAbility에서 Overlap으로 바꾼 Pawn 채널도 확정적으로 복구한다.
+		// (NotifyActorEndOverlap는 모든 몬스터 겹침이 풀려야만 복구하므로 누락될 수 있음)
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 		if (Player->GetCreatureState() != ECreatureState::Dead)
 		{
 			Player->SetCreatureState(ECreatureState::Idle);
@@ -259,24 +263,70 @@ void UR1GameplayAbility_JumpAttack::OnDashFinished()
 	}
 
 	AR1Character* Attacker = Cast<AR1Character>(CurrentActorInfo->AvatarActor.Get());
-	Attacker->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-
-	if (Attacker)
+	if (Attacker == nullptr)
 	{
-		if (Attacker->GetCreatureState() == ECreatureState::Dead)
+		return;
+	}
+
+	UCharacterMovementComponent* MoveComp = Attacker->GetCharacterMovement();
+
+	// 멱등성(idempotent) 가드: 몽타주 중단/취소와 루트모션 종료가 모두 이 핸들러를 호출할 수 있다.
+	// 이미 착지 처리(MOVE_Walking 복귀)가 끝났다면 중복으로 다시 종료하지 않는다.
+	// 대시 중에는 MOVE_Flying 이므로, MOVE_Walking 이면 이미 처리된 것으로 간주한다.
+	if (MoveComp == nullptr || MoveComp->MovementMode == MOVE_Walking)
+	{
+		return;
+	}
+
+	// 1. 바닥 탐지가 가능하도록 월드 충돌을 먼저 복구한다. (EndAbility에도 안전망으로 복구가 남아있음)
+	if (UCapsuleComponent* Capsule = Attacker->GetCapsuleComponent())
+	{
+		Capsule->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+		// 2. 착지 지점 아래로 트레이스해 유효한 바닥을 찾고, 캡슐 발바닥이 바닥에 닿도록 Z를 스냅한다.
+		//    대시가 타깃의 캡슐 중심 Z(수평 오프셋만 적용)로 끝나기 때문에, 바닥에 박히거나 떠 있을 수 있다.
+		const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+		const FVector Origin = Attacker->GetActorLocation();
+		const FVector TraceStart = Origin + FVector(0.f, 0.f, HalfHeight);
+		const FVector TraceEnd = Origin - FVector(0.f, 0.f, 2000.f);
+
+		FHitResult FloorHit;
+		FCollisionQueryParams Params(SCENE_QUERY_STAT(JumpAttackGroundSnap), false, Attacker);
+
+		if (Attacker->GetWorld() &&
+			Attacker->GetWorld()->LineTraceSingleByChannel(FloorHit, TraceStart, TraceEnd, ECC_WorldStatic, Params))
 		{
-			Attacker->SetCreatureState(ECreatureState::Dead);
-			UE_LOG(LogTemp, Warning, TEXT("Dead"));
+			const FVector SnappedLocation(Origin.X, Origin.Y, FloorHit.ImpactPoint.Z + HalfHeight + 2.f);
+			Attacker->SetActorLocation(SnappedLocation, false, nullptr, ETeleportType::TeleportPhysics);
 		}
 		else
 		{
-			Attacker->SetCreatureState(ECreatureState::Moving);
-			UE_LOG(LogTemp, Warning, TEXT("Moving"));
+			UE_LOG(LogTemp, Warning, TEXT("[JumpAttack] 착지 지점 아래에서 바닥을 찾지 못했습니다. 위치 보정을 건너뜁니다."));
 		}
 	}
 
-	// 능력 정상 종료
+	// 3. 바닥 스냅 이후에 걷기 모드로 복귀한다.
+	MoveComp->SetMovementMode(MOVE_Walking);
+
+	if (Attacker->GetCreatureState() == ECreatureState::Dead)
+	{
+		Attacker->SetCreatureState(ECreatureState::Dead);
+		UE_LOG(LogTemp, Warning, TEXT("Dead"));
+	}
+	else
+	{
+		Attacker->SetCreatureState(ECreatureState::Moving);
+		UE_LOG(LogTemp, Warning, TEXT("Moving"));
+	}
+
+	// 4. 능력 정상 종료
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UR1GameplayAbility_JumpAttack::OnDashRootMotionFinished(bool bReachedDestination, bool bTimedOut, FVector FinalTargetLocation)
+{
+	// 실제 대시 종료 시점. 몽타주 콜백과 공유하는 착지 처리를 호출한다(멱등성 가드로 중복 방지).
+	OnDashFinished();
 }
 
 void UR1GameplayAbility_JumpAttack::OnDashInterrupted()
