@@ -956,7 +956,12 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 
 		// 방에 navmesh가 아직 없거나, 빌드가 진행 중(타일 일부만 완성)이면 계속 대기.
 		const bool bStillBuilding = UNavigationSystemV1::IsNavigationBeingBuilt(World);
-		if (!bRoomNavigable || bStillBuilding)
+
+		// 에셋 프리로드 완료 여부도 같은 게이트에서 함께 기다린다.
+		// 핸들이 없으면(로드할 게 없었으면) 완료로 취급한다.
+		const bool bPreloadReady = (!FloorPreloadHandle.IsValid()) || FloorPreloadHandle->HasLoadCompleted();
+
+		if (!bRoomNavigable || bStillBuilding || !bPreloadReady)
 		{
 			World->GetTimerManager().SetTimer(
 				NavBuildWaitTimer, this, &AR1MapGenerator::WaitForNavMeshThenActivate, NavBuildPollInterval, false);
@@ -970,6 +975,12 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 			TEXT("[MapGenerator] navmesh 대기 타임아웃(%.1fs) — %d번 방에 navmesh가 생성되지 않았습니다. ")
 			TEXT("해당 방 레벨의 NavMeshBoundsVolume가 바닥을 감싸는지 확인하세요."),
 			NavBuildMaxTicks * NavBuildPollInterval, PendingActivateNodeID);
+	}
+
+	if (bTimedOut && FloorPreloadHandle.IsValid() && !FloorPreloadHandle->HasLoadCompleted())
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[MapGenerator] 에셋 프리로드가 끝나기 전에 타임아웃 — 프리로드를 기다리지 않고 진행합니다."));
 	}
 
 	NavBuildWaitTicks = 0;
