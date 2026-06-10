@@ -179,6 +179,12 @@ private:
 	// 모든 방 로드가 끝났을 때 1회 실행: 진행도 100%, 시작/복귀 방 활성화, 로딩 게이트 해제.
 	void OnFloorFullyLoaded();
 
+	// RuntimeGeneration=Dynamic 네비메시는 방 지오메트리가 월드에 추가(OnLevelShown)된 뒤
+	// 수 프레임에 걸쳐 '비동기'로 빌드된다. 빌드가 끝나기 전에 방을 활성화하면
+	// (플레이어 텔레포트 + 몬스터 AI MoveTo) 길찾기가 실패하므로, 로딩 게이트를 유지한 채
+	// 네비메시 빌드 완료를 기다렸다가 방을 활성화한다.
+	void WaitForNavMeshThenActivate();
+
 	// 방이 스트리밍될 때마다 로드된 방 비율을 진행도에 반영해 로딩바가 끊김 없이 차오르게 한다.
 	void BroadcastFloorLoadProgress();
 
@@ -192,6 +198,10 @@ private:
 	int32 ExpectedFloorRoomCount = 0;
 	int32 LoadedFloorRoomCount = 0;
 	bool bFloorActivated = false;
+
+	// 네비메시 비동기 빌드 완료를 기다리는 폴링 타이머/카운터.
+	FTimerHandle NavBuildWaitTimer;
+	int32 NavBuildWaitTicks = 0;
 
 	// 로딩 완료 후 활성화할 방(신규 층=0, 세이브 복귀=저장된 방).
 	int32 PendingActivateNodeID = 0;

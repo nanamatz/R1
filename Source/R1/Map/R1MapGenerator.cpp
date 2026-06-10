@@ -13,9 +13,11 @@
 #include "GameFramework/Character.h"
 
 #include "Containers/Queue.h"
-#include "Data/R1AssetData.h" 
+#include "Data/R1AssetData.h"
 #include "Data/R1RoomDefinitionData.h"
 #include "EngineUtils.h"
+#include "NavigationSystem.h"
+#include "NavMesh/NavMeshBoundsVolume.h"
 
 #include "Player/R1PlayerController.h"
 #include "System/R1LoadingSubSystem.h"
@@ -30,6 +32,10 @@
 // GenerateMap(동기) 직후 도달하는 진행도. 이후 0.2~1.0 구간을 실제 방 스트리밍 비율로 채운다.
 // 느린 작업(방 AddToWorld)이 로딩바의 대부분(80%)을 차지하도록 해 50%에서 멈춘 듯한 인상을 없앤다.
 static constexpr float FloorLoadStartProgress = 0.2f;
+
+// 네비메시 생성 대기 파라미터.
+static constexpr float NavBuildPollInterval = 0.05f; // 폴링 간격(초)
+static constexpr int32 NavBuildMaxTicks = 100;       // 타임아웃(약 5초) — 무한 대기 방지
 
 AR1MapGenerator::AR1MapGenerator()
 {
@@ -836,6 +842,69 @@ void AR1MapGenerator::OnFloorFullyLoaded()
 		OnMapGenerated.Broadcast(GeneratedMap);
 	}
 
+	// 방 지오메트리는 월드에 추가됐지만 네비메시 타일은 아직 비동기 빌드 중일 수 있다.
+	// 로딩 게이트(NotifyContentReady)와 방 활성화(ActivateRoom)는 네비메시가 준비된 뒤로 미룬다.
+	NavBuildWaitTicks = 0;
+	WaitForNavMeshThenActivate();
+}
+
+void AR1MapGenerator::WaitForNavMeshThenActivate()
+{
+	UWorld* World = GetWorld();
+	UNavigationSystemV1* NavSys = World ? FNavigationSystem::GetCurrent<UNavigationSystemV1>(World) : nullptr;
+
+	++NavBuildWaitTicks;
+
+	// [핵심 수정] 첫 진입 시 1회: 런타임에 스트리밍된 모든 NavMeshBoundsVolume를 네비 시스템에
+	// 명시적으로 재통지한다. 층 전체가 동시에 대량 로드될 때 일부 룸(특히 시작 방)의 bounds
+	// 업데이트 알림이 누락되어 그 방의 navmesh가 아예 생성되지 않는 경합(race)을 보정한다.
+	// 이미 정상 등록된 volume이라도 재통지는 해당 영역을 다시 더럽혀(rebuild) 무해하다.
+	if (NavSys != nullptr && NavBuildWaitTicks == 1)
+	{
+		for (TActorIterator<ANavMeshBoundsVolume> It(World); It; ++It)
+		{
+			NavSys->OnNavigationBoundsUpdated(*It);
+		}
+	}
+
+	const bool bTimedOut = (NavBuildWaitTicks >= NavBuildMaxTicks);
+
+	if (NavSys != nullptr && !bTimedOut)
+	{
+		// 프록시(IsNavigationBeingBuilt)가 아니라 '활성화할 방에 실제로 navmesh가 깔렸는가'라는
+		// 진짜 조건을 폴링한다. 방 중심을 navmesh에 투영해 성공하면 그 방의 타일이 생성된 것.
+		// (RoomSpacing(기본 5000) 대비 충분히 작은 extent라 옆 방 navmesh로 오인하지 않는다.)
+		bool bRoomNavigable = false;
+		if (GeneratedMap.IsValidIndex(PendingActivateNodeID))
+		{
+			FNavLocation Projected;
+			const FVector RoomCenter = GeneratedMap[PendingActivateNodeID].SpawnLocation;
+			const FVector Extent(1000.0f, 1000.0f, 1000.0f);
+			// 4번째 인자(NavData=nullptr)를 명시해 오버로드 모호성을 제거(기본 NavData 사용).
+			bRoomNavigable = NavSys->ProjectPointToNavigation(RoomCenter, Projected, Extent, (const ANavigationData*)nullptr);
+		}
+
+		// 방에 navmesh가 아직 없거나, 빌드가 진행 중(타일 일부만 완성)이면 계속 대기.
+		const bool bStillBuilding = UNavigationSystemV1::IsNavigationBeingBuilt(World);
+		if (!bRoomNavigable || bStillBuilding)
+		{
+			World->GetTimerManager().SetTimer(
+				NavBuildWaitTimer, this, &AR1MapGenerator::WaitForNavMeshThenActivate, NavBuildPollInterval, false);
+			return;
+		}
+	}
+
+	if (bTimedOut)
+	{
+		UE_LOG(LogTemp, Error,
+			TEXT("[MapGenerator] navmesh 대기 타임아웃(%.1fs) — %d번 방에 navmesh가 생성되지 않았습니다. ")
+			TEXT("해당 방 레벨의 NavMeshBoundsVolume가 바닥을 감싸는지 확인하세요."),
+			NavBuildMaxTicks * NavBuildPollInterval, PendingActivateNodeID);
+	}
+
+	NavBuildWaitTicks = 0;
+
+	// navmesh 준비 완료 → 로딩 게이트 해제 + 방 활성화.
 	if (UR1LoadingSubSystem* LoadingSubsystem = GetGameInstance()->GetSubsystem<UR1LoadingSubSystem>())
 	{
 		LoadingSubsystem->NotifyContentReady();
