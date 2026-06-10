@@ -39,48 +39,70 @@ void UR1NavSmoothingLibrary::SmoothMoveTo(AController* Controller, const FVector
 		return;
 	}
 
-	// 2. Query the path synchronously.
-	FPathFindingQuery Query(Pawn, *NavData, Start, Destination);
+	// 2. Snap the click/target point to the nearest navigable point. Interactable
+	//    centers (GetActorLocation) often sit slightly off the navmesh — raised, or
+	//    inside the mesh — which makes pathfinding's end-point projection fail and the
+	//    player not move at all. A generous extent lets those points find solid ground.
+	//    Vertical is the loosest because object centers are usually above the floor.
+	FVector TargetDest = Destination;
+	FNavLocation ProjectedDest;
+	const FVector ProjExtent(300.0f, 300.0f, 500.0f);
+	if (NavSys->ProjectPointToNavigation(Destination, ProjectedDest, ProjExtent, &Pawn->GetNavAgentPropertiesRef()))
+	{
+		TargetDest = ProjectedDest.Location;
+	}
+
+	// 3. Query the path synchronously. Allow partial paths so a target on a
+	//    disconnected navmesh island (or otherwise unreachable) still moves the player
+	//    as far as the navmesh allows — ending near the target — instead of refusing
+	//    to move. This is the core fix for clicking objects across navmesh gaps.
+	FPathFindingQuery Query(Pawn, *NavData, Start, TargetDest);
+	Query.SetAllowPartialPaths(true);
 	FPathFindingResult Result = NavSys->FindPathSync(Query);
 
-	// 3. Guard / fallback — invalid or too short to smooth (straight shot).
-	if (!Result.IsSuccessful() || !Result.Path.IsValid() || Result.Path->GetPathPoints().Num() < 3)
+	// 4. Guard / fallback — no usable path at all.
+	if (!Result.IsSuccessful() || !Result.Path.IsValid() || Result.Path->GetPathPoints().Num() < 2)
 	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(Controller, Destination);
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(Controller, TargetDest);
 		return;
 	}
 
-	// 4. String-pull: greedy — from each anchor keep the farthest point reachable by a
-	//    clear on-navmesh straight line, dropping the midpoints in between.
+	// 5. String-pull: greedy — from each anchor keep the farthest point reachable by a
+	//    clear on-navmesh straight line, dropping the midpoints in between. Only worth
+	//    doing when there are interior points to collapse (>= 3); a straight 2-point
+	//    path (incl. a short partial path) is followed as-is.
 	TArray<FNavPathPoint>& Pts = Result.Path->GetPathPoints();
-	TArray<FNavPathPoint> Kept;
-	Kept.Reserve(Pts.Num());
-	Kept.Add(Pts[0]);
-
-	int32 Anchor = 0;
-	while (Anchor < Pts.Num() - 1)
+	if (Pts.Num() >= 3)
 	{
-		int32 Farthest = Anchor + 1; // the immediate next point is always reachable
-		for (int32 i = Anchor + 2; i < Pts.Num(); ++i)
-		{
-			FVector HitLocation;
-			const bool bBlocked = UNavigationSystemV1::NavigationRaycast(
-				Controller, Pts[Anchor].Location, Pts[i].Location, HitLocation, nullptr, Controller);
+		TArray<FNavPathPoint> Kept;
+		Kept.Reserve(Pts.Num());
+		Kept.Add(Pts[0]);
 
-			if (bBlocked)
+		int32 Anchor = 0;
+		while (Anchor < Pts.Num() - 1)
+		{
+			int32 Farthest = Anchor + 1; // the immediate next point is always reachable
+			for (int32 i = Anchor + 2; i < Pts.Num(); ++i)
 			{
-				break; // can't see point i directly — stop extending from this anchor
+				FVector HitLocation;
+				const bool bBlocked = UNavigationSystemV1::NavigationRaycast(
+					Controller, Pts[Anchor].Location, Pts[i].Location, HitLocation, nullptr, Controller);
+
+				if (bBlocked)
+				{
+					break; // can't see point i directly — stop extending from this anchor
+				}
+				Farthest = i; // clear straight line on navmesh — we can go straight to i
 			}
-			Farthest = i; // clear straight line on navmesh — we can go straight to i
+
+			Kept.Add(Pts[Farthest]);
+			Anchor = Farthest;
 		}
 
-		Kept.Add(Pts[Farthest]);
-		Anchor = Farthest;
+		Pts = MoveTemp(Kept); // overwrite the path with the smoothed point list
 	}
 
-	Pts = MoveTemp(Kept); // overwrite the path with the smoothed point list
-
-	// 5. Issue the move through a PathFollowingComponent (get-or-create, mirroring
+	// 6. Issue the move through a PathFollowingComponent (get-or-create, mirroring
 	//    what SimpleMoveToLocation does internally). Path already finished → no re-pathfind.
 	UPathFollowingComponent* PFollowComp = Controller->FindComponentByClass<UPathFollowingComponent>();
 	if (PFollowComp == nullptr)
@@ -90,7 +112,7 @@ void UR1NavSmoothingLibrary::SmoothMoveTo(AController* Controller, const FVector
 		PFollowComp->Initialize();
 	}
 
-	FAIMoveRequest MoveReq(Destination);
+	FAIMoveRequest MoveReq(TargetDest);
 	MoveReq.SetUsePathfinding(false);
 
 	FNavPathSharedPtr Path = Result.Path;
