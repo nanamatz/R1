@@ -40,6 +40,11 @@ private:
 	UFUNCTION()
 	void OnDashInterrupted();
 
+	// 루트모션(대시) 종료 시 호출. 실제 착지 시점에 맞춰 착지 처리를 수행한다.
+	// 델리게이트 시그니처(bReachedDestination, bTimedOut, FinalTargetLocation)에 맞춰야 한다.
+	UFUNCTION()
+	void OnDashRootMotionFinished(bool bReachedDestination, bool bTimedOut, FVector FinalTargetLocation);
+
 	UFUNCTION()
 	void OnJumpAttackEventReceived(FGameplayEventData Payload);
 
