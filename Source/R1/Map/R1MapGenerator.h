@@ -9,6 +9,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMapGenerateProgress, float, Curre
 class UR1RoomDefinitionData;
 class UR1AssetData;
 class AR1PlayerSpawnMarker;
+struct FStreamableHandle;
 
 USTRUCT(BlueprintType)
 struct FFloorData
@@ -205,6 +206,14 @@ private:
 
 	// 로딩 완료 후 활성화할 방(신규 층=0, 세이브 복귀=저장된 방).
 	int32 PendingActivateNodeID = 0;
+
+	// 이 층에서 미리 로드한 에셋들의 스트리밍 핸들. 핸들이 살아있는 동안 에셋이 메모리에 상주한다.
+	// (UObject가 아니므로 UPROPERTY로 두지 않는다.)
+	TSharedPtr<FStreamableHandle> FloorPreloadHandle;
+
+	// 층의 모든 방 PDA에서 프리로드 대상(라벨/Primary Asset)을 모아 단일 비동기 로드를 시작한다.
+	// 이전 핸들은 이 함수 진입 시 해제되어 이전 층 에셋이 GC 대상이 된다.
+	void StartFloorAssetPreload();
 
 private:
 	// 내부적으로 알아서 채워 쓸 풀 (에디터 노출 안 함, 임시 보관용 Transient)
