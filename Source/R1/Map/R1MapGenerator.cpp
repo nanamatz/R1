@@ -4,6 +4,9 @@
 
 #include "Data/R1RoomDefinitionData.h"
 #include "System/R1RoomStreamingSubsystem.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
+#include "System/R1AssetManager.h"
 #include "System/R1PlayerSaveGame.h"
 #include "System/R1SaveSystem.h"
 #include "Character/R1Player.h"
@@ -739,8 +742,75 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 	TriggerAutoSave();
 }
 
+void AR1MapGenerator::StartFloorAssetPreload()
+{
+	// 이전 층 프리로드 핸들을 해제해 이전 층 에셋을 GC 대상으로 만든다(메모리를 한 층 분량으로 제한).
+	FloorPreloadHandle.Reset();
+
+	UAssetManager& AssetManager = UAssetManager::Get();
+	UR1AssetData* AssetData = UR1AssetManager::GetLoadedAssetData();
+
+	// 중복 경로 제거용. 여러 방이 같은 라벨/에셋을 가리켜도 한 번만 로드한다.
+	TSet<FSoftObjectPath> UniquePaths;
+
+	for (const FR1MapNode& Node : GeneratedMap)
+	{
+		if (!Node.RoomDefinition) continue;
+
+		// 1) 라벨 → 전역 AssetData에서 소프트 경로로 해석
+		if (AssetData)
+		{
+			for (const FName& Label : Node.RoomDefinition->PreloadAssetLabels)
+			{
+				if (Label.IsNone()) continue;
+
+				const FAssetSet& Set = AssetData->GetAssetSetByLabel(Label);
+				for (const FAssetEntry& Entry : Set.AssetEntries)
+				{
+					if (Entry.AssetPath.IsValid())
+					{
+						UniquePaths.Add(Entry.AssetPath);
+					}
+				}
+			}
+		}
+
+		// 2) Primary Asset Id → AssetManager에서 소프트 경로로 해석
+		for (const FPrimaryAssetId& AssetId : Node.RoomDefinition->PreloadPrimaryAssets)
+		{
+			if (!AssetId.IsValid()) continue;
+
+			const FSoftObjectPath Path = AssetManager.GetPrimaryAssetPath(AssetId);
+			if (Path.IsValid())
+			{
+				UniquePaths.Add(Path);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning,
+					TEXT("[MapGenerator] 프리로드 Primary Asset 경로 해석 실패: %s"), *AssetId.ToString());
+			}
+		}
+	}
+
+	if (UniquePaths.Num() == 0)
+	{
+		// 로드할 게 없으면 핸들은 null로 둔다(게이트는 null을 '완료'로 취급).
+		return;
+	}
+
+	const TArray<FSoftObjectPath> PathsToLoad = UniquePaths.Array();
+	FloorPreloadHandle = AssetManager.GetStreamableManager().RequestAsyncLoad(PathsToLoad);
+
+	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 층 에셋 프리로드 시작: %d개 경로"), PathsToLoad.Num());
+}
+
 void AR1MapGenerator::SpawnFloorAndWait()
 {
+	// 층 에셋 비동기 프리로드 시작. 아래 레벨 스트리밍(AddToWorld)과 병렬로 진행되므로
+	// 정상 경우 추가 대기 시간이 거의 없다. 완료 게이트는 WaitForNavMeshThenActivate에서 처리.
+	StartFloorAssetPreload();
+
 	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
 	if (!RoomSubsystem)
 	{
