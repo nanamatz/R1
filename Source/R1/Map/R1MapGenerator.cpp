@@ -22,6 +22,11 @@
 #include "UI/System/R1LoadingScreenWidget.h"
 #include "Map/R1PlayerSpawnMarker.h"
 
+#include "Object/R1ItemActor.h"
+#include "Object/R1GoldActor.h"
+#include "Character/R1Monster.h"
+#include "System/R1ObjectPoolSystem.h"
+
 AR1MapGenerator::AR1MapGenerator()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -852,7 +857,8 @@ void AR1MapGenerator::GoToNextFloor()
 	HighestAchievedProgress = 0.1f;
 	OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
 
-
+	// 0. 영속 월드에 스폰된 이전 층 액터(아이템/골드/몬스터) 일괄 정리
+	CleanupFloorActors();
 
 	// 1. 기존에 로드된 모든 스트리밍 레벨(방) 메모리에서 날려버리기
 	UR1RoomStreamingSubsystem* RoomSubsystem = GetGameInstance()->GetSubsystem<UR1RoomStreamingSubsystem>();
@@ -879,6 +885,38 @@ void AR1MapGenerator::GoToNextFloor()
 	// 4. 새 층의 모든 방을 스폰하고, 모두 로드되면 0번(시작) 방을 활성화
 	PendingActivateNodeID = 0;
 	SpawnFloorAndWait();
+}
+
+void AR1MapGenerator::CleanupFloorActors()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	int32 DestroyedItems = 0;
+	int32 DestroyedGold = 0;
+	int32 DestroyedMonsters = 0;
+
+	for (TActorIterator<AR1ItemActor> It(World); It; ++It)
+	{
+		if (IsValid(*It)) { It->Destroy(); ++DestroyedItems; }
+	}
+	for (TActorIterator<AR1GoldActor> It(World); It; ++It)
+	{
+		if (IsValid(*It)) { It->Destroy(); ++DestroyedGold; }
+	}
+	// 활성/풀링(잠자는) 몬스터 모두 월드 액터이므로 한 번에 정리
+	for (TActorIterator<AR1Monster> It(World); It; ++It)
+	{
+		if (IsValid(*It)) { It->Destroy(); ++DestroyedMonsters; }
+	}
+
+	// 풀의 잔여 참조(파괴된 액터)를 정리
+	if (UR1ObjectPoolSystem* PoolSubsystem = GetGameInstance()->GetSubsystem<UR1ObjectPoolSystem>())
+	{
+		PoolSubsystem->ClearAllPools();
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 층 전환 정리: 아이템 %d, 골드 %d, 몬스터 %d 제거"), DestroyedItems, DestroyedGold, DestroyedMonsters);
 }
 
 bool AR1MapGenerator::IsLastFloor() const

@@ -179,6 +179,9 @@ private:
 	// 모든 방 로드가 끝났을 때 1회 실행: 진행도 100%, 시작/복귀 방 활성화, 로딩 게이트 해제.
 	void OnFloorFullyLoaded();
 
+	// 층 전환 시, 영속 월드에 스폰된 아이템/골드/몬스터 액터를 일괄 파괴하고 풀을 초기화.
+	void CleanupFloorActors();
+
 	// NodeID 방의 SpawnLocation에 가장 가까운 플레이어 스폰 마커를 찾습니다.
 	AR1PlayerSpawnMarker* FindSpawnMarkerForNode(int32 NodeID) const;
 
