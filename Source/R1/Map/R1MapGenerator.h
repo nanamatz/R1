@@ -179,6 +179,9 @@ private:
 	// 모든 방 로드가 끝났을 때 1회 실행: 진행도 100%, 시작/복귀 방 활성화, 로딩 게이트 해제.
 	void OnFloorFullyLoaded();
 
+	// 방이 스트리밍될 때마다 로드된 방 비율을 진행도에 반영해 로딩바가 끊김 없이 차오르게 한다.
+	void BroadcastFloorLoadProgress();
+
 	// 층 전환 시, 영속 월드에 스폰된 아이템/골드/몬스터 액터를 일괄 파괴하고 풀을 초기화.
 	void CleanupFloorActors();
 

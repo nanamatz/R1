@@ -27,6 +27,10 @@
 #include "Character/R1Monster.h"
 #include "System/R1ObjectPoolSystem.h"
 
+// GenerateMap(동기) 직후 도달하는 진행도. 이후 0.2~1.0 구간을 실제 방 스트리밍 비율로 채운다.
+// 느린 작업(방 AddToWorld)이 로딩바의 대부분(80%)을 차지하도록 해 50%에서 멈춘 듯한 인상을 없앤다.
+static constexpr float FloorLoadStartProgress = 0.2f;
+
 AR1MapGenerator::AR1MapGenerator()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -68,7 +72,7 @@ void AR1MapGenerator::InitializeMap()
 		InitializeRoomPools();
 		GenerateMap();
 
-		HighestAchievedProgress = 0.5f;
+		HighestAchievedProgress = FloorLoadStartProgress;
 		OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
 
 		PendingActivateNodeID = 0;
@@ -781,6 +785,9 @@ void AR1MapGenerator::SpawnFloorAndWait()
 		}
 	}
 
+	// 이미 표시된 방이 있다면 그 비율만큼 진행도를 즉시 반영.
+	BroadcastFloorLoadProgress();
+
 	if (LoadedFloorRoomCount >= ExpectedFloorRoomCount)
 	{
 		OnFloorFullyLoaded();
@@ -790,9 +797,29 @@ void AR1MapGenerator::SpawnFloorAndWait()
 void AR1MapGenerator::HandleFloorRoomShown()
 {
 	LoadedFloorRoomCount++;
+
+	// 방 하나가 표시될 때마다 진행도를 갱신해 로딩바가 50%에서 멈추지 않고 계속 차오르게 한다.
+	BroadcastFloorLoadProgress();
+
 	if (!bFloorActivated && LoadedFloorRoomCount >= ExpectedFloorRoomCount)
 	{
 		OnFloorFullyLoaded();
+	}
+}
+
+void AR1MapGenerator::BroadcastFloorLoadProgress()
+{
+	const float Frac = (ExpectedFloorRoomCount > 0)
+		? (float)LoadedFloorRoomCount / (float)ExpectedFloorRoomCount
+		: 1.0f;
+
+	const float NewProgress = FMath::Lerp(FloorLoadStartProgress, 1.0f, FMath::Clamp(Frac, 0.0f, 1.0f));
+
+	// HighestAchievedProgress로 단조 증가 보장(뒤로 가지 않음).
+	if (NewProgress > HighestAchievedProgress)
+	{
+		HighestAchievedProgress = NewProgress;
+		OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
 	}
 }
 
@@ -879,7 +906,7 @@ void AR1MapGenerator::GoToNextFloor()
 	InitializeRoomPools();
 	GenerateMap();
 
-	HighestAchievedProgress = 0.5f;
+	HighestAchievedProgress = FloorLoadStartProgress;
 	OnGenerateProgressUpdated.Broadcast(HighestAchievedProgress);
 
 	// 4. 새 층의 모든 방을 스폰하고, 모두 로드되면 0번(시작) 방을 활성화

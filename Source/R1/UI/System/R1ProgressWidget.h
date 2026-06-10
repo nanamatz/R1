@@ -25,8 +25,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_Ring;
 
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> Text_Percent;
 	// 실시간으로 조작할 머티리얼을 담아둘 포인터
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> ProgressMaterial;
