@@ -271,9 +271,24 @@ void AR1HUD::CloseShopUI()
     }
 }
 
+void AR1HUD::ToggleWidget(TSubclassOf<UUserWidget> WidgetClass, UUserWidget* Widget, bool& bVisibleFlag)
+{
+    if (!WidgetClass || !Widget) return;
+
+    if (bVisibleFlag)
+    {
+        Widget->SetVisibility(ESlateVisibility::Hidden);
+        bVisibleFlag = false;
+    }
+    else
+    {
+        Widget->SetVisibility(ESlateVisibility::Visible);
+        bVisibleFlag = true;
+    }
+}
+
 void AR1HUD::ToggleInventory()
 {
-
     if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
     {
         if (InvenSubsys->bIsShopOpen)
@@ -283,67 +298,22 @@ void AR1HUD::ToggleInventory()
         }
     }
 
-    if (!InventoryWidgetClass || !InventoryUIWidget) return;
-
-    if (bIsInventoryUIVisible)
-    {
-        InventoryUIWidget->SetVisibility(ESlateVisibility::Hidden);
-		bIsInventoryUIVisible = false;
-    }
-    else
-    {
-        InventoryUIWidget->SetVisibility(ESlateVisibility::Visible);
-		bIsInventoryUIVisible = true;
-    }
-
+    ToggleWidget(InventoryWidgetClass, InventoryUIWidget, bIsInventoryUIVisible);
 }
 
 void AR1HUD::ToggleCharacterStatUI()
 {
-    if (!CharacterStatUIWidgetClass || !CharacterStatUISceneWidget) return;
-
-    if (bIsCharacterStatUIVisible)
-    {
-        CharacterStatUISceneWidget->SetVisibility(ESlateVisibility::Hidden);
-        bIsCharacterStatUIVisible = false;
-    }
-    else
-    {
-        CharacterStatUISceneWidget->SetVisibility(ESlateVisibility::Visible);
-        bIsCharacterStatUIVisible = true;
-    }
+    ToggleWidget(CharacterStatUIWidgetClass, CharacterStatUISceneWidget, bIsCharacterStatUIVisible);
 }
 
 void AR1HUD::UpdateGameOverUI()
 {
-    if (!GameOverUIWidgetClass || !GameOverUIWidget) return;
-
-    if (bIsGameOverUIVisible)
-    {
-        GameOverUIWidget->SetVisibility(ESlateVisibility::Hidden);
-        bIsGameOverUIVisible = false;
-    }
-    else
-    {
-        GameOverUIWidget->SetVisibility(ESlateVisibility::Visible);
-        bIsGameOverUIVisible = true;
-    }
+    ToggleWidget(GameOverUIWidgetClass, GameOverUIWidget, bIsGameOverUIVisible);
 }
 
 void AR1HUD::ToggleGameMenu()
 {
-    if (!GameMenuUIWidgetClass || !GameMenuUIWidget) return;
-
-    if (bIsGameMenuUIVisible)
-    {
-        GameMenuUIWidget->SetVisibility(ESlateVisibility::Hidden);
-        bIsGameMenuUIVisible = false;
-    }
-    else
-    {
-        GameMenuUIWidget->SetVisibility(ESlateVisibility::Visible);
-        bIsGameMenuUIVisible = true;
-    }
+    ToggleWidget(GameMenuUIWidgetClass, GameMenuUIWidget, bIsGameMenuUIVisible);
 }
 
 void AR1HUD::ToggleOptionsUI()
