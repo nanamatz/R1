@@ -67,129 +67,78 @@ void AR1PlayerController::BeginPlay()
 	R1Player->SetCreatureState(ECreatureState::Moving);
 }
 
+const UInputAction* AR1PlayerController::FindInputActionChecked(const UR1InputData* InputData, const FGameplayTag& Tag, const TCHAR* DebugName) const
+{
+	const UInputAction* Action = InputData ? InputData->FindInputActionByTag(Tag) : nullptr;
+	if (Action == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: %s is null."), DebugName);
+	}
+	return Action;
+}
+
 void AR1PlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	if (const UR1InputData* InputData = UR1AssetManager::GetAssetByName<UR1InputData>("InputData"))
-	{
-		UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
-		if (EnhancedInputComponent == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: InputComponent is not UEnhancedInputComponent."));
-			return;
-		}
-
-		auto ActionMoveTo = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SetDestination);
-		if (ActionMoveTo == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionMoveTo is null."));
-			return;
-		}
-
-		EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Started, this, &ThisClass::OnInputStarted);
-		EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Triggered, this, &ThisClass::OnSetDestinationTriggered);
-		EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Completed, this, &ThisClass::OnSetDestinationReleased);
-		EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Canceled, this, &ThisClass::OnSetDestinationReleased);
-
-		auto ActionInventoryToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_Inventory);
-
-		if (ActionInventoryToggle == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionInventroyToggle is null."));
-			return;
-		}
-		
-		EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
-
-		auto ActionCharacterStatUIToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_CharacterStatUI);
-
-		if (ActionCharacterStatUIToggle == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed:ActionCharacterStatUIToggle is null."));
-			return;
-		}
-
-		EnhancedInputComponent->BindAction(ActionCharacterStatUIToggle, ETriggerEvent::Started, this, &ThisClass::OnCharacterStatUIToggle);
-
-		auto ActionGameMenuToggle = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_GameMenu);
-
-		if (ActionGameMenuToggle == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionGameMenuToggle is null."));
-			return;
-		}
-
-		EnhancedInputComponent->BindAction(ActionGameMenuToggle, ETriggerEvent::Started, this, &ThisClass::OnGameMenuToggle);
-
-
-		auto ActionQSkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillQ);
-
-		if (ActionQSkill == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActioQSkill is null."));
-			return;
-		}
-
-		EnhancedInputComponent->BindAction(ActionQSkill, ETriggerEvent::Started, this, &ThisClass::OnQSkill);
-
-		auto ActionWSkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillW);
-
-		if (ActionWSkill == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActioWSkill is null."));
-			return;
-		}
-
-		EnhancedInputComponent->BindAction(ActionWSkill, ETriggerEvent::Started, this, &ThisClass::OnWSkill);
-
-		auto ActionESkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillE);
-
-		if (ActionESkill == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActioESkill is null."));
-			return;
-		}
-
-		EnhancedInputComponent->BindAction(ActionESkill, ETriggerEvent::Started, this, &ThisClass::OnESkill);
-
-		auto ActionRSkill = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_SkillR);
-
-		if (ActionRSkill == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActioRSkill is null."));
-			return;
-		}
-
-		EnhancedInputComponent->BindAction(ActionRSkill, ETriggerEvent::Started, this, &ThisClass::OnRSkill);
-
-		auto ActionLookClick = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_LookClick);
-
-		if (ActionLookClick == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionLookClick is null."));
-			return;
-		}
-
-		EnhancedInputComponent->BindAction(ActionLookClick, ETriggerEvent::Started, this, &ThisClass::OnLookClickStarted);
-		EnhancedInputComponent->BindAction(ActionLookClick, ETriggerEvent::Completed, this, &ThisClass::OnLookClickReleased);
-		EnhancedInputComponent->BindAction(ActionLookClick, ETriggerEvent::Canceled, this, &ThisClass::OnLookClickReleased);
-
-		auto ActionLookMouse = InputData->FindInputActionByTag(R1GameplayTags::Input_Action_LookMouse);
-
-		if (ActionLookMouse == nullptr)
-		{
-			UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: ActionLookMouse is null."));
-			return;
-		}
-		EnhancedInputComponent->BindAction(ActionLookMouse, ETriggerEvent::Triggered, this, &ThisClass::OnLookMouse);
-
-
-	}
-	else
+	const UR1InputData* InputData = UR1AssetManager::GetAssetByName<UR1InputData>("InputData");
+	if (InputData == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		return;
 	}
+
+	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
+	if (EnhancedInputComponent == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: InputComponent is not UEnhancedInputComponent."));
+		return;
+	}
+
+	const UInputAction* ActionMoveTo = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_SetDestination, TEXT("ActionMoveTo"));
+	if (ActionMoveTo == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Started, this, &ThisClass::OnInputStarted);
+	EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Triggered, this, &ThisClass::OnSetDestinationTriggered);
+	EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Completed, this, &ThisClass::OnSetDestinationReleased);
+	EnhancedInputComponent->BindAction(ActionMoveTo, ETriggerEvent::Canceled, this, &ThisClass::OnSetDestinationReleased);
+
+	const UInputAction* ActionInventoryToggle = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_Inventory, TEXT("ActionInventroyToggle"));
+	if (ActionInventoryToggle == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionInventoryToggle, ETriggerEvent::Started, this, &ThisClass::OnInventoryToggle);
+
+	const UInputAction* ActionCharacterStatUIToggle = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_CharacterStatUI, TEXT("ActionCharacterStatUIToggle"));
+	if (ActionCharacterStatUIToggle == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionCharacterStatUIToggle, ETriggerEvent::Started, this, &ThisClass::OnCharacterStatUIToggle);
+
+	const UInputAction* ActionGameMenuToggle = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_GameMenu, TEXT("ActionGameMenuToggle"));
+	if (ActionGameMenuToggle == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionGameMenuToggle, ETriggerEvent::Started, this, &ThisClass::OnGameMenuToggle);
+
+	const UInputAction* ActionQSkill = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_SkillQ, TEXT("ActioQSkill"));
+	if (ActionQSkill == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionQSkill, ETriggerEvent::Started, this, &ThisClass::OnQSkill);
+
+	const UInputAction* ActionWSkill = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_SkillW, TEXT("ActioWSkill"));
+	if (ActionWSkill == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionWSkill, ETriggerEvent::Started, this, &ThisClass::OnWSkill);
+
+	const UInputAction* ActionESkill = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_SkillE, TEXT("ActioESkill"));
+	if (ActionESkill == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionESkill, ETriggerEvent::Started, this, &ThisClass::OnESkill);
+
+	const UInputAction* ActionRSkill = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_SkillR, TEXT("ActioRSkill"));
+	if (ActionRSkill == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionRSkill, ETriggerEvent::Started, this, &ThisClass::OnRSkill);
+
+	const UInputAction* ActionLookClick = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_LookClick, TEXT("ActionLookClick"));
+	if (ActionLookClick == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionLookClick, ETriggerEvent::Started, this, &ThisClass::OnLookClickStarted);
+	EnhancedInputComponent->BindAction(ActionLookClick, ETriggerEvent::Completed, this, &ThisClass::OnLookClickReleased);
+	EnhancedInputComponent->BindAction(ActionLookClick, ETriggerEvent::Canceled, this, &ThisClass::OnLookClickReleased);
+
+	const UInputAction* ActionLookMouse = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_LookMouse, TEXT("ActionLookMouse"));
+	if (ActionLookMouse == nullptr) return;
+	EnhancedInputComponent->BindAction(ActionLookMouse, ETriggerEvent::Triggered, this, &ThisClass::OnLookMouse);
 }
 
 void AR1PlayerController::PlayerTick(float DeltaTime)
