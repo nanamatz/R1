@@ -278,6 +278,9 @@ private:
 	// 풀(Pool)에서 '우리가 원하는 방향의 문'을 가진 방을 찾아 영구적으로 빼오는 함수
 	class UR1RoomDefinitionData* PopValidRoomFromPool(TArray<class UR1RoomDefinitionData*>& Pool, ER1DoorDirection RequiredDoor);
 
+	// 풀에서 무작위 방 하나를 꺼내(제거 후 반환)는 헬퍼. 비어 있으면 nullptr.
+	class UR1RoomDefinitionData* PopRandomFromPool(TArray<class UR1RoomDefinitionData*>& Pool);
+
 public:
 	// 세이브 서브시스템을 불러와 현재 상태를 조용히 저장하는 헬퍼 함수
 	void TriggerAutoSave();
