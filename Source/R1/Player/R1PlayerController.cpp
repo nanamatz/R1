@@ -618,26 +618,24 @@ void AR1PlayerController::OnQSkill()
 
 void AR1PlayerController::OnWSkill()
 {
-	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)
-	{
-		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::W);
-	}
+	ExecuteSkill(ER1SkillSlot::W);
 }
 
 void AR1PlayerController::OnESkill()
 {
-	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)
-	{
-		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::E);
-	}
+	ExecuteSkill(ER1SkillSlot::E);
 }
-
 
 void AR1PlayerController::OnRSkill()
 {
+	ExecuteSkill(ER1SkillSlot::R);
+}
+
+void AR1PlayerController::ExecuteSkill(ER1SkillSlot Slot)
+{
 	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)
 	{
-		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::R);
+		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(Slot);
 	}
 }
 

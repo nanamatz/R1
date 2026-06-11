@@ -43,6 +43,9 @@ private:
 	void OnESkill();
 	void OnRSkill();
 
+	// 🌟 중복 제거: Q/W/E/R 스킬 입력 핸들러의 공통 실행 로직
+	void ExecuteSkill(ER1SkillSlot Slot);
+
 public:
 	void OnLookClickStarted();
 	void OnLookClickReleased();
