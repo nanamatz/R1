@@ -58,6 +58,9 @@ protected:
 	// 🌟 중복 제거용 도우미 함수 2: 아이템 인스턴스 생성하기
 	class UR1ItemInstance* CreateItemInstance(class UR1ItemAssetData* InItemData, EItemRarity Rarity);
 
+	// 🌟 중복 제거용 도우미 함수 3: UI 에러 사운드 재생 (구매 실패·골드 부족 등)
+	void PlayInventoryErrorSound() const;
+
 public:
 	// 아이템을 인벤토리에서 장비창으로 이동
 	bool EquipItem(UR1ItemInstance* ItemToEquip, ER1EquipmentSlot SpecificSlot = ER1EquipmentSlot::None);
