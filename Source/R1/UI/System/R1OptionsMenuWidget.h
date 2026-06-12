@@ -14,6 +14,36 @@ class UTextBlock;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnOptionsCloseRequested);
 
+// 옵션 화면에서 다루는 설정 값 한 벌(12종)의 인메모리 스냅샷.
+// 직렬화 대상인 UR1SaveGame_Settings는 그대로 두고, 화면 내 임시 편집(Temp)과
+// 변경 감지 기준(Original) 보관·복사·비교에만 사용한다.
+struct FR1SettingsSnapshot
+{
+	// Audio
+	float MasterVolume = 0.0f;
+	float BGMVolume = 0.0f;
+	float SFXVolume = 0.0f;
+
+	// Gameplay / Controls
+	bool bShowDamageText = false;
+	float MinimapOpacity = 0.0f;
+	bool bConfineMouseToWindow = false;
+	float CameraShakeIntensity = 0.0f;
+	ER1Language Language = ER1Language::English;
+
+	// Graphics
+	FIntPoint Resolution = FIntPoint::ZeroValue;
+	TEnumAsByte<EWindowMode::Type> WindowMode = EWindowMode::Fullscreen;
+	float FrameRateLimit = 0.0f;
+	bool bVSyncEnabled = false;
+
+	static FR1SettingsSnapshot FromSettings(const class UR1SaveGame_Settings* Settings);
+	void ApplyTo(class UR1SaveGame_Settings* Settings) const;
+
+	// 변경 감지용 비교. float는 IsNearlyEqual 기준 (기존 IsSettingsChanged와 동일 의미).
+	bool NearlyEquals(const FR1SettingsSnapshot& Other) const;
+};
+
 UCLASS()
 class R1_API UR1OptionsMenuWidget : public UR1UserWidget
 {
@@ -59,9 +89,6 @@ public:
     UFUNCTION()
     virtual void OnCancelModalDismissed();
 protected:
-    UPROPERTY()
-    TObjectPtr<class UR1SaveGame_Settings> OriginalSettings;
-
     UPROPERTY(EditDefaultsOnly, Category = "R1|UI")
     TSubclassOf<class UR1ConfirmModalSceneWidget> ConfirmModalClass;
 
@@ -122,43 +149,10 @@ private:
     void RefreshLocalization();
 
 protected:
-    // Temporary variables for UI state (before Apply)
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
-    float TempMasterVolume;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
-    float TempBGMVolume;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
-    float TempSFXVolume;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
-    bool bTempShowDamageText;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
-    float TempMinimapOpacity;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
-    bool bTempConfineMouse;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
-    float TempCameraShakeIntensity;
-
-    // --- Graphics Temp Variables ---
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp|Graphics")
-    FIntPoint TempResolution;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp|Graphics")
-    TEnumAsByte<EWindowMode::Type> TempWindowMode;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp|Graphics")
-    float TempFrameRateLimit;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp|Graphics")
-    bool bTempVSyncEnabled;
-
-    UPROPERTY(BlueprintReadWrite, Category = "R1|UI|Temp")
-    ER1Language TempLanguage = ER1Language::English;
+    // 화면에서 편집 중인 값(Temp)과 변경 감지·롤백 기준점(Original).
+    // (이전의 Temp* 개별 멤버 12종 + OriginalSettings 객체를 스냅샷 한 쌍으로 통합)
+    FR1SettingsSnapshot Temp;
+    FR1SettingsSnapshot Original;
 
 protected:
     UPROPERTY(meta = (BindWidget))
