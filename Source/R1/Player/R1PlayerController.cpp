@@ -64,7 +64,10 @@ void AR1PlayerController::BeginPlay()
 
 	// 💡 새 레벨이 시작될 때마다 마우스 캡처 깜빡임을 방지하고 GameAndUI 모드로 확정 짓습니다.
 	UpdateInputMode(false);
-	R1Player->SetCreatureState(ECreatureState::Moving);
+	if (R1Player)
+	{
+		R1Player->SetCreatureState(ECreatureState::Moving);
+	}
 }
 
 const UInputAction* AR1PlayerController::FindInputActionChecked(const UR1InputData* InputData, const FGameplayTag& Tag, const TCHAR* DebugName) const
@@ -498,10 +501,10 @@ void AR1PlayerController::DropItemToWorld(UR1ItemInstance* ItemToDrop, ER1Equipm
 	// 2. 월드에 아이템 액터 스폰!
 	FActorSpawnParameters SpawnParams;
 	AR1ItemActor* DroppedItem = GetWorld()->SpawnActor<AR1ItemActor>(ItemActorClass, SpawnLoc, FRotator::ZeroRotator, SpawnParams);
-	DroppedItem->PopEffect();
 
 	if (DroppedItem)
 	{
+		DroppedItem->PopEffect();
 		// 3. 인스턴스가 들고 있던 정보 그대로 전달
 		DroppedItem->InitItem(ItemToDrop->GetItemData(), ItemToDrop->ItemRarity,ItemToDrop->ItemCount);
 
