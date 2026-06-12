@@ -40,9 +40,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Audio")
 	FGameplayTag GameplayCueTag;
 
-	UFUNCTION()
-	virtual void OnMontageEnded();
-
-	UFUNCTION()
-	virtual void OnAttackEventReceived(FGameplayEventData Payload);
+	virtual void OnMontageEnded() override;
+	virtual void OnAttackEventReceived(FGameplayEventData Payload) override;
 };

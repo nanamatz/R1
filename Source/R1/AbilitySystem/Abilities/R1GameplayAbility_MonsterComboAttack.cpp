@@ -22,51 +22,12 @@ void UR1GameplayAbility_MonsterComboAttack::ActivateAbility(const FGameplayAbili
 
 	AR1Character* Attacker = Cast<AR1Character>(ActorInfo->AvatarActor);
 
-	if (Attacker && MontageToPlay)
+	// Combo Section Cycling
+	FName StartSectionName = (ComboIndex == 0) ? FName("Combo1") : FName("Combo2");
+
+	if (PlayAttackMontageAndWaitForEvent(Attacker, AttackEventTag, StartSectionName))
 	{
-		Attacker->SetCreatureState(ECreatureState::Casting);
-		float AttackRate = 1.0f;
-
-		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
-		{
-			bool bFound = false;
-			float CurrentAttackSpeed = ASC->GetGameplayAttributeValue(UR1AttributeSet::GetAttackSpeedAttribute(), bFound);
-			if (bFound)
-			{
-				AttackRate = CurrentAttackSpeed;
-			}
-		}
-
-		// Combo Section Cycling
-		FName StartSectionName = (ComboIndex == 0) ? FName("Combo1") : FName("Combo2");
-
-		UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-			this,
-			NAME_None,
-			MontageToPlay,
-			AttackRate,
-			StartSectionName,
-			false
-		);
-
-		MontageTask->OnCompleted.AddDynamic(this, &UR1GameplayAbility_MonsterComboAttack::OnMontageEnded);
-		MontageTask->OnInterrupted.AddDynamic(this, &UR1GameplayAbility_MonsterComboAttack::OnMontageEnded);
-		MontageTask->OnCancelled.AddDynamic(this, &UR1GameplayAbility_MonsterComboAttack::OnMontageEnded);
-
-		MontageTask->ReadyForActivation();
-
 		ComboIndex = (ComboIndex + 1) % 2;
-
-		// Wait for Hit Event
-		UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
-			this,
-			AttackEventTag,
-			nullptr,
-			true,
-			false
-		);
-		WaitEventTask->EventReceived.AddDynamic(this, &UR1GameplayAbility_MonsterComboAttack::OnAttackEventReceived);
-		WaitEventTask->ReadyForActivation();
 	}
 	else
 	{
