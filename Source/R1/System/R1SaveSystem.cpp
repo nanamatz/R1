@@ -108,7 +108,6 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	if (MapGenerator)
 	{
 		SaveObj->CurrentFloorIndex = MapGenerator->CurrentFloorIndex;
-		SaveObj->CurrentActiveNodeID = MapGenerator->CurrentActiveNodeID;
 		SaveObj->CurrentActiveNodeID = (MapGenerator->PendingNodeID != -1) ? MapGenerator->PendingNodeID : MapGenerator->CurrentActiveNodeID;
 
 		// MapGenerator가 들고 있는 무거운 GeneratedMap을 가벼운 SaveNode로 변환
