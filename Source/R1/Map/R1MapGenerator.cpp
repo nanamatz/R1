@@ -37,8 +37,9 @@
 static constexpr float FloorLoadStartProgress = 0.2f;
 
 // 네비메시 생성 대기 파라미터.
-static constexpr float NavBuildPollInterval = 0.05f; // 폴링 간격(초)
-static constexpr int32 NavBuildMaxTicks = 100;       // 타임아웃(약 5초) — 무한 대기 방지
+static constexpr float NavBuildPollInterval = 0.05f;   // 폴링 간격(초)
+static constexpr int32 NavBuildMaxTicks = 100;         // 타임아웃(약 5초) — 무한 대기 방지
+static constexpr int32 NavRenotifyIntervalTicks = 20;  // navmesh 미생성 방 재통지(자가 치유) 간격(약 1초)
 
 AR1MapGenerator::AR1MapGenerator()
 {
@@ -929,30 +930,72 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 
 	const bool bTimedOut = (NavBuildWaitTicks >= NavBuildMaxTicks);
 
+	// [수정] 시작 방 하나가 아니라 '층의 모든 방'의 navmesh를 직접 검증한다.
+	// 기존 게이트는 활성화할 방(시작 방)만 투영 검사했고 나머지 방은 IsNavigationBeingBuilt에
+	// 의존했는데, 재통지(OnNavigationBoundsUpdated)는 PendingNavBoundsUpdates 큐에 쌓였다가
+	// 나브 시스템의 다음 Tick에야 처리되며, IsNavigationBeingBuilt는 이 큐를 보지 못한다
+	// (HasDirtyAreasQueued/빌드 태스크만 검사). 그래서 첫 틱에 시작 방만 빌드돼 있으면 게이트가
+	// 열려 버려, 통지가 유실된 다른 방이 navmesh 없이 시작되는 증상이 남아 있었다.
+	// 방 중심을 navmesh에 투영해 성공하면 그 방의 타일이 생성된 것.
+	// (RoomSpacing(기본 5000) 대비 충분히 작은 extent라 옆 방 navmesh로 오인하지 않는다.)
+	TArray<int32> UnnavigableRooms;
+	if (NavSys != nullptr)
+	{
+		const FVector Extent(1000.0f, 1000.0f, 1000.0f);
+		for (const FR1MapNode& Node : GeneratedMap)
+		{
+			if (!Node.RoomDefinition) continue; // 레벨이 스폰되지 않는 노드는 검사 대상이 아님
+
+			FNavLocation Projected;
+			// 4번째 인자(NavData=nullptr)를 명시해 오버로드 모호성을 제거(기본 NavData 사용).
+			if (!NavSys->ProjectPointToNavigation(Node.SpawnLocation, Projected, Extent, (const ANavigationData*)nullptr))
+			{
+				UnnavigableRooms.Add(Node.NodeID);
+			}
+		}
+	}
+
 	if (NavSys != nullptr && !bTimedOut)
 	{
-		// 프록시(IsNavigationBeingBuilt)가 아니라 '활성화할 방에 실제로 navmesh가 깔렸는가'라는
-		// 진짜 조건을 폴링한다. 방 중심을 navmesh에 투영해 성공하면 그 방의 타일이 생성된 것.
-		// (RoomSpacing(기본 5000) 대비 충분히 작은 extent라 옆 방 navmesh로 오인하지 않는다.)
-		bool bRoomNavigable = false;
-		if (GeneratedMap.IsValidIndex(PendingActivateNodeID))
-		{
-			FNavLocation Projected;
-			const FVector RoomCenter = GeneratedMap[PendingActivateNodeID].SpawnLocation;
-			const FVector Extent(1000.0f, 1000.0f, 1000.0f);
-			// 4번째 인자(NavData=nullptr)를 명시해 오버로드 모호성을 제거(기본 NavData 사용).
-			bRoomNavigable = NavSys->ProjectPointToNavigation(RoomCenter, Projected, Extent, (const ANavigationData*)nullptr);
-		}
-
-		// 방에 navmesh가 아직 없거나, 빌드가 진행 중(타일 일부만 완성)이면 계속 대기.
+		// 빌드가 진행 중(타일 일부만 완성)이면 계속 대기.
 		const bool bStillBuilding = UNavigationSystemV1::IsNavigationBeingBuilt(World);
 
 		// 에셋 프리로드 완료 여부도 같은 게이트에서 함께 기다린다.
 		// 핸들이 없으면(로드할 게 없었으면) 완료로 취급한다.
 		const bool bPreloadReady = (!FloorPreloadHandle.IsValid()) || FloorPreloadHandle->HasLoadCompleted();
 
-		if (!bRoomNavigable || bStillBuilding || !bPreloadReady)
+		if (UnnavigableRooms.Num() > 0 || bStillBuilding || !bPreloadReady)
 		{
+			// [자가 치유] 빌드가 idle인데도 navmesh가 없는 방은 dirty 통지가 유실된 것이다
+			// (PerformNavigationBoundsUpdate는 빌드 잠금 시 dirty 전파를 조용히 버린다).
+			// 해당 방 영역과 겹치는 NavMeshBoundsVolume을 다시 통지해 재빌드를 강제한다.
+			// 첫 틱의 전체 재통지가 처리될 시간을 주기 위해 약 1초 간격으로만 시도한다.
+			if (UnnavigableRooms.Num() > 0 && !bStillBuilding && (NavBuildWaitTicks % NavRenotifyIntervalTicks == 0))
+			{
+				for (int32 NodeID : UnnavigableRooms)
+				{
+					if (!GeneratedMap.IsValidIndex(NodeID)) continue;
+
+					const FBox RoomBox = FBox::BuildAABB(
+						GeneratedMap[NodeID].SpawnLocation,
+						FVector(RoomSpacing * 0.5f, RoomSpacing * 0.5f, 2000.0f));
+
+					for (TActorIterator<ANavMeshBoundsVolume> It(World); It; ++It)
+					{
+						if (It->GetComponentsBoundingBox(true).Intersect(RoomBox))
+						{
+							NavSys->OnNavigationBoundsUpdated(*It);
+						}
+					}
+				}
+
+				const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
+					[](int32 NodeID) { return FString::FromInt(NodeID); });
+				UE_LOG(LogTemp, Warning,
+					TEXT("[MapGenerator] navmesh 미생성 방 %d개 재통지(재빌드 강제): [%s]"),
+					UnnavigableRooms.Num(), *RoomList);
+			}
+
 			World->GetTimerManager().SetTimer(
 				NavBuildWaitTimer, this, &AR1MapGenerator::WaitForNavMeshThenActivate, NavBuildPollInterval, false);
 			return;
@@ -961,10 +1004,12 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 
 	if (bTimedOut)
 	{
+		const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
+			[](int32 NodeID) { return FString::FromInt(NodeID); });
 		UE_LOG(LogTemp, Error,
-			TEXT("[MapGenerator] navmesh 대기 타임아웃(%.1fs) — %d번 방에 navmesh가 생성되지 않았습니다. ")
-			TEXT("해당 방 레벨의 NavMeshBoundsVolume가 바닥을 감싸는지 확인하세요."),
-			NavBuildMaxTicks * NavBuildPollInterval, PendingActivateNodeID);
+			TEXT("[MapGenerator] navmesh 대기 타임아웃(%.1fs) — 다음 방에 navmesh가 생성되지 않았습니다: [%s]. ")
+			TEXT("해당 방 레벨의 NavMeshBoundsVolume가 바닥(방 중심 포함)을 감싸는지 확인하세요."),
+			NavBuildMaxTicks * NavBuildPollInterval, *RoomList);
 	}
 
 	if (bTimedOut && FloorPreloadHandle.IsValid() && !FloorPreloadHandle->HasLoadCompleted())
