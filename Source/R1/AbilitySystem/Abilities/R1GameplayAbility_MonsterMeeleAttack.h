@@ -18,7 +18,4 @@ public:
 
 protected:
 	virtual void OnAttackEventReceived(FGameplayEventData Payload) override;
-
-private:
-	void CheckAndApplyDamage_Sector(const FGameplayEffectSpecHandle& SpecHandle, class AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC);
 };

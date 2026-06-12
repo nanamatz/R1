@@ -38,7 +38,4 @@ protected:
 
 	UFUNCTION()
 	virtual void OnAttackEventReceived(FGameplayEventData Payload);
-
-private:
-	void CheckAndApplyDamage_Sector(const FGameplayEffectSpecHandle& SpecHandle, class AR1Character* SourceCharacter, class UAbilitySystemComponent* SourceASC);
 };
