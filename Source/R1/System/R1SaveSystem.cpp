@@ -198,6 +198,7 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 					ItemSaveData.ItemData = Item->GetItemData();
 					ItemSaveData.ItemRarity = Item->ItemRarity;
 					ItemSaveData.Position = InventorySubsystem->GetItemPosition(Item);
+					ItemSaveData.ItemCount = Item->ItemCount;
 					SaveObj->InventoryItems.Add(ItemSaveData);
 				}
 			}
@@ -267,7 +268,7 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 			{
 				if (UR1ItemAssetData* ResolvedData = ItemSaveData.ItemData.LoadSynchronous())
 				{
-					InventorySubsystem->LoadItem(ResolvedData, ItemSaveData.ItemRarity, ItemSaveData.Position);
+					InventorySubsystem->LoadItem(ResolvedData, ItemSaveData.ItemRarity, ItemSaveData.Position, ItemSaveData.ItemCount);
 				}
 			}
 

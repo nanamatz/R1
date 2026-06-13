@@ -48,6 +48,10 @@ struct FR1ItemSaveData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FIntPoint Position = FIntPoint(-1, -1);
+
+	// 스택 개수 (소모품·열쇠 등). 기본값 1 → 이 필드가 없던 구버전 세이브도 안전하게 1로 로드됨.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ItemCount = 1;
 };
 
 USTRUCT(BlueprintType)

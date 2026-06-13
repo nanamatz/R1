@@ -393,11 +393,12 @@ bool UR1InventorySubsystem::BuyItemAt(UR1ItemInstance* ItemToBuy, FIntPoint Pref
 	return false;
 }
 
-void UR1InventorySubsystem::LoadItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos)
+void UR1InventorySubsystem::LoadItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos, int32 InCount)
 {
 	// 🌟 도우미 함수 적용
 	if (UR1ItemInstance* Item = CreateItemInstance(InItemData, Rarity))
 	{
+		Item->ItemCount = FMath::Max(1, InCount);
 		Items.Add(Item);
 		AddItemToGrid(Item, Pos);
 	}
