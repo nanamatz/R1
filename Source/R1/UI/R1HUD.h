@@ -135,6 +135,26 @@ protected:
     TObjectPtr<class UR1GameOptionsMenuSceneWidget> GameOptionsSceneWidget = nullptr;
 
 private:
+    // 🌟 중복 제거: 위젯 가시성 토글 + bool 플래그 갱신 (WidgetClass/Widget 유효성 가드 포함)
+    void ToggleWidget(TSubclassOf<UUserWidget> WidgetClass, class UUserWidget* Widget, bool& bVisibleFlag);
+
+    // 🌟 중복 제거: 위젯 생성 + 뷰포트 추가. 가시성/플래그/후처리는 호출부에서 담당.
+    template<typename WidgetT>
+    WidgetT* CreateAndAddWidget(class APlayerController* OwningPC, TSubclassOf<UUserWidget> WidgetClass, int32 ZOrder)
+    {
+        if (!OwningPC || !WidgetClass)
+        {
+            return nullptr;
+        }
+        WidgetT* Widget = CreateWidget<WidgetT>(OwningPC, WidgetClass);
+        if (Widget)
+        {
+            Widget->AddToViewport(ZOrder);
+        }
+        return Widget;
+    }
+
+private:
     bool bIsFloorGuidePending = false;
     ER1FloorLevel PendingFloorLevel;
 

@@ -135,6 +135,23 @@ UR1ItemInstance* UR1InventorySubsystem::CreateItemInstance(UR1ItemAssetData* InI
 	return NewItem;
 }
 
+void UR1InventorySubsystem::PlayInventoryErrorSound() const
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
+			{
+				if (HUD->UISoundData && HUD->UISoundData->ActionError)
+				{
+					UGameplayStatics::PlaySoundAtLocation(this, HUD->UISoundData->ActionError, PC->GetPawn()->GetActorLocation());
+				}
+			}
+		}
+	}
+}
+
 bool UR1InventorySubsystem::EquipItem(UR1ItemInstance* ItemToEquip, ER1EquipmentSlot SpecificSlot)
 {
 	if (!ItemToEquip) return false;
@@ -350,19 +367,7 @@ bool UR1InventorySubsystem::BuyItemAt(UR1ItemInstance* ItemToBuy, FIntPoint Pref
 	{
 		UE_LOG(LogTemp, Warning, TEXT("골드 부족: 필요 %d, 현재 %d"), Price, Gold);
 
-		if (UWorld* World = GetWorld())
-		{
-			if (APlayerController* PC = World->GetFirstPlayerController())
-			{
-				if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
-				{
-					if (HUD->UISoundData && HUD->UISoundData->ActionError)
-					{
-						UGameplayStatics::PlaySoundAtLocation(this, HUD->UISoundData->ActionError, PC->GetPawn()->GetActorLocation());
-					}
-				}
-			}
-		}
+		PlayInventoryErrorSound();
 
 		return false;
 	}
@@ -383,19 +388,7 @@ bool UR1InventorySubsystem::BuyItemAt(UR1ItemInstance* ItemToBuy, FIntPoint Pref
 
 	UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 찼습니다! 구매 실패."));
 
-	if (UWorld* World = GetWorld())
-	{
-		if (APlayerController* PC = World->GetFirstPlayerController())
-		{
-			if (AR1HUD* HUD = Cast<AR1HUD>(PC->GetHUD()))
-			{
-				if (HUD->UISoundData && HUD->UISoundData->ActionError)
-				{
-					UGameplayStatics::PlaySoundAtLocation(this, HUD->UISoundData->ActionError, PC->GetPawn()->GetActorLocation());
-				}
-			}
-		}
-	}
+	PlayInventoryErrorSound();
 
 	return false;
 }

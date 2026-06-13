@@ -332,41 +332,31 @@ void AR1MapGenerator::AssignRoomTypes()
 		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 🎲 랜덤 특수 방 %d개 스폰 결정!"), NumSpecialRoomsToSpawn);
 
 
+		// 타입 -> 풀 매핑. 분배 시 if-체인 대신 테이블 조회로 풀을 선택한다.
+		TMap<ER1RoomContentType, TArray<UR1RoomDefinitionData*>*> SpecialPoolByType;
+		SpecialPoolByType.Add(ER1RoomContentType::Treasure, &TreasureRoomPool);
+		SpecialPoolByType.Add(ER1RoomContentType::Shop, &ShopRoomPool);
+		SpecialPoolByType.Add(ER1RoomContentType::Refresh, &RefreshRoomPool);
+
 		// 4. 섞인 순서대로 결정된 개수만큼 풀에서 방을 딱 하나씩만 빼옵니다.
 		for (int32 i = 0; i < NumSpecialRoomsToSpawn; ++i)
 		{
 			ER1RoomContentType SelectedType = AvailableSpecialTypes[i];
 
-			if (SelectedType == ER1RoomContentType::Treasure)
+			if (TArray<UR1RoomDefinitionData*>** PoolPtr = SpecialPoolByType.Find(SelectedType))
 			{
-				int32 RandIdx = FMath::RandRange(0, TreasureRoomPool.Num() - 1);
-				SpecialRoomsToSpawn.Add(TreasureRoomPool[RandIdx]);
-				TreasureRoomPool.RemoveAt(RandIdx);
-			}
-			else if (SelectedType == ER1RoomContentType::Shop)
-			{
-				int32 RandIdx = FMath::RandRange(0, ShopRoomPool.Num() - 1);
-				SpecialRoomsToSpawn.Add(ShopRoomPool[RandIdx]);
-				ShopRoomPool.RemoveAt(RandIdx);
-			}
-			else if (SelectedType == ER1RoomContentType::Refresh)
-			{
-				int32 RandIdx = FMath::RandRange(0, RefreshRoomPool.Num() - 1);
-				SpecialRoomsToSpawn.Add(RefreshRoomPool[RandIdx]);
-				RefreshRoomPool.RemoveAt(RandIdx);
+				if (UR1RoomDefinitionData* PickedRoom = PopRandomFromPool(**PoolPtr))
+				{
+					SpecialRoomsToSpawn.Add(PickedRoom);
+				}
 			}
 
-			if(SelectedType == ER1RoomContentType::Treasure)
+			switch (SelectedType)
 			{
-				UE_LOG(LogTemp, Warning, TEXT(" - 보물 방 당첨!"));
-			}
-			else if (SelectedType == ER1RoomContentType::Shop)
-			{
-				UE_LOG(LogTemp, Warning, TEXT(" - 상점 방 당첨!"));
-			}
-			else if (SelectedType == ER1RoomContentType::Refresh)
-			{
-				UE_LOG(LogTemp, Warning, TEXT(" - 회복 방 당첨!"));
+			case ER1RoomContentType::Treasure: UE_LOG(LogTemp, Warning, TEXT(" - 보물 방 당첨!")); break;
+			case ER1RoomContentType::Shop:     UE_LOG(LogTemp, Warning, TEXT(" - 상점 방 당첨!")); break;
+			case ER1RoomContentType::Refresh:  UE_LOG(LogTemp, Warning, TEXT(" - 회복 방 당첨!")); break;
+			default: break;
 			}
 		}
 	}
@@ -1188,6 +1178,19 @@ UR1RoomDefinitionData* AR1MapGenerator::PopValidRoomFromPool(TArray<class UR1Roo
 		}
 	}
 	return nullptr; // 조건에 맞는 방이 풀에 없습니다.
+}
+
+UR1RoomDefinitionData* AR1MapGenerator::PopRandomFromPool(TArray<UR1RoomDefinitionData*>& Pool)
+{
+	if (Pool.IsEmpty())
+	{
+		return nullptr;
+	}
+
+	const int32 RandIdx = FMath::RandRange(0, Pool.Num() - 1);
+	UR1RoomDefinitionData* PickedRoom = Pool[RandIdx];
+	Pool.RemoveAt(RandIdx);
+	return PickedRoom;
 }
 
 void AR1MapGenerator::TriggerAutoSave()
