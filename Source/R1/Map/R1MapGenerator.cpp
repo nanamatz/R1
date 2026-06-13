@@ -809,44 +809,16 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 
 	++NavBuildWaitTicks;
 
-	// [핵심 수정] 첫 진입 시 1회: 런타임에 스트리밍된 모든 NavMeshBoundsVolume를 네비 시스템에
-	// 명시적으로 재통지한다. 층 전체가 동시에 대량 로드될 때 일부 룸(특히 시작 방)의 bounds
-	// 업데이트 알림이 누락되어 그 방의 navmesh가 아예 생성되지 않는 경합(race)을 보정한다.
-	// 이미 정상 등록된 volume이라도 재통지는 해당 영역을 다시 더럽혀(rebuild) 무해하다.
+	// 첫 진입 시 1회: 스트리밍된 모든 NavMeshBoundsVolume를 재통지해 첫 틱 경합을 보정.
 	if (NavSys != nullptr && NavBuildWaitTicks == 1)
 	{
-		for (TActorIterator<ANavMeshBoundsVolume> It(World); It; ++It)
-		{
-			NavSys->OnNavigationBoundsUpdated(*It);
-		}
+		RenotifyAllNavBounds(NavSys);
 	}
 
 	const bool bTimedOut = (NavBuildWaitTicks >= NavBuildMaxTicks);
 
-	// [수정] 시작 방 하나가 아니라 '층의 모든 방'의 navmesh를 직접 검증한다.
-	// 기존 게이트는 활성화할 방(시작 방)만 투영 검사했고 나머지 방은 IsNavigationBeingBuilt에
-	// 의존했는데, 재통지(OnNavigationBoundsUpdated)는 PendingNavBoundsUpdates 큐에 쌓였다가
-	// 나브 시스템의 다음 Tick에야 처리되며, IsNavigationBeingBuilt는 이 큐를 보지 못한다
-	// (HasDirtyAreasQueued/빌드 태스크만 검사). 그래서 첫 틱에 시작 방만 빌드돼 있으면 게이트가
-	// 열려 버려, 통지가 유실된 다른 방이 navmesh 없이 시작되는 증상이 남아 있었다.
-	// 방 중심을 navmesh에 투영해 성공하면 그 방의 타일이 생성된 것.
-	// (RoomSpacing(기본 5000) 대비 충분히 작은 extent라 옆 방 navmesh로 오인하지 않는다.)
-	TArray<int32> UnnavigableRooms;
-	if (NavSys != nullptr)
-	{
-		const FVector Extent(1000.0f, 1000.0f, 1000.0f);
-		for (const FR1MapNode& Node : GeneratedMap)
-		{
-			if (!Node.RoomDefinition) continue; // 레벨이 스폰되지 않는 노드는 검사 대상이 아님
-
-			FNavLocation Projected;
-			// 4번째 인자(NavData=nullptr)를 명시해 오버로드 모호성을 제거(기본 NavData 사용).
-			if (!NavSys->ProjectPointToNavigation(Node.SpawnLocation, Projected, Extent, (const ANavigationData*)nullptr))
-			{
-				UnnavigableRooms.Add(Node.NodeID);
-			}
-		}
-	}
+	// '층의 모든 방'의 navmesh를 직접 검증해 아직 길찾기 불가한 방을 수집.
+	TArray<int32> UnnavigableRooms = (NavSys != nullptr) ? CollectUnnavigableRooms(NavSys) : TArray<int32>();
 
 	if (NavSys != nullptr && !bTimedOut)
 	{
@@ -859,34 +831,11 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 
 		if (UnnavigableRooms.Num() > 0 || bStillBuilding || !bPreloadReady)
 		{
-			// [자가 치유] 빌드가 idle인데도 navmesh가 없는 방은 dirty 통지가 유실된 것이다
-			// (PerformNavigationBoundsUpdate는 빌드 잠금 시 dirty 전파를 조용히 버린다).
-			// 해당 방 영역과 겹치는 NavMeshBoundsVolume을 다시 통지해 재빌드를 강제한다.
+			// [자가 치유] 빌드가 idle인데도 navmesh가 없는 방은 dirty 통지가 유실된 것이다.
 			// 첫 틱의 전체 재통지가 처리될 시간을 주기 위해 약 1초 간격으로만 시도한다.
 			if (UnnavigableRooms.Num() > 0 && !bStillBuilding && (NavBuildWaitTicks % NavRenotifyIntervalTicks == 0))
 			{
-				for (int32 NodeID : UnnavigableRooms)
-				{
-					if (!GeneratedMap.IsValidIndex(NodeID)) continue;
-
-					const FBox RoomBox = FBox::BuildAABB(
-						GeneratedMap[NodeID].SpawnLocation,
-						FVector(RoomSpacing * 0.5f, RoomSpacing * 0.5f, 2000.0f));
-
-					for (TActorIterator<ANavMeshBoundsVolume> It(World); It; ++It)
-					{
-						if (It->GetComponentsBoundingBox(true).Intersect(RoomBox))
-						{
-							NavSys->OnNavigationBoundsUpdated(*It);
-						}
-					}
-				}
-
-				const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
-					[](int32 NodeID) { return FString::FromInt(NodeID); });
-				UE_LOG(LogTemp, Warning,
-					TEXT("[MapGenerator] navmesh 미생성 방 %d개 재통지(재빌드 강제): [%s]"),
-					UnnavigableRooms.Num(), *RoomList);
+				RenotifyUnnavigableRooms(NavSys, UnnavigableRooms);
 			}
 
 			World->GetTimerManager().SetTimer(
@@ -911,6 +860,79 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 			TEXT("[MapGenerator] 에셋 프리로드가 끝나기 전에 타임아웃 — 프리로드를 기다리지 않고 진행합니다."));
 	}
 
+	FinalizeFloorActivation();
+}
+
+void AR1MapGenerator::RenotifyAllNavBounds(UNavigationSystemV1* NavSys)
+{
+	UWorld* World = GetWorld();
+	if (!NavSys || !World) return;
+
+	// 층 전체가 동시에 대량 로드될 때 일부 룸(특히 시작 방)의 bounds 업데이트 알림이 누락되어
+	// 그 방의 navmesh가 아예 생성되지 않는 경합을 보정한다. 이미 정상 등록된 volume이라도
+	// 재통지는 해당 영역을 다시 더럽혀(rebuild) 무해하다.
+	for (TActorIterator<ANavMeshBoundsVolume> It(World); It; ++It)
+	{
+		NavSys->OnNavigationBoundsUpdated(*It);
+	}
+}
+
+TArray<int32> AR1MapGenerator::CollectUnnavigableRooms(UNavigationSystemV1* NavSys) const
+{
+	// 재통지(OnNavigationBoundsUpdated)는 PendingNavBoundsUpdates 큐에 쌓였다가 나브 시스템의 다음
+	// Tick에야 처리되며, IsNavigationBeingBuilt는 이 큐를 보지 못한다(HasDirtyAreasQueued/빌드 태스크만
+	// 검사). 그래서 활성화할 방만 검사하면 통지가 유실된 다른 방이 navmesh 없이 시작될 수 있다.
+	// 방 중심을 navmesh에 투영해 성공하면 그 방의 타일이 생성된 것.
+	// (RoomSpacing(기본 5000) 대비 충분히 작은 extent라 옆 방 navmesh로 오인하지 않는다.)
+	TArray<int32> UnnavigableRooms;
+	if (!NavSys) return UnnavigableRooms;
+
+	const FVector Extent(1000.0f, 1000.0f, 1000.0f);
+	for (const FR1MapNode& Node : GeneratedMap)
+	{
+		if (!Node.RoomDefinition) continue; // 레벨이 스폰되지 않는 노드는 검사 대상이 아님
+
+		FNavLocation Projected;
+		// 4번째 인자(NavData=nullptr)를 명시해 오버로드 모호성을 제거(기본 NavData 사용).
+		if (!NavSys->ProjectPointToNavigation(Node.SpawnLocation, Projected, Extent, (const ANavigationData*)nullptr))
+		{
+			UnnavigableRooms.Add(Node.NodeID);
+		}
+	}
+	return UnnavigableRooms;
+}
+
+void AR1MapGenerator::RenotifyUnnavigableRooms(UNavigationSystemV1* NavSys, const TArray<int32>& UnnavigableRooms)
+{
+	UWorld* World = GetWorld();
+	if (!NavSys || !World) return;
+
+	for (int32 NodeID : UnnavigableRooms)
+	{
+		if (!GeneratedMap.IsValidIndex(NodeID)) continue;
+
+		const FBox RoomBox = FBox::BuildAABB(
+			GeneratedMap[NodeID].SpawnLocation,
+			FVector(RoomSpacing * 0.5f, RoomSpacing * 0.5f, 2000.0f));
+
+		for (TActorIterator<ANavMeshBoundsVolume> It(World); It; ++It)
+		{
+			if (It->GetComponentsBoundingBox(true).Intersect(RoomBox))
+			{
+				NavSys->OnNavigationBoundsUpdated(*It);
+			}
+		}
+	}
+
+	const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
+		[](int32 NodeID) { return FString::FromInt(NodeID); });
+	UE_LOG(LogTemp, Warning,
+		TEXT("[MapGenerator] navmesh 미생성 방 %d개 재통지(재빌드 강제): [%s]"),
+		UnnavigableRooms.Num(), *RoomList);
+}
+
+void AR1MapGenerator::FinalizeFloorActivation()
+{
 	NavBuildWaitTicks = 0;
 
 	// navmesh 준비 완료 → 로딩 게이트 해제 + 방 활성화.

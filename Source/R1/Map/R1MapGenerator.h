@@ -186,6 +186,17 @@ private:
 	// 네비메시 빌드 완료를 기다렸다가 방을 활성화한다.
 	void WaitForNavMeshThenActivate();
 
+	// WaitForNavMeshThenActivate를 구성하는 단계별 헬퍼 (Long Function 분해, C-1.3).
+	// 동작은 분해 전과 동일하다.
+	// ① 스트리밍된 모든 NavMeshBoundsVolume를 네비 시스템에 재통지(첫 틱 경합 보정).
+	void RenotifyAllNavBounds(class UNavigationSystemV1* NavSys);
+	// ② 방 중심을 navmesh에 투영해 타일이 아직 없는(=길찾기 불가) 방들의 NodeID를 수집.
+	TArray<int32> CollectUnnavigableRooms(class UNavigationSystemV1* NavSys) const;
+	// ③ navmesh가 없는 방과 겹치는 NavMeshBoundsVolume만 다시 통지해 재빌드를 강제(자가 치유).
+	void RenotifyUnnavigableRooms(class UNavigationSystemV1* NavSys, const TArray<int32>& UnnavigableRooms);
+	// ④ 대기 종료: 카운터 리셋 + 로딩 게이트 해제 + 방 활성화.
+	void FinalizeFloorActivation();
+
 	// 방이 스트리밍될 때마다 로드된 방 비율을 진행도에 반영해 로딩바가 끊김 없이 차오르게 한다.
 	void BroadcastFloorLoadProgress();
 
