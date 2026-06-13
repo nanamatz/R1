@@ -329,15 +329,6 @@ void AR1MapGenerator::AssignRoomTypes()
 	}
 }
 
-bool AR1MapGenerator::HasRoomAt(FIntPoint Pos)
-{
-	for (const FR1MapNode& Node : GeneratedMap)
-	{
-		if (Node.GridPosition == Pos) return true;
-	}
-	return false;
-}
-
 int32 AR1MapGenerator::GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorDirection Direction)
 {
 	if (!GeneratedMap.IsValidIndex(CurrentNodeID)) return -1;

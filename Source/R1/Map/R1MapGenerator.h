@@ -252,9 +252,6 @@ private:
 	// 생성된 맵에 방 속성(보스 방, 시작 방 등)을 할당하는 함수
 	void AssignRoomTypes();
 
-	// 해당 그리드 좌표에 이미 방이 존재하는지 확인하는 헬퍼 함수
-	bool HasRoomAt(FIntPoint Pos);
-
 
 	// 현재 플레이어가 위치한 방의 고유 번호 (시작은 0번)
 public:
