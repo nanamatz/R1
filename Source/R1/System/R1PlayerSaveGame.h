@@ -138,6 +138,10 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	int32 LastSettledLevel = 1;
 
+	// 보유 골드 (인벤토리 서브시스템에만 있던 값 — 세이브 누락으로 Continue 시 0으로 초기화되던 버그 수정)
+	UPROPERTY(BlueprintReadWrite)
+	int32 Gold = 0;
+
 	// [Added] 런 진행도 저장 데이터
 	UPROPERTY(BlueprintReadWrite)
 	int32 RunLevel = 1;

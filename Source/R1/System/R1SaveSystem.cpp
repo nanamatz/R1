@@ -214,9 +214,12 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 					SaveObj->EquippedItems.Add(EquippedSaveData);
 				}
 			}
+
+			// 보유 골드 저장
+			SaveObj->Gold = InventorySubsystem->GetGold();
 		}
 	}
-	
+
 	SaveObj->ShopInventories = ActiveShopInventories;
 
 	// 정산 기준: 이 런에서 마지막으로 정산된 레벨(인메모리 캐시)
@@ -276,6 +279,9 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 					InventorySubsystem->LoadEquippedItem(ResolvedData, EquippedSaveData.ItemRarity, EquippedSaveData.Slot);
 				}
 			}
+
+			// 보유 골드 복구 (UI 갱신 방송 포함)
+			InventorySubsystem->LoadGold(SaveObj->Gold);
 
 			// 💡 로딩이 끝났음을 UI에 알려서 인벤토리/장비창을 갱신하게 만듭니다!
 			InventorySubsystem->OnInventoryUpdated.Broadcast();

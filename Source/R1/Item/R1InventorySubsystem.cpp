@@ -479,6 +479,12 @@ void UR1InventorySubsystem::AddGold(int32 Amount)
 	OnGoldChanged.Broadcast(Gold);
 }
 
+void UR1InventorySubsystem::LoadGold(int32 InGold)
+{
+	Gold = FMath::Max(0, InGold);
+	OnGoldChanged.Broadcast(Gold);
+}
+
 bool UR1InventorySubsystem::ConsumeGold(int32 Amount)
 {
 	if (Amount <= 0 || Gold < Amount) return false;
