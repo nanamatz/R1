@@ -1,6 +1,7 @@
 #include "Map/R1MapGenerator.h"
 #include "Map/DungeonManager.h"
 #include "Map/R1Door.h"
+#include "Map/R1MapGrid.h"
 
 #include "Data/R1RoomDefinitionData.h"
 #include "System/R1RoomStreamingSubsystem.h"
@@ -147,16 +148,8 @@ void AR1MapGenerator::GenerateMap()
 			{
 				if (CurrentNodeID >= TotalRoomCount) break;
 
-				FIntPoint DirOffset = FIntPoint::ZeroValue;
-				ER1DoorDirection OppositeDir = ER1DoorDirection::None;
-
-				switch (DoorDir)
-				{
-				case ER1DoorDirection::North: DirOffset = FIntPoint(1, 0);  OppositeDir = ER1DoorDirection::South; break; // 북쪽은 +X
-				case ER1DoorDirection::South: DirOffset = FIntPoint(-1, 0); OppositeDir = ER1DoorDirection::North; break; // 남쪽은 -X
-				case ER1DoorDirection::East:  DirOffset = FIntPoint(0, 1);  OppositeDir = ER1DoorDirection::West; break;  // 동쪽은 +Y
-				case ER1DoorDirection::West:  DirOffset = FIntPoint(0, -1); OppositeDir = ER1DoorDirection::East; break;  // 서쪽은 -Y
-				}
+				const FIntPoint DirOffset = R1MapGrid::GetGridOffset(DoorDir);
+				const ER1DoorDirection OppositeDir = R1MapGrid::GetOppositeDirection(DoorDir);
 
 				FIntPoint NewPos = ParentNode.GridPosition + DirOffset;
 
@@ -442,17 +435,10 @@ int32 AR1MapGenerator::GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorD
 	if (!GeneratedMap.IsValidIndex(CurrentNodeID)) return -1;
 
 	const FR1MapNode& CurrentNode = GeneratedMap[CurrentNodeID];
-	FIntPoint TargetGridPos = CurrentNode.GridPosition;
 
-	// 1. 타겟 방향의 가상 그리드 좌표를 계산합니다.
-	switch (Direction)
-	{
-	case ER1DoorDirection::North: TargetGridPos.X += 1; break;
-	case ER1DoorDirection::South: TargetGridPos.X -= 1; break;
-	case ER1DoorDirection::East:  TargetGridPos.Y += 1; break;
-	case ER1DoorDirection::West:  TargetGridPos.Y -= 1; break;
-	default: return -1;
-	}
+	// 1. 타겟 방향의 가상 그리드 좌표를 계산합니다. (None은 유효한 이웃이 없으므로 조기 반환)
+	if (Direction == ER1DoorDirection::None) return -1;
+	const FIntPoint TargetGridPos = CurrentNode.GridPosition + R1MapGrid::GetGridOffset(Direction);
 
 	// 2. 현재 방과 "연결된(Connected)" 방들 중에서, 타겟 좌표에 위치한 방이 있는지 검사합니다.
 	for (int32 ConnectedID : CurrentNode.ConnectedNodeIDs)
@@ -1169,14 +1155,7 @@ void AR1MapGenerator::UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID)
 
 ER1DoorDirection AR1MapGenerator::GetOppositeDirection(ER1DoorDirection InDir)
 {
-	switch (InDir)
-	{
-	case ER1DoorDirection::North: return ER1DoorDirection::South;
-	case ER1DoorDirection::South: return ER1DoorDirection::North;
-	case ER1DoorDirection::East:  return ER1DoorDirection::West;
-	case ER1DoorDirection::West:  return ER1DoorDirection::East;
-	default: return ER1DoorDirection::None;
-	}
+	return R1MapGrid::GetOppositeDirection(InDir);
 }
 
 void AR1MapGenerator::OnRoomClearedCallback(int32 ClearedNodeID)
