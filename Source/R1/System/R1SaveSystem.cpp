@@ -116,10 +116,11 @@ void UR1SaveSystem::ApplySaveToPlayerState(UR1PlayerSaveGame* SaveObj, AR1Player
 	AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState());
 	if (!PS) return;
 
+	// 주의: Health/Mana는 여기서 세팅하지 않는다. PreAttributeChange가 현재 Max로 클램프하므로
+	// 장비/런업으로 Max가 최종값이 된 뒤 RestorePlayerResources에서 마지막에 복구한다.
 	if (UR1AttributeSet* CommonAttr = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet()))
 	{
 		CommonAttr->SetMaxHealth(SaveObj->MaxHealth);
-		CommonAttr->SetHealth(SaveObj->Health);
 		CommonAttr->SetHealthRegeneration(SaveObj->HealthRegen);
 
 		CommonAttr->SetBaseDamage(SaveObj->BaseDamage);
@@ -143,7 +144,6 @@ void UR1SaveSystem::ApplySaveToPlayerState(UR1PlayerSaveGame* SaveObj, AR1Player
 		PlayerAttr->SetDamageMultiplier(SaveObj->DamageMultiplier);
 
 		PlayerAttr->SetMaxMana(SaveObj->MaxMana);
-		PlayerAttr->SetMana(SaveObj->Mana);
 		PlayerAttr->SetManaRegeneration(SaveObj->ManaRegen);
 
 		PS->SetRunLevel(SaveObj->RunLevel);
@@ -152,6 +152,25 @@ void UR1SaveSystem::ApplySaveToPlayerState(UR1PlayerSaveGame* SaveObj, AR1Player
 		{
 			RunUpgradeComp->LoadUpgradeData(SaveObj->AvailableRunUpgradePoints, SaveObj->RunUpgradeHistory);
 		}
+	}
+}
+
+void UR1SaveSystem::RestorePlayerResources(UR1PlayerSaveGame* SaveObj, AR1Player* Player)
+{
+	if (!SaveObj || !Player) return;
+
+	AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState());
+	if (!PS) return;
+
+	// 이 시점엔 MaxHealth/MaxMana가 베이스 + 런업 + 장비까지 모두 반영된 최종값이므로,
+	// 저장된 현재 Health/Mana가 클램프로 깎이지 않는다.
+	if (UR1AttributeSet* CommonAttr = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet()))
+	{
+		CommonAttr->SetHealth(SaveObj->Health);
+	}
+	if (UPlayerAttributeSet* PlayerAttr = Cast<UPlayerAttributeSet>(PS->GetPlayerAttributeSet()))
+	{
+		PlayerAttr->SetMana(SaveObj->Mana);
 	}
 }
 
@@ -301,6 +320,10 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	}
 
 	ActiveShopInventories = SaveObj->ShopInventories;
+
+	// 장비/런업으로 MaxHealth·MaxMana가 최종값까지 복원된 뒤에 현재 Health/Mana를 마지막에 주입한다.
+	// (그 전에 세팅하면 PreAttributeChange 클램프로 저장값이 깎인다 — Continue 시 체력/마나 손실 버그)
+	RestorePlayerResources(SaveObj, Player);
 
 	return true;
 }

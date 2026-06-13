@@ -34,6 +34,11 @@ private:
 	// 세이브 객체에 기록/주입하는 한 쌍. 스탯 추가 시 이 두 함수만 나란히 수정하면 된다.
 	void WritePlayerStateToSave(class AR1Player* Player, class UR1PlayerSaveGame* SaveObj);
 	void ApplySaveToPlayerState(class UR1PlayerSaveGame* SaveObj, class AR1Player* Player);
+
+	// 실시간 리소스(Health/Mana) 복구는 반드시 '마지막'에 호출한다.
+	// PreAttributeChange가 Health/Mana를 현재 MaxHealth/MaxMana로 클램프하므로,
+	// 장비·런업으로 Max가 최종값까지 올라간 뒤에 세팅해야 저장된 값이 깎이지 않는다.
+	void RestorePlayerResources(class UR1PlayerSaveGame* SaveObj, class AR1Player* Player);
 public:
 
 	// 세이브 파일이 있는지 확인 (Continue 버튼 활성화 용도)
