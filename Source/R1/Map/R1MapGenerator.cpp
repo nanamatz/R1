@@ -567,6 +567,11 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 	const bool bWasLoadingFromSave = bIsLoadingFromSave;
 	bIsLoadingFromSave = false;
 
+	// 텔레포트 보정값: 문 앞 진입 시 방 중심 쪽으로 밀어 넣을 거리, 그리고 바닥 끼임 방지용 Z 띄움.
+	constexpr float DoorEntryPushDistance = 300.0f; // 문에서 방 중심 방향으로 들어가는 거리
+	constexpr float DoorEntryZOffset = 100.0f;      // 문 진입 시 Z 띄움
+	constexpr float RoomCenterZOffset = 150.0f;     // 마커도 문도 없을 때 방 중심 폴백 Z 띄움
+
 	AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	if (PlayerCharacter)
 	{
@@ -582,7 +587,7 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 		{
 			const FVector DirectionToCenter =
 				(GeneratedMap[NodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
-			FinalLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
+			FinalLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * DoorEntryPushDistance) + FVector(0.0f, 0.0f, DoorEntryZOffset);
 		}
 		else if (AR1PlayerSpawnMarker* Marker = FindSpawnMarkerForNode(NodeID))
 		{
@@ -591,7 +596,7 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 		}
 		else
 		{
-			FinalLocation = GeneratedMap[NodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
+			FinalLocation = GeneratedMap[NodeID].SpawnLocation + FVector(0.0f, 0.0f, RoomCenterZOffset);
 		}
 
 		if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
