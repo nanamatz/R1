@@ -3,6 +3,7 @@
 #include "Map/R1Door.h"
 #include "Map/R1MapGrid.h"
 #include "Map/R1MapLayoutGenerator.h"
+#include "Map/R1MinimapState.h"
 
 #include "Data/R1RoomDefinitionData.h"
 #include "System/R1RoomStreamingSubsystem.h"
@@ -617,7 +618,7 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 	PendingDoorDirection = ER1DoorDirection::None;
 	InitializedNodeIDs.Add(NodeID);
 
-	UpdateMinimapState(NodeID, PrevRoomID);
+	R1MinimapState::ApplyRoomEntered(GeneratedMap, NodeID);
 	if (OnPlayerMovedRoom.IsBound())
 	{
 		OnPlayerMovedRoom.Broadcast(NodeID, PrevRoomID);
@@ -1049,37 +1050,6 @@ void AR1MapGenerator::CleanupFloorActors()
 bool AR1MapGenerator::IsLastFloor() const
 {
 	return CurrentFloorIndex >= (FloorSettings.Num() - 1);
-}
-
-void AR1MapGenerator::UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID)
-{
-	for (FR1MapNode& Node : GeneratedMap)
-	{
-		if (Node.MinimapState == ER1MinimapRoomState::Current && Node.NodeID != TargetNodeID)
-		{
-			// 클리어 여부에 따라 상태 결정 (만약 안 깬 방에서 도망쳐 나온 거라면 Discovered로 유지)
-			Node.MinimapState = Node.bIsCleared ? ER1MinimapRoomState::Visited : ER1MinimapRoomState::Discovered;
-		}
-	}
-
-	// 2. 새로 진입한 방을 'Current(현재 위치)'로 변경
-	if (GeneratedMap.IsValidIndex(TargetNodeID))
-	{
-		GeneratedMap[TargetNodeID].MinimapState = ER1MinimapRoomState::Current;
-		GeneratedMap[TargetNodeID].bIsVisited = true;
-
-		// 3. 진입한 방과 연결된 모든 이웃 방들을 탐색하여 'Hidden'이면 'Discovered(발견됨)'로 밝힙니다.
-		for (int32 ConnectedID : GeneratedMap[TargetNodeID].ConnectedNodeIDs)
-		{
-			if (GeneratedMap.IsValidIndex(ConnectedID))
-			{
-				if (GeneratedMap[ConnectedID].MinimapState == ER1MinimapRoomState::Hidden)
-				{
-					GeneratedMap[ConnectedID].MinimapState = ER1MinimapRoomState::Discovered;
-				}
-			}
-		}
-	}
 }
 
 ER1DoorDirection AR1MapGenerator::GetOppositeDirection(ER1DoorDirection InDir)

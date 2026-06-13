@@ -169,7 +169,7 @@ public:
 	void ActivateRoom(int32 NodeID);
 
 private:
-	void UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID);
+	// 미니맵 상태 전이는 순수 헬퍼 R1MinimapState::ApplyRoomEntered로 분리(C-1.4).
 
 	// 각 룸 레벨 인스턴스의 OnLevelShown에 바인딩되는 카운터 콜백.
 	// (OnLevelShown은 AddToWorld/BeginPlay 이후에 브로드캐스트되므로, 카운트가
