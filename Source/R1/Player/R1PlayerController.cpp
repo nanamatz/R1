@@ -64,7 +64,10 @@ void AR1PlayerController::BeginPlay()
 
 	// 💡 새 레벨이 시작될 때마다 마우스 캡처 깜빡임을 방지하고 GameAndUI 모드로 확정 짓습니다.
 	UpdateInputMode(false);
-	R1Player->SetCreatureState(ECreatureState::Moving);
+	if (R1Player)
+	{
+		R1Player->SetCreatureState(ECreatureState::Moving);
+	}
 }
 
 const UInputAction* AR1PlayerController::FindInputActionChecked(const UR1InputData* InputData, const FGameplayTag& Tag, const TCHAR* DebugName) const
@@ -208,7 +211,7 @@ void AR1PlayerController::OnInputStarted()
 void AR1PlayerController::OnSetDestinationTriggered()
 {
 	if (!bMousePressed) return;
-	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
+	if (IsCasting()) return;
 	if (TargetActor) return;
 
 	FollowTime += GetWorld()->GetDeltaSeconds();
@@ -240,7 +243,7 @@ void AR1PlayerController::OnSetDestinationReleased()
 
 	bMousePressed = false;
 
-	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting)
+	if (IsCasting())
 	{
 		return;
 	}
@@ -326,7 +329,7 @@ void AR1PlayerController::TickCursorTrace()
 void AR1PlayerController::ChaseTargetAndAttack()
 {
 	if (R1Player == nullptr || TargetActor == nullptr) return;
-	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
+	if (IsCasting()) return;
 
 	TargetAttackActor = Cast<AR1Monster>(TargetActor);
 	if (TargetAttackActor)
@@ -498,10 +501,10 @@ void AR1PlayerController::DropItemToWorld(UR1ItemInstance* ItemToDrop, ER1Equipm
 	// 2. 월드에 아이템 액터 스폰!
 	FActorSpawnParameters SpawnParams;
 	AR1ItemActor* DroppedItem = GetWorld()->SpawnActor<AR1ItemActor>(ItemActorClass, SpawnLoc, FRotator::ZeroRotator, SpawnParams);
-	DroppedItem->PopEffect();
 
 	if (DroppedItem)
 	{
+		DroppedItem->PopEffect();
 		// 3. 인스턴스가 들고 있던 정보 그대로 전달
 		DroppedItem->InitItem(ItemToDrop->GetItemData(), ItemToDrop->ItemRarity,ItemToDrop->ItemCount);
 
@@ -558,7 +561,7 @@ void AR1PlayerController::OnOptionsUIToggle()
 
 void AR1PlayerController::OnQSkill()
 {
-	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)
+	if (R1Player && R1Player->GetEquipmentComponent() && !IsCasting())
 	{
 		R1Player->CombatTarget = Cast<AR1Character>(HighlightActor);
 		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::Q);
@@ -582,10 +585,15 @@ void AR1PlayerController::OnRSkill()
 
 void AR1PlayerController::ExecuteSkill(ER1SkillSlot Slot)
 {
-	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)
+	if (R1Player && R1Player->GetEquipmentComponent() && !IsCasting())
 	{
 		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(Slot);
 	}
+}
+
+bool AR1PlayerController::IsCasting() const
+{
+	return R1Player && R1Player->GetCreatureState() == ECreatureState::Casting;
 }
 
 

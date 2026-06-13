@@ -1,6 +1,9 @@
 #include "Map/R1MapGenerator.h"
 #include "Map/DungeonManager.h"
 #include "Map/R1Door.h"
+#include "Map/R1MapGrid.h"
+#include "Map/R1MapLayoutGenerator.h"
+#include "Map/R1MinimapState.h"
 
 #include "Data/R1RoomDefinitionData.h"
 #include "System/R1RoomStreamingSubsystem.h"
@@ -37,8 +40,9 @@
 static constexpr float FloorLoadStartProgress = 0.2f;
 
 // 네비메시 생성 대기 파라미터.
-static constexpr float NavBuildPollInterval = 0.05f; // 폴링 간격(초)
-static constexpr int32 NavBuildMaxTicks = 100;       // 타임아웃(약 5초) — 무한 대기 방지
+static constexpr float NavBuildPollInterval = 0.05f;   // 폴링 간격(초)
+static constexpr int32 NavBuildMaxTicks = 100;         // 타임아웃(약 5초) — 무한 대기 방지
+static constexpr int32 NavRenotifyIntervalTicks = 20;  // navmesh 미생성 방 재통지(자가 치유) 간격(약 1초)
 
 AR1MapGenerator::AR1MapGenerator()
 {
@@ -91,6 +95,10 @@ void AR1MapGenerator::InitializeMap()
 
 void AR1MapGenerator::GenerateMap()
 {
+	// 토폴로지 생성 알고리즘은 FR1MapLayoutGenerator로 분리(C-1.2). 액터는 풀 로딩·재시도·
+	// 특수방 배정·오토세이브만 담당한다. RNG 순서는 분리 전과 동일하게 보존된다.
+	const FR1MapLayoutGenerator LayoutGenerator(TotalRoomCount, RoomSpacing);
+
 	int32 MaxRetries = 50;
 	bool bMapGeneratedSuccessfully = false;
 
@@ -98,116 +106,10 @@ void AR1MapGenerator::GenerateMap()
 	{
 		// 재시도할 때마다 풀이 리셋되어야 하므로 다시 로드합니다.
 		InitializeRoomPools();
-		GeneratedMap.Empty();
 		ActiveManagers.Empty();
 		InitializedNodeIDs.Empty();
 
-		TQueue<int32> RoomQueue;
-		int32 CurrentNodeID = 0;
-
-		// 1. 시작 방 배정 (풀에서 1개 빼오기)
-		FR1MapNode StartNode;
-		StartNode.NodeID = CurrentNodeID;
-		StartNode.GridPosition = FIntPoint(0, 0);
-		StartNode.SpawnLocation = FVector::ZeroVector;
-
-		if (StartRoomPool.Num() > 0)
-		{
-			int32 StartIndex = FMath::RandRange(0, StartRoomPool.Num() - 1);
-			StartNode.RoomDefinition = StartRoomPool[StartIndex];
-			StartRoomPool.RemoveAt(StartIndex);
-		}
-		StartNode.bIsCleared = true;
-
-		GeneratedMap.Add(StartNode);
-		RoomQueue.Enqueue(CurrentNodeID);
-		CurrentNodeID++;
-
-		// 2. [핵심] 큐 순회 (퍼즐 맞추기)
-		while (!RoomQueue.IsEmpty() && CurrentNodeID < TotalRoomCount)
-		{
-			int32 ParentID;
-			RoomQueue.Dequeue(ParentID);
-			FR1MapNode& ParentNode = GeneratedMap[ParentID];
-
-			if (!ParentNode.RoomDefinition) continue;
-
-			// 현재 방에 실제로 뚫려있는 문 방향만 가져옵니다! (무지성 동서남북 배제)
-			TArray<ER1DoorDirection> ParentDoors = ParentNode.RoomDefinition->AvailableDoors;
-
-			// 가지가 한쪽으로만 뻗는 걸 막기 위해 문 방향 셔플
-			for (int32 i = ParentDoors.Num() - 1; i > 0; i--)
-			{
-				ParentDoors.Swap(i, FMath::RandRange(0, i));
-			}
-
-			// 실제 뚫려있는 문을 향해서만 가지를 뻗습니다.
-			for (ER1DoorDirection DoorDir : ParentDoors)
-			{
-				if (CurrentNodeID >= TotalRoomCount) break;
-
-				FIntPoint DirOffset = FIntPoint::ZeroValue;
-				ER1DoorDirection OppositeDir = ER1DoorDirection::None;
-
-				switch (DoorDir)
-				{
-				case ER1DoorDirection::North: DirOffset = FIntPoint(1, 0);  OppositeDir = ER1DoorDirection::South; break; // 북쪽은 +X
-				case ER1DoorDirection::South: DirOffset = FIntPoint(-1, 0); OppositeDir = ER1DoorDirection::North; break; // 남쪽은 -X
-				case ER1DoorDirection::East:  DirOffset = FIntPoint(0, 1);  OppositeDir = ER1DoorDirection::West; break;  // 동쪽은 +Y
-				case ER1DoorDirection::West:  DirOffset = FIntPoint(0, -1); OppositeDir = ER1DoorDirection::East; break;  // 서쪽은 -Y
-				}
-
-				FIntPoint NewPos = ParentNode.GridPosition + DirOffset;
-
-				// 이미 그 위치에 다른 방이 있다면, 연결만 해주고 스킵
-				if (int32 ExistingID = GetNodeIDAt(NewPos); ExistingID != -1)
-				{
-					GeneratedMap[ParentID].ConnectedNodeIDs.AddUnique(ExistingID);
-					GeneratedMap[ExistingID].ConnectedNodeIDs.AddUnique(ParentID);
-					continue;
-				}
-
-				// 뭉침 방지 룰 (아이작 룰)
-				int32 NeighborCount = 0;
-				FIntPoint CheckDirs[4] = { FIntPoint(0, 1), FIntPoint(0, -1), FIntPoint(-1, 0), FIntPoint(1, 0) };
-				for (FIntPoint CheckDir : CheckDirs)
-				{
-					if (GetNodeIDAt(NewPos + CheckDir) != -1) NeighborCount++;
-				}
-				if (NeighborCount > 1) continue;
-
-				// 확률 50%
-				if (FMath::RandRange(0, 100) < 50)
-				{
-					// [가장 중요] 다음 방은 반드시 내 문과 맞물리는(OppositeDir) 문이 있어야 합니다!
-					UR1RoomDefinitionData* NextRoomData = PopValidRoomFromPool(CombatRoomPool, OppositeDir);
-
-					if (!NextRoomData)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 핏이 맞는 방이 풀에 고갈되었습니다. 이쪽 방향은 벽으로 막습니다."));
-						continue; // 풀에 퍼즐 조각이 없으면 방을 만들지 않음
-					}
-
-					FR1MapNode NewNode;
-					NewNode.NodeID = CurrentNodeID;
-					NewNode.GridPosition = NewPos;
-					NewNode.SpawnLocation = FVector(NewPos.X * RoomSpacing, NewPos.Y * RoomSpacing, 0.0f);
-					NewNode.RoomDefinition = NextRoomData; // 바로 할당!
-
-					NewNode.ConnectedNodeIDs.Add(ParentID);
-					GeneratedMap.Add(NewNode);
-					GeneratedMap[ParentID].ConnectedNodeIDs.Add(CurrentNodeID);
-
-					RoomQueue.Enqueue(CurrentNodeID);
-					CurrentNodeID++;
-				}
-			}
-		}
-
-		if (GeneratedMap.Num() == TotalRoomCount)
-		{
-			bMapGeneratedSuccessfully = true;
-		}
+		bMapGeneratedSuccessfully = LayoutGenerator.BuildAttempt(StartRoomPool, CombatRoomPool, GeneratedMap);
 
 		MaxRetries--;
 	}
@@ -427,31 +329,15 @@ void AR1MapGenerator::AssignRoomTypes()
 	}
 }
 
-bool AR1MapGenerator::HasRoomAt(FIntPoint Pos)
-{
-	for (const FR1MapNode& Node : GeneratedMap)
-	{
-		if (Node.GridPosition == Pos) return true;
-	}
-	return false;
-}
-
 int32 AR1MapGenerator::GetConnectedNodeInDirection(int32 CurrentNodeID, ER1DoorDirection Direction)
 {
 	if (!GeneratedMap.IsValidIndex(CurrentNodeID)) return -1;
 
 	const FR1MapNode& CurrentNode = GeneratedMap[CurrentNodeID];
-	FIntPoint TargetGridPos = CurrentNode.GridPosition;
 
-	// 1. 타겟 방향의 가상 그리드 좌표를 계산합니다.
-	switch (Direction)
-	{
-	case ER1DoorDirection::North: TargetGridPos.X += 1; break;
-	case ER1DoorDirection::South: TargetGridPos.X -= 1; break;
-	case ER1DoorDirection::East:  TargetGridPos.Y += 1; break;
-	case ER1DoorDirection::West:  TargetGridPos.Y -= 1; break;
-	default: return -1;
-	}
+	// 1. 타겟 방향의 가상 그리드 좌표를 계산합니다. (None은 유효한 이웃이 없으므로 조기 반환)
+	if (Direction == ER1DoorDirection::None) return -1;
+	const FIntPoint TargetGridPos = CurrentNode.GridPosition + R1MapGrid::GetGridOffset(Direction);
 
 	// 2. 현재 방과 "연결된(Connected)" 방들 중에서, 타겟 좌표에 위치한 방이 있는지 검사합니다.
 	for (int32 ConnectedID : CurrentNode.ConnectedNodeIDs)
@@ -681,6 +567,11 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 	const bool bWasLoadingFromSave = bIsLoadingFromSave;
 	bIsLoadingFromSave = false;
 
+	// 텔레포트 보정값: 문 앞 진입 시 방 중심 쪽으로 밀어 넣을 거리, 그리고 바닥 끼임 방지용 Z 띄움.
+	constexpr float DoorEntryPushDistance = 300.0f; // 문에서 방 중심 방향으로 들어가는 거리
+	constexpr float DoorEntryZOffset = 100.0f;      // 문 진입 시 Z 띄움
+	constexpr float RoomCenterZOffset = 150.0f;     // 마커도 문도 없을 때 방 중심 폴백 Z 띄움
+
 	AR1Player* PlayerCharacter = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	if (PlayerCharacter)
 	{
@@ -696,7 +587,7 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 		{
 			const FVector DirectionToCenter =
 				(GeneratedMap[NodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
-			FinalLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * 300.0f) + FVector(0.0f, 0.0f, 100.0f);
+			FinalLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * DoorEntryPushDistance) + FVector(0.0f, 0.0f, DoorEntryZOffset);
 		}
 		else if (AR1PlayerSpawnMarker* Marker = FindSpawnMarkerForNode(NodeID))
 		{
@@ -705,7 +596,7 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 		}
 		else
 		{
-			FinalLocation = GeneratedMap[NodeID].SpawnLocation + FVector(0.0f, 0.0f, 150.0f);
+			FinalLocation = GeneratedMap[NodeID].SpawnLocation + FVector(0.0f, 0.0f, RoomCenterZOffset);
 		}
 
 		if (AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController()))
@@ -723,7 +614,7 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 	PendingDoorDirection = ER1DoorDirection::None;
 	InitializedNodeIDs.Add(NodeID);
 
-	UpdateMinimapState(NodeID, PrevRoomID);
+	R1MinimapState::ApplyRoomEntered(GeneratedMap, NodeID);
 	if (OnPlayerMovedRoom.IsBound())
 	{
 		OnPlayerMovedRoom.Broadcast(NodeID, PrevRoomID);
@@ -915,44 +806,35 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 
 	++NavBuildWaitTicks;
 
-	// [핵심 수정] 첫 진입 시 1회: 런타임에 스트리밍된 모든 NavMeshBoundsVolume를 네비 시스템에
-	// 명시적으로 재통지한다. 층 전체가 동시에 대량 로드될 때 일부 룸(특히 시작 방)의 bounds
-	// 업데이트 알림이 누락되어 그 방의 navmesh가 아예 생성되지 않는 경합(race)을 보정한다.
-	// 이미 정상 등록된 volume이라도 재통지는 해당 영역을 다시 더럽혀(rebuild) 무해하다.
+	// 첫 진입 시 1회: 스트리밍된 모든 NavMeshBoundsVolume를 재통지해 첫 틱 경합을 보정.
 	if (NavSys != nullptr && NavBuildWaitTicks == 1)
 	{
-		for (TActorIterator<ANavMeshBoundsVolume> It(World); It; ++It)
-		{
-			NavSys->OnNavigationBoundsUpdated(*It);
-		}
+		RenotifyAllNavBounds(NavSys);
 	}
 
 	const bool bTimedOut = (NavBuildWaitTicks >= NavBuildMaxTicks);
 
+	// '층의 모든 방'의 navmesh를 직접 검증해 아직 길찾기 불가한 방을 수집.
+	TArray<int32> UnnavigableRooms = (NavSys != nullptr) ? CollectUnnavigableRooms(NavSys) : TArray<int32>();
+
 	if (NavSys != nullptr && !bTimedOut)
 	{
-		// 프록시(IsNavigationBeingBuilt)가 아니라 '활성화할 방에 실제로 navmesh가 깔렸는가'라는
-		// 진짜 조건을 폴링한다. 방 중심을 navmesh에 투영해 성공하면 그 방의 타일이 생성된 것.
-		// (RoomSpacing(기본 5000) 대비 충분히 작은 extent라 옆 방 navmesh로 오인하지 않는다.)
-		bool bRoomNavigable = false;
-		if (GeneratedMap.IsValidIndex(PendingActivateNodeID))
-		{
-			FNavLocation Projected;
-			const FVector RoomCenter = GeneratedMap[PendingActivateNodeID].SpawnLocation;
-			const FVector Extent(1000.0f, 1000.0f, 1000.0f);
-			// 4번째 인자(NavData=nullptr)를 명시해 오버로드 모호성을 제거(기본 NavData 사용).
-			bRoomNavigable = NavSys->ProjectPointToNavigation(RoomCenter, Projected, Extent, (const ANavigationData*)nullptr);
-		}
-
-		// 방에 navmesh가 아직 없거나, 빌드가 진행 중(타일 일부만 완성)이면 계속 대기.
+		// 빌드가 진행 중(타일 일부만 완성)이면 계속 대기.
 		const bool bStillBuilding = UNavigationSystemV1::IsNavigationBeingBuilt(World);
 
 		// 에셋 프리로드 완료 여부도 같은 게이트에서 함께 기다린다.
 		// 핸들이 없으면(로드할 게 없었으면) 완료로 취급한다.
 		const bool bPreloadReady = (!FloorPreloadHandle.IsValid()) || FloorPreloadHandle->HasLoadCompleted();
 
-		if (!bRoomNavigable || bStillBuilding || !bPreloadReady)
+		if (UnnavigableRooms.Num() > 0 || bStillBuilding || !bPreloadReady)
 		{
+			// [자가 치유] 빌드가 idle인데도 navmesh가 없는 방은 dirty 통지가 유실된 것이다.
+			// 첫 틱의 전체 재통지가 처리될 시간을 주기 위해 약 1초 간격으로만 시도한다.
+			if (UnnavigableRooms.Num() > 0 && !bStillBuilding && (NavBuildWaitTicks % NavRenotifyIntervalTicks == 0))
+			{
+				RenotifyUnnavigableRooms(NavSys, UnnavigableRooms);
+			}
+
 			World->GetTimerManager().SetTimer(
 				NavBuildWaitTimer, this, &AR1MapGenerator::WaitForNavMeshThenActivate, NavBuildPollInterval, false);
 			return;
@@ -961,10 +843,12 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 
 	if (bTimedOut)
 	{
+		const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
+			[](int32 NodeID) { return FString::FromInt(NodeID); });
 		UE_LOG(LogTemp, Error,
-			TEXT("[MapGenerator] navmesh 대기 타임아웃(%.1fs) — %d번 방에 navmesh가 생성되지 않았습니다. ")
-			TEXT("해당 방 레벨의 NavMeshBoundsVolume가 바닥을 감싸는지 확인하세요."),
-			NavBuildMaxTicks * NavBuildPollInterval, PendingActivateNodeID);
+			TEXT("[MapGenerator] navmesh 대기 타임아웃(%.1fs) — 다음 방에 navmesh가 생성되지 않았습니다: [%s]. ")
+			TEXT("해당 방 레벨의 NavMeshBoundsVolume가 바닥(방 중심 포함)을 감싸는지 확인하세요."),
+			NavBuildMaxTicks * NavBuildPollInterval, *RoomList);
 	}
 
 	if (bTimedOut && FloorPreloadHandle.IsValid() && !FloorPreloadHandle->HasLoadCompleted())
@@ -973,6 +857,79 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 			TEXT("[MapGenerator] 에셋 프리로드가 끝나기 전에 타임아웃 — 프리로드를 기다리지 않고 진행합니다."));
 	}
 
+	FinalizeFloorActivation();
+}
+
+void AR1MapGenerator::RenotifyAllNavBounds(UNavigationSystemV1* NavSys)
+{
+	UWorld* World = GetWorld();
+	if (!NavSys || !World) return;
+
+	// 층 전체가 동시에 대량 로드될 때 일부 룸(특히 시작 방)의 bounds 업데이트 알림이 누락되어
+	// 그 방의 navmesh가 아예 생성되지 않는 경합을 보정한다. 이미 정상 등록된 volume이라도
+	// 재통지는 해당 영역을 다시 더럽혀(rebuild) 무해하다.
+	for (TActorIterator<ANavMeshBoundsVolume> It(World); It; ++It)
+	{
+		NavSys->OnNavigationBoundsUpdated(*It);
+	}
+}
+
+TArray<int32> AR1MapGenerator::CollectUnnavigableRooms(UNavigationSystemV1* NavSys) const
+{
+	// 재통지(OnNavigationBoundsUpdated)는 PendingNavBoundsUpdates 큐에 쌓였다가 나브 시스템의 다음
+	// Tick에야 처리되며, IsNavigationBeingBuilt는 이 큐를 보지 못한다(HasDirtyAreasQueued/빌드 태스크만
+	// 검사). 그래서 활성화할 방만 검사하면 통지가 유실된 다른 방이 navmesh 없이 시작될 수 있다.
+	// 방 중심을 navmesh에 투영해 성공하면 그 방의 타일이 생성된 것.
+	// (RoomSpacing(기본 5000) 대비 충분히 작은 extent라 옆 방 navmesh로 오인하지 않는다.)
+	TArray<int32> UnnavigableRooms;
+	if (!NavSys) return UnnavigableRooms;
+
+	const FVector Extent(1000.0f, 1000.0f, 1000.0f);
+	for (const FR1MapNode& Node : GeneratedMap)
+	{
+		if (!Node.RoomDefinition) continue; // 레벨이 스폰되지 않는 노드는 검사 대상이 아님
+
+		FNavLocation Projected;
+		// 4번째 인자(NavData=nullptr)를 명시해 오버로드 모호성을 제거(기본 NavData 사용).
+		if (!NavSys->ProjectPointToNavigation(Node.SpawnLocation, Projected, Extent, (const ANavigationData*)nullptr))
+		{
+			UnnavigableRooms.Add(Node.NodeID);
+		}
+	}
+	return UnnavigableRooms;
+}
+
+void AR1MapGenerator::RenotifyUnnavigableRooms(UNavigationSystemV1* NavSys, const TArray<int32>& UnnavigableRooms)
+{
+	UWorld* World = GetWorld();
+	if (!NavSys || !World) return;
+
+	for (int32 NodeID : UnnavigableRooms)
+	{
+		if (!GeneratedMap.IsValidIndex(NodeID)) continue;
+
+		const FBox RoomBox = FBox::BuildAABB(
+			GeneratedMap[NodeID].SpawnLocation,
+			FVector(RoomSpacing * 0.5f, RoomSpacing * 0.5f, 2000.0f));
+
+		for (TActorIterator<ANavMeshBoundsVolume> It(World); It; ++It)
+		{
+			if (It->GetComponentsBoundingBox(true).Intersect(RoomBox))
+			{
+				NavSys->OnNavigationBoundsUpdated(*It);
+			}
+		}
+	}
+
+	const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
+		[](int32 NodeID) { return FString::FromInt(NodeID); });
+	UE_LOG(LogTemp, Warning,
+		TEXT("[MapGenerator] navmesh 미생성 방 %d개 재통지(재빌드 강제): [%s]"),
+		UnnavigableRooms.Num(), *RoomList);
+}
+
+void AR1MapGenerator::FinalizeFloorActivation()
+{
 	NavBuildWaitTicks = 0;
 
 	// navmesh 준비 완료 → 로딩 게이트 해제 + 방 활성화.
@@ -1091,47 +1048,9 @@ bool AR1MapGenerator::IsLastFloor() const
 	return CurrentFloorIndex >= (FloorSettings.Num() - 1);
 }
 
-void AR1MapGenerator::UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID)
-{
-	for (FR1MapNode& Node : GeneratedMap)
-	{
-		if (Node.MinimapState == ER1MinimapRoomState::Current && Node.NodeID != TargetNodeID)
-		{
-			// 클리어 여부에 따라 상태 결정 (만약 안 깬 방에서 도망쳐 나온 거라면 Discovered로 유지)
-			Node.MinimapState = Node.bIsCleared ? ER1MinimapRoomState::Visited : ER1MinimapRoomState::Discovered;
-		}
-	}
-
-	// 2. 새로 진입한 방을 'Current(현재 위치)'로 변경
-	if (GeneratedMap.IsValidIndex(TargetNodeID))
-	{
-		GeneratedMap[TargetNodeID].MinimapState = ER1MinimapRoomState::Current;
-		GeneratedMap[TargetNodeID].bIsVisited = true;
-
-		// 3. 진입한 방과 연결된 모든 이웃 방들을 탐색하여 'Hidden'이면 'Discovered(발견됨)'로 밝힙니다.
-		for (int32 ConnectedID : GeneratedMap[TargetNodeID].ConnectedNodeIDs)
-		{
-			if (GeneratedMap.IsValidIndex(ConnectedID))
-			{
-				if (GeneratedMap[ConnectedID].MinimapState == ER1MinimapRoomState::Hidden)
-				{
-					GeneratedMap[ConnectedID].MinimapState = ER1MinimapRoomState::Discovered;
-				}
-			}
-		}
-	}
-}
-
 ER1DoorDirection AR1MapGenerator::GetOppositeDirection(ER1DoorDirection InDir)
 {
-	switch (InDir)
-	{
-	case ER1DoorDirection::North: return ER1DoorDirection::South;
-	case ER1DoorDirection::South: return ER1DoorDirection::North;
-	case ER1DoorDirection::East:  return ER1DoorDirection::West;
-	case ER1DoorDirection::West:  return ER1DoorDirection::East;
-	default: return ER1DoorDirection::None;
-	}
+	return R1MapGrid::GetOppositeDirection(InDir);
 }
 
 void AR1MapGenerator::OnRoomClearedCallback(int32 ClearedNodeID)
@@ -1144,40 +1063,6 @@ void AR1MapGenerator::OnRoomClearedCallback(int32 ClearedNodeID)
 		TriggerAutoSave();
 
 	}
-}
-
-int32 AR1MapGenerator::GetNodeIDAt(FIntPoint Pos)
-{
-	for (int32 i = 0; i < GeneratedMap.Num(); ++i)
-	{
-		if (GeneratedMap[i].GridPosition == Pos) return GeneratedMap[i].NodeID;
-	}
-	return -1;
-}
-
-UR1RoomDefinitionData* AR1MapGenerator::PopValidRoomFromPool(TArray<class UR1RoomDefinitionData*>& Pool, ER1DoorDirection RequiredDoor)
-{
-	// 항상 같은 방만 나오는 것을 막기 위해 인덱스를 랜덤으로 섞어서 탐색
-	TArray<int32> Indices;
-	for (int32 i = 0; i < Pool.Num(); ++i) Indices.Add(i);
-
-	for (int32 i = Indices.Num() - 1; i > 0; i--)
-	{
-		Indices.Swap(i, FMath::RandRange(0, i));
-	}
-
-	// 섞인 순서대로 조건에 맞는 방(퍼즐 조각) 찾기
-	for (int32 Index : Indices)
-	{
-		UR1RoomDefinitionData* RoomData = Pool[Index];
-		// 이 방이 우리가 요구하는 문을 가지고 있는가?
-		if (RoomData && RoomData->AvailableDoors.Contains(RequiredDoor))
-		{
-			Pool.RemoveAt(Index); // 중복 방지를 위해 풀에서 완전히 삭제!
-			return RoomData;
-		}
-	}
-	return nullptr; // 조건에 맞는 방이 풀에 없습니다.
 }
 
 UR1RoomDefinitionData* AR1MapGenerator::PopRandomFromPool(TArray<UR1RoomDefinitionData*>& Pool)

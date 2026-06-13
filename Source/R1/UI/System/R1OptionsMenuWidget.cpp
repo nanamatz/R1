@@ -17,6 +17,69 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 
+FR1SettingsSnapshot FR1SettingsSnapshot::FromSettings(const UR1SaveGame_Settings* Settings)
+{
+    FR1SettingsSnapshot Snapshot;
+    if (Settings)
+    {
+        Snapshot.MasterVolume = Settings->MasterVolume;
+        Snapshot.BGMVolume = Settings->BGMVolume;
+        Snapshot.SFXVolume = Settings->SFXVolume;
+        Snapshot.bShowDamageText = Settings->bShowDamageText;
+        Snapshot.MinimapOpacity = Settings->MinimapOpacity;
+        Snapshot.bConfineMouseToWindow = Settings->bConfineMouseToWindow;
+        Snapshot.CameraShakeIntensity = Settings->CameraShakeIntensity;
+        Snapshot.Language = Settings->Language;
+
+        Snapshot.Resolution = Settings->Resolution;
+        Snapshot.WindowMode = Settings->WindowMode;
+        Snapshot.FrameRateLimit = Settings->FrameRateLimit;
+        Snapshot.bVSyncEnabled = Settings->bVSyncEnabled;
+    }
+    return Snapshot;
+}
+
+void FR1SettingsSnapshot::ApplyTo(UR1SaveGame_Settings* Settings) const
+{
+    if (!Settings)
+    {
+        return;
+    }
+
+    Settings->MasterVolume = MasterVolume;
+    Settings->BGMVolume = BGMVolume;
+    Settings->SFXVolume = SFXVolume;
+    Settings->bShowDamageText = bShowDamageText;
+    Settings->MinimapOpacity = MinimapOpacity;
+    Settings->bConfineMouseToWindow = bConfineMouseToWindow;
+    Settings->CameraShakeIntensity = CameraShakeIntensity;
+    Settings->Language = Language;
+
+    Settings->Resolution = Resolution;
+    Settings->WindowMode = WindowMode;
+    Settings->FrameRateLimit = FrameRateLimit;
+    Settings->bVSyncEnabled = bVSyncEnabled;
+}
+
+bool FR1SettingsSnapshot::NearlyEquals(const FR1SettingsSnapshot& Other) const
+{
+    if (!FMath::IsNearlyEqual(MasterVolume, Other.MasterVolume)) return false;
+    if (!FMath::IsNearlyEqual(BGMVolume, Other.BGMVolume)) return false;
+    if (!FMath::IsNearlyEqual(SFXVolume, Other.SFXVolume)) return false;
+    if (bShowDamageText != Other.bShowDamageText) return false;
+    if (!FMath::IsNearlyEqual(MinimapOpacity, Other.MinimapOpacity)) return false;
+    if (bConfineMouseToWindow != Other.bConfineMouseToWindow) return false;
+    if (!FMath::IsNearlyEqual(CameraShakeIntensity, Other.CameraShakeIntensity)) return false;
+    if (Language != Other.Language) return false;
+
+    if (Resolution != Other.Resolution) return false;
+    if (WindowMode != Other.WindowMode) return false;
+    if (!FMath::IsNearlyEqual(FrameRateLimit, Other.FrameRateLimit)) return false;
+    if (bVSyncEnabled != Other.bVSyncEnabled) return false;
+
+    return true;
+}
+
 void UR1OptionsMenuWidget::NativeConstruct()
 {
     Super::NativeConstruct();
@@ -37,28 +100,11 @@ void UR1OptionsMenuWidget::NativeConstruct()
     SyncUIFromSettings();
 
     // 3. 초기 상태를 저장하여 나중에 변경 사항이 있는지 확인하거나 롤백할 때 사용합니다.
-    if (!OriginalSettings)
-    {
-        OriginalSettings = NewObject<UR1SaveGame_Settings>(this);
-    }
-    
     if (UR1SettingsSubsystem* SettingsSubsystem = GetGameInstance()->GetSubsystem<UR1SettingsSubsystem>())
     {
         if (UR1SaveGame_Settings* CurrentSettings = SettingsSubsystem->GetCustomSettings())
         {
-            OriginalSettings->MasterVolume = CurrentSettings->MasterVolume;
-            OriginalSettings->BGMVolume = CurrentSettings->BGMVolume;
-            OriginalSettings->SFXVolume = CurrentSettings->SFXVolume;
-            OriginalSettings->bShowDamageText = CurrentSettings->bShowDamageText;
-            OriginalSettings->MinimapOpacity = CurrentSettings->MinimapOpacity;
-            OriginalSettings->bConfineMouseToWindow = CurrentSettings->bConfineMouseToWindow;
-            OriginalSettings->CameraShakeIntensity = CurrentSettings->CameraShakeIntensity;
-            
-            OriginalSettings->Resolution = CurrentSettings->Resolution;
-            OriginalSettings->WindowMode = CurrentSettings->WindowMode;
-            OriginalSettings->FrameRateLimit = CurrentSettings->FrameRateLimit;
-            OriginalSettings->bVSyncEnabled = CurrentSettings->bVSyncEnabled;
-            OriginalSettings->Language = CurrentSettings->Language;
+            Original = FR1SettingsSnapshot::FromSettings(CurrentSettings);
         }
     }
 
@@ -189,7 +235,7 @@ void UR1OptionsMenuWidget::SetTempResolutionByIndex(int32 SelectedIndex)
     // 유효한 인덱스인지 안전 검사
     if (SupportedResolutions.IsValidIndex(SelectedIndex))
     {
-        TempResolution = SupportedResolutions[SelectedIndex];
+        Temp.Resolution = SupportedResolutions[SelectedIndex];
     }
 }
 
@@ -197,61 +243,61 @@ void UR1OptionsMenuWidget::SetTempWindowModeByIndex(int32 SelectedIndex)
 {
     switch (SelectedIndex)
     {
-    case 0: TempWindowMode = EWindowMode::Windowed;          break;
-    case 1: TempWindowMode = EWindowMode::Fullscreen;         break;
-    case 2: TempWindowMode = EWindowMode::WindowedFullscreen; break;
+    case 0: Temp.WindowMode = EWindowMode::Windowed;          break;
+    case 1: Temp.WindowMode = EWindowMode::Fullscreen;         break;
+    case 2: Temp.WindowMode = EWindowMode::WindowedFullscreen; break;
     default: break;
     }
 }
 
 void UR1OptionsMenuWidget::SetTempVSync(bool bEnabled)
 {
-    bTempVSyncEnabled = bEnabled;
+    Temp.bVSyncEnabled = bEnabled;
 }
 
 void UR1OptionsMenuWidget::SetTempFPS(float NewFPS)
 {
-    TempFrameRateLimit = NewFPS;
+    Temp.FrameRateLimit = NewFPS;
 }
 
 void UR1OptionsMenuWidget::SetTempMasterVolume(float NewVolume)
 {
-    TempMasterVolume = NewVolume;
+    Temp.MasterVolume = NewVolume;
 }
 
 void UR1OptionsMenuWidget::SetTempBGMVolume(float NewVolume)
 {
-    TempBGMVolume = NewVolume;
+    Temp.BGMVolume = NewVolume;
 }
 
 void UR1OptionsMenuWidget::SetTempSFXVolume(float NewVolume)
 {
-    TempSFXVolume = NewVolume;
+    Temp.SFXVolume = NewVolume;
 }
 
 void UR1OptionsMenuWidget::SetTempMinimapOpacity(float NewOpacity)
 {
-    TempMinimapOpacity = NewOpacity;
+    Temp.MinimapOpacity = NewOpacity;
 }
 
 void UR1OptionsMenuWidget::SetTempShowDamageText(bool bEnabled)
 {
-    bTempShowDamageText = bEnabled;
+    Temp.bShowDamageText = bEnabled;
 }
 
 void UR1OptionsMenuWidget::SetTempCameraShakeIntensity(float NewIntensity)
 {
-    TempCameraShakeIntensity = NewIntensity;
+    Temp.CameraShakeIntensity = NewIntensity;
 }
 
 void UR1OptionsMenuWidget::SetTempConfineMouse(bool bEnabled)
 {
-    bTempConfineMouse = bEnabled;
+    Temp.bConfineMouseToWindow = bEnabled;
 }
 
 void UR1OptionsMenuWidget::SetTempLanguage(ER1Language NewLanguage)
 {
-    TempLanguage = NewLanguage;
+    Temp.Language = NewLanguage;
 }
 
 void UR1OptionsMenuWidget::OnDefaultsButtonClicked()
@@ -260,19 +306,7 @@ void UR1OptionsMenuWidget::OnDefaultsButtonClicked()
     UR1SaveGame_Settings* DefaultSettings = NewObject<UR1SaveGame_Settings>();
     if (DefaultSettings)
     {
-        TempMasterVolume = DefaultSettings->MasterVolume;
-        TempBGMVolume = DefaultSettings->BGMVolume;
-        TempSFXVolume = DefaultSettings->SFXVolume;
-        bTempShowDamageText = DefaultSettings->bShowDamageText;
-        TempMinimapOpacity = DefaultSettings->MinimapOpacity;
-        bTempConfineMouse = DefaultSettings->bConfineMouseToWindow;
-        TempCameraShakeIntensity = DefaultSettings->CameraShakeIntensity;
-
-        TempResolution = DefaultSettings->Resolution;
-        TempWindowMode = DefaultSettings->WindowMode;
-        TempFrameRateLimit = DefaultSettings->FrameRateLimit;
-        bTempVSyncEnabled = DefaultSettings->bVSyncEnabled;
-        TempLanguage = DefaultSettings->Language;
+        Temp = FR1SettingsSnapshot::FromSettings(DefaultSettings);
 
         // UI 갱신
         UpdateWidgetsFromTemp();
@@ -354,24 +388,8 @@ void UR1OptionsMenuWidget::OnConfirmCancellation()
 
 bool UR1OptionsMenuWidget::IsSettingsChanged() const
 {
-    if (!OriginalSettings) return false;
-
-    // OriginalSettings(최후의 저장 상태)와 현재 Temp 변수들을 비교
-    if (!FMath::IsNearlyEqual(TempMasterVolume, OriginalSettings->MasterVolume)) return true;
-    if (!FMath::IsNearlyEqual(TempBGMVolume, OriginalSettings->BGMVolume)) return true;
-    if (!FMath::IsNearlyEqual(TempSFXVolume, OriginalSettings->SFXVolume)) return true;
-    if (bTempShowDamageText != OriginalSettings->bShowDamageText) return true;
-    if (!FMath::IsNearlyEqual(TempMinimapOpacity, OriginalSettings->MinimapOpacity)) return true;
-    if (bTempConfineMouse != OriginalSettings->bConfineMouseToWindow) return true;
-    if (!FMath::IsNearlyEqual(TempCameraShakeIntensity, OriginalSettings->CameraShakeIntensity)) return true;
-
-    if (TempResolution != OriginalSettings->Resolution) return true;
-    if (TempWindowMode != OriginalSettings->WindowMode) return true;
-    if (!FMath::IsNearlyEqual(TempFrameRateLimit, OriginalSettings->FrameRateLimit)) return true;
-    if (bTempVSyncEnabled != OriginalSettings->bVSyncEnabled) return true;
-    if (TempLanguage != OriginalSettings->Language) return true;
-
-    return false;
+    // Original(최후의 저장 상태)과 현재 Temp 스냅샷을 비교
+    return !Temp.NearlyEquals(Original);
 }
 
 void UR1OptionsMenuWidget::OnCancelModalDismissed()
@@ -397,60 +415,37 @@ void UR1OptionsMenuWidget::LoadSettingsToTemp()
     {
         if (UR1SaveGame_Settings* Settings = SettingsSubsystem->GetCustomSettings())
         {
-            TempMasterVolume = Settings->MasterVolume;
-            TempBGMVolume = Settings->BGMVolume;
-            TempSFXVolume = Settings->SFXVolume;
-            bTempShowDamageText = Settings->bShowDamageText;
-            TempMinimapOpacity = Settings->MinimapOpacity;
-            bTempConfineMouse = Settings->bConfineMouseToWindow;
-            TempCameraShakeIntensity = Settings->CameraShakeIntensity;
-            TempLanguage = Settings->Language;
+            Temp = FR1SettingsSnapshot::FromSettings(Settings);
         }
     }
 
+    // 그래픽 4종은 저장 파일이 아닌 엔진의 현재 상태를 기준으로 한다.
     if (UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings())
     {
-        TempResolution = UserSettings->GetScreenResolution();
-        TempWindowMode = UserSettings->GetFullscreenMode();
-        TempFrameRateLimit = UserSettings->GetFrameRateLimit();
-        bTempVSyncEnabled = UserSettings->IsVSyncEnabled();
+        Temp.Resolution = UserSettings->GetScreenResolution();
+        Temp.WindowMode = UserSettings->GetFullscreenMode();
+        Temp.FrameRateLimit = UserSettings->GetFrameRateLimit();
+        Temp.bVSyncEnabled = UserSettings->IsVSyncEnabled();
     }
 }
 
 void UR1OptionsMenuWidget::UpdateOriginalSettingsFromTemp()
 {
-    if (!OriginalSettings)
-    {
-        OriginalSettings = NewObject<UR1SaveGame_Settings>(this);
-    }
-
     // 현재 Temp에 로드된 값을 '최초 원본'으로 복사
-    OriginalSettings->MasterVolume = TempMasterVolume;
-    OriginalSettings->BGMVolume = TempBGMVolume;
-    OriginalSettings->SFXVolume = TempSFXVolume;
-    OriginalSettings->bShowDamageText = bTempShowDamageText;
-    OriginalSettings->MinimapOpacity = TempMinimapOpacity;
-    OriginalSettings->bConfineMouseToWindow = bTempConfineMouse;
-    OriginalSettings->CameraShakeIntensity = TempCameraShakeIntensity;
-
-    OriginalSettings->Resolution = TempResolution;
-    OriginalSettings->WindowMode = TempWindowMode;
-    OriginalSettings->FrameRateLimit = TempFrameRateLimit;
-    OriginalSettings->bVSyncEnabled = bTempVSyncEnabled;
-    OriginalSettings->Language = TempLanguage;
+    Original = Temp;
 }
 
 void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()
 {
-    // Update child widgets from Temp variables
+    // Update child widgets from Temp snapshot
     if (WBP_Category_Graphics)
     {
-        if (WBP_Category_Graphics->WBP_CheckBox_VSync) WBP_Category_Graphics->WBP_CheckBox_VSync->SetIsChecked(bTempVSyncEnabled);
-        if (WBP_Category_Graphics->WBP_Slider_FPS) WBP_Category_Graphics->WBP_Slider_FPS->SetValue(TempFrameRateLimit);
+        if (WBP_Category_Graphics->WBP_CheckBox_VSync) WBP_Category_Graphics->WBP_CheckBox_VSync->SetIsChecked(Temp.bVSyncEnabled);
+        if (WBP_Category_Graphics->WBP_Slider_FPS) WBP_Category_Graphics->WBP_Slider_FPS->SetValue(Temp.FrameRateLimit);
 
         // 창 모드 인덱스 계산 (콤보박스 순서: 0=Windowed, 1=Fullscreen, 2=WindowedFullscreen)
         int32 WindowModeIdx = 0;
-        switch (TempWindowMode.GetValue())
+        switch (Temp.WindowMode.GetValue())
         {
         case EWindowMode::Windowed:           WindowModeIdx = 0; break;
         case EWindowMode::Fullscreen:         WindowModeIdx = 1; break;
@@ -458,7 +453,7 @@ void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()
         }
 
         // 해상도 인덱스 찾기
-        int32 ResIdx = SupportedResolutions.Find(TempResolution);
+        int32 ResIdx = SupportedResolutions.Find(Temp.Resolution);
         if (ResIdx == INDEX_NONE) ResIdx = 0;
 
         WBP_Category_Graphics->SetSelectedIndexes(ResIdx, WindowModeIdx);
@@ -466,22 +461,22 @@ void UR1OptionsMenuWidget::UpdateWidgetsFromTemp()
 
     if (WBP_Category_Audio)
     {
-        if (WBP_Category_Audio->WBP_Slider_Master) WBP_Category_Audio->WBP_Slider_Master->SetValue(TempMasterVolume);
-        if (WBP_Category_Audio->WBP_Slider_BGM) WBP_Category_Audio->WBP_Slider_BGM->SetValue(TempBGMVolume);
-        if (WBP_Category_Audio->WBP_Slider_SFX) WBP_Category_Audio->WBP_Slider_SFX->SetValue(TempSFXVolume);
+        if (WBP_Category_Audio->WBP_Slider_Master) WBP_Category_Audio->WBP_Slider_Master->SetValue(Temp.MasterVolume);
+        if (WBP_Category_Audio->WBP_Slider_BGM) WBP_Category_Audio->WBP_Slider_BGM->SetValue(Temp.BGMVolume);
+        if (WBP_Category_Audio->WBP_Slider_SFX) WBP_Category_Audio->WBP_Slider_SFX->SetValue(Temp.SFXVolume);
     }
 
     if (WBP_Category_Gameplay)
     {
-        if (WBP_Category_Gameplay->WBP_Slider_MinimapOpacity) WBP_Category_Gameplay->WBP_Slider_MinimapOpacity->SetValue(TempMinimapOpacity);
-        if (WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText) WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText->SetIsChecked(bTempShowDamageText);
-        WBP_Category_Gameplay->SetSelectedLanguage(TempLanguage);
+        if (WBP_Category_Gameplay->WBP_Slider_MinimapOpacity) WBP_Category_Gameplay->WBP_Slider_MinimapOpacity->SetValue(Temp.MinimapOpacity);
+        if (WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText) WBP_Category_Gameplay->WBP_CheckBox_ShowDamageText->SetIsChecked(Temp.bShowDamageText);
+        WBP_Category_Gameplay->SetSelectedLanguage(Temp.Language);
     }
 
     if (WBP_Category_Controls)
     {
-        if (WBP_Category_Controls->WBP_Slider_CameraShake) WBP_Category_Controls->WBP_Slider_CameraShake->SetValue(TempCameraShakeIntensity);
-        if (WBP_Category_Controls->WBP_CheckBox_ConfineMouse) WBP_Category_Controls->WBP_CheckBox_ConfineMouse->SetIsChecked(bTempConfineMouse);
+        if (WBP_Category_Controls->WBP_Slider_CameraShake) WBP_Category_Controls->WBP_Slider_CameraShake->SetValue(Temp.CameraShakeIntensity);
+        if (WBP_Category_Controls->WBP_CheckBox_ConfineMouse) WBP_Category_Controls->WBP_CheckBox_ConfineMouse->SetIsChecked(Temp.bConfineMouseToWindow);
     }
 }
 
@@ -491,20 +486,7 @@ void UR1OptionsMenuWidget::ApplyAndSaveSettings(bool bSaveToDisk)
     {
         if (UR1SaveGame_Settings* Settings = SettingsSubsystem->GetCustomSettings())
         {
-            Settings->MasterVolume = TempMasterVolume;
-            Settings->BGMVolume = TempBGMVolume;
-            Settings->SFXVolume = TempSFXVolume;
-            Settings->bShowDamageText = bTempShowDamageText;
-            Settings->MinimapOpacity = TempMinimapOpacity;
-            Settings->bConfineMouseToWindow = bTempConfineMouse;
-            Settings->CameraShakeIntensity = TempCameraShakeIntensity;
-
-            // Graphics
-            Settings->Resolution = TempResolution;
-            Settings->WindowMode = TempWindowMode;
-            Settings->FrameRateLimit = TempFrameRateLimit;
-            Settings->bVSyncEnabled = bTempVSyncEnabled;
-            Settings->Language = TempLanguage;
+            Temp.ApplyTo(Settings);
 
             // 서브시스템에 현재 Temp 값들을 적용하라고 명령 (Subsystem 내부에 Apply 로직이 있어야 함)
             SettingsSubsystem->ApplyGraphicsSettings();
@@ -518,22 +500,7 @@ void UR1OptionsMenuWidget::ApplyAndSaveSettings(bool bSaveToDisk)
                 SettingsSubsystem->SaveSettings();
 
                 // 🌟 저장 성공 후에는 현재 상태가 다시 '최신 원본'이 됩니다.
-                if (OriginalSettings)
-                {
-                    OriginalSettings->MasterVolume = Settings->MasterVolume;
-                    OriginalSettings->BGMVolume = Settings->BGMVolume;
-                    OriginalSettings->SFXVolume = Settings->SFXVolume;
-                    OriginalSettings->bShowDamageText = Settings->bShowDamageText;
-                    OriginalSettings->MinimapOpacity = Settings->MinimapOpacity;
-                    OriginalSettings->bConfineMouseToWindow = Settings->bConfineMouseToWindow;
-                    OriginalSettings->CameraShakeIntensity = Settings->CameraShakeIntensity;
-
-                    OriginalSettings->Resolution = Settings->Resolution;
-                    OriginalSettings->WindowMode = Settings->WindowMode;
-                    OriginalSettings->FrameRateLimit = Settings->FrameRateLimit;
-                    OriginalSettings->bVSyncEnabled = Settings->bVSyncEnabled;
-                    OriginalSettings->Language = Settings->Language;
-                }
+                Original = Temp;
             }
         }
     }

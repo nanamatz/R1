@@ -33,54 +33,12 @@ void UR1GameplayAbility_FistAttack::ActivateAbility(const FGameplayAbilitySpecHa
 
 	AR1Character* Attacker = Cast<AR1Character>(ActorInfo->AvatarActor);
 
-	if (Attacker && MontageToPlay)
+	// Combo Section Cycling
+	FName StartSectionName = (ComboIndex == 0) ? FName("Combo1") : FName("Combo2");
+
+	if (PlayAttackMontageAndWaitForEvent(Attacker, AttackEventTag, StartSectionName))
 	{
-		Attacker->SetCreatureState(ECreatureState::Casting);
-		float AttackRate = 1.0f; // 기본 속도
-
-		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
-		{
-			bool bFound = false;
-			// GAS에서 현재 AttackSpeed 스탯 값을 읽어옵니다.
-			float CurrentAttackSpeed = ASC->GetGameplayAttributeValue(UR1AttributeSet::GetAttackSpeedAttribute(), bFound);
-
-			if (bFound)
-			{
-				AttackRate = CurrentAttackSpeed;
-			}
-		}
-		FName StartSectionName = (ComboIndex == 0) ? FName("Combo1") : FName("Combo2");
-
-		UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-			this,
-			NAME_None,
-			MontageToPlay, // 재생할 몽타주
-			AttackRate,
-			StartSectionName,
-			false
-		);
-
-		MontageTask->OnCompleted.AddDynamic(this, &UR1GameplayAbility_FistAttack::OnMontageEnded);
-		MontageTask->OnInterrupted.AddDynamic(this, &UR1GameplayAbility_FistAttack::OnMontageEnded);
-		MontageTask->OnCancelled.AddDynamic(this, &UR1GameplayAbility_FistAttack::OnMontageEnded);
-
-		MontageTask->ReadyForActivation();
-
 		ComboIndex = (ComboIndex + 1) % 2;
-
-		UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
-			this,
-			AttackEventTag, // 기다릴 태그
-			nullptr,
-			true,
-			false
-		);
-		// 이벤트가 도착하면 -> OnAttackEventReceived 실행
-		WaitEventTask->EventReceived.AddDynamic(this, &UR1GameplayAbility_FistAttack::OnAttackEventReceived);
-
-		// Task 시작!
-		WaitEventTask->ReadyForActivation();
-
 	}
 	else
 	{

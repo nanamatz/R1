@@ -393,11 +393,12 @@ bool UR1InventorySubsystem::BuyItemAt(UR1ItemInstance* ItemToBuy, FIntPoint Pref
 	return false;
 }
 
-void UR1InventorySubsystem::LoadItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos)
+void UR1InventorySubsystem::LoadItem(UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos, int32 InCount)
 {
 	// 🌟 도우미 함수 적용
 	if (UR1ItemInstance* Item = CreateItemInstance(InItemData, Rarity))
 	{
+		Item->ItemCount = FMath::Max(1, InCount);
 		Items.Add(Item);
 		AddItemToGrid(Item, Pos);
 	}
@@ -479,6 +480,12 @@ void UR1InventorySubsystem::AddGold(int32 Amount)
 	OnGoldChanged.Broadcast(Gold);
 }
 
+void UR1InventorySubsystem::LoadGold(int32 InGold)
+{
+	Gold = FMath::Max(0, InGold);
+	OnGoldChanged.Broadcast(Gold);
+}
+
 bool UR1InventorySubsystem::ConsumeGold(int32 Amount)
 {
 	if (Amount <= 0 || Gold < Amount) return false;
@@ -492,8 +499,11 @@ void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
 {
 	if (!Item || !Item->GetItemData()) return;
 
+	// 판매가는 기본 가치의 70%만 환급(최소 1골드). 구매가 대비 손해를 둬 무한 차익거래를 막는다.
+	constexpr float SellValueRatio = 0.7f;
+
 	int32 UnitValue = Item->GetItemData()->BaseValue;
-	int32 SaleValue = FMath::Max(1, FMath::FloorToInt(UnitValue * 0.7f)) * Quantity;
+	int32 SaleValue = FMath::Max(1, FMath::FloorToInt(UnitValue * SellValueRatio)) * Quantity;
 
 	AddGold(SaleValue);
 

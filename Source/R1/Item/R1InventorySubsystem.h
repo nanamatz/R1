@@ -131,8 +131,11 @@ public:
 
 public:
 
-	void LoadItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos);
+	void LoadItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity, FIntPoint Pos, int32 InCount = 1);
 	void LoadEquippedItem(class UR1ItemAssetData* InItemData, EItemRarity Rarity, ER1EquipmentSlot Slot);
+
+	// 세이브에서 골드 복구 (정확한 값으로 세팅 후 UI 갱신 방송). AddGold는 가산 전용이라 복구엔 부적합.
+	void LoadGold(int32 InGold);
 
 public:
 	bool FindEmptySlot(const FIntPoint& ItemSize, FIntPoint& OutPos);

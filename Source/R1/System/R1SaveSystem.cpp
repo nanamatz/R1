@@ -10,6 +10,7 @@
 #include "Player/R1PlayerState.h"
 #include "Player/R1RunUpgradeComponent.h"
 
+#include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/PlayerAttributeSet.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 
@@ -48,6 +49,131 @@ void UR1SaveSystem::DeleteSavedRun()
 	ActiveShopInventories.Empty();
 }
 
+void UR1SaveSystem::WritePlayerStateToSave(AR1Player* Player, UR1PlayerSaveGame* SaveObj)
+{
+	if (!Player || !SaveObj) return;
+
+	// [Added] 위치 및 회전 저장
+	SaveObj->PlayerLocation = Player->GetActorLocation();
+	SaveObj->PlayerRotation = Player->GetActorRotation();
+
+	AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState());
+	if (!PS) return;
+
+	// 장비/런 업그레이드는 무한·지속 GE 모디파이어로 '현재값'에만 얹힌다(베이스값은 건드리지 않음).
+	// 로드 시 재장착(LoadEquippedItem)·런업 재적용(LoadUpgradeData)으로 그 모디파이어가 다시 얹히므로,
+	// 저장은 반드시 '베이스값'(모디파이어 제외)으로 해야 한다. 현재값을 저장하면 로드 때 보너스가 이중 적용된다.
+	// 단, Health/Mana는 실시간 리소스이므로 현재값을 그대로 보존한다.
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+	auto BaseOf = [ASC](const FGameplayAttribute& Attr, float Fallback) -> float
+	{
+		return ASC ? ASC->GetNumericAttributeBase(Attr) : Fallback;
+	};
+
+	if (UR1AttributeSet* CommonAttr = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet()))
+	{
+		SaveObj->MaxHealth = BaseOf(UR1AttributeSet::GetMaxHealthAttribute(), CommonAttr->GetMaxHealth());
+		SaveObj->Health = CommonAttr->GetHealth(); // 실시간 리소스: 현재값 보존
+		SaveObj->HealthRegen = BaseOf(UR1AttributeSet::GetHealthRegenerationAttribute(), CommonAttr->GetHealthRegeneration());
+
+		SaveObj->BaseDamage = BaseOf(UR1AttributeSet::GetBaseDamageAttribute(), CommonAttr->GetBaseDamage());
+		SaveObj->BaseDefence = BaseOf(UR1AttributeSet::GetBaseDefenceAttribute(), CommonAttr->GetBaseDefence());
+
+		SaveObj->MoveSpeed = BaseOf(UR1AttributeSet::GetMoveSpeedAttribute(), CommonAttr->GetMoveSpeed());
+
+		SaveObj->AttackSpeed = BaseOf(UR1AttributeSet::GetAttackSpeedAttribute(), CommonAttr->GetAttackSpeed());
+		SaveObj->AttackRange = BaseOf(UR1AttributeSet::GetAttackRangeAttribute(), CommonAttr->GetAttackRange());
+
+		SaveObj->CritChance = BaseOf(UR1AttributeSet::GetCriticalHitChanceAttribute(), CommonAttr->GetCriticalHitChance());
+		SaveObj->CritMultiplier = BaseOf(UR1AttributeSet::GetCriticalHitMultiplierAttribute(), CommonAttr->GetCriticalHitMultiplier());
+	}
+	if (UPlayerAttributeSet* PlayerAttr = Cast<UPlayerAttributeSet>(PS->GetPlayerAttributeSet()))
+	{
+		SaveObj->MaxMana = BaseOf(UPlayerAttributeSet::GetMaxManaAttribute(), PlayerAttr->GetMaxMana());
+		SaveObj->Mana = PlayerAttr->GetMana(); // 실시간 리소스: 현재값 보존
+		SaveObj->ManaRegen = BaseOf(UPlayerAttributeSet::GetManaRegenerationAttribute(), PlayerAttr->GetManaRegeneration());
+
+		SaveObj->DamageMultiplier = BaseOf(UPlayerAttributeSet::GetDamageMultiplierAttribute(), PlayerAttr->GetDamageMultiplier());
+
+		SaveObj->Level = BaseOf(UPlayerAttributeSet::GetLevelAttribute(), PlayerAttr->GetLevel());
+		SaveObj->Exp = BaseOf(UPlayerAttributeSet::GetExpAttribute(), PlayerAttr->GetExp());
+		SaveObj->MaxExp = BaseOf(UPlayerAttributeSet::GetMaxExpAttribute(), PlayerAttr->GetMaxExp());
+
+		SaveObj->RunLevel = PS->GetRunLevel();
+
+		if (UR1RunUpgradeComponent* RunUpgradeComp = PS->GetRunUpgradeComponent())
+		{
+			SaveObj->AvailableRunUpgradePoints = RunUpgradeComp->GetAvailablePoints();
+			SaveObj->RunUpgradeHistory = RunUpgradeComp->GetInvestmentHistory();
+		}
+	}
+}
+
+void UR1SaveSystem::ApplySaveToPlayerState(UR1PlayerSaveGame* SaveObj, AR1Player* Player)
+{
+	if (!SaveObj || !Player) return;
+
+	AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState());
+	if (!PS) return;
+
+	// 주의: Health/Mana는 여기서 세팅하지 않는다. PreAttributeChange가 현재 Max로 클램프하므로
+	// 장비/런업으로 Max가 최종값이 된 뒤 RestorePlayerResources에서 마지막에 복구한다.
+	if (UR1AttributeSet* CommonAttr = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet()))
+	{
+		CommonAttr->SetMaxHealth(SaveObj->MaxHealth);
+		CommonAttr->SetHealthRegeneration(SaveObj->HealthRegen);
+
+		CommonAttr->SetBaseDamage(SaveObj->BaseDamage);
+		CommonAttr->SetBaseDefence(SaveObj->BaseDefence);
+
+		CommonAttr->SetMoveSpeed(SaveObj->MoveSpeed);
+
+		CommonAttr->SetAttackSpeed(SaveObj->AttackSpeed);
+		CommonAttr->SetAttackRange(SaveObj->AttackRange);
+
+		CommonAttr->SetCriticalHitChance(SaveObj->CritChance);
+		CommonAttr->SetCriticalHitMultiplier(SaveObj->CritMultiplier);
+
+	}
+	if (UPlayerAttributeSet* PlayerAttr = Cast<UPlayerAttributeSet>(PS->GetPlayerAttributeSet()))
+	{
+		PlayerAttr->SetLevel(SaveObj->Level);
+		PlayerAttr->SetMaxExp(SaveObj->MaxExp);
+		PlayerAttr->SetExp(SaveObj->Exp);
+
+		PlayerAttr->SetDamageMultiplier(SaveObj->DamageMultiplier);
+
+		PlayerAttr->SetMaxMana(SaveObj->MaxMana);
+		PlayerAttr->SetManaRegeneration(SaveObj->ManaRegen);
+
+		PS->SetRunLevel(SaveObj->RunLevel);
+
+		if (UR1RunUpgradeComponent* RunUpgradeComp = PS->GetRunUpgradeComponent())
+		{
+			RunUpgradeComp->LoadUpgradeData(SaveObj->AvailableRunUpgradePoints, SaveObj->RunUpgradeHistory);
+		}
+	}
+}
+
+void UR1SaveSystem::RestorePlayerResources(UR1PlayerSaveGame* SaveObj, AR1Player* Player)
+{
+	if (!SaveObj || !Player) return;
+
+	AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState());
+	if (!PS) return;
+
+	// 이 시점엔 MaxHealth/MaxMana가 베이스 + 런업 + 장비까지 모두 반영된 최종값이므로,
+	// 저장된 현재 Health/Mana가 클램프로 깎이지 않는다.
+	if (UR1AttributeSet* CommonAttr = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet()))
+	{
+		CommonAttr->SetHealth(SaveObj->Health);
+	}
+	if (UPlayerAttributeSet* PlayerAttr = Cast<UPlayerAttributeSet>(PS->GetPlayerAttributeSet()))
+	{
+		PlayerAttr->SetMana(SaveObj->Mana);
+	}
+}
+
 void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenerator)
 {
 	UR1PlayerSaveGame* SaveObj = Cast<UR1PlayerSaveGame>(UGameplayStatics::CreateSaveGameObject(UR1PlayerSaveGame::StaticClass()));
@@ -56,59 +182,12 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	SaveObj->LastSettledLevel = CachedLastSettledLevel;
 
 	// 1. 플레이어 상태 저장 (작성하셨던 코드 재활용!)
-	if (Player)
-	{
-		// [Added] 위치 및 회전 저장
-		SaveObj->PlayerLocation = Player->GetActorLocation();
-		SaveObj->PlayerRotation = Player->GetActorRotation();
-
-		if (AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState()))
-		{
-			if (UR1AttributeSet* CommonAttr = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet()))
-			{
-				SaveObj->MaxHealth = CommonAttr->GetMaxHealth();
-				SaveObj->Health = CommonAttr->GetHealth();
-				SaveObj->HealthRegen = CommonAttr->GetHealthRegeneration();
-
-				SaveObj->BaseDamage = CommonAttr->GetBaseDamage();
-				SaveObj->BaseDefence = CommonAttr->GetBaseDefence();
-
-				SaveObj->MoveSpeed = CommonAttr->GetMoveSpeed();
-
-				SaveObj->AttackSpeed = CommonAttr->GetAttackSpeed();
-				SaveObj->AttackRange = CommonAttr->GetAttackRange();
-
-				SaveObj->CritChance = CommonAttr->GetCriticalHitChance();
-				SaveObj->CritMultiplier = CommonAttr->GetCriticalHitMultiplier();
-			}
-			if (UPlayerAttributeSet* PlayerAttr = Cast<UPlayerAttributeSet>(PS->GetPlayerAttributeSet()))
-			{
-				SaveObj->MaxMana = PlayerAttr->GetMaxMana();
-				SaveObj->Mana = PlayerAttr->GetMana();
-				SaveObj->ManaRegen = PlayerAttr->GetManaRegeneration();
-
-				SaveObj->DamageMultiplier = PlayerAttr->GetDamageMultiplier();
-
-				SaveObj->Level = PlayerAttr->GetLevel();
-				SaveObj->Exp = PlayerAttr->GetExp();
-				SaveObj->MaxExp = PlayerAttr->GetMaxExp();
-
-				SaveObj->RunLevel = PS->GetRunLevel();
-
-				if (UR1RunUpgradeComponent* RunUpgradeComp = PS->GetRunUpgradeComponent())
-				{
-					SaveObj->AvailableRunUpgradePoints = RunUpgradeComp->GetAvailablePoints();
-					SaveObj->RunUpgradeHistory = RunUpgradeComp->GetInvestmentHistory();
-				}
-			}
-		}
-	}
+	WritePlayerStateToSave(Player, SaveObj);
 
 	// 2. 맵 데이터 압축 및 저장
 	if (MapGenerator)
 	{
 		SaveObj->CurrentFloorIndex = MapGenerator->CurrentFloorIndex;
-		SaveObj->CurrentActiveNodeID = MapGenerator->CurrentActiveNodeID;
 		SaveObj->CurrentActiveNodeID = (MapGenerator->PendingNodeID != -1) ? MapGenerator->PendingNodeID : MapGenerator->CurrentActiveNodeID;
 
 		// MapGenerator가 들고 있는 무거운 GeneratedMap을 가벼운 SaveNode로 변환
@@ -149,6 +228,7 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 					ItemSaveData.ItemData = Item->GetItemData();
 					ItemSaveData.ItemRarity = Item->ItemRarity;
 					ItemSaveData.Position = InventorySubsystem->GetItemPosition(Item);
+					ItemSaveData.ItemCount = Item->ItemCount;
 					SaveObj->InventoryItems.Add(ItemSaveData);
 				}
 			}
@@ -165,11 +245,15 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 					SaveObj->EquippedItems.Add(EquippedSaveData);
 				}
 			}
+
+			// 보유 골드 저장
+			SaveObj->Gold = InventorySubsystem->GetGold();
 		}
 	}
-	
+
 	SaveObj->ShopInventories = ActiveShopInventories;
 
+	// 정산 기준: 이 런에서 마지막으로 정산된 레벨(인메모리 캐시)
 	int32 CurrentLevel = FMath::FloorToInt(SaveObj->Level);
 	int32 EarnedPoints = FMath::Max(0, CurrentLevel - CachedLastSettledLevel);
 
@@ -183,22 +267,7 @@ void UR1SaveSystem::SaveCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	UGameplayStatics::SaveGameToSlot(SaveObj, RunSaveSlotName, RunSaveUserIndex);
 
 	// 2. 메타 세이브 업데이트 및 디스크 쓰기
-	UR1MetaSaveGame* MetaSave = LoadMetaProgression();
-	if (MetaSave)
-	{
-		if (EarnedPoints > 0)
-		{
-			//MetaSave->AvailableSkillPoints += EarnedPoints;
-
-			if (CurrentLevel > MetaSave->PlayerMetaLevel)
-			{
-				MetaSave->AvailableSkillPoints += (CurrentLevel - MetaSave->PlayerMetaLevel);
-				MetaSave->PlayerMetaLevel = CurrentLevel;
-			}
-		}
-		MetaSave->CurrentMetaExp = FMath::FloorToInt(SaveObj->Exp);
-		SaveMetaProgression(MetaSave);
-	}
+	ApplyMetaSettlement(LoadMetaProgression(), CurrentLevel, EarnedPoints, SaveObj->Exp);
 }
 
 bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenerator)
@@ -209,49 +278,7 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 	if (!SaveObj) return false;
 
 	// 1. 플레이어 상태 주입
-	if (Player)
-	{
-		if (AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState()))
-		{
-			if (UR1AttributeSet* CommonAttr = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet()))
-			{
-				CommonAttr->SetMaxHealth(SaveObj->MaxHealth);
-				CommonAttr->SetHealth(SaveObj->Health);
-				CommonAttr->SetHealthRegeneration(SaveObj->HealthRegen);
-
-				CommonAttr->SetBaseDamage(SaveObj->BaseDamage);
-				CommonAttr->SetBaseDefence(SaveObj->BaseDefence);
-
-				CommonAttr->SetMoveSpeed(SaveObj->MoveSpeed);
-
-				CommonAttr->SetAttackSpeed(SaveObj->AttackSpeed);
-				CommonAttr->SetAttackRange(SaveObj->AttackRange);
-
-				CommonAttr->SetCriticalHitChance(SaveObj->CritChance);
-				CommonAttr->SetCriticalHitMultiplier(SaveObj->CritMultiplier);
-
-			}
-			if (UPlayerAttributeSet* PlayerAttr = Cast<UPlayerAttributeSet>(PS->GetPlayerAttributeSet()))
-			{
-				PlayerAttr->SetLevel(SaveObj->Level);
-				PlayerAttr->SetMaxExp(SaveObj->MaxExp);
-				PlayerAttr->SetExp(SaveObj->Exp);
-
-				PlayerAttr->SetDamageMultiplier(SaveObj->DamageMultiplier);
-
-				PlayerAttr->SetMaxMana(SaveObj->MaxMana);
-				PlayerAttr->SetMana(SaveObj->Mana);
-				PlayerAttr->SetManaRegeneration(SaveObj->ManaRegen);
-
-				PS->SetRunLevel(SaveObj->RunLevel);
-
-				if (UR1RunUpgradeComponent* RunUpgradeComp = PS->GetRunUpgradeComponent())
-				{
-					RunUpgradeComp->LoadUpgradeData(SaveObj->AvailableRunUpgradePoints, SaveObj->RunUpgradeHistory);
-				}
-			}
-		}
-	}
+	ApplySaveToPlayerState(SaveObj, Player);
 
 	if (MapGenerator)
 	{
@@ -271,7 +298,7 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 			{
 				if (UR1ItemAssetData* ResolvedData = ItemSaveData.ItemData.LoadSynchronous())
 				{
-					InventorySubsystem->LoadItem(ResolvedData, ItemSaveData.ItemRarity, ItemSaveData.Position);
+					InventorySubsystem->LoadItem(ResolvedData, ItemSaveData.ItemRarity, ItemSaveData.Position, ItemSaveData.ItemCount);
 				}
 			}
 
@@ -284,6 +311,9 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 				}
 			}
 
+			// 보유 골드 복구 (UI 갱신 방송 포함)
+			InventorySubsystem->LoadGold(SaveObj->Gold);
+
 			// 💡 로딩이 끝났음을 UI에 알려서 인벤토리/장비창을 갱신하게 만듭니다!
 			InventorySubsystem->OnInventoryUpdated.Broadcast();
 		}
@@ -291,7 +321,33 @@ bool UR1SaveSystem::LoadCurrentRun(AR1Player* Player, AR1MapGenerator* MapGenera
 
 	ActiveShopInventories = SaveObj->ShopInventories;
 
+	// 장비/런업으로 MaxHealth·MaxMana가 최종값까지 복원된 뒤에 현재 Health/Mana를 마지막에 주입한다.
+	// (그 전에 세팅하면 PreAttributeChange 클램프로 저장값이 깎인다 — Continue 시 체력/마나 손실 버그)
+	RestorePlayerResources(SaveObj, Player);
+
 	return true;
+}
+
+void UR1SaveSystem::ApplyMetaSettlement(UR1MetaSaveGame* MetaSave, int32 CurrentLevel, int32 EarnedPoints, float Exp)
+{
+	if (!MetaSave) return;
+
+	if (EarnedPoints > 0)
+	{
+		//MetaSave->AvailableSkillPoints += EarnedPoints;
+
+		// 메타 레벨 갱신 (최고 레벨 기록)
+		if (CurrentLevel > MetaSave->PlayerMetaLevel)
+		{
+			MetaSave->AvailableSkillPoints += (CurrentLevel - MetaSave->PlayerMetaLevel);
+			MetaSave->PlayerMetaLevel = CurrentLevel;
+		}
+	}
+
+	// 누적 경험치 동기화
+	MetaSave->CurrentMetaExp = FMath::FloorToInt(Exp);
+
+	SaveMetaProgression(MetaSave);
 }
 
 void UR1SaveSystem::SaveMetaProgression(UR1MetaSaveGame* MetaSaveObj)
@@ -325,6 +381,7 @@ void UR1SaveSystem::SaveShopInventory(int32 RoomID, const TArray<class UR1ItemIn
 			FR1ItemSaveData ItemSaveData;
 			ItemSaveData.ItemData = Item->GetItemData();
 			ItemSaveData.ItemRarity = Item->ItemRarity;
+			ItemSaveData.ItemCount = Item->ItemCount; // 상점 아이템은 항목당 1개로 고정되지만, 그 수량을 그대로 보존
 			SaveData.Items.Add(ItemSaveData);
 		}
 	}
@@ -343,7 +400,7 @@ bool UR1SaveSystem::LoadShopInventory(int32 RoomID, TArray<class UR1ItemInstance
 		{
 			UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(Outer);
 			NewItem->Init(ResolvedData, ItemData.ItemRarity);
-			NewItem->ItemCount = 1;
+			NewItem->ItemCount = FMath::Max(1, ItemData.ItemCount); // 저장된 수량 복구 (구버전 세이브는 기본 1)
 			OutShopItems.Add(NewItem);
 		}
 	}
@@ -360,29 +417,17 @@ void UR1SaveSystem::ExtractAndSaveMetaProgression()
 	UR1MetaSaveGame* MetaSave = LoadMetaProgression();
 	if (!MetaSave) return;
 
-	// 1. 포인트 계산: (현재 런 레벨) - (이 런에서 마지막으로 정산된 레벨)
+	// 1. 포인트 계산: (현재 런 레벨) - (이 런에서 마지막으로 정산된 레벨, 디스크 기록 기준)
 	int32 CurrentLevel = FMath::FloorToInt(RunSave->Level);
 	int32 EarnedPoints = FMath::Max(0, CurrentLevel - RunSave->LastSettledLevel);
 
 	if (EarnedPoints > 0)
 	{
-		// 2. 포인트 지급 및 마지막 정산 레벨 기록
-		//MetaSave->AvailableSkillPoints += EarnedPoints;
-		
 		// 런 세이브의 정산 레벨 업데이트 및 즉시 저장 (중복 정산 방지 핵심)
 		RunSave->LastSettledLevel = CurrentLevel;
 		UGameplayStatics::SaveGameToSlot(RunSave, RunSaveSlotName, RunSaveUserIndex);
-
-		// 메타 레벨 갱신 (최고 레벨 기록)
-		if (CurrentLevel > MetaSave->PlayerMetaLevel)
-		{
-			MetaSave->AvailableSkillPoints += (CurrentLevel - MetaSave->PlayerMetaLevel);
-			MetaSave->PlayerMetaLevel = CurrentLevel;
-		}
 	}
 
-	// 3. 누적 경험치 동기화
-	MetaSave->CurrentMetaExp = FMath::FloorToInt(RunSave->Exp);
-
-	SaveMetaProgression(MetaSave);
+	// 2. 메타 세이브 갱신 (스킬포인트 지급 + 최고 레벨 + 누적 경험치 + 디스크 저장)
+	ApplyMetaSettlement(MetaSave, CurrentLevel, EarnedPoints, RunSave->Exp);
 }

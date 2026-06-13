@@ -48,6 +48,10 @@ struct FR1ItemSaveData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FIntPoint Position = FIntPoint(-1, -1);
+
+	// 스택 개수 (소모품·열쇠 등). 기본값 1 → 이 필드가 없던 구버전 세이브도 안전하게 1로 로드됨.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ItemCount = 1;
 };
 
 USTRUCT(BlueprintType)
@@ -137,6 +141,10 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	int32 LastSettledLevel = 1;
+
+	// 보유 골드 (인벤토리 서브시스템에만 있던 값 — 세이브 누락으로 Continue 시 0으로 초기화되던 버그 수정)
+	UPROPERTY(BlueprintReadWrite)
+	int32 Gold = 0;
 
 	// [Added] 런 진행도 저장 데이터
 	UPROPERTY(BlueprintReadWrite)

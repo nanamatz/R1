@@ -3,7 +3,12 @@
 
 #include "Library/R1AbilitySystemLibrary.h"
 #include "Engine/World.h"
+#include "Engine/OverlapResult.h"
 #include "Character/R1Character.h"
+#include "Character/R1Player.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/Attribute/R1AttributeSet.h"
 
 TArray<AR1Character*> UR1AbilitySystemLibrary::GetChainLightningTargets(AR1Character* SourceActor, AR1Character* InitialTarget, float BounceRadius, int32 MaxBounces)
 {
@@ -107,4 +112,77 @@ TArray<AR1Character*> UR1AbilitySystemLibrary::GetChainLightningTargets(AR1Chara
 
 	// 최종적으로 찾아낸 연쇄 타겟 1~3마리 반환
 	return ResultTargets;
+}
+
+void UR1AbilitySystemLibrary::ApplySectorDamageToPlayers(const FGameplayEffectSpecHandle& SpecHandle, AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC)
+{
+	if (SourceCharacter == nullptr || SourceASC == nullptr)
+	{
+		return;
+	}
+
+	if (SpecHandle.IsValid() == false || SpecHandle.Data.IsValid() == false)
+	{
+		return;
+	}
+
+	UWorld* World = SourceCharacter->GetWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+
+	float AttackRange = SourceASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());
+	float AttackRadius = SourceASC->GetNumericAttribute(UR1AttributeSet::GetAttackRadiusAttribute());
+	if (AttackRange <= KINDA_SMALL_NUMBER || AttackRadius <= KINDA_SMALL_NUMBER)
+	{
+		return;
+	}
+
+	TArray<FOverlapResult> OverlapResults;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(SourceCharacter);
+
+	bool bResult = World->OverlapMultiByChannel(
+		OverlapResults,
+		SourceCharacter->GetActorLocation(),
+		FQuat::Identity,
+		ECC_GameTraceChannel2,
+		FCollisionShape::MakeSphere(AttackRange),
+		Params
+	);
+
+	if (!bResult)
+	{
+		return;
+	}
+
+	// 각도 계산 (Dot Product)
+	float DotThreshold = FMath::Cos(FMath::DegreesToRadians(AttackRadius / 2.0f));
+
+	FVector MyForward = SourceCharacter->GetActorForwardVector();
+	TSet<AActor*> ProcessedActors;
+
+	for (const FOverlapResult& Result : OverlapResults)
+	{
+		AActor* TargetActor = Result.GetActor();
+		if (!TargetActor || ProcessedActors.Contains(TargetActor)) continue;
+
+		AR1Player* TargetPlayer = Cast<AR1Player>(TargetActor);
+		if (!TargetPlayer) continue;
+
+		FVector DirToTarget = (TargetPlayer->GetActorLocation() - SourceCharacter->GetActorLocation()).GetSafeNormal();
+		float DotResult = FVector::DotProduct(MyForward, DirToTarget);
+
+		// 각도 안에 있다면 데미지 적용
+		if (DotResult >= DotThreshold)
+		{
+			UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetPlayer);
+			if (TargetASC)
+			{
+				SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+				ProcessedActors.Add(TargetPlayer);
+			}
+		}
+	}
 }

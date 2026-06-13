@@ -33,12 +33,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Damage")
 	FGameplayTag AttackEventTag;
 
-	UFUNCTION()
-	virtual void OnMontageEnded();
-
-	UFUNCTION()
-	virtual void OnAttackEventReceived(FGameplayEventData Payload);
-
-private:
-	void CheckAndApplyDamage_Sector(const FGameplayEffectSpecHandle& SpecHandle, class AR1Character* SourceCharacter, class UAbilitySystemComponent* SourceASC);
+	virtual void OnMontageEnded() override;
+	virtual void OnAttackEventReceived(FGameplayEventData Payload) override;
 };

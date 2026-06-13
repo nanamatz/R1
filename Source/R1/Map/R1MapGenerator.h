@@ -169,7 +169,7 @@ public:
 	void ActivateRoom(int32 NodeID);
 
 private:
-	void UpdateMinimapState(int32 TargetNodeID, int32 PrevNodeID);
+	// 미니맵 상태 전이는 순수 헬퍼 R1MinimapState::ApplyRoomEntered로 분리(C-1.4).
 
 	// 각 룸 레벨 인스턴스의 OnLevelShown에 바인딩되는 카운터 콜백.
 	// (OnLevelShown은 AddToWorld/BeginPlay 이후에 브로드캐스트되므로, 카운트가
@@ -185,6 +185,17 @@ private:
 	// (플레이어 텔레포트 + 몬스터 AI MoveTo) 길찾기가 실패하므로, 로딩 게이트를 유지한 채
 	// 네비메시 빌드 완료를 기다렸다가 방을 활성화한다.
 	void WaitForNavMeshThenActivate();
+
+	// WaitForNavMeshThenActivate를 구성하는 단계별 헬퍼 (Long Function 분해, C-1.3).
+	// 동작은 분해 전과 동일하다.
+	// ① 스트리밍된 모든 NavMeshBoundsVolume를 네비 시스템에 재통지(첫 틱 경합 보정).
+	void RenotifyAllNavBounds(class UNavigationSystemV1* NavSys);
+	// ② 방 중심을 navmesh에 투영해 타일이 아직 없는(=길찾기 불가) 방들의 NodeID를 수집.
+	TArray<int32> CollectUnnavigableRooms(class UNavigationSystemV1* NavSys) const;
+	// ③ navmesh가 없는 방과 겹치는 NavMeshBoundsVolume만 다시 통지해 재빌드를 강제(자가 치유).
+	void RenotifyUnnavigableRooms(class UNavigationSystemV1* NavSys, const TArray<int32>& UnnavigableRooms);
+	// ④ 대기 종료: 카운터 리셋 + 로딩 게이트 해제 + 방 활성화.
+	void FinalizeFloorActivation();
 
 	// 방이 스트리밍될 때마다 로드된 방 비율을 진행도에 반영해 로딩바가 끊김 없이 차오르게 한다.
 	void BroadcastFloorLoadProgress();
@@ -241,9 +252,6 @@ private:
 	// 생성된 맵에 방 속성(보스 방, 시작 방 등)을 할당하는 함수
 	void AssignRoomTypes();
 
-	// 해당 그리드 좌표에 이미 방이 존재하는지 확인하는 헬퍼 함수
-	bool HasRoomAt(FIntPoint Pos);
-
 
 	// 현재 플레이어가 위치한 방의 고유 번호 (시작은 0번)
 public:
@@ -272,13 +280,9 @@ private:
 	void OnRoomClearedCallback(int32 ClearedNodeID);
 
 private:
-	// 특정 좌표에 방이 있다면 그 방의 NodeID를 반환하는 함수
-	int32 GetNodeIDAt(FIntPoint Pos);
-
-	// 풀(Pool)에서 '우리가 원하는 방향의 문'을 가진 방을 찾아 영구적으로 빼오는 함수
-	class UR1RoomDefinitionData* PopValidRoomFromPool(TArray<class UR1RoomDefinitionData*>& Pool, ER1DoorDirection RequiredDoor);
-
 	// 풀에서 무작위 방 하나를 꺼내(제거 후 반환)는 헬퍼. 비어 있으면 nullptr.
+	// (특수방 배정 AssignRoomTypes 전용. 토폴로지 생성 헬퍼 GetNodeIDAt/PopValidRoomFromPool은
+	//  FR1MapLayoutGenerator로 이동했다 — C-1.2)
 	class UR1RoomDefinitionData* PopRandomFromPool(TArray<class UR1RoomDefinitionData*>& Pool);
 
 public:
