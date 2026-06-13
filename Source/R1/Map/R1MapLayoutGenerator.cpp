@@ -35,12 +35,17 @@ bool FR1MapLayoutGenerator::BuildAttempt(TArray<UR1RoomDefinitionData*>& StartPo
 	{
 		int32 ParentID;
 		RoomQueue.Dequeue(ParentID);
-		FR1MapNode& ParentNode = OutMap[ParentID];
 
-		if (!ParentNode.RoomDefinition) continue;
+		// 아래 루프에서 OutMap.Add가 배열을 재할당하면 OutMap 원소 참조가 무효화된다.
+		// 부모의 불변 정보(룸 데이터·그리드 좌표)는 미리 값으로 복사해 두고, 쓰기는 항상
+		// OutMap[ParentID]로 재인덱싱한다. (이전엔 참조를 루프 내내 들고 있어 dangling 소지)
+		const UR1RoomDefinitionData* ParentRoomDef = OutMap[ParentID].RoomDefinition;
+		if (!ParentRoomDef) continue;
+
+		const FIntPoint ParentGridPosition = OutMap[ParentID].GridPosition;
 
 		// 현재 방에 실제로 뚫려있는 문 방향만 가져옵니다! (무지성 동서남북 배제)
-		TArray<ER1DoorDirection> ParentDoors = ParentNode.RoomDefinition->AvailableDoors;
+		TArray<ER1DoorDirection> ParentDoors = ParentRoomDef->AvailableDoors;
 
 		// 가지가 한쪽으로만 뻗는 걸 막기 위해 문 방향 셔플
 		for (int32 i = ParentDoors.Num() - 1; i > 0; i--)
@@ -56,7 +61,7 @@ bool FR1MapLayoutGenerator::BuildAttempt(TArray<UR1RoomDefinitionData*>& StartPo
 			const FIntPoint DirOffset = R1MapGrid::GetGridOffset(DoorDir);
 			const ER1DoorDirection OppositeDir = R1MapGrid::GetOppositeDirection(DoorDir);
 
-			FIntPoint NewPos = ParentNode.GridPosition + DirOffset;
+			FIntPoint NewPos = ParentGridPosition + DirOffset;
 
 			// 이미 그 위치에 다른 방이 있다면, 연결만 해주고 스킵
 			if (int32 ExistingID = GetNodeIDAt(OutMap, NewPos); ExistingID != -1)
