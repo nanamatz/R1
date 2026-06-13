@@ -499,8 +499,11 @@ void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
 {
 	if (!Item || !Item->GetItemData()) return;
 
+	// 판매가는 기본 가치의 70%만 환급(최소 1골드). 구매가 대비 손해를 둬 무한 차익거래를 막는다.
+	constexpr float SellValueRatio = 0.7f;
+
 	int32 UnitValue = Item->GetItemData()->BaseValue;
-	int32 SaleValue = FMath::Max(1, FMath::FloorToInt(UnitValue * 0.7f)) * Quantity;
+	int32 SaleValue = FMath::Max(1, FMath::FloorToInt(UnitValue * SellValueRatio)) * Quantity;
 
 	AddGold(SaleValue);
 
