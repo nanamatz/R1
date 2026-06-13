@@ -358,6 +358,7 @@ void UR1SaveSystem::SaveShopInventory(int32 RoomID, const TArray<class UR1ItemIn
 			FR1ItemSaveData ItemSaveData;
 			ItemSaveData.ItemData = Item->GetItemData();
 			ItemSaveData.ItemRarity = Item->ItemRarity;
+			ItemSaveData.ItemCount = Item->ItemCount; // 상점 아이템은 항목당 1개로 고정되지만, 그 수량을 그대로 보존
 			SaveData.Items.Add(ItemSaveData);
 		}
 	}
@@ -376,7 +377,7 @@ bool UR1SaveSystem::LoadShopInventory(int32 RoomID, TArray<class UR1ItemInstance
 		{
 			UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(Outer);
 			NewItem->Init(ResolvedData, ItemData.ItemRarity);
-			NewItem->ItemCount = 1;
+			NewItem->ItemCount = FMath::Max(1, ItemData.ItemCount); // 저장된 수량 복구 (구버전 세이브는 기본 1)
 			OutShopItems.Add(NewItem);
 		}
 	}
