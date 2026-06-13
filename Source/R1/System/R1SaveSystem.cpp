@@ -10,6 +10,7 @@
 #include "Player/R1PlayerState.h"
 #include "Player/R1RunUpgradeComponent.h"
 
+#include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/PlayerAttributeSet.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 
@@ -59,34 +60,44 @@ void UR1SaveSystem::WritePlayerStateToSave(AR1Player* Player, UR1PlayerSaveGame*
 	AR1PlayerState* PS = Cast<AR1PlayerState>(Player->GetPlayerState());
 	if (!PS) return;
 
+	// 장비/런 업그레이드는 무한·지속 GE 모디파이어로 '현재값'에만 얹힌다(베이스값은 건드리지 않음).
+	// 로드 시 재장착(LoadEquippedItem)·런업 재적용(LoadUpgradeData)으로 그 모디파이어가 다시 얹히므로,
+	// 저장은 반드시 '베이스값'(모디파이어 제외)으로 해야 한다. 현재값을 저장하면 로드 때 보너스가 이중 적용된다.
+	// 단, Health/Mana는 실시간 리소스이므로 현재값을 그대로 보존한다.
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+	auto BaseOf = [ASC](const FGameplayAttribute& Attr, float Fallback) -> float
+	{
+		return ASC ? ASC->GetNumericAttributeBase(Attr) : Fallback;
+	};
+
 	if (UR1AttributeSet* CommonAttr = Cast<UR1AttributeSet>(PS->GetCommonAttributeSet()))
 	{
-		SaveObj->MaxHealth = CommonAttr->GetMaxHealth();
-		SaveObj->Health = CommonAttr->GetHealth();
-		SaveObj->HealthRegen = CommonAttr->GetHealthRegeneration();
+		SaveObj->MaxHealth = BaseOf(UR1AttributeSet::GetMaxHealthAttribute(), CommonAttr->GetMaxHealth());
+		SaveObj->Health = CommonAttr->GetHealth(); // 실시간 리소스: 현재값 보존
+		SaveObj->HealthRegen = BaseOf(UR1AttributeSet::GetHealthRegenerationAttribute(), CommonAttr->GetHealthRegeneration());
 
-		SaveObj->BaseDamage = CommonAttr->GetBaseDamage();
-		SaveObj->BaseDefence = CommonAttr->GetBaseDefence();
+		SaveObj->BaseDamage = BaseOf(UR1AttributeSet::GetBaseDamageAttribute(), CommonAttr->GetBaseDamage());
+		SaveObj->BaseDefence = BaseOf(UR1AttributeSet::GetBaseDefenceAttribute(), CommonAttr->GetBaseDefence());
 
-		SaveObj->MoveSpeed = CommonAttr->GetMoveSpeed();
+		SaveObj->MoveSpeed = BaseOf(UR1AttributeSet::GetMoveSpeedAttribute(), CommonAttr->GetMoveSpeed());
 
-		SaveObj->AttackSpeed = CommonAttr->GetAttackSpeed();
-		SaveObj->AttackRange = CommonAttr->GetAttackRange();
+		SaveObj->AttackSpeed = BaseOf(UR1AttributeSet::GetAttackSpeedAttribute(), CommonAttr->GetAttackSpeed());
+		SaveObj->AttackRange = BaseOf(UR1AttributeSet::GetAttackRangeAttribute(), CommonAttr->GetAttackRange());
 
-		SaveObj->CritChance = CommonAttr->GetCriticalHitChance();
-		SaveObj->CritMultiplier = CommonAttr->GetCriticalHitMultiplier();
+		SaveObj->CritChance = BaseOf(UR1AttributeSet::GetCriticalHitChanceAttribute(), CommonAttr->GetCriticalHitChance());
+		SaveObj->CritMultiplier = BaseOf(UR1AttributeSet::GetCriticalHitMultiplierAttribute(), CommonAttr->GetCriticalHitMultiplier());
 	}
 	if (UPlayerAttributeSet* PlayerAttr = Cast<UPlayerAttributeSet>(PS->GetPlayerAttributeSet()))
 	{
-		SaveObj->MaxMana = PlayerAttr->GetMaxMana();
-		SaveObj->Mana = PlayerAttr->GetMana();
-		SaveObj->ManaRegen = PlayerAttr->GetManaRegeneration();
+		SaveObj->MaxMana = BaseOf(UPlayerAttributeSet::GetMaxManaAttribute(), PlayerAttr->GetMaxMana());
+		SaveObj->Mana = PlayerAttr->GetMana(); // 실시간 리소스: 현재값 보존
+		SaveObj->ManaRegen = BaseOf(UPlayerAttributeSet::GetManaRegenerationAttribute(), PlayerAttr->GetManaRegeneration());
 
-		SaveObj->DamageMultiplier = PlayerAttr->GetDamageMultiplier();
+		SaveObj->DamageMultiplier = BaseOf(UPlayerAttributeSet::GetDamageMultiplierAttribute(), PlayerAttr->GetDamageMultiplier());
 
-		SaveObj->Level = PlayerAttr->GetLevel();
-		SaveObj->Exp = PlayerAttr->GetExp();
-		SaveObj->MaxExp = PlayerAttr->GetMaxExp();
+		SaveObj->Level = BaseOf(UPlayerAttributeSet::GetLevelAttribute(), PlayerAttr->GetLevel());
+		SaveObj->Exp = BaseOf(UPlayerAttributeSet::GetExpAttribute(), PlayerAttr->GetExp());
+		SaveObj->MaxExp = BaseOf(UPlayerAttributeSet::GetMaxExpAttribute(), PlayerAttr->GetMaxExp());
 
 		SaveObj->RunLevel = PS->GetRunLevel();
 
