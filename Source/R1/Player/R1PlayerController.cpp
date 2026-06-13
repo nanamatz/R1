@@ -211,7 +211,7 @@ void AR1PlayerController::OnInputStarted()
 void AR1PlayerController::OnSetDestinationTriggered()
 {
 	if (!bMousePressed) return;
-	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
+	if (IsCasting()) return;
 	if (TargetActor) return;
 
 	FollowTime += GetWorld()->GetDeltaSeconds();
@@ -243,7 +243,7 @@ void AR1PlayerController::OnSetDestinationReleased()
 
 	bMousePressed = false;
 
-	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting)
+	if (IsCasting())
 	{
 		return;
 	}
@@ -329,7 +329,7 @@ void AR1PlayerController::TickCursorTrace()
 void AR1PlayerController::ChaseTargetAndAttack()
 {
 	if (R1Player == nullptr || TargetActor == nullptr) return;
-	if (R1Player && R1Player->GetCreatureState() == ECreatureState::Casting) return;
+	if (IsCasting()) return;
 
 	TargetAttackActor = Cast<AR1Monster>(TargetActor);
 	if (TargetAttackActor)
@@ -561,7 +561,7 @@ void AR1PlayerController::OnOptionsUIToggle()
 
 void AR1PlayerController::OnQSkill()
 {
-	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)
+	if (R1Player && R1Player->GetEquipmentComponent() && !IsCasting())
 	{
 		R1Player->CombatTarget = Cast<AR1Character>(HighlightActor);
 		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::Q);
@@ -585,10 +585,15 @@ void AR1PlayerController::OnRSkill()
 
 void AR1PlayerController::ExecuteSkill(ER1SkillSlot Slot)
 {
-	if (R1Player && R1Player->GetEquipmentComponent() && R1Player->GetCreatureState() != ECreatureState::Casting)
+	if (R1Player && R1Player->GetEquipmentComponent() && !IsCasting())
 	{
 		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(Slot);
 	}
+}
+
+bool AR1PlayerController::IsCasting() const
+{
+	return R1Player && R1Player->GetCreatureState() == ECreatureState::Casting;
 }
 
 

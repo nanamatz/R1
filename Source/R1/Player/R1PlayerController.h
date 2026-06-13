@@ -49,6 +49,9 @@ private:
 	// 🌟 중복 제거: 태그로 입력 액션을 찾고, 없으면 에러 로그를 남긴다(없으면 nullptr 반환).
 	const class UInputAction* FindInputActionChecked(const class UR1InputData* InputData, const FGameplayTag& Tag, const TCHAR* DebugName) const;
 
+	// 🌟 중복 제거: 캐스팅(시전) 중이라 입력을 받으면 안 되는 상태인지. (R1Player 널 가드 포함)
+	bool IsCasting() const;
+
 public:
 	void OnLookClickStarted();
 	void OnLookClickReleased();
