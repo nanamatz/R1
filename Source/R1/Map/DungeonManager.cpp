@@ -206,6 +206,12 @@ void ADungeonManager::SpawnRoomClearReward()
 	// 3. 월드에 스폰!
 	FVector SpawnLocation = GetActorLocation();
 	SpawnLocation.Z = 50.0f;
+
+	// 보스방은 방 중앙에 포탈이 스폰되므로 보상은 옆으로 비켜서 스폰
+	if (ClearCondition == ER1RoomClearCondition::KillBoss)
+	{
+		SpawnLocation += FVector(300.0f, 0.0f, 0.0f);
+	}
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 

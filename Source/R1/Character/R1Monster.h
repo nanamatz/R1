@@ -42,6 +42,10 @@ public:
 	// 스포너가 태어날 때 호출해 줄 주입 함수
 	void InitializeWithManager(class ADungeonManager* InManager);
 
+	// 소속 방의 매니저 (보스 골드 스폰 위치 계산용)
+	UPROPERTY()
+	TObjectPtr<class ADungeonManager> OwningDungeonManager;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<class UMonsterAttributeSet> MonsterAttributeSet;
 
