@@ -22,9 +22,14 @@ AR1Portal::AR1Portal()
 	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBox"));
 	TriggerBox->SetupAttachment(RootComponent);
 
-	// 2. 트리거 박스 충돌 설정 (플레이어만 감지하도록)
-	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
+	// 커서 트레이스(Attack 채널)를 Block해야 하이라이트가 동작함 (R1Door와 동일 패턴)
+	TriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	TriggerBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+	TriggerBox->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
+	TriggerBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	TriggerBox->SetBoxExtent(FVector(200.0f, 200.0f, 100.0f)); // 적당한 크기로 조절
+
+	Tags.Add(FName("Interactable"));
 }
 
 void AR1Portal::Interact_Implementation(AR1PlayerController* Interactor)

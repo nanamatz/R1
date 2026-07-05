@@ -134,6 +134,8 @@ void AR1Monster::InitializeWithManager(ADungeonManager* InManager)
 {
 	if (!IsValid(InManager)) return;
 
+	OwningDungeonManager = InManager;
+
 	InManager->RegisterMonster(this);
 
 	this->OnDeadDelegate.RemoveDynamic(InManager, &ADungeonManager::UnregisterMonster);
@@ -188,6 +190,12 @@ void AR1Monster::DropGold()
 
 		FVector SpawnLocation = GetActorLocation();
 		FRotator SpawnRotation = FRotator::ZeroRotator;
+
+		// 보스 골드는 방 중앙의 포탈, +X 쪽 클리어 보상 아이템과 겹치지 않게 반대편에 스폰
+		if (ActorHasTag(FName("Boss")) && IsValid(OwningDungeonManager))
+		{
+			SpawnLocation = OwningDungeonManager->GetActorLocation() + FVector(-300.0f, 0.0f, 50.0f);
+		}
 
 		AR1GoldActor* DroppedGold = GetWorld()->SpawnActor<AR1GoldActor>(GoldActorClass, SpawnLocation, SpawnRotation, SpawnParams);
 
