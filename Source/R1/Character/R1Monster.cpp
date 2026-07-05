@@ -27,6 +27,9 @@
 
 AR1Monster::AR1Monster()
 {
+	// 스포너(런타임 스폰) 경로에서도 AI 컨트롤러가 빙의되도록 보장 (미설정 시 배치된 폰만 빙의됨)
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
