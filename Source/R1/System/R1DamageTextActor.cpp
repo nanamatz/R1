@@ -1,6 +1,5 @@
 #include "System/R1DamageTextActor.h"
 #include "Components/WidgetComponent.h"
-#include "System/R1DamageUISubsystem.h"
 #include "UI/R1DamageTextWidget.h"
 
 AR1DamageTextActor::AR1DamageTextActor()
@@ -26,10 +25,7 @@ void AR1DamageTextActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//if (UR1DamageTextWidget* DamageWidget = Cast<UR1DamageTextWidget>(DamageTextWidgetComp->GetUserWidgetObject()))
-	//{
-	//	DamageWidget->OnAnimationFinished.AddDynamic(this, &AR1DamageTextActor::HandleAnimationFinished);
-	//}
+	SetLifeSpan(LifeSpanSeconds);
 }
 
 void AR1DamageTextActor::SetDamageInfo(const FR1DamageInfo& DamageInfo)
@@ -37,13 +33,5 @@ void AR1DamageTextActor::SetDamageInfo(const FR1DamageInfo& DamageInfo)
 	if (UR1DamageTextWidget* DamageWidget = Cast<UR1DamageTextWidget>(DamageTextWidgetComp->GetUserWidgetObject()))
 	{
 		DamageWidget->SetDamageInfo(DamageInfo);
-	}
-}
-
-void AR1DamageTextActor::HandleAnimationFinished()
-{
-	if (UR1DamageUISubsystem* DamageSS = GetWorld()->GetSubsystem<UR1DamageUISubsystem>())
-	{
-		DamageSS->ReturnActorToPool(this);
 	}
 }

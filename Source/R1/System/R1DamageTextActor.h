@@ -9,8 +9,8 @@ UCLASS()
 class R1_API AR1DamageTextActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	AR1DamageTextActor();
 
 	void SetDamageInfo(const FR1DamageInfo& DamageInfo);
@@ -24,7 +24,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<class UWidgetComponent> DamageTextWidgetComp;
 
-private:
-	UFUNCTION()
-	void HandleAnimationFinished();
+	// 플로팅 애니메이션이 끝난 뒤 자동 파괴되기까지의 수명 (FloatAnim 길이보다 길게)
+	UPROPERTY(EditDefaultsOnly, Category = "Damage UI")
+	float LifeSpanSeconds = 1.5f;
 };

@@ -299,10 +299,17 @@ void AR1Monster::WakeUp()
 	SetCreatureState(ECreatureState::Idle);
 
 	// 5. AI 재가동
-	AR1AIController* AIC = Cast<AR1AIController>(GetController());
-	if (AIC && AIC->BrainComponent)
+	// GoToSleep에서 컨트롤러를 파괴했으므로 새로 스폰 (OnPossess에서 BT·퍼셉션 재가동)
+	if (GetController() == nullptr)
 	{
-		AIC->BrainComponent->RestartLogic();
+		SpawnDefaultController();
+	}
+	else if (AR1AIController* AIC = Cast<AR1AIController>(GetController()))
+	{
+		if (AIC->BrainComponent)
+		{
+			AIC->BrainComponent->RestartLogic();
+		}
 	}
 
 	// 6. 몬스터 스탯 초기화 (GAS)
@@ -363,6 +370,14 @@ void AR1Monster::GoToSleep()
 	//{
 	//	HpBarComponent->SetHiddenInGame(true);
 	//}
+
+	// 6. AI 컨트롤러 파괴 — 잠자는 몬스터가 컨트롤러(퍼셉션 포함)를 월드에 남기지 않게 함.
+	// 풀에서 재사용될 때 WakeUp의 SpawnDefaultController가 새로 만들어줌
+	if (AController* AIC = GetController())
+	{
+		AIC->UnPossess();
+		AIC->Destroy();
+	}
 }
 
 void AR1Monster::ResetHitFlash()
