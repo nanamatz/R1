@@ -23,7 +23,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Damage UI")
 	TObjectPtr<class UWidgetAnimation> FloatAnim;
-	
-	//UFUNCTION(BlueprintCallable, Category = "Damage UI")
-	//void HandleAnimationFinished();
 };

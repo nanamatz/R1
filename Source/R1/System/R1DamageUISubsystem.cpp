@@ -8,39 +8,18 @@ UR1DamageUISubsystem::UR1DamageUISubsystem()
 
 void UR1DamageUISubsystem::ShowDamageText(const FR1DamageInfo& DamageInfo)
 {
-	AR1DamageTextActor* DamageActor = GetActorFromPool();
+	if (!DamageActorClass)
+	{
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	// 액터는 BeginPlay에서 SetLifeSpan으로 스스로 파괴됨 (풀링 없이 스폰-파괴)
+	AR1DamageTextActor* DamageActor = GetWorld()->SpawnActor<AR1DamageTextActor>(DamageActorClass, DamageInfo.TargetLocation, FRotator::ZeroRotator, SpawnParams);
 	if (DamageActor)
 	{
-		DamageActor->SetActorLocation(DamageInfo.TargetLocation);
-		DamageActor->SetActorHiddenInGame(false);
 		DamageActor->SetDamageInfo(DamageInfo);
 	}
-}
-
-void UR1DamageUISubsystem::ReturnActorToPool(AR1DamageTextActor* Actor)
-{
-	if (Actor)
-	{
-		Actor->SetActorHiddenInGame(true);
-		ActorPool.Add(Actor);
-	}
-}
-
-AR1DamageTextActor* UR1DamageUISubsystem::GetActorFromPool()
-{
-	if (ActorPool.Num() > 0)
-	{
-		return ActorPool.Pop();
-	}
-
-	if (DamageActorClass)
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		
-		AR1DamageTextActor* NewActor = GetWorld()->SpawnActor<AR1DamageTextActor>(DamageActorClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
-		return NewActor;
-	}
-
-	return nullptr;
 }

@@ -19,15 +19,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Damage UI")
 	void ShowDamageText(const FR1DamageInfo& DamageInfo);
 
-	void ReturnActorToPool(AR1DamageTextActor* Actor);
-
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Damage UI")
 	TSubclassOf<AR1DamageTextActor> DamageActorClass;
-
-private:
-	UPROPERTY()
-	TArray<TObjectPtr<AR1DamageTextActor>> ActorPool;
-
-	AR1DamageTextActor* GetActorFromPool();
 };
