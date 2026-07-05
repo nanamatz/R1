@@ -106,7 +106,7 @@ public:
 
 	// 방 맵 간의 물리적 거리 (예: 10000 = 100m, 서로 보이지 않게 띄움)
 	UPROPERTY(EditAnywhere, Category = "Map Generation")
-	float RoomSpacing = 5000.0f;
+	float RoomSpacing = 10000.0f;
 
 	// 최종적으로 완성된 맵의 데이터 배열
 	UPROPERTY(BlueprintReadOnly, Category = "Map Generation")
