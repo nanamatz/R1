@@ -1,4 +1,5 @@
 #include "AbilitySystem/Abilities/R1GameplayAbility_WaveAttack.h"
+#include "R1LogChannels.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Character/R1Player.h"
@@ -134,7 +135,7 @@ void UR1GameplayAbility_WaveAttack::OnAttackEventReceived(FGameplayEventData Pay
 					}
 				}
 			}
-			UE_LOG(LogTemp, Log, TEXT("WaveAttack (Laser): Hit %d unique players"), ProcessedActors.Num());
+			UE_LOG(LogR1, Log, TEXT("WaveAttack (Laser): Hit %d unique players"), ProcessedActors.Num());
 		}
 	}
 }

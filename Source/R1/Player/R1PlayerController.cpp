@@ -1,4 +1,5 @@
 #include "Player/R1PlayerController.h"
+#include "R1LogChannels.h"
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
@@ -75,7 +76,7 @@ const UInputAction* AR1PlayerController::FindInputActionChecked(const UR1InputDa
 	const UInputAction* Action = InputData ? InputData->FindInputActionByTag(Tag) : nullptr;
 	if (Action == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: %s is null."), DebugName);
+		UE_LOG(LogR1, Error, TEXT("SetupInputComponent failed: %s is null."), DebugName);
 	}
 	return Action;
 }
@@ -87,14 +88,14 @@ void AR1PlayerController::SetupInputComponent()
 	const UR1InputData* InputData = UR1AssetManager::GetAssetByName<UR1InputData>("InputData");
 	if (InputData == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogR1, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 		return;
 	}
 
 	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
 	if (EnhancedInputComponent == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("SetupInputComponent failed: InputComponent is not UEnhancedInputComponent."));
+		UE_LOG(LogR1, Error, TEXT("SetupInputComponent failed: InputComponent is not UEnhancedInputComponent."));
 		return;
 	}
 
@@ -528,7 +529,7 @@ void AR1PlayerController::DropItemToWorld(UR1ItemInstance* ItemToDrop, ER1Equipm
 
 		InvenSubsys->OnInventoryUpdated.Broadcast();
 
-		UE_LOG(LogTemp, Warning, TEXT("아이템을 월드에 버렸습니다!"));
+		UE_LOG(LogR1, Warning, TEXT("아이템을 월드에 버렸습니다!"));
 	}
 }
 

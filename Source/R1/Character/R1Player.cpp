@@ -1,6 +1,7 @@
 
 
 #include "Character/R1Player.h"
+#include "R1LogChannels.h"
 #include "Character/R1Monster.h"
 #include "Player/R1PlayerState.h"
 
@@ -148,7 +149,7 @@ void AR1Player::NotifyActorEndOverlap(AActor* OtherActor)
 		if (OverlappingMobs.Num() == 0)
 		{
 			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-			UE_LOG(LogTemp, Warning, TEXT("몬스터와 겹침이 완전히 해제되어 Block 상태로 복구되었습니다."));
+			UE_LOG(LogR1, Warning, TEXT("몬스터와 겹침이 완전히 해제되어 Block 상태로 복구되었습니다."));
 		}
 	}
 }
@@ -208,7 +209,7 @@ void AR1Player::OnManaChanged(float Ratio)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("OnMpChanged is NOT bound for actor: %s"), *GetName());
+		UE_LOG(LogR1, Warning, TEXT("OnMpChanged is NOT bound for actor: %s"), *GetName());
 	}
 }
 
@@ -223,16 +224,16 @@ void AR1Player::InitExpBar()
 		float Level = PlayerAttributeSet->GetLevel(); // 🌟 레벨 가져오기
 		float Ratio = Exp / MaxExp;
 
-		UE_LOG(LogTemp, Warning, TEXT("====================================="));
-		UE_LOG(LogTemp, Warning, TEXT("[Player Init] InitExpBar 완료 - UI 동기화됨!"));
-		UE_LOG(LogTemp, Warning, TEXT("[Player Init] 현재 인게임 레벨: %f"), Level);
-		UE_LOG(LogTemp, Warning, TEXT("[Player Init] 현재 보유 경험치: %f / %f"), Exp, MaxExp);
-		UE_LOG(LogTemp, Warning, TEXT("====================================="));
+		UE_LOG(LogR1, Warning, TEXT("====================================="));
+		UE_LOG(LogR1, Warning, TEXT("[Player Init] InitExpBar 완료 - UI 동기화됨!"));
+		UE_LOG(LogR1, Warning, TEXT("[Player Init] 현재 인게임 레벨: %f"), Level);
+		UE_LOG(LogR1, Warning, TEXT("[Player Init] 현재 보유 경험치: %f / %f"), Exp, MaxExp);
+		UE_LOG(LogR1, Warning, TEXT("====================================="));
 		PS->OnExpChanged.Broadcast(Ratio);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[Player Init] PlayerAttributeSet이 아직도 nullptr입니다!"));
+		UE_LOG(LogR1, Error, TEXT("[Player Init] PlayerAttributeSet이 아직도 nullptr입니다!"));
 	}
 }
 

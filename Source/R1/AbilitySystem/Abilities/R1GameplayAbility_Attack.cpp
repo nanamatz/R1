@@ -1,4 +1,5 @@
 #include "AbilitySystem/Abilities/R1GameplayAbility_Attack.h"
+#include "R1LogChannels.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h" // 몽타주 Task
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"  // 이벤트 대기 Task
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
@@ -55,12 +56,12 @@ void UR1GameplayAbility_Attack::OnMontageEnded()
 		if (Attacker->GetCreatureState() == ECreatureState::Dead)
 		{
 			Attacker->SetCreatureState(ECreatureState::Dead);
-			UE_LOG(LogTemp, Warning, TEXT("Dead"));
+			UE_LOG(LogR1, Warning, TEXT("Dead"));
 		}
 		else
 		{
 			Attacker->SetCreatureState(ECreatureState::Moving);
-			UE_LOG(LogTemp, Warning, TEXT("Moving"));
+			UE_LOG(LogR1, Warning, TEXT("Moving"));
 		}
 	}
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
@@ -158,7 +159,7 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Player Attacked, But TargetActor is NULL!"));
+				UE_LOG(LogR1, Warning, TEXT("Player Attacked, But TargetActor is NULL!"));
 			}
 		}
 	}

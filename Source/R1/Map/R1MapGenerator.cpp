@@ -1,4 +1,5 @@
 #include "Map/R1MapGenerator.h"
+#include "R1LogChannels.h"
 #include "Map/DungeonManager.h"
 #include "Map/R1Door.h"
 #include "Map/R1MapGrid.h"
@@ -20,7 +21,6 @@
 
 #include "Containers/Queue.h"
 #include "Data/R1AssetData.h"
-#include "Data/R1RoomDefinitionData.h"
 #include "EngineUtils.h"
 #include "NavigationSystem.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
@@ -69,7 +69,7 @@ void AR1MapGenerator::InitializeMap()
 
 	if (SaveSystem && SaveSystem->HasSavedRun())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 세이브 파일이 존재합니다. 랜덤 맵 생성을 대기하고 로드를 요청합니다."));
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 세이브 파일이 존재합니다. 랜덤 맵 생성을 대기하고 로드를 요청합니다."));
 
 		// 플레이어 캐릭터를 찾아옴
 		AR1Player* PlayerChar = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
@@ -118,11 +118,11 @@ void AR1MapGenerator::GenerateMap()
 	if (bMapGeneratedSuccessfully)
 	{
 		AssignRoomTypes();
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 합리적인 퍼즐 맞추기로 %d개의 방 지도 생성이 완료되었습니다!"), GeneratedMap.Num());
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 합리적인 퍼즐 맞추기로 %d개의 방 지도 생성이 완료되었습니다!"), GeneratedMap.Num());
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 퍼즐 조각이 부족하거나 알고리즘 한계로 생성 실패!"));
+		UE_LOG(LogR1, Error, TEXT("[MapGenerator] 퍼즐 조각이 부족하거나 알고리즘 한계로 생성 실패!"));
 	}
 
 	TriggerAutoSave();
@@ -138,7 +138,7 @@ void AR1MapGenerator::InitializeRoomPools()
 	// 에디터에서 세팅한 층 배열을 벗어나면 중단
 	if (!FloorSettings.IsValidIndex(CurrentFloorIndex))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] %d층 세팅 데이터가 없습니다!"), CurrentFloorIndex);
+		UE_LOG(LogR1, Error, TEXT("[MapGenerator] %d층 세팅 데이터가 없습니다!"), CurrentFloorIndex);
 		return;
 	}
 
@@ -231,7 +231,7 @@ void AR1MapGenerator::AssignRoomTypes()
 		NumSpecialRoomsToSpawn = FMath::Min(NumSpecialRoomsToSpawn, AvailableSpecialTypes.Num());
 
 
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 🎲 랜덤 특수 방 %d개 스폰 결정!"), NumSpecialRoomsToSpawn);
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 🎲 랜덤 특수 방 %d개 스폰 결정!"), NumSpecialRoomsToSpawn);
 
 
 		// 타입 -> 풀 매핑. 분배 시 if-체인 대신 테이블 조회로 풀을 선택한다.
@@ -255,16 +255,16 @@ void AR1MapGenerator::AssignRoomTypes()
 
 			switch (SelectedType)
 			{
-			case ER1RoomContentType::Treasure: UE_LOG(LogTemp, Warning, TEXT(" - 보물 방 당첨!")); break;
-			case ER1RoomContentType::Shop:     UE_LOG(LogTemp, Warning, TEXT(" - 상점 방 당첨!")); break;
-			case ER1RoomContentType::Refresh:  UE_LOG(LogTemp, Warning, TEXT(" - 회복 방 당첨!")); break;
+			case ER1RoomContentType::Treasure: UE_LOG(LogR1, Warning, TEXT(" - 보물 방 당첨!")); break;
+			case ER1RoomContentType::Shop:     UE_LOG(LogR1, Warning, TEXT(" - 상점 방 당첨!")); break;
+			case ER1RoomContentType::Refresh:  UE_LOG(LogR1, Warning, TEXT(" - 회복 방 당첨!")); break;
 			default: break;
 			}
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] ❌ 사용 가능한 특수 방 풀이 전부 0개입니다!"));
+		UE_LOG(LogR1, Error, TEXT("[MapGenerator] ❌ 사용 가능한 특수 방 풀이 전부 0개입니다!"));
 	}
 
 	for (UR1RoomDefinitionData* SpecialRoomData : SpecialRoomsToSpawn)
@@ -416,7 +416,7 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 	PendingActivateNodeID = CurrentActiveNodeID;
 	SpawnFloorAndWait();
 
-	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 📂 %d층 %d번 방에서 이어서 시작합니다!"), CurrentFloorIndex + 1, CurrentActiveNodeID);
+	UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 📂 %d층 %d번 방에서 이어서 시작합니다!"), CurrentFloorIndex + 1, CurrentActiveNodeID);
 }
 
 UR1RoomDefinitionData* AR1MapGenerator::FindRoomDefinitionByLabel(FName AssetName)
@@ -522,7 +522,7 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 	ADungeonManager* Manager = ActiveManagers.FindRef(NodeID);
 	if (!IsValid(Manager))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] ActivateRoom: %d번 방 매니저가 아직 등록되지 않았습니다."), NodeID);
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] ActivateRoom: %d번 방 매니저가 아직 등록되지 않았습니다."), NodeID);
 		return;
 	}
 
@@ -668,7 +668,7 @@ void AR1MapGenerator::StartFloorAssetPreload()
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning,
+				UE_LOG(LogR1, Warning,
 					TEXT("[MapGenerator] 프리로드 Primary Asset 경로 해석 실패: %s"), *AssetId.ToString());
 			}
 		}
@@ -683,7 +683,7 @@ void AR1MapGenerator::StartFloorAssetPreload()
 	const TArray<FSoftObjectPath> PathsToLoad = UniquePaths.Array();
 	FloorPreloadHandle = AssetManager.GetStreamableManager().RequestAsyncLoad(PathsToLoad);
 
-	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 층 에셋 프리로드 시작: %d개 경로"), PathsToLoad.Num());
+	UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 층 에셋 프리로드 시작: %d개 경로"), PathsToLoad.Num());
 }
 
 void AR1MapGenerator::SpawnFloorAndWait()
@@ -845,7 +845,7 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 	{
 		const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
 			[](int32 NodeID) { return FString::FromInt(NodeID); });
-		UE_LOG(LogTemp, Error,
+		UE_LOG(LogR1, Error,
 			TEXT("[MapGenerator] navmesh 대기 타임아웃(%.1fs) — 다음 방에 navmesh가 생성되지 않았습니다: [%s]. ")
 			TEXT("해당 방 레벨의 NavMeshBoundsVolume가 바닥(방 중심 포함)을 감싸는지 확인하세요."),
 			NavBuildMaxTicks * NavBuildPollInterval, *RoomList);
@@ -853,7 +853,7 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 
 	if (bTimedOut && FloorPreloadHandle.IsValid() && !FloorPreloadHandle->HasLoadCompleted())
 	{
-		UE_LOG(LogTemp, Warning,
+		UE_LOG(LogR1, Warning,
 			TEXT("[MapGenerator] 에셋 프리로드가 끝나기 전에 타임아웃 — 프리로드를 기다리지 않고 진행합니다."));
 	}
 
@@ -923,7 +923,7 @@ void AR1MapGenerator::RenotifyUnnavigableRooms(UNavigationSystemV1* NavSys, cons
 
 	const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
 		[](int32 NodeID) { return FString::FromInt(NodeID); });
-	UE_LOG(LogTemp, Warning,
+	UE_LOG(LogR1, Warning,
 		TEXT("[MapGenerator] navmesh 미생성 방 %d개 재통지(재빌드 강제): [%s]"),
 		UnnavigableRooms.Num(), *RoomList);
 }
@@ -968,7 +968,7 @@ void AR1MapGenerator::GoToNextFloor()
 	// 마지막 층까지 깼다면 리턴 (게임 클리어)
 	if (!FloorSettings.IsValidIndex(CurrentFloorIndex))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 모든 층 클리어! 게임 엔딩!"));
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 모든 층 클리어! 게임 엔딩!"));
 		return;
 	}
 
@@ -1040,7 +1040,7 @@ void AR1MapGenerator::CleanupFloorActors()
 		PoolSubsystem->ClearAllPools();
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 층 전환 정리: 아이템 %d, 골드 %d, 몬스터 %d 제거"), DestroyedItems, DestroyedGold, DestroyedMonsters);
+	UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 층 전환 정리: 아이템 %d, 골드 %d, 몬스터 %d 제거"), DestroyedItems, DestroyedGold, DestroyedMonsters);
 }
 
 bool AR1MapGenerator::IsLastFloor() const
@@ -1096,11 +1096,11 @@ void AR1MapGenerator::TriggerAutoSave()
 
 			CurrentActiveNodeID = TempActiveID;
 
-			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 자동 저장 완료! (현재 저장된 방: %d번)"), CurrentActiveNodeID);
+			UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 자동 저장 완료! (현재 저장된 방: %d번)"), CurrentActiveNodeID);
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 자동 저장 실패: 플레이어 캐릭터를 찾을 수 없습니다!"));
+			UE_LOG(LogR1, Error, TEXT("[MapGenerator] 자동 저장 실패: 플레이어 캐릭터를 찾을 수 없습니다!"));
 		}
 	}
 }

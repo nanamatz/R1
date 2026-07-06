@@ -1,4 +1,5 @@
 #include "Object/R1ItemActor.h"
+#include "R1LogChannels.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/TextBlock.h"
@@ -165,7 +166,7 @@ void AR1ItemActor::InitItem(UR1ItemAssetData* InItemData, EItemRarity InRarity, 
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("ItemActor: 전달받은 ItemData가 Null입니다!"));
+		UE_LOG(LogR1, Error, TEXT("ItemActor: 전달받은 ItemData가 Null입니다!"));
 	}
 
 	if (HaloEffect)
@@ -197,12 +198,12 @@ void AR1ItemActor::OnLootAttempted(AR1Player* Looter)
 			UGameplayStatics::PlaySoundAtLocation(this, ItemData->WorldLootingSound, GetActorLocation());
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("아이템 획득: %s"), *ItemData->ItemName.ToString());
+		UE_LOG(LogR1, Warning, TEXT("아이템 획득: %s"), *ItemData->ItemName.ToString());
 		Destroy();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("인벤토리가 가득 차서 먹을 수 없습니다!"));
+		UE_LOG(LogR1, Warning, TEXT("인벤토리가 가득 차서 먹을 수 없습니다!"));
 	}
 }
 

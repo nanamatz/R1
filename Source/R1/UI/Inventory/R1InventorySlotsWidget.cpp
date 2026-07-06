@@ -2,6 +2,7 @@
 
 
 #include "UI/Inventory/R1InventorySlotsWidget.h"
+#include "R1LogChannels.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -219,7 +220,7 @@ bool UR1InventorySlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FD
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("인벤토리에 장비를 벗어둘 공간이 부족합니다!"));
+				UE_LOG(LogR1, Warning, TEXT("인벤토리에 장비를 벗어둘 공간이 부족합니다!"));
 				Inventory->OnInventoryUpdated.Broadcast();
 				return true;
 			}

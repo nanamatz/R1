@@ -1,4 +1,5 @@
 #include "UI/PlayerInfo/R1HpTextUI.h"
+#include "R1LogChannels.h"
 
 #include "Components/TextBlock.h"
 #include "Character/R1Player.h"
@@ -12,14 +13,14 @@ void UR1HpTextUI::NativeConstruct()
 	AR1Player* Player = Cast<AR1Player>(GetOwningPlayerPawn());
 	if (!Player)
 	{
-		UE_LOG(LogTemp, Error, TEXT("R1HpTextUI: Failed to find AR1Player during NativeConstruct!"));
+		UE_LOG(LogR1, Error, TEXT("R1HpTextUI: Failed to find AR1Player during NativeConstruct!"));
 		return;
 	}
 
 	BoundASC = Player->GetAbilitySystemComponent();
 	if (!BoundASC)
 	{
-		UE_LOG(LogTemp, Error, TEXT("R1HpTextUI: AR1Player has no AbilitySystemComponent!"));
+		UE_LOG(LogR1, Error, TEXT("R1HpTextUI: AR1Player has no AbilitySystemComponent!"));
 		return;
 	}
 

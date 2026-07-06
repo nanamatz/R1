@@ -2,6 +2,7 @@
 
 
 #include "Map/R1Door.h"
+#include "R1LogChannels.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Character/R1Player.h"
@@ -219,7 +220,7 @@ void AR1Door::Interact_Implementation(AR1PlayerController* Interactor)
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("열쇠가 부족합니다!"));
+			UE_LOG(LogR1, Warning, TEXT("열쇠가 부족합니다!"));
 			
 			if (LinkedLockDoor && LinkedLockDoor->ErrorSound)
 			{

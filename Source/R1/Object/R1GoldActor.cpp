@@ -1,4 +1,5 @@
 #include "Object/R1GoldActor.h"
+#include "R1LogChannels.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Item/R1InventorySubsystem.h" // 서브시스템 인클루드
@@ -215,12 +216,12 @@ void AR1GoldActor::UpdateTooltipUI()
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT(" 툴팁 위젯 캐스팅 실패! 현재 할당된 위젯 클래스: %s"), *UserWidget->GetClass()->GetName());
+			UE_LOG(LogR1, Error, TEXT(" 툴팁 위젯 캐스팅 실패! 현재 할당된 위젯 클래스: %s"), *UserWidget->GetClass()->GetName());
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT(" UserWidgetObject가 NULL입니다. 위젯 클래스가 할당되지 않았습니다."));
+		UE_LOG(LogR1, Error, TEXT(" UserWidgetObject가 NULL입니다. 위젯 클래스가 할당되지 않았습니다."));
 	}
 }
 

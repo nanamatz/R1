@@ -7,7 +7,6 @@
 #include "Character/R1Player.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
-#include "R1GameplayAbility_LevelUp.h"
 
 UR1GameplayAbility_LevelUp::UR1GameplayAbility_LevelUp(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

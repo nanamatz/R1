@@ -1,4 +1,5 @@
 #include "Map/R1MapLayoutGenerator.h"
+#include "R1LogChannels.h"
 #include "Map/R1MapGrid.h"
 #include "Data/R1RoomDefinitionData.h"
 #include "Containers/Queue.h"
@@ -88,7 +89,7 @@ bool FR1MapLayoutGenerator::BuildAttempt(TArray<UR1RoomDefinitionData*>& StartPo
 
 				if (!NextRoomData)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 핏이 맞는 방이 풀에 고갈되었습니다. 이쪽 방향은 벽으로 막습니다."));
+					UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 핏이 맞는 방이 풀에 고갈되었습니다. 이쪽 방향은 벽으로 막습니다."));
 					continue; // 풀에 퍼즐 조각이 없으면 방을 만들지 않음
 				}
 

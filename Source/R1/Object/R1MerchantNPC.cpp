@@ -1,4 +1,5 @@
 #include "Object/R1MerchantNPC.h"
+#include "R1LogChannels.h"
 #include "Data/R1ItemAssetData.h"
 #include "Data/R1ItemPoolData.h"
 #include "Data/R1ShopNPCData.h"
@@ -132,7 +133,7 @@ void AR1MerchantNPC::AssignNPCIdentity()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MerchantNPC: NPCPool이 할당되지 않았거나 비어 있습니다!"));
+		UE_LOG(LogR1, Warning, TEXT("MerchantNPC: NPCPool이 할당되지 않았거나 비어 있습니다!"));
 	}
 }
 
@@ -140,7 +141,7 @@ void AR1MerchantNPC::GenerateShopItems()
 {
 	if (!ItemPool || ItemPool->DropItems.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Merchant ItemPool is empty or null!"));
+		UE_LOG(LogR1, Warning, TEXT("Merchant ItemPool is empty or null!"));
 		return;
 	}
 
@@ -153,7 +154,7 @@ void AR1MerchantNPC::GenerateShopItems()
 		if (SaveSystem->LoadShopInventory(RoomID, CachedItems, this))
 		{
 			ItemsForSale = CachedItems;
-			UE_LOG(LogTemp, Warning, TEXT("Merchant: %d번 방 상점 리스트 복원 완료!"), RoomID);
+			UE_LOG(LogR1, Warning, TEXT("Merchant: %d번 방 상점 리스트 복원 완료!"), RoomID);
 			return; // 복원 성공 시 새로 뽑지 않고 그대로 종료!
 		}
 	}
@@ -184,7 +185,7 @@ void AR1MerchantNPC::GenerateShopItems()
 		if (SaveSystem && RoomID != -1)
 		{
 			SaveSystem->SaveShopInventory(RoomID, ItemsForSale);
-			UE_LOG(LogTemp, Warning, TEXT("Merchant: %d번 방 상점 리스트 최초 생성 및 캐싱 완료!"), RoomID);
+			UE_LOG(LogR1, Warning, TEXT("Merchant: %d번 방 상점 리스트 최초 생성 및 캐싱 완료!"), RoomID);
 		}
 	}
 }

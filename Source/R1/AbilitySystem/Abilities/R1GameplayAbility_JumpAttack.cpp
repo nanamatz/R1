@@ -1,4 +1,5 @@
 #include "AbilitySystem/Abilities/R1GameplayAbility_JumpAttack.h"
+#include "R1LogChannels.h"
 #include "Character/R1Player.h"
 #include "Character/R1Monster.h"
 #include "Player/R1PlayerController.h"
@@ -190,14 +191,14 @@ void UR1GameplayAbility_JumpAttack::OnAvatarSet(const FGameplayAbilityActorInfo*
 
 	if (ActorInfo == nullptr || !ActorInfo->AvatarActor.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("OnAvatarSet: ActorInfo 또는 AvatarActor가 유효하지 않습니다!"));
+		UE_LOG(LogR1, Warning, TEXT("OnAvatarSet: ActorInfo 또는 AvatarActor가 유효하지 않습니다!"));
 		return;
 	}
 
 	UWorld* World = ActorInfo->AvatarActor->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("OnAvatarSet: AvatarActor에서 World를 가져올 수 없습니다!"));
+		UE_LOG(LogR1, Warning, TEXT("OnAvatarSet: AvatarActor에서 World를 가져올 수 없습니다!"));
 		return;
 	}
 
@@ -209,11 +210,11 @@ void UR1GameplayAbility_JumpAttack::OnAvatarSet(const FGameplayAbilityActorInfo*
 			CachedSkillRange = SkillData->Range;
 			CachedManaCost = SkillData->ManaCost;
 
-			UE_LOG(LogTemp, Warning, TEXT("[OnAvatarSet] 스킬 데이터 로드 완료! 데미지: %f"), CachedSkillDamage);
+			UE_LOG(LogR1, Warning, TEXT("[OnAvatarSet] 스킬 데이터 로드 완료! 데미지: %f"), CachedSkillDamage);
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("[OnAvatarSet] SkillID '%s'에 해당하는 데이터를 찾을 수 없습니다!"), *SkillID.ToString());
+			UE_LOG(LogR1, Error, TEXT("[OnAvatarSet] SkillID '%s'에 해당하는 데이터를 찾을 수 없습니다!"), *SkillID.ToString());
 		}
 	}
 }
@@ -231,7 +232,7 @@ bool UR1GameplayAbility_JumpAttack::CheckCost(const FGameplayAbilitySpecHandle H
 		// 현재 마나가 데이터 테이블에서 가져온 마나 소모량보다 적으면 스킬 시전 불가!
 		if (CurrentMana < CachedManaCost)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("마나가 부족합니다! 필요 마나: %f, 현재 마나: %f"), CachedManaCost, CurrentMana);
+			UE_LOG(LogR1, Warning, TEXT("마나가 부족합니다! 필요 마나: %f, 현재 마나: %f"), CachedManaCost, CurrentMana);
 			return false;
 		}
 	}
@@ -301,7 +302,7 @@ void UR1GameplayAbility_JumpAttack::OnDashFinished()
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[JumpAttack] 착지 지점 아래에서 바닥을 찾지 못했습니다. 위치 보정을 건너뜁니다."));
+			UE_LOG(LogR1, Warning, TEXT("[JumpAttack] 착지 지점 아래에서 바닥을 찾지 못했습니다. 위치 보정을 건너뜁니다."));
 		}
 	}
 
@@ -311,12 +312,12 @@ void UR1GameplayAbility_JumpAttack::OnDashFinished()
 	if (Attacker->GetCreatureState() == ECreatureState::Dead)
 	{
 		Attacker->SetCreatureState(ECreatureState::Dead);
-		UE_LOG(LogTemp, Warning, TEXT("Dead"));
+		UE_LOG(LogR1, Warning, TEXT("Dead"));
 	}
 	else
 	{
 		Attacker->SetCreatureState(ECreatureState::Moving);
-		UE_LOG(LogTemp, Warning, TEXT("Moving"));
+		UE_LOG(LogR1, Warning, TEXT("Moving"));
 	}
 
 	// 4. 능력 정상 종료

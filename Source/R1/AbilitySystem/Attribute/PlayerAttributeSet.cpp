@@ -2,6 +2,7 @@
 
 
 #include "AbilitySystem/Attribute/PlayerAttributeSet.h"
+#include "R1LogChannels.h"
 #include "GameplayEffectExtension.h"
 #include "Player/R1PlayerState.h"
 #include "Character/R1Character.h"
@@ -74,7 +75,7 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 			FRealCurve* MaxExpCurve = PS->PlayerStatTable->FindCurve(FName("MaxExp"), TEXT(""));
 			if (!MaxExpCurve)
 			{
-				UE_LOG(LogTemp, Error, TEXT("Can't find CurveTable Row Named : Max Exp!"));
+				UE_LOG(LogR1, Error, TEXT("Can't find CurveTable Row Named : Max Exp!"));
 				return;
 			}
 			// 다음 레벨업에 필요한 최대 경험치 계산
@@ -82,7 +83,7 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 
 			if (MaxExpForNextLevel <= KINDA_SMALL_NUMBER)
 			{
-				UE_LOG(LogTemp, Error, TEXT("Invalid MaxExp curve value at level %.1f."), CurrentLevel);
+				UE_LOG(LogR1, Error, TEXT("Invalid MaxExp curve value at level %.1f."), CurrentLevel);
 				return;
 			}
 
@@ -108,18 +109,18 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 
 				}
 
-				UE_LOG(LogTemp, Warning, TEXT("Level UP!!!"));
+				UE_LOG(LogR1, Warning, TEXT("Level UP!!!"));
 
 				SetLevel(CurrentLevel);
 				SetExp(CurrentExp);
 
 				// 다음 레벨업에 필요한 경험치로 갱신 (루프 계속 진행을 위함)
 				MaxExpForNextLevel = MaxExpCurve->Eval(CurrentLevel);
-				UE_LOG(LogTemp, Warning, TEXT("Max Exp : %f"), MaxExpForNextLevel);
+				UE_LOG(LogR1, Warning, TEXT("Max Exp : %f"), MaxExpForNextLevel);
 				SetMaxExp(MaxExpForNextLevel);
 				if (MaxExpForNextLevel <= KINDA_SMALL_NUMBER)
 				{
-					UE_LOG(LogTemp, Error, TEXT("Invalid MaxExp curve value at level %.1f."), CurrentLevel);
+					UE_LOG(LogR1, Error, TEXT("Invalid MaxExp curve value at level %.1f."), CurrentLevel);
 					break;
 				}
 				//레벨 업 후 UI 갱신

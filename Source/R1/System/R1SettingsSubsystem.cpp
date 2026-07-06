@@ -1,4 +1,5 @@
 #include "System/R1SettingsSubsystem.h"
+#include "R1LogChannels.h"
 #include "System/R1SaveGame_Settings.h"
 #include "System/R1LocalizationSubsystem.h"
 #include "Kismet/GameplayStatics.h"
@@ -63,7 +64,7 @@ void UR1SettingsSubsystem::ApplyGraphicsSettings()
     {
         if (CurrentSettings)
         {
-            UE_LOG(LogTemp, Warning, TEXT("[R1Settings] Applying Graphics: Res %dx%d, Mode %d, FPS %f, VSync %d"), 
+            UE_LOG(LogR1, Warning, TEXT("[R1Settings] Applying Graphics: Res %dx%d, Mode %d, FPS %f, VSync %d"), 
                 CurrentSettings->Resolution.X, CurrentSettings->Resolution.Y, 
                 (int32)CurrentSettings->WindowMode.GetValue(), 
                 CurrentSettings->FrameRateLimit, 

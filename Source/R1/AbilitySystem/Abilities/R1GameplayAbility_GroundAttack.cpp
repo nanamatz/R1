@@ -1,4 +1,5 @@
 #include "AbilitySystem/Abilities/R1GameplayAbility_GroundAttack.h"
+#include "R1LogChannels.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Character/R1Player.h"
 #include "Data/R1TelegraphData.h"
@@ -53,5 +54,5 @@ void UR1GameplayAbility_GroundAttack::OnAttackEventReceived(FGameplayEventData P
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("GroundAttack: Hit %d actors"), OverlappedActors.Num());
+	UE_LOG(LogR1, Log, TEXT("GroundAttack: Hit %d actors"), OverlappedActors.Num());
 }

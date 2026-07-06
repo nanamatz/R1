@@ -2,7 +2,6 @@
 
 
 #include "Animation/R1AnimNotify_SendGameplayEvent.h"
-#include "R1AnimNotify_SendGameplayEvent.h"
 #include "Character/R1Character.h"
 
 UR1AnimNotify_SendGameplayEvent::UR1AnimNotify_SendGameplayEvent(const FObjectInitializer& ObjectInitializer)
