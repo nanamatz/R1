@@ -52,19 +52,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void PostLoad() override;
 
 public:
 	// 기준점이 될 루트 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<class USceneComponent> RootComp;
 
-	// 에디터에서 자유롭게 추가할 수 있는 몬스터 스폰 세팅 목록
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-	TArray<FMonsterSpawnData> SpawnList;
-
-	// [신규] 프리셋 목록. 비어 있지 않으면 SpawnMonster()가 이 중 하나를 가중 랜덤으로 선택해 스폰합니다.
-	// 비어 있으면 위의 SpawnList(레거시)를 그대로 사용합니다. 기존 맵은 수정 없이 동작합니다.
+	// 프리셋 목록. SpawnMonster()가 이 중 하나를 가중 랜덤으로 선택해 스폰합니다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn", meta = (TitleProperty = "PresetName"))
 	TArray<FMonsterSpawnPreset> SpawnPresets;
 

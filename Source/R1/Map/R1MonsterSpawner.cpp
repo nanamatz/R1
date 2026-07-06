@@ -23,64 +23,42 @@ void AR1MonsterSpawner::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AR1MonsterSpawner::PostLoad()
-{
-	Super::PostLoad();
-
-	// [이관용 임시 코드] 레거시 SpawnList → SpawnPresets[0] 자동 이관.
-	// ResavePackages로 전체 맵 재저장 후 SpawnList와 함께 제거 예정.
-	if (SpawnPresets.IsEmpty() && SpawnList.Num() > 0)
-	{
-		FMonsterSpawnPreset& Migrated = SpawnPresets.AddDefaulted_GetRef();
-		Migrated.PresetName = TEXT("Default");
-		Migrated.SpawnList = MoveTemp(SpawnList);
-		SpawnList.Empty();
-	}
-}
-
 void AR1MonsterSpawner::SpawnMonster()
 {
 	if (!DungeonManager) return;
+	if (SpawnPresets.IsEmpty()) return;
 
-	if (SpawnPresets.Num() > 0)
+	// 가중 랜덤으로 프리셋 하나 선택 (음수 가중치는 0으로 취급)
+	float TotalWeight = 0.f;
+	for (const FMonsterSpawnPreset& Preset : SpawnPresets)
 	{
-		// 가중 랜덤으로 프리셋 하나 선택 (음수 가중치는 0으로 취급)
-		float TotalWeight = 0.f;
-		for (const FMonsterSpawnPreset& Preset : SpawnPresets)
-		{
-			TotalWeight += FMath::Max(Preset.Weight, 0.f);
-		}
+		TotalWeight += FMath::Max(Preset.Weight, 0.f);
+	}
 
-		int32 PickedIndex = 0;
-		if (TotalWeight > 0.f)
+	int32 PickedIndex = 0;
+	if (TotalWeight > 0.f)
+	{
+		float Roll = FMath::FRandRange(0.f, TotalWeight);
+		for (int32 i = 0; i < SpawnPresets.Num(); ++i)
 		{
-			float Roll = FMath::FRandRange(0.f, TotalWeight);
-			for (int32 i = 0; i < SpawnPresets.Num(); ++i)
+			const float PresetWeight = FMath::Max(SpawnPresets[i].Weight, 0.f);
+			if (PresetWeight <= 0.f) continue;
+
+			Roll -= PresetWeight;
+			if (Roll <= 0.f)
 			{
-				const float PresetWeight = FMath::Max(SpawnPresets[i].Weight, 0.f);
-				if (PresetWeight <= 0.f) continue;
-
-				Roll -= PresetWeight;
-				if (Roll <= 0.f)
-				{
-					PickedIndex = i;
-					break;
-				}
+				PickedIndex = i;
+				break;
 			}
 		}
-		else
-		{
-			// 전 프리셋 가중치가 0이면 균등 랜덤
-			PickedIndex = FMath::RandRange(0, SpawnPresets.Num() - 1);
-		}
-
-		SpawnFromList(SpawnPresets[PickedIndex].SpawnList);
 	}
 	else
 	{
-		// 레거시 경로: 프리셋 미사용 맵은 기존 SpawnList 그대로
-		SpawnFromList(SpawnList);
+		// 전 프리셋 가중치가 0이면 균등 랜덤
+		PickedIndex = FMath::RandRange(0, SpawnPresets.Num() - 1);
 	}
+
+	SpawnFromList(SpawnPresets[PickedIndex].SpawnList);
 }
 
 void AR1MonsterSpawner::SpawnFromList(const TArray<FMonsterSpawnData>& InSpawnList)
