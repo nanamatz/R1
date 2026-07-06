@@ -23,6 +23,21 @@ void AR1MonsterSpawner::BeginPlay()
 	Super::BeginPlay();
 }
 
+void AR1MonsterSpawner::PostLoad()
+{
+	Super::PostLoad();
+
+	// [이관용 임시 코드] 레거시 SpawnList → SpawnPresets[0] 자동 이관.
+	// ResavePackages로 전체 맵 재저장 후 SpawnList와 함께 제거 예정.
+	if (SpawnPresets.IsEmpty() && SpawnList.Num() > 0)
+	{
+		FMonsterSpawnPreset& Migrated = SpawnPresets.AddDefaulted_GetRef();
+		Migrated.PresetName = TEXT("Default");
+		Migrated.SpawnList = MoveTemp(SpawnList);
+		SpawnList.Empty();
+	}
+}
+
 void AR1MonsterSpawner::SpawnMonster()
 {
 	if (!DungeonManager) return;

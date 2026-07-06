@@ -52,6 +52,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void PostLoad() override;
 
 public:
 	// 기준점이 될 루트 컴포넌트
