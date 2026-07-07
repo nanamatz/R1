@@ -2,6 +2,7 @@
 
 
 #include "UI/PlayerInfo/R1PlayerInfoWidget.h"
+#include "R1LogChannels.h"
 #include "UI/PlayerInfo/R1HpOrbWidget.h"
 #include "UI/PlayerInfo/R1MpOrbWidget.h"
 #include "Components/Button.h"
@@ -17,12 +18,12 @@ void UR1PlayerInfoWidget::NativeConstruct()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("R1PlayerInfoWidget: Btn_HpOrbHover not bound — HP text hover will not work."));
+		UE_LOG(LogR1, Warning, TEXT("R1PlayerInfoWidget: Btn_HpOrbHover not bound — HP text hover will not work."));
 	}
 
 	if (!HpOrbWidget)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("R1PlayerInfoWidget: HpOrbWidget not bound — cannot toggle HP text."));
+		UE_LOG(LogR1, Warning, TEXT("R1PlayerInfoWidget: HpOrbWidget not bound — cannot toggle HP text."));
 	}
 
 	if (Btn_MpOrbHover)
@@ -32,12 +33,12 @@ void UR1PlayerInfoWidget::NativeConstruct()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("R1PlayerInfoWidget: Btn_MpOrbHover not bound — MP text hover will not work."));
+		UE_LOG(LogR1, Warning, TEXT("R1PlayerInfoWidget: Btn_MpOrbHover not bound — MP text hover will not work."));
 	}
 
 	if (!MpOrbWidget)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("R1PlayerInfoWidget: MpOrbWidget not bound — cannot toggle MP text."));
+		UE_LOG(LogR1, Warning, TEXT("R1PlayerInfoWidget: MpOrbWidget not bound — cannot toggle MP text."));
 	}
 }
 

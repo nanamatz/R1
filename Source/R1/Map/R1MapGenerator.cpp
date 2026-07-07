@@ -1,4 +1,5 @@
 #include "Map/R1MapGenerator.h"
+#include "R1LogChannels.h"
 #include "Map/DungeonManager.h"
 #include "Map/R1Door.h"
 #include "Map/R1MapGrid.h"
@@ -20,12 +21,12 @@
 
 #include "Containers/Queue.h"
 #include "Data/R1AssetData.h"
-#include "Data/R1RoomDefinitionData.h"
 #include "EngineUtils.h"
 #include "NavigationSystem.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 
 #include "Player/R1PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
 #include "System/R1LoadingSubSystem.h"
 #include "UI/System/R1LoadingScreenWidget.h"
 #include "Map/R1PlayerSpawnMarker.h"
@@ -38,6 +39,55 @@
 // GenerateMap(동기) 직후 도달하는 진행도. 이후 0.2~1.0 구간을 실제 방 스트리밍 비율로 채운다.
 // 느린 작업(방 AddToWorld)이 로딩바의 대부분(80%)을 차지하도록 해 50%에서 멈춘 듯한 인상을 없앤다.
 static constexpr float FloorLoadStartProgress = 0.2f;
+
+// 문 통과 방 전환 페이드 연출. 층 전체가 메모리에 있어 전환 자체는 즉시 가능하지만,
+// 순간 컷이 어색하므로 짧은 페이드아웃 → (검은 화면 뒤 텔레포트) → 페이드인으로 감싼다.
+static constexpr float DoorFadeOutDuration = 0.5f;
+static constexpr float DoorFadeInDuration = 0.3f;
+
+// 문 진입 시 카메라 정착(settle) 거리: 페이드인 시작 시 카메라가 입구 문 쪽으로 이만큼 당겨진
+// 위치에서 출발해 플레이어 쪽으로 미끄러져 들어온다 (기존 CameraLagSpeed=3 사용).
+// 크게 하면 카메라 이동이 길고 뚜렷해지고, 작게 하면 미묘해진다.
+static constexpr float DoorEntryCameraSettleDistance = 450.0f;
+
+static void StartDoorTransitionFade(const UObject* WorldContext, float FromAlpha, float ToAlpha, float Duration, bool bHoldWhenFinished)
+{
+	if (APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(WorldContext, 0))
+	{
+		CamManager->StartCameraFade(FromAlpha, ToAlpha, Duration, FLinearColor::Black, false, bHoldWhenFinished);
+	}
+	else
+	{
+		UE_LOG(LogR1, Error, TEXT("[DoorFade] PlayerCameraManager를 찾지 못해 페이드를 걸 수 없습니다!"));
+	}
+}
+
+// 텔레포트 프레임은 전투 시작·오토세이브·새 방 첫 렌더가 몰려 프레임 시간이 크게 튄다(히치).
+// 엔진 페이드는 프레임 DeltaTime으로 진행되므로(FadeTimeRemaining -= DeltaTime), 히치 직후에
+// 시작한 페이드인은 그 큰 DeltaTime 한 번에 통째로 소진되어 "효과가 뚝 끊기는" 것처럼 보인다.
+// 검은 화면(hold)을 유지한 채 프레임 델타가 정상으로 돌아온 틱에서 페이드인을 시작한다.
+static constexpr float DoorFadeHitchDeltaThreshold = 0.05f; // 이보다 긴 프레임은 히치로 간주
+static constexpr int32 DoorFadeMaxSettleTicks = 5;          // 무한 대기 방지 상한
+
+static void StartDoorFadeInWhenFrameSettles(AR1MapGenerator* Generator, int32 RemainingTries)
+{
+	if (!IsValid(Generator)) return;
+	UWorld* World = Generator->GetWorld();
+	if (!World) return;
+
+	const float LastFrameDelta = World->GetDeltaSeconds();
+	if (RemainingTries <= 0 || LastFrameDelta < DoorFadeHitchDeltaThreshold)
+	{
+		StartDoorTransitionFade(Generator, 1.0f, 0.0f, DoorFadeInDuration, false);
+		return;
+	}
+
+	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(Generator,
+		[Generator, RemainingTries]()
+		{
+			StartDoorFadeInWhenFrameSettles(Generator, RemainingTries - 1);
+		}));
+}
 
 // 네비메시 생성 대기 파라미터.
 static constexpr float NavBuildPollInterval = 0.05f;   // 폴링 간격(초)
@@ -69,7 +119,7 @@ void AR1MapGenerator::InitializeMap()
 
 	if (SaveSystem && SaveSystem->HasSavedRun())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 세이브 파일이 존재합니다. 랜덤 맵 생성을 대기하고 로드를 요청합니다."));
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 세이브 파일이 존재합니다. 랜덤 맵 생성을 대기하고 로드를 요청합니다."));
 
 		// 플레이어 캐릭터를 찾아옴
 		AR1Player* PlayerChar = Cast<AR1Player>(UGameplayStatics::GetPlayerCharacter(this, 0));
@@ -118,11 +168,11 @@ void AR1MapGenerator::GenerateMap()
 	if (bMapGeneratedSuccessfully)
 	{
 		AssignRoomTypes();
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 합리적인 퍼즐 맞추기로 %d개의 방 지도 생성이 완료되었습니다!"), GeneratedMap.Num());
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 합리적인 퍼즐 맞추기로 %d개의 방 지도 생성이 완료되었습니다!"), GeneratedMap.Num());
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 퍼즐 조각이 부족하거나 알고리즘 한계로 생성 실패!"));
+		UE_LOG(LogR1, Error, TEXT("[MapGenerator] 퍼즐 조각이 부족하거나 알고리즘 한계로 생성 실패!"));
 	}
 
 	TriggerAutoSave();
@@ -138,7 +188,7 @@ void AR1MapGenerator::InitializeRoomPools()
 	// 에디터에서 세팅한 층 배열을 벗어나면 중단
 	if (!FloorSettings.IsValidIndex(CurrentFloorIndex))
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] %d층 세팅 데이터가 없습니다!"), CurrentFloorIndex);
+		UE_LOG(LogR1, Error, TEXT("[MapGenerator] %d층 세팅 데이터가 없습니다!"), CurrentFloorIndex);
 		return;
 	}
 
@@ -231,7 +281,7 @@ void AR1MapGenerator::AssignRoomTypes()
 		NumSpecialRoomsToSpawn = FMath::Min(NumSpecialRoomsToSpawn, AvailableSpecialTypes.Num());
 
 
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 🎲 랜덤 특수 방 %d개 스폰 결정!"), NumSpecialRoomsToSpawn);
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 🎲 랜덤 특수 방 %d개 스폰 결정!"), NumSpecialRoomsToSpawn);
 
 
 		// 타입 -> 풀 매핑. 분배 시 if-체인 대신 테이블 조회로 풀을 선택한다.
@@ -255,16 +305,16 @@ void AR1MapGenerator::AssignRoomTypes()
 
 			switch (SelectedType)
 			{
-			case ER1RoomContentType::Treasure: UE_LOG(LogTemp, Warning, TEXT(" - 보물 방 당첨!")); break;
-			case ER1RoomContentType::Shop:     UE_LOG(LogTemp, Warning, TEXT(" - 상점 방 당첨!")); break;
-			case ER1RoomContentType::Refresh:  UE_LOG(LogTemp, Warning, TEXT(" - 회복 방 당첨!")); break;
+			case ER1RoomContentType::Treasure: UE_LOG(LogR1, Warning, TEXT(" - 보물 방 당첨!")); break;
+			case ER1RoomContentType::Shop:     UE_LOG(LogR1, Warning, TEXT(" - 상점 방 당첨!")); break;
+			case ER1RoomContentType::Refresh:  UE_LOG(LogR1, Warning, TEXT(" - 회복 방 당첨!")); break;
 			default: break;
 			}
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("[MapGenerator] ❌ 사용 가능한 특수 방 풀이 전부 0개입니다!"));
+		UE_LOG(LogR1, Error, TEXT("[MapGenerator] ❌ 사용 가능한 특수 방 풀이 전부 0개입니다!"));
 	}
 
 	for (UR1RoomDefinitionData* SpecialRoomData : SpecialRoomsToSpawn)
@@ -366,8 +416,15 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 	PendingNodeID = NextNodeID;
 	PendingDoorDirection = Direction;
 
-	// 층 전체가 이미 메모리에 있으므로 스트리밍 대기 없이 즉시 활성화 (= 끊김 없음).
-	ActivateRoom(NextNodeID);
+	// 층 전체가 이미 메모리에 있으므로 즉시 활성화가 가능하지만, 순간 컷이 어색하므로
+	// 페이드아웃이 끝난 뒤(검은 화면에서) 방을 활성화한다. 페이드인은 ActivateRoom 텔레포트 후.
+	// 재진입은 위의 PendingNodeID 가드가 막는다.
+	StartDoorTransitionFade(this, 0.0f, 1.0f, DoorFadeOutDuration, /*bHoldWhenFinished=*/true);
+
+	FTimerHandle FadeTimerHandle;
+	GetWorldTimerManager().SetTimer(FadeTimerHandle,
+		FTimerDelegate::CreateUObject(this, &AR1MapGenerator::ActivateRoom, NextNodeID),
+		DoorFadeOutDuration, false);
 }
 
 
@@ -416,7 +473,7 @@ void AR1MapGenerator::LoadMapFromSaveData(const TArray<FR1MapNodeSaveData>& Save
 	PendingActivateNodeID = CurrentActiveNodeID;
 	SpawnFloorAndWait();
 
-	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 📂 %d층 %d번 방에서 이어서 시작합니다!"), CurrentFloorIndex + 1, CurrentActiveNodeID);
+	UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 📂 %d층 %d번 방에서 이어서 시작합니다!"), CurrentFloorIndex + 1, CurrentActiveNodeID);
 }
 
 UR1RoomDefinitionData* AR1MapGenerator::FindRoomDefinitionByLabel(FName AssetName)
@@ -517,12 +574,26 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 
 void AR1MapGenerator::ActivateRoom(int32 NodeID)
 {
-	if (!GeneratedMap.IsValidIndex(NodeID)) return;
+	// 문 진입 실패 시(아래 early return) 페이드아웃된 화면이 검게 남지 않도록 복구가 필요하다.
+	const bool bIsDoorEntry = (PendingDoorDirection != ER1DoorDirection::None);
+
+	if (!GeneratedMap.IsValidIndex(NodeID))
+	{
+		if (bIsDoorEntry)
+		{
+			StartDoorTransitionFade(this, 1.0f, 0.0f, DoorFadeInDuration, false);
+		}
+		return;
+	}
 
 	ADungeonManager* Manager = ActiveManagers.FindRef(NodeID);
 	if (!IsValid(Manager))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] ActivateRoom: %d번 방 매니저가 아직 등록되지 않았습니다."), NodeID);
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] ActivateRoom: %d번 방 매니저가 아직 등록되지 않았습니다."), NodeID);
+		if (bIsDoorEntry)
+		{
+			StartDoorTransitionFade(this, 1.0f, 0.0f, DoorFadeInDuration, false);
+		}
 		return;
 	}
 
@@ -578,6 +649,9 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 		FVector FinalLocation;
 		FRotator FinalRotation = FRotator::ZeroRotator;
 
+		// 문 진입 시 카메라 정착(settle) 연출용: 진행 방향(문 → 방 중심). 문 진입이 아니면 Zero.
+		FVector EntryDirection = FVector::ZeroVector;
+
 		if (bWasLoadingFromSave)
 		{
 			FinalLocation = LoadedPlayerLocation;
@@ -588,6 +662,7 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 			const FVector DirectionToCenter =
 				(GeneratedMap[NodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
 			FinalLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * DoorEntryPushDistance) + FVector(0.0f, 0.0f, DoorEntryZOffset);
+			EntryDirection = DirectionToCenter;
 		}
 		else if (AR1PlayerSpawnMarker* Marker = FindSpawnMarkerForNode(NodeID))
 		{
@@ -604,8 +679,32 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 			PC->ResetMovementState();
 		}
 
-		PlayerCharacter->TeleportToRoom(FinalLocation);
+		if (!EntryDirection.IsNearlyZero())
+		{
+			// 카메라 정착 연출: 페이드인 시작 시점에 카메라가 완전히 멈춰 있으면 "순간이동한 컷"으로
+			// 느껴진다. 이를 피하려고 카메라를 먼저 입구 문 쪽(진행 방향 뒤쪽) 지점에 스냅해 두고,
+			// 플레이어만 최종 위치로 옮겨 카메라 랙이 페이드인 동안 진행 방향으로 미끄러져 들어오게 한다.
+			// (나갈 때의 카메라 이동 방향이 새 방에서도 이어져 컷이 아니라 연속 이동처럼 보인다)
+			const FVector CameraSettleStart = FinalLocation - (EntryDirection * DoorEntryCameraSettleDistance);
+			PlayerCharacter->TeleportToRoom(CameraSettleStart);
+			PlayerCharacter->SetActorLocation(FinalLocation, false, nullptr, ETeleportType::TeleportPhysics);
+		}
+		else
+		{
+			PlayerCharacter->TeleportToRoom(FinalLocation);
+		}
 		PlayerCharacter->SetActorRotation(FinalRotation);
+	}
+
+	// 문을 통한 진입이었다면(페이드아웃으로 검은 화면 상태), 텔레포트가 끝났으니 페이드인.
+	// 단, 이 프레임은 히치가 걸리므로 즉시 걸지 않고 프레임이 안정된 뒤 시작한다(위 함수 주석 참고).
+	// 층 이동/세이브 복귀는 로딩 스크린이 자체 페이드를 처리하므로 제외된다.
+	if (bIsDoorEntry)
+	{
+		GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			StartDoorFadeInWhenFrameSettles(this, DoorFadeMaxSettleTicks);
+		}));
 	}
 
 	// 4. 상태 갱신 + 미니맵 + 오토세이브
@@ -668,7 +767,7 @@ void AR1MapGenerator::StartFloorAssetPreload()
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning,
+				UE_LOG(LogR1, Warning,
 					TEXT("[MapGenerator] 프리로드 Primary Asset 경로 해석 실패: %s"), *AssetId.ToString());
 			}
 		}
@@ -683,7 +782,7 @@ void AR1MapGenerator::StartFloorAssetPreload()
 	const TArray<FSoftObjectPath> PathsToLoad = UniquePaths.Array();
 	FloorPreloadHandle = AssetManager.GetStreamableManager().RequestAsyncLoad(PathsToLoad);
 
-	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 층 에셋 프리로드 시작: %d개 경로"), PathsToLoad.Num());
+	UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 층 에셋 프리로드 시작: %d개 경로"), PathsToLoad.Num());
 }
 
 void AR1MapGenerator::SpawnFloorAndWait()
@@ -845,7 +944,7 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 	{
 		const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
 			[](int32 NodeID) { return FString::FromInt(NodeID); });
-		UE_LOG(LogTemp, Error,
+		UE_LOG(LogR1, Error,
 			TEXT("[MapGenerator] navmesh 대기 타임아웃(%.1fs) — 다음 방에 navmesh가 생성되지 않았습니다: [%s]. ")
 			TEXT("해당 방 레벨의 NavMeshBoundsVolume가 바닥(방 중심 포함)을 감싸는지 확인하세요."),
 			NavBuildMaxTicks * NavBuildPollInterval, *RoomList);
@@ -853,7 +952,7 @@ void AR1MapGenerator::WaitForNavMeshThenActivate()
 
 	if (bTimedOut && FloorPreloadHandle.IsValid() && !FloorPreloadHandle->HasLoadCompleted())
 	{
-		UE_LOG(LogTemp, Warning,
+		UE_LOG(LogR1, Warning,
 			TEXT("[MapGenerator] 에셋 프리로드가 끝나기 전에 타임아웃 — 프리로드를 기다리지 않고 진행합니다."));
 	}
 
@@ -923,7 +1022,7 @@ void AR1MapGenerator::RenotifyUnnavigableRooms(UNavigationSystemV1* NavSys, cons
 
 	const FString RoomList = FString::JoinBy(UnnavigableRooms, TEXT(", "),
 		[](int32 NodeID) { return FString::FromInt(NodeID); });
-	UE_LOG(LogTemp, Warning,
+	UE_LOG(LogR1, Warning,
 		TEXT("[MapGenerator] navmesh 미생성 방 %d개 재통지(재빌드 강제): [%s]"),
 		UnnavigableRooms.Num(), *RoomList);
 }
@@ -968,7 +1067,7 @@ void AR1MapGenerator::GoToNextFloor()
 	// 마지막 층까지 깼다면 리턴 (게임 클리어)
 	if (!FloorSettings.IsValidIndex(CurrentFloorIndex))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 모든 층 클리어! 게임 엔딩!"));
+		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 모든 층 클리어! 게임 엔딩!"));
 		return;
 	}
 
@@ -1040,7 +1139,7 @@ void AR1MapGenerator::CleanupFloorActors()
 		PoolSubsystem->ClearAllPools();
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 층 전환 정리: 아이템 %d, 골드 %d, 몬스터 %d 제거"), DestroyedItems, DestroyedGold, DestroyedMonsters);
+	UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 층 전환 정리: 아이템 %d, 골드 %d, 몬스터 %d 제거"), DestroyedItems, DestroyedGold, DestroyedMonsters);
 }
 
 bool AR1MapGenerator::IsLastFloor() const
@@ -1096,11 +1195,11 @@ void AR1MapGenerator::TriggerAutoSave()
 
 			CurrentActiveNodeID = TempActiveID;
 
-			UE_LOG(LogTemp, Warning, TEXT("[MapGenerator] 자동 저장 완료! (현재 저장된 방: %d번)"), CurrentActiveNodeID);
+			UE_LOG(LogR1, Warning, TEXT("[MapGenerator] 자동 저장 완료! (현재 저장된 방: %d번)"), CurrentActiveNodeID);
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("[MapGenerator] 자동 저장 실패: 플레이어 캐릭터를 찾을 수 없습니다!"));
+			UE_LOG(LogR1, Error, TEXT("[MapGenerator] 자동 저장 실패: 플레이어 캐릭터를 찾을 수 없습니다!"));
 		}
 	}
 }

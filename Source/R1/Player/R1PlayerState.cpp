@@ -2,6 +2,7 @@
 
 
 #include "Player/R1PlayerState.h"
+#include "R1LogChannels.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/PlayerAttributeSet.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
@@ -78,7 +79,7 @@ void AR1PlayerState::ApplyMetaUpgrades()
 {
 	if (!AbilitySystemComponent || !MetaUpgradeEffectClass || !MetaUpgradeDataTable)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[PlayerState] 메타 업그레이드 적용 실패: ASC, GE 클래스 또는 데이터 테이블이 누락되었습니다."));
+		UE_LOG(LogR1, Error, TEXT("[PlayerState] 메타 업그레이드 적용 실패: ASC, GE 클래스 또는 데이터 테이블이 누락되었습니다."));
 		return;
 	}
 
@@ -110,7 +111,7 @@ void AR1PlayerState::ApplyMetaUpgrades()
 				float Ratio = (NewMaxExp > 0) ? (MetaSave->CurrentMetaExp / NewMaxExp) : 0.0f;
 				OnExpChanged.Broadcast(Ratio);
 
-				UE_LOG(LogTemp, Warning, TEXT("[Meta Load] 레벨: %d, 경험치: %f / %f (동기화 완료)"),
+				UE_LOG(LogR1, Warning, TEXT("[Meta Load] 레벨: %d, 경험치: %f / %f (동기화 완료)"),
 					MetaSave->PlayerMetaLevel, MetaSave->CurrentMetaExp, NewMaxExp);
 			}
 		}
@@ -118,7 +119,7 @@ void AR1PlayerState::ApplyMetaUpgrades()
 
 	if (MetaSave->InvestedUpgrades.IsEmpty())
 	{
-		UE_LOG(LogTemp, Log, TEXT("[PlayerState] 투자된 메타 스킬이 없습니다. 기본 스탯으로 시작합니다."));
+		UE_LOG(LogR1, Log, TEXT("[PlayerState] 투자된 메타 스킬이 없습니다. 기본 스탯으로 시작합니다."));
 		return;
 	}
 
@@ -165,7 +166,7 @@ void AR1PlayerState::ApplyMetaUpgrades()
 					// 🌟 [핵심] SetByCaller를 이용해 태그에 해당하는 수치를 GE에 주입합니다!
 					SpecHandle.Data.Get()->SetSetByCallerMagnitude(UpgradeTag, BuffValue);
 
-					UE_LOG(LogTemp, Warning, TEXT("[PlayerState] 메타 업그레이드 장전: %s (+%f)"), *UpgradeTag.ToString(), BuffValue);
+					UE_LOG(LogR1, Warning, TEXT("[PlayerState] 메타 업그레이드 장전: %s (+%f)"), *UpgradeTag.ToString(), BuffValue);
 				}
 				break; // 찾았으니 다음 투자 내역으로 이동
 			}

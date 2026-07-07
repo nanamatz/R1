@@ -6,6 +6,7 @@
  */
 
 #include "System/R1RoomStreamingSubsystem.h"
+#include "R1LogChannels.h"
 #include "Data/R1RoomDefinitionData.h"
 #include "Engine/LevelStreamingDynamic.h"
 
@@ -59,7 +60,7 @@ void UR1RoomStreamingSubsystem::UnloadAllRooms()
 	// 않도록 룸 상태 캐시를 비웁니다.
 	RoomStates.Reset();
 
-	UE_LOG(LogTemp, Warning, TEXT("[RoomStreaming] 이전 층의 모든 방을 메모리에서 해제했습니다."));
+	UE_LOG(LogR1, Warning, TEXT("[RoomStreaming] 이전 층의 모든 방을 메모리에서 해제했습니다."));
 }
 
 FName UR1RoomStreamingSubsystem::MakeRoomKey(const UR1RoomDefinitionData* RoomDefinition) const

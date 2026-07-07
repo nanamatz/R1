@@ -79,7 +79,7 @@ void UBTTask_MoveToRange::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Nod
         AR1Character* SourceCharacter = Cast<AR1Character>(ControllingPawn);
         UR1AbilitySystemComponent* ASC = Cast<UR1AbilitySystemComponent>(SourceCharacter ? SourceCharacter->GetAbilitySystemComponent() : nullptr);
 
-        float AttackRange;
+        float AttackRange = 150.0f;
         if (ASC)
         {
             AttackRange = ASC->GetNumericAttribute(UR1AttributeSet::GetAttackRangeAttribute());

@@ -1,4 +1,5 @@
 #include "Character/R1Character.h"
+#include "R1LogChannels.h"
 #include "Components/WidgetComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
@@ -96,7 +97,7 @@ void AR1Character::OnHealthChanged(float Ratio, bool bIsDamage)
 	}
 	else
 	{
-		UE_LOG(LogTemp,Warning, TEXT("OnHpChanged is NOT bound for actor: %s"), *GetName());
+		UE_LOG(LogR1,Warning, TEXT("OnHpChanged is NOT bound for actor: %s"), *GetName());
 	}
 }
 
@@ -159,7 +160,7 @@ void AR1Character::InitAttributes()
 {
 	if (!AbilitySystemComponent || !CharacterStatTable || !InitStatEffectClass)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("InitAttributes: Missing ASC, Table, or GE Class!"));
+		UE_LOG(LogR1, Warning, TEXT("InitAttributes: Missing ASC, Table, or GE Class!"));
 		return;
 	}
 
@@ -193,12 +194,12 @@ void AR1Character::InitAttributes()
 	if (!StatData)
 	{
 		// 여기가 뜨면 RowName 오타 (Player vs player 등)
-		UE_LOG(LogTemp, Error, TEXT("InitAttributes: '%s' 행을 찾을 수 없습니다!"), *CharacterRowName.ToString());
+		UE_LOG(LogR1, Error, TEXT("InitAttributes: '%s' 행을 찾을 수 없습니다!"), *CharacterRowName.ToString());
 		return;
 	}
 
 	// 4. 값 확인
-	UE_LOG(LogTemp, Warning, TEXT("데이터 찾음! 레벨: %f, 경험치 통: %f, 경험치: %f,공격력: %f, 체력: %f"), StatData->Level,StatData->MaxExp,StatData->Xp,StatData->BaseDamage, StatData->MaxHealth);
+	UE_LOG(LogR1, Warning, TEXT("데이터 찾음! 레벨: %f, 경험치 통: %f, 경험치: %f,공격력: %f, 체력: %f"), StatData->Level,StatData->MaxExp,StatData->Xp,StatData->BaseDamage, StatData->MaxHealth);
 
 }
 

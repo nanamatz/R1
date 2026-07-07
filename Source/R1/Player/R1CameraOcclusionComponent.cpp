@@ -1,5 +1,6 @@
 
 #include "Player/R1CameraOcclusionComponent.h"
+#include "R1LogChannels.h"
 #include "Character/R1Character.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
@@ -302,7 +303,7 @@ void UR1CameraOcclusionComponent::RegisterOccludedComponent(UPrimitiveComponent*
 
 		if (ISMComp->NumCustomDataFloats < (PerInstanceDataIndex + 1))
 		{
-			UE_LOG(LogTemp, Warning,
+			UE_LOG(LogR1, Warning,
 				TEXT("R1CameraOcclusion: ISM '%s'의 NumCustomDataFloats(%d)가 부족합니다."
 					 " PerInstanceDataIndex=%d — BeginPlay 초기화가 올바르게 실행됐는지 확인하세요."),
 				*Comp->GetName(), ISMComp->NumCustomDataFloats, PerInstanceDataIndex);

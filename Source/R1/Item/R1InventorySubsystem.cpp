@@ -1,4 +1,5 @@
 #include "Item/R1InventorySubsystem.h"
+#include "R1LogChannels.h"
 #include "Item/R1ItemInstance.h"
 #include "System/R1EquipmentManagerComponent.h"
 #include "Data/R1ItemAssetData.h"
@@ -213,7 +214,7 @@ bool UR1InventorySubsystem::UnequipItem(ER1EquipmentSlot TargetSlot, FIntPoint P
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("인벤토리에 빈 공간이 없어 장비를 바닥에 버리거나 보관할 수 없습니다. (현재는 그냥 Items에만 추가)"));
+			UE_LOG(LogR1, Warning, TEXT("인벤토리에 빈 공간이 없어 장비를 바닥에 버리거나 보관할 수 없습니다. (현재는 그냥 Items에만 추가)"));
 		}
 	}
 
@@ -365,7 +366,7 @@ bool UR1InventorySubsystem::BuyItemAt(UR1ItemInstance* ItemToBuy, FIntPoint Pref
 
 	if (Gold < Price)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("골드 부족: 필요 %d, 현재 %d"), Price, Gold);
+		UE_LOG(LogR1, Warning, TEXT("골드 부족: 필요 %d, 현재 %d"), Price, Gold);
 
 		PlayInventoryErrorSound();
 
@@ -386,7 +387,7 @@ bool UR1InventorySubsystem::BuyItemAt(UR1ItemInstance* ItemToBuy, FIntPoint Pref
 		return true;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("인벤토리가 꽉 찼습니다! 구매 실패."));
+	UE_LOG(LogR1, Warning, TEXT("인벤토리가 꽉 찼습니다! 구매 실패."));
 
 	PlayInventoryErrorSound();
 
@@ -440,7 +441,7 @@ bool UR1InventorySubsystem::FindEmptySlot(const FIntPoint& ItemSize, FIntPoint& 
 		}
 	}
 	// 빈자리가 없음 (인벤토리 꽉 참)
-	UE_LOG(LogTemp, Error, TEXT("인벤토리 꽉 찼음"));
+	UE_LOG(LogR1, Error, TEXT("인벤토리 꽉 찼음"));
 	return false; 
 }
 

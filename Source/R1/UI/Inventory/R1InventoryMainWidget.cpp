@@ -1,4 +1,5 @@
 #include "UI/Inventory/R1InventoryMainWidget.h"
+#include "R1LogChannels.h"
 #include "Item/R1DragDropOperation.h"
 #include "Item/R1ItemInstance.h"
 #include "Player/R1PlayerController.h"
@@ -16,7 +17,7 @@ bool UR1InventoryMainWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
                 // 🌟 월드에 아이템을 드랍합니다.
                 PC->DropItemToWorld(DragDropOp->ItemInstance, DragDropOp->FromEquipmentSlot);
 
-                UE_LOG(LogTemp, Warning, TEXT("[R1UserWidget] UI 밖(월드)에 아이템을 던졌습니다!"));
+                UE_LOG(LogR1, Warning, TEXT("[R1UserWidget] UI 밖(월드)에 아이템을 던졌습니다!"));
                 return true;
             }
         }

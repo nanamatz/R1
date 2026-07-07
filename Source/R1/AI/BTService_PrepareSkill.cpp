@@ -1,6 +1,7 @@
 
 
 #include "AI/BTService_PrepareSkill.h"
+#include "R1LogChannels.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AbilitySystemComponent.h"
@@ -68,7 +69,7 @@ void UBTService_PrepareSkill::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 		if (SelectedClass)
 		{
 			BlackboardComp->SetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName, SelectedClass);
-			UE_LOG(LogTemp, Log, TEXT("BTService_PrepareSkill: Selected Ability %s (CanAttack: %d)"), *SelectedClass->GetName(), bCanAttack);
+			UE_LOG(LogR1, Log, TEXT("BTService_PrepareSkill: Selected Ability %s (CanAttack: %d)"), *SelectedClass->GetName(), bCanAttack);
 		}
 	}
 }

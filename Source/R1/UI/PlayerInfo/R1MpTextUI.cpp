@@ -1,4 +1,5 @@
 #include "UI/PlayerInfo/R1MpTextUI.h"
+#include "R1LogChannels.h"
 
 #include "Components/TextBlock.h"
 #include "Player/R1PlayerState.h"
@@ -12,14 +13,14 @@ void UR1MpTextUI::NativeConstruct()
 	AR1PlayerState* PS = Cast<AR1PlayerState>(GetOwningPlayerState());
 	if (!PS)
 	{
-		UE_LOG(LogTemp, Error, TEXT("R1MpTextUI: Failed to find AR1PlayerState during NativeConstruct!"));
+		UE_LOG(LogR1, Error, TEXT("R1MpTextUI: Failed to find AR1PlayerState during NativeConstruct!"));
 		return;
 	}
 
 	BoundASC = PS->GetAbilitySystemComponent();
 	if (!BoundASC)
 	{
-		UE_LOG(LogTemp, Error, TEXT("R1MpTextUI: AR1PlayerState has no AbilitySystemComponent!"));
+		UE_LOG(LogR1, Error, TEXT("R1MpTextUI: AR1PlayerState has no AbilitySystemComponent!"));
 		return;
 	}
 

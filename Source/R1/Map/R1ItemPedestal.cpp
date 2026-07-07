@@ -2,6 +2,7 @@
 
 
 #include "Map/R1ItemPedestal.h"
+#include "R1LogChannels.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "Data/R1ItemPoolData.h"
@@ -51,7 +52,7 @@ void AR1ItemPedestal::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	// 1. 방어 코드
 	if (!TreasureLootPool || TreasureLootPool->DropItems.Num() == 0 || !ItemActorClass)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[ItemPedestal] 루팅 풀이나 아이템 클래스가 세팅되지 않았습니다!"));
+		UE_LOG(LogR1, Warning, TEXT("[ItemPedestal] 루팅 풀이나 아이템 클래스가 세팅되지 않았습니다!"));
 		return;
 	}
 

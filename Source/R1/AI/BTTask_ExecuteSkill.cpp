@@ -2,6 +2,7 @@
 
 
 #include "AI/BTTask_ExecuteSkill.h"
+#include "R1LogChannels.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AIController.h"
 #include "AbilitySystemInterface.h"
@@ -31,11 +32,11 @@ EBTNodeResult::Type UBTTask_ExecuteSkill::ExecuteTask(UBehaviorTreeComponent& Ow
 	UClass* TargetClass = BlackboardComp->GetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName);
 	if (!TargetClass)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("BTTask_ExecuteSkill: TargetAbilityClass is NULL! (KeyName: %s)"), *BBKey_TargetAbilityClass.SelectedKeyName.ToString());
+		UE_LOG(LogR1, Warning, TEXT("BTTask_ExecuteSkill: TargetAbilityClass is NULL! (KeyName: %s)"), *BBKey_TargetAbilityClass.SelectedKeyName.ToString());
 		return EBTNodeResult::Failed;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("BTTask_ExecuteSkill: Executing Ability %s"), *GetNameSafe(TargetClass));
+	UE_LOG(LogR1, Log, TEXT("BTTask_ExecuteSkill: Executing Ability %s"), *GetNameSafe(TargetClass));
 
 	MyMemory->ExecutingClass = TargetClass;
 	MyMemory->CachedOwnerComp = &OwnerComp;

@@ -2,6 +2,7 @@
 
 
 #include "UI/PlayerInfo/R1ExpBarWidget.h"
+#include "R1LogChannels.h"
 #include "Player/R1PlayerState.h"
 #include "Components/ProgressBar.h"
 
@@ -35,12 +36,12 @@ void UR1ExpBarWidget::NativeConstruct()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("R1ExpBarWidget: Failed to find AR1PlayerState during NativeConstruct!"));
+		UE_LOG(LogR1, Error, TEXT("R1ExpBarWidget: Failed to find AR1PlayerState during NativeConstruct!"));
 	}
 
 	if (!ExpBar)
 	{
-		UE_LOG(LogTemp, Error, TEXT("R1ExpBarWidget: ExpBar component is missing!"));
+		UE_LOG(LogR1, Error, TEXT("R1ExpBarWidget: ExpBar component is missing!"));
 	}
 }
 

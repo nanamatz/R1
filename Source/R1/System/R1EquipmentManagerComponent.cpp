@@ -2,6 +2,7 @@
 
 
 #include "System/R1EquipmentManagerComponent.h"
+#include "R1LogChannels.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/R1GameplayAbility.h"
@@ -150,7 +151,7 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 완료! 스킬 %d개, 효과 %d개 적용됨"),
+	UE_LOG(LogR1, Warning, TEXT("[%s] 슬롯 장착 완료! 스킬 %d개, 효과 %d개 적용됨"),
 		*UEnum::GetValueAsString(EquipSlot), NewHandles.AbilityHandles.Num(), NewHandles.EffectHandles.Num());
 }
 
@@ -168,7 +169,7 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 			{
 				if (It.Value() == AbilityHandle)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("🗑️ 스킬 단축키 등록 해제: %s 슬롯 비워짐"), *UEnum::GetValueAsString(It.Key()));
+					UE_LOG(LogR1, Warning, TEXT("🗑️ 스킬 단축키 등록 해제: %s 슬롯 비워짐"), *UEnum::GetValueAsString(It.Key()));
 					It.RemoveCurrent();
 				}
 			}
@@ -206,7 +207,7 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 			UpdateWeaponState(false);
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
+		UE_LOG(LogR1, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
 	}
 }
 
@@ -236,7 +237,7 @@ void UR1EquipmentManagerComponent::ExecuteSkillSlot(ER1SkillSlot Slot)
 			return;
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("ℹ️ [%s] 슬롯이 비어있습니다."), *UEnum::GetValueAsString(Slot));
+	UE_LOG(LogR1, Warning, TEXT("ℹ️ [%s] 슬롯이 비어있습니다."), *UEnum::GetValueAsString(Slot));
 }
 
 void UR1EquipmentManagerComponent::AssignSkillToSlot(ER1SkillSlot Slot, FGameplayAbilitySpecHandle AbilityHandle)
@@ -256,12 +257,12 @@ void UR1EquipmentManagerComponent::AutoAssignToEmptySlot(FGameplayAbilitySpecHan
 		{
 			// 해당 슬롯에 등록!
 			SkillSlotsMap.Add(Slot, NewHandle);
-			UE_LOG(LogTemp, Warning, TEXT("✅ 스킬 자동 등록 완료! 슬롯: %s"), *UEnum::GetValueAsString(Slot));
+			UE_LOG(LogR1, Warning, TEXT("✅ 스킬 자동 등록 완료! 슬롯: %s"), *UEnum::GetValueAsString(Slot));
 			return; // 하나 등록했으면 끝
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("⚠️ 스킬 단축키가 모두 꽉 찼습니다! (Q,W,E,R 모두 사용 중)"));
+	UE_LOG(LogR1, Warning, TEXT("⚠️ 스킬 단축키가 모두 꽉 찼습니다! (Q,W,E,R 모두 사용 중)"));
 }
 
 void UR1EquipmentManagerComponent::UpdateWeaponState(bool bIsEquipped)

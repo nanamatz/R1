@@ -2,6 +2,7 @@
 
 
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "R1LogChannels.h"
 #include "GameplayEffectExtension.h"
 #include "Player/R1PlayerState.h"
 #include "Character/R1Character.h"
@@ -71,7 +72,7 @@ void UR1AttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, f
 			Character->GetCharacterMovement()->MaxWalkSpeed = NewValue;
 
 			// 로그로 잘 적용되는지 확인해 보세요!
-			 UE_LOG(LogTemp, Warning, TEXT("이동 속도 변경됨: %f -> %f"), OldValue, NewValue);
+			 UE_LOG(LogR1, Warning, TEXT("이동 속도 변경됨: %f -> %f"), OldValue, NewValue);
 		}
 	}
 }
@@ -95,7 +96,7 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 			if (bIsDamage && Character->GetCreatureState() != ECreatureState::Dead)
 			{
-				UE_LOG(LogTemp, Error, TEXT("Damage : %f"), Data.EvaluatedData.Magnitude);
+				UE_LOG(LogR1, Error, TEXT("Damage : %f"), Data.EvaluatedData.Magnitude);
 				UAbilitySystemComponent* TargetASC = GetOwningAbilitySystemComponent();
 
 				// Hit Stop 적용 (때린 놈과 맞은 놈 모두)

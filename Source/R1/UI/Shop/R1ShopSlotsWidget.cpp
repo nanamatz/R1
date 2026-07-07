@@ -2,6 +2,7 @@
 
 
 #include "UI/Shop/R1ShopSlotsWidget.h"
+#include "R1LogChannels.h"
 #include "UI/Inventory/R1InventroySlotWidget.h"
 #include "UI/Inventory/Item/R1InventoryEntryWidget.h"
 #include "UI/R1HUD.h"
@@ -112,7 +113,7 @@ bool UR1ShopSlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDr
 		if (InvenSubsys->RemoveItem(DroppedItem))
 		{
 			InvenSubsys->AddGold(SellPrice);
-			UE_LOG(LogTemp, Log, TEXT("아이템 판매 완료! +%d 골드"), SellPrice);
+			UE_LOG(LogR1, Log, TEXT("아이템 판매 완료! +%d 골드"), SellPrice);
 
 			if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))
 			{
@@ -127,7 +128,7 @@ bool UR1ShopSlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDr
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("상점 내에서는 아이템을 이동시킬 수 없습니다."));
+		UE_LOG(LogR1, Warning, TEXT("상점 내에서는 아이템을 이동시킬 수 없습니다."));
 		return false;
 	}
 

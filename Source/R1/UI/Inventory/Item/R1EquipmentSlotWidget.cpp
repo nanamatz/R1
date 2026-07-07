@@ -2,6 +2,7 @@
 
 
 #include "UI/Inventory/Item/R1EquipmentSlotWidget.h"
+#include "R1LogChannels.h"
 #include "UI/Inventory/Item/R1ItemDragWidget.h"
 
 #include "Item/R1DragDropOperation.h"
@@ -65,7 +66,7 @@ bool UR1EquipmentSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDr
 
 	if (!DragDropOp->ItemInstance->GetEquipSlot().Contains(EquipmentSlotType))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("착용할 수 없는 부위입니다!"));
+		UE_LOG(LogR1, Warning, TEXT("착용할 수 없는 부위입니다!"));
 
 		UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>();
 		if (InvenSubsys)

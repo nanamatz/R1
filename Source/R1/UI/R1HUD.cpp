@@ -1,4 +1,5 @@
 #include "UI/R1HUD.h"
+#include "R1LogChannels.h"
 #include "Blueprint/UserWidget.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 
@@ -62,7 +63,7 @@ void AR1HUD::BeginPlay()
             }
             else
             {
-                UE_LOG(LogTemp, Warning, TEXT("Failed to create InventoryWidget from class %s"), *GetNameSafe(InventoryWidgetClass));
+                UE_LOG(LogR1, Warning, TEXT("Failed to create InventoryWidget from class %s"), *GetNameSafe(InventoryWidgetClass));
             }
         }
         if (!BaseUIWidget)
@@ -74,7 +75,7 @@ void AR1HUD::BeginPlay()
             }
             else
             {
-                UE_LOG(LogTemp, Warning, TEXT("Failed to create BaseUIWidget"));
+                UE_LOG(LogR1, Warning, TEXT("Failed to create BaseUIWidget"));
             }
         }
         if (!GameOverUIWidget)
@@ -87,7 +88,7 @@ void AR1HUD::BeginPlay()
             }
             else
             {
-                UE_LOG(LogTemp, Warning, TEXT("Failed to create GameOverUIWidget"));
+                UE_LOG(LogR1, Warning, TEXT("Failed to create GameOverUIWidget"));
             }
         }
         if (!GameMenuUIWidget)
@@ -101,7 +102,7 @@ void AR1HUD::BeginPlay()
             }
             else
             {
-                UE_LOG(LogTemp, Warning, TEXT("Failed to create GameMenuUIWidget"));
+                UE_LOG(LogR1, Warning, TEXT("Failed to create GameMenuUIWidget"));
             }
         }
         if (!MiniMapUIWidget)
@@ -109,7 +110,7 @@ void AR1HUD::BeginPlay()
             MiniMapUIWidget = CreateAndAddWidget<UUserWidget>(PC, MiniMapUIWidgetClass, 5);
             if (!MiniMapUIWidget)
             {
-                UE_LOG(LogTemp, Warning, TEXT("Failed to create MiniMapUIWidget"));
+                UE_LOG(LogR1, Warning, TEXT("Failed to create MiniMapUIWidget"));
             }
         }
         if (!FloorGuideSceneWidget && FloorGuideSceneWidgetClass)
@@ -136,7 +137,7 @@ void AR1HUD::BeginPlay()
 
                 if (!ShopWidget)
                 {
-                    UE_LOG(LogTemp, Error, TEXT("ShopSceneWidget 내부에 UR1ShopWidget 자식이 없습니다!"));
+                    UE_LOG(LogR1, Error, TEXT("ShopSceneWidget 내부에 UR1ShopWidget 자식이 없습니다!"));
                 }
 
                 ShopSceneWidget->AddToViewport(10);

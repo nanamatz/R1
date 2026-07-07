@@ -2,6 +2,7 @@
 
 
 #include "Object/R1Dispenser.h"
+#include "R1LogChannels.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "AbilitySystemComponent.h"
@@ -80,7 +81,7 @@ void AR1Dispenser::Interact_Implementation(AR1PlayerController* Interactor)
 
 	if (CurHP >= MaxHP && CurMP >= MaxMP)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("이미 체력과 마나가 가득 차 있습니다!"));
+		UE_LOG(LogR1, Warning, TEXT("이미 체력과 마나가 가득 차 있습니다!"));
 
 		if (RecoveryErrorSound)
 		{

@@ -2,6 +2,7 @@
 
 
 #include "UI/PlayerInfo/R1HpOrbWidget.h"
+#include "R1LogChannels.h"
 #include "UI/PlayerInfo/R1HpTextUI.h"
 #include "Components/Image.h"
 #include "Character/R1Player.h"
@@ -26,7 +27,7 @@ void UR1HpOrbWidget::NativeConstruct()
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("R1HpOrbWidget: Failed to find AR1Player during NativeConstruct!"));
+        UE_LOG(LogR1, Error, TEXT("R1HpOrbWidget: Failed to find AR1Player during NativeConstruct!"));
     }
 
     // 기본은 숨김 — 호버 시에만 표시

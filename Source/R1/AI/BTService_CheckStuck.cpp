@@ -2,6 +2,7 @@
 
 
 #include "AI/BTService_CheckStuck.h"
+#include "R1LogChannels.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AI/R1AIController.h"
 #include "Character/R1RangerMonster.h"
@@ -78,7 +79,7 @@ void UBTService_CheckStuck::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 					}
 				}
 
-				UE_LOG(LogTemp, Warning, TEXT("몬스터가 %.1f초 동안 아무것도 하지 못해 타겟을 포기합니다!"), StuckTimeout);
+				UE_LOG(LogR1, Warning, TEXT("몬스터가 %.1f초 동안 아무것도 하지 못해 타겟을 포기합니다!"), StuckTimeout);
 
 				// 포기한 직후 다시 바로 타겟을 잡지 않도록 타이머 초기화
 				Memory->TimeStuck = 0.0f;

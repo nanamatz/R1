@@ -1,6 +1,7 @@
 
 
 #include "AbilitySystem/Abilities/R1GameplayAbility_HitReact.h"
+#include "R1LogChannels.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "R1GameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -58,7 +59,7 @@ void UR1GameplayAbility_HitReact::ActivateAbility(const FGameplayAbilitySpecHand
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("HitReact 어빌리티에 HitMontage가 세팅되지 않았습니다!"));
+		UE_LOG(LogR1, Error, TEXT("HitReact 어빌리티에 HitMontage가 세팅되지 않았습니다!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
 

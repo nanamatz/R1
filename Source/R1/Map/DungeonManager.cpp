@@ -2,6 +2,7 @@
 
 
 #include "Map/DungeonManager.h"
+#include "R1LogChannels.h"
 #include "Character/R1Character.h"
 #include "Map/R1Door.h"
 #include "Map/R1MonsterSpawner.h"
@@ -162,7 +163,7 @@ void ADungeonManager::HandleMonsterReadyToSleep(AR1Monster* DeadMonster)
 		{
 			PoolSubsystem->ReturnMonster(DeadMonster);
 
-			UE_LOG(LogTemp, Log, TEXT("[DungeonManager] 몬스터를 성공적으로 창고에 반환했습니다: %s"), *DeadMonster->GetName());
+			UE_LOG(LogR1, Log, TEXT("[DungeonManager] 몬스터를 성공적으로 창고에 반환했습니다: %s"), *DeadMonster->GetName());
 		}
 	}
 }
@@ -195,7 +196,7 @@ void ADungeonManager::SpawnRoomClearReward()
 	float DropRoll = FMath::FRandRange(1.f, 100.0f);
 	if (DropRoll > RoomClearDropChance)
 	{
-		UE_LOG(LogTemp, Log, TEXT("방 클리어 보상 드랍 실패 (확률: %.1f%%, 결과: %.1f)"), RoomClearDropChance, DropRoll);
+		UE_LOG(LogR1, Log, TEXT("방 클리어 보상 드랍 실패 (확률: %.1f%%, 결과: %.1f)"), RoomClearDropChance, DropRoll);
 		return;
 	}
 
@@ -223,7 +224,7 @@ void ADungeonManager::SpawnRoomClearReward()
 		DroppedItem->InitItem(SelectedItem, SelectedItem->ItemRarity);
 		DroppedItem->PopEffect();
 
-		UE_LOG(LogTemp, Warning, TEXT("방 클리어 보상 드랍! [%s] (가중치: %.0f)"),
+		UE_LOG(LogR1, Warning, TEXT("방 클리어 보상 드랍! [%s] (가중치: %.0f)"),
 			*SelectedItem->ItemName.ToString(), SelectedItem->GetDropWeight());
 	}
 }
@@ -254,6 +255,6 @@ void ADungeonManager::InitializeRoomData(UR1RoomDefinitionData* RoomData)
 		ClearCondition = ER1RoomClearCondition::KillAllMonsters;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[DungeonManager] 방 데이터 주입 완료! 보상 풀: %s"),
+	UE_LOG(LogR1, Warning, TEXT("[DungeonManager] 방 데이터 주입 완료! 보상 풀: %s"),
 		RoomClearLootPool ? *RoomClearLootPool->GetName() : TEXT("없음"));
 }

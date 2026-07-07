@@ -2,6 +2,7 @@
 
 
 #include "AI/R1AIController.h"
+#include "R1LogChannels.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -52,7 +53,7 @@ void AR1AIController::OnPossess(APawn* InPawn)
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("몬스터(%s)에 할당된 비헤이비어 트리가 없습니다!"), *Monster->GetName());
+			UE_LOG(LogR1, Warning, TEXT("몬스터(%s)에 할당된 비헤이비어 트리가 없습니다!"), *Monster->GetName());
 		}
 	}
 
@@ -141,6 +142,6 @@ void AR1AIController::UpdateSightRange(float NewRange)
 		AIPerception->SetDominantSense(CurrentSightConfig->GetSenseImplementation());
 		AIPerception->RequestStimuliListenerUpdate();
 
-		UE_LOG(LogTemp, Warning, TEXT("[AI Controller] 몬스터 시야 세팅/업데이트 완료! 새로운 반경: %f"), NewRange);
+		UE_LOG(LogR1, Warning, TEXT("[AI Controller] 몬스터 시야 세팅/업데이트 완료! 새로운 반경: %f"), NewRange);
 	}
 }

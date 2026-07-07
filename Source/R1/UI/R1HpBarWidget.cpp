@@ -3,7 +3,6 @@
 
 #include "UI/R1HpBarWidget.h"
 #include "Components/ProgressBar.h"
-#include "R1HpBarWidget.h"
 
 UR1HpBarWidget::UR1HpBarWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

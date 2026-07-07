@@ -2,6 +2,7 @@
 
 
 #include "UI/Inventory/Item/R1ItemDragWidget.h"
+#include "R1LogChannels.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
@@ -16,7 +17,7 @@ void UR1ItemDragWidget::Init(const FVector2D& InWidgetSize, UTexture2D* InItemIc
 {
 	if (!SizeBox_Root || !Image_Icon || !Text_Count)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[UR1ItemDragWidget] 위젯 컴포넌트가 존재하지 않습니다! 블루프린트 설정이나 생성 시점을 확인하세요."));
+		UE_LOG(LogR1, Error, TEXT("[UR1ItemDragWidget] 위젯 컴포넌트가 존재하지 않습니다! 블루프린트 설정이나 생성 시점을 확인하세요."));
 		return;
 	}
 

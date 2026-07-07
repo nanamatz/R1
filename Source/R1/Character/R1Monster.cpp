@@ -1,4 +1,5 @@
 #include "Character/R1Monster.h"
+#include "R1LogChannels.h"
 #include "R1Player.h"
 
 #include "Components/CapsuleComponent.h"
@@ -97,7 +98,7 @@ void AR1Monster::OnDead(const TObjectPtr<AR1Character> Attacker)
 
 	if (Attacker == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("오류: Attacker가 NULL입니다! 데미지 GE 컨텍스트에서 Instigator를 세팅하지 않았습니다."));
+		UE_LOG(LogR1, Error, TEXT("오류: Attacker가 NULL입니다! 데미지 GE 컨텍스트에서 Instigator를 세팅하지 않았습니다."));
 		return;
 	}
 
@@ -179,7 +180,7 @@ void AR1Monster::DropGold()
 {
 	if (!GoldActorClass)
 	{
-		UE_LOG(LogTemp, Error, TEXT("몬스터 블루프린트에 GoldActorClass가 할당되지 않았습니다!"));
+		UE_LOG(LogR1, Error, TEXT("몬스터 블루프린트에 GoldActorClass가 할당되지 않았습니다!"));
 		return;
 	}
 
