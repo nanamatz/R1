@@ -318,27 +318,18 @@ void AR1Player::UpdateLowHealthEffect(float Ratio)
 
 void AR1Player::TeleportToRoom(FVector TargetLocation)
 {
-	// CameraBoom은 AR1Player에 선언된 USpringArmComponent 포인터 이름에 맞게 변경해 주세요.
+	SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
 	if (SpringArm)
 	{
-		// 1. 현재 카메라 지연(Lag) 설정 상태를 기억해 둡니다.
-		bool bWasLagging = SpringArm->bEnableCameraLag;
-
-		// 2. 카메라가 부드럽게 따라오지 못하도록 지연 기능을 강제로 끕니다.
+		const bool bWasLagging = SpringArm->bEnableCameraLag;
 		SpringArm->bEnableCameraLag = false;
 
-		// 3. 플레이어를 순간이동 시킵니다. 
-		SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
+		// 스프링암의 랙 보간 상태(PreviousDesiredLoc)는 틱(UpdateDesiredArmLocation)에서만 갱신되므로,
+		// 랙을 끈 채 즉시 한 번 틱을 돌려 카메라를 새 위치로 스냅시키고 내부 상태를 리셋한다.
+		// (UpdateChildTransforms만으로는 리셋되지 않아 다음 틱에 이전 방 위치에서부터 느리게 보간됨)
+		SpringArm->TickComponent(0.f, LEVELTICK_All, nullptr);
 
-		// 4. (안전장치) 텔레포트된 위치로 자식 컴포넌트(카메라)들의 위치를 즉시 갱신합니다.
-		SpringArm->UpdateChildTransforms();
-
-		// 5. 카메라 지연 기능을 원래대로 되돌려 놓습니다.
 		SpringArm->bEnableCameraLag = bWasLagging;
-	}
-	else
-	{
-		// 스프링암이 없다면 그냥 이동만 시킵니다.
-		SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
 	}
 }

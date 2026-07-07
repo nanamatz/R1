@@ -26,6 +26,7 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 
 #include "Player/R1PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
 #include "System/R1LoadingSubSystem.h"
 #include "UI/System/R1LoadingScreenWidget.h"
 #include "Map/R1PlayerSpawnMarker.h"
@@ -38,6 +39,34 @@
 // GenerateMap(동기) 직후 도달하는 진행도. 이후 0.2~1.0 구간을 실제 방 스트리밍 비율로 채운다.
 // 느린 작업(방 AddToWorld)이 로딩바의 대부분(80%)을 차지하도록 해 50%에서 멈춘 듯한 인상을 없앤다.
 static constexpr float FloorLoadStartProgress = 0.2f;
+
+// 문 통과 방 전환 페이드 연출. 층 전체가 메모리에 있어 전환 자체는 즉시 가능하지만,
+// 순간 컷이 어색하므로 짧은 페이드아웃 → (검은 화면 뒤 텔레포트) → 페이드인으로 감싼다.
+static constexpr float DoorFadeOutDuration = 0.5f;
+static constexpr float DoorFadeInDuration = 0.3f;
+
+// 문 진입 시 카메라 정착(settle) 거리: 페이드인 시작 시 카메라가 입구 문 쪽으로 이만큼 당겨진
+// 위치에서 출발해 플레이어 쪽으로 미끄러져 들어온다 (기존 CameraLagSpeed=3 사용).
+// 크게 하면 카메라 이동이 길고 뚜렷해지고, 작게 하면 미묘해진다.
+static constexpr float DoorEntryCameraSettleDistance = 450.0f;
+
+static void StartDoorTransitionFade(const UObject* WorldContext, float FromAlpha, float ToAlpha, float Duration, bool bHoldWhenFinished)
+{
+	if (APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(WorldContext, 0))
+	{
+		// [진단용 임시 로그] 페이드아웃 미표시 원인 추적. 원인 확정 후 제거 예정.
+		UE_LOG(LogR1, Warning, TEXT("[DoorFade] StartCameraFade %.2f→%.2f (%.2fs, hold=%d) 호출 직전: bEnableFading=%d FadeAmount=%.2f t=%.3f"),
+			FromAlpha, ToAlpha, Duration, bHoldWhenFinished ? 1 : 0,
+			CamManager->bEnableFading ? 1 : 0, CamManager->FadeAmount,
+			WorldContext->GetWorld() ? WorldContext->GetWorld()->GetTimeSeconds() : -1.0f);
+
+		CamManager->StartCameraFade(FromAlpha, ToAlpha, Duration, FLinearColor::Black, false, bHoldWhenFinished);
+	}
+	else
+	{
+		UE_LOG(LogR1, Error, TEXT("[DoorFade] PlayerCameraManager를 찾지 못해 페이드를 걸 수 없습니다!"));
+	}
+}
 
 // 네비메시 생성 대기 파라미터.
 static constexpr float NavBuildPollInterval = 0.05f;   // 폴링 간격(초)
@@ -366,8 +395,16 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 	PendingNodeID = NextNodeID;
 	PendingDoorDirection = Direction;
 
-	// 층 전체가 이미 메모리에 있으므로 스트리밍 대기 없이 즉시 활성화 (= 끊김 없음).
-	ActivateRoom(NextNodeID);
+	// 층 전체가 이미 메모리에 있으므로 즉시 활성화가 가능하지만, 순간 컷이 어색하므로
+	// 페이드아웃이 끝난 뒤(검은 화면에서) 방을 활성화한다. 페이드인은 ActivateRoom 텔레포트 후.
+	// 재진입은 위의 PendingNodeID 가드가 막는다.
+	UE_LOG(LogR1, Warning, TEXT("[DoorFade] OnPlayerEnteredDoor: 페이드아웃 시작, %.2f초 후 ActivateRoom(%d) 예약"), DoorFadeOutDuration, NextNodeID);
+	StartDoorTransitionFade(this, 0.0f, 1.0f, DoorFadeOutDuration, /*bHoldWhenFinished=*/true);
+
+	FTimerHandle FadeTimerHandle;
+	GetWorldTimerManager().SetTimer(FadeTimerHandle,
+		FTimerDelegate::CreateUObject(this, &AR1MapGenerator::ActivateRoom, NextNodeID),
+		DoorFadeOutDuration, false);
 }
 
 
@@ -517,12 +554,35 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 
 void AR1MapGenerator::ActivateRoom(int32 NodeID)
 {
-	if (!GeneratedMap.IsValidIndex(NodeID)) return;
+	// 문 진입 실패 시(아래 early return) 페이드아웃된 화면이 검게 남지 않도록 복구가 필요하다.
+	const bool bIsDoorEntry = (PendingDoorDirection != ER1DoorDirection::None);
+
+	// [진단용 임시 로그] 페이드아웃이 0.5초 동안 실제로 진행됐는지 확인.
+	// 정상이라면 이 시점에 bEnableFading=1, FadeAmount≈1.0(완전 검정)이어야 한다.
+	if (APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(this, 0))
+	{
+		UE_LOG(LogR1, Warning, TEXT("[DoorFade] ActivateRoom(%d) 진입: bIsDoorEntry=%d bEnableFading=%d FadeAmount=%.2f t=%.3f"),
+			NodeID, bIsDoorEntry ? 1 : 0, CamManager->bEnableFading ? 1 : 0, CamManager->FadeAmount,
+			GetWorld()->GetTimeSeconds());
+	}
+
+	if (!GeneratedMap.IsValidIndex(NodeID))
+	{
+		if (bIsDoorEntry)
+		{
+			StartDoorTransitionFade(this, 1.0f, 0.0f, DoorFadeInDuration, false);
+		}
+		return;
+	}
 
 	ADungeonManager* Manager = ActiveManagers.FindRef(NodeID);
 	if (!IsValid(Manager))
 	{
 		UE_LOG(LogR1, Warning, TEXT("[MapGenerator] ActivateRoom: %d번 방 매니저가 아직 등록되지 않았습니다."), NodeID);
+		if (bIsDoorEntry)
+		{
+			StartDoorTransitionFade(this, 1.0f, 0.0f, DoorFadeInDuration, false);
+		}
 		return;
 	}
 
@@ -578,6 +638,9 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 		FVector FinalLocation;
 		FRotator FinalRotation = FRotator::ZeroRotator;
 
+		// 문 진입 시 카메라 정착(settle) 연출용: 진행 방향(문 → 방 중심). 문 진입이 아니면 Zero.
+		FVector EntryDirection = FVector::ZeroVector;
+
 		if (bWasLoadingFromSave)
 		{
 			FinalLocation = LoadedPlayerLocation;
@@ -588,6 +651,7 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 			const FVector DirectionToCenter =
 				(GeneratedMap[NodeID].SpawnLocation - TargetDoorToSpawnAt->GetActorLocation()).GetSafeNormal();
 			FinalLocation = TargetDoorToSpawnAt->GetActorLocation() + (DirectionToCenter * DoorEntryPushDistance) + FVector(0.0f, 0.0f, DoorEntryZOffset);
+			EntryDirection = DirectionToCenter;
 		}
 		else if (AR1PlayerSpawnMarker* Marker = FindSpawnMarkerForNode(NodeID))
 		{
@@ -604,8 +668,28 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 			PC->ResetMovementState();
 		}
 
-		PlayerCharacter->TeleportToRoom(FinalLocation);
+		if (!EntryDirection.IsNearlyZero())
+		{
+			// 카메라 정착 연출: 페이드인 시작 시점에 카메라가 완전히 멈춰 있으면 "순간이동한 컷"으로
+			// 느껴진다. 이를 피하려고 카메라를 먼저 입구 문 쪽(진행 방향 뒤쪽) 지점에 스냅해 두고,
+			// 플레이어만 최종 위치로 옮겨 카메라 랙이 페이드인 동안 진행 방향으로 미끄러져 들어오게 한다.
+			// (나갈 때의 카메라 이동 방향이 새 방에서도 이어져 컷이 아니라 연속 이동처럼 보인다)
+			const FVector CameraSettleStart = FinalLocation - (EntryDirection * DoorEntryCameraSettleDistance);
+			PlayerCharacter->TeleportToRoom(CameraSettleStart);
+			PlayerCharacter->SetActorLocation(FinalLocation, false, nullptr, ETeleportType::TeleportPhysics);
+		}
+		else
+		{
+			PlayerCharacter->TeleportToRoom(FinalLocation);
+		}
 		PlayerCharacter->SetActorRotation(FinalRotation);
+	}
+
+	// 문을 통한 진입이었다면(페이드아웃으로 검은 화면 상태), 텔레포트가 끝났으니 페이드인.
+	// 층 이동/세이브 복귀는 로딩 스크린이 자체 페이드를 처리하므로 제외된다.
+	if (bIsDoorEntry)
+	{
+		StartDoorTransitionFade(this, 1.0f, 0.0f, DoorFadeInDuration, false);
 	}
 
 	// 4. 상태 갱신 + 미니맵 + 오토세이브
