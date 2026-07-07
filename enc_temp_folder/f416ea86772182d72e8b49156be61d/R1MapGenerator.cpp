@@ -54,6 +54,12 @@ static void StartDoorTransitionFade(const UObject* WorldContext, float FromAlpha
 {
 	if (APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(WorldContext, 0))
 	{
+		// [진단용 임시 로그] 페이드아웃 미표시 원인 추적. 원인 확정 후 제거 예정.
+		UE_LOG(LogR1, Warning, TEXT("[DoorFade] StartCameraFade %.2f→%.2f (%.2fs, hold=%d) 호출 직전: bEnableFading=%d FadeAmount=%.2f t=%.3f"),
+			FromAlpha, ToAlpha, Duration, bHoldWhenFinished ? 1 : 0,
+			CamManager->bEnableFading ? 1 : 0, CamManager->FadeAmount,
+			WorldContext->GetWorld() ? WorldContext->GetWorld()->GetTimeSeconds() : -1.0f);
+
 		CamManager->StartCameraFade(FromAlpha, ToAlpha, Duration, FLinearColor::Black, false, bHoldWhenFinished);
 	}
 	else
@@ -81,6 +87,9 @@ static void StartDoorFadeInWhenFrameSettles(AR1MapGenerator* Generator, int32 Re
 		StartDoorTransitionFade(Generator, 1.0f, 0.0f, DoorFadeInDuration, false);
 		return;
 	}
+
+	// [진단용 임시 로그] 히치 가설 검증: 지연이 일어났다면 이 로그의 델타 값이 크게 찍힌다.
+	UE_LOG(LogR1, Warning, TEXT("[DoorFade] 프레임 델타 %.3fs (히치) — 페이드인 %d틱 더 대기"), LastFrameDelta, RemainingTries);
 
 	World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(Generator,
 		[Generator, RemainingTries]()
@@ -419,6 +428,7 @@ void AR1MapGenerator::OnPlayerEnteredDoor(ER1DoorDirection Direction)
 	// 층 전체가 이미 메모리에 있으므로 즉시 활성화가 가능하지만, 순간 컷이 어색하므로
 	// 페이드아웃이 끝난 뒤(검은 화면에서) 방을 활성화한다. 페이드인은 ActivateRoom 텔레포트 후.
 	// 재진입은 위의 PendingNodeID 가드가 막는다.
+	UE_LOG(LogR1, Warning, TEXT("[DoorFade] OnPlayerEnteredDoor: 페이드아웃 시작, %.2f초 후 ActivateRoom(%d) 예약"), DoorFadeOutDuration, NextNodeID);
 	StartDoorTransitionFade(this, 0.0f, 1.0f, DoorFadeOutDuration, /*bHoldWhenFinished=*/true);
 
 	FTimerHandle FadeTimerHandle;
@@ -577,6 +587,15 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 	// 문 진입 실패 시(아래 early return) 페이드아웃된 화면이 검게 남지 않도록 복구가 필요하다.
 	const bool bIsDoorEntry = (PendingDoorDirection != ER1DoorDirection::None);
 
+	// [진단용 임시 로그] 페이드아웃이 0.5초 동안 실제로 진행됐는지 확인.
+	// 정상이라면 이 시점에 bEnableFading=1, FadeAmount≈1.0(완전 검정)이어야 한다.
+	if (APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(this, 0))
+	{
+		UE_LOG(LogR1, Warning, TEXT("[DoorFade] ActivateRoom(%d) 진입: bIsDoorEntry=%d bEnableFading=%d FadeAmount=%.2f t=%.3f"),
+			NodeID, bIsDoorEntry ? 1 : 0, CamManager->bEnableFading ? 1 : 0, CamManager->FadeAmount,
+			GetWorld()->GetTimeSeconds());
+	}
+
 	if (!GeneratedMap.IsValidIndex(NodeID))
 	{
 		if (bIsDoorEntry)
@@ -697,14 +716,10 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 	}
 
 	// 문을 통한 진입이었다면(페이드아웃으로 검은 화면 상태), 텔레포트가 끝났으니 페이드인.
-	// 단, 이 프레임은 히치가 걸리므로 즉시 걸지 않고 프레임이 안정된 뒤 시작한다(위 함수 주석 참고).
 	// 층 이동/세이브 복귀는 로딩 스크린이 자체 페이드를 처리하므로 제외된다.
 	if (bIsDoorEntry)
 	{
-		GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
-		{
-			StartDoorFadeInWhenFrameSettles(this, DoorFadeMaxSettleTicks);
-		}));
+		StartDoorTransitionFade(this, 1.0f, 0.0f, DoorFadeInDuration, false);
 	}
 
 	// 4. 상태 갱신 + 미니맵 + 오토세이브
