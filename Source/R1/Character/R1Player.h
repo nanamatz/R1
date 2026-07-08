@@ -65,8 +65,10 @@ public:
 public:
 	class UR1AttributeSet* GetR1AttributeSet() const { return CommonAttributeSet; }
 
-	bool GetIsWeaponEquipped() const { return bIsWeaponEquipped; }
-	void SetIsWeaponEquipped(bool bEquipped) { bIsWeaponEquipped = bEquipped; }
+	// 파생값: 무기 포즈가 Unarmed가 아니면 장착 상태로 간주 (기존 ABP 호환용)
+	bool GetIsWeaponEquipped() const { return CurrentWeaponType != ER1WeaponType::Unarmed; }
+	ER1WeaponType GetWeaponType() const { return CurrentWeaponType; }
+	void SetWeaponType(ER1WeaponType NewWeaponType) { CurrentWeaponType = NewWeaponType; }
 
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
@@ -94,7 +96,7 @@ public:
 private:
 	void InitExpBar();
 
-	bool bIsWeaponEquipped = false;
+	ER1WeaponType CurrentWeaponType = ER1WeaponType::Unarmed;
 
 protected:
 	virtual void InitAttributes() override;

@@ -60,7 +60,7 @@ public:
 private:
 	FGameplayAbilitySpecHandle DefaultAttackAbilityHandle;
 
-	void UpdateWeaponState(bool bIsEquipped);
+	void UpdateWeaponState(ER1WeaponType NewWeaponType);
 
 	UPROPERTY()
 	TMap<ER1SkillSlot, FGameplayAbilitySpecHandle> SkillSlotsMap;

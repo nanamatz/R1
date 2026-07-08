@@ -39,7 +39,12 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 	{
 		ASC->ClearAbility(DefaultAttackAbilityHandle);
 		DefaultAttackAbilityHandle = FGameplayAbilitySpecHandle();
-		UpdateWeaponState(true);
+	}
+
+	// 무기 포즈 타입은 기본 공격 핸들 상태와 무관하게 항상 갱신
+	if (EquipSlot == ER1EquipmentSlot::Weapon)
+	{
+		UpdateWeaponState(ItemData->WeaponType);
 	}
 
 	FR1EquipmentActiveHandles NewHandles;
@@ -204,7 +209,7 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 			{
 				DefaultAttackAbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(DefaultAttackAbilityClass, 1));
 			}
-			UpdateWeaponState(false);
+			UpdateWeaponState(ER1WeaponType::Unarmed);
 		}
 
 		UE_LOG(LogR1, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
@@ -265,11 +270,12 @@ void UR1EquipmentManagerComponent::AutoAssignToEmptySlot(FGameplayAbilitySpecHan
 	UE_LOG(LogR1, Warning, TEXT("⚠️ 스킬 단축키가 모두 꽉 찼습니다! (Q,W,E,R 모두 사용 중)"));
 }
 
-void UR1EquipmentManagerComponent::UpdateWeaponState(bool bIsEquipped)
+void UR1EquipmentManagerComponent::UpdateWeaponState(ER1WeaponType NewWeaponType)
 {
 	if (AR1Player* Player = Cast<AR1Player>(GetOwner()))
 	{
-		Player->SetIsWeaponEquipped(bIsEquipped);
+		Player->SetWeaponType(NewWeaponType);
+		UE_LOG(LogR1, Log, TEXT("무기 포즈 타입 변경: %s"), *UEnum::GetValueAsString(NewWeaponType));
 	}
 }
 
@@ -287,7 +293,7 @@ void UR1EquipmentManagerComponent::BeginPlay()
 		{
 			DefaultAttackAbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(DefaultAttackAbilityClass, 1));
 		}
-		UpdateWeaponState(false);
+		UpdateWeaponState(ER1WeaponType::Unarmed);
 	}
 }
 
