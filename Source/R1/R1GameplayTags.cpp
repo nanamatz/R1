@@ -38,6 +38,7 @@ namespace R1GameplayTags
 
 	//State tags
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Dead,"Character.State.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(Character_State_Frozen,"Character.State.Frozen");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Casting,"Character.State.Casting");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_HitReact,"Character.State.HitReact");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_UnInterruptable,"Character.State.UnInterruptable");
@@ -123,5 +124,6 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Weapon_Impact, "GameplayCue.Weapon.Impact");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_ChainLightning, "GameplayCue.Skill.ChainLightning");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Burning, "GameplayCue.Status.Burning");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Frozen, "GameplayCue.Status.Frozen");
 
 }
