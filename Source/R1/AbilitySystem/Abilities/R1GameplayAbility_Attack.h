@@ -40,6 +40,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "GAS|Audio")
 	FGameplayTag GameplayCueTag;
 
+	// [설정] 콤보 몽타주 섹션 목록. 비어 있으면 기존 단일 스윙(섹션 지정 없이 재생).
+	UPROPERTY(EditDefaultsOnly, Category = "Animation|Combo")
+	TArray<FName> ComboSections;
+
+	// 다음에 재생할 콤보 섹션 인덱스 (InstancedPerActor라 액티베이션 간 유지)
+	UPROPERTY(Transient)
+	int32 ComboIndex = 0;
+
 	virtual void OnMontageEnded() override;
 	virtual void OnAttackEventReceived(FGameplayEventData Payload) override;
 };

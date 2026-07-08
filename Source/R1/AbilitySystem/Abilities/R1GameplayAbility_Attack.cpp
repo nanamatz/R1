@@ -9,11 +9,13 @@
 #include "Character/R1Character.h"
 #include "R1GameplayTags.h"
 #include "System/R1EquipmentManagerComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 UR1GameplayAbility_Attack::UR1GameplayAbility_Attack(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)	
 {
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerExecution;
+	// ComboIndex가 액티베이션 사이에 유지되도록 액터당 인스턴스 사용
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
 bool UR1GameplayAbility_Attack::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
@@ -31,7 +33,21 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 
 	AR1Character* Attacker = Cast<AR1Character>(ActorInfo->AvatarActor);
 
-	if (!PlayAttackMontageAndWaitForEvent(Attacker, AttackEventTag))
+	// 콤보 섹션이 설정돼 있으면 순환 재생, 없으면 기존 단일 스윙
+	FName StartSection = NAME_None;
+	if (ComboSections.Num() > 0)
+	{
+		StartSection = ComboSections[ComboIndex % ComboSections.Num()];
+	}
+
+	if (PlayAttackMontageAndWaitForEvent(Attacker, AttackEventTag, StartSection))
+	{
+		if (ComboSections.Num() > 0)
+		{
+			ComboIndex = (ComboIndex + 1) % ComboSections.Num();
+		}
+	}
+	else
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
@@ -110,50 +126,55 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 					// 나 자신에게 이벤트를 보내서, 내 몸에 장착된 패시브 GA들이 듣고 반응하게 합니다.
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceCharacter, HitEventTag, PayloadData);
 
-					// [오디오 트리거] 장착된 무기에서 소리를 가져와 GameplayCue를 실행합니다.
-					if (GameplayCueTag.IsValid() && AudioTag.IsValid())
+					// [오디오] 1) 장착 무기 사운드 + GameplayCue, 2) 없으면 SoundToPlay 폴백(맨손 등)
+					USoundBase* WeaponSound = nullptr;
+					if (AudioTag.IsValid())
 					{
 						if (AR1Player* Player = Cast<AR1Player>(SourceCharacter))
 						{
 							if (UR1EquipmentManagerComponent* EquipManager = Player->GetEquipmentComponent())
 							{
-								SoundToPlay = EquipManager->GetSoundByTag(ER1EquipmentSlot::Weapon, AudioTag);
+								WeaponSound = EquipManager->GetSoundByTag(ER1EquipmentSlot::Weapon, AudioTag);
 							}
 						}
+					}
 
-						if (SoundToPlay)
+					if (WeaponSound && GameplayCueTag.IsValid())
+					{
+						FGameplayCueParameters CueParams;
+						CueParams.SourceObject = WeaponSound;
+						CueParams.Instigator = SourceCharacter;
+
+
+						FVector StartLoc = SourceCharacter->GetActorLocation() + FVector(0, 0, 50.0f); // 명치를 향하도록 Z축 보정
+						FVector EndLoc = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
+
+						FHitResult HitResult;
+						FCollisionQueryParams TraceParams;
+						TraceParams.AddIgnoredActor(SourceCharacter);
+
+						// 공격자의 명치에서 타겟의 명치로 보이지 않는 선을 긋습니다.
+						bool bHit = SourceCharacter->GetWorld()->LineTraceSingleByChannel(
+							HitResult, StartLoc, EndLoc, ECC_Visibility, TraceParams);
+
+						if (bHit)
 						{
-							FGameplayCueParameters CueParams;
-							CueParams.SourceObject = SoundToPlay;
-							CueParams.Instigator = SourceCharacter;
-
-
-							FVector StartLoc = SourceCharacter->GetActorLocation() + FVector(0, 0, 50.0f); // 명치를 향하도록 Z축 보정
-							FVector EndLoc = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
-
-							FHitResult HitResult;
-							FCollisionQueryParams TraceParams;
-							TraceParams.AddIgnoredActor(SourceCharacter);
-
-							// 공격자의 명치에서 타겟의 명치로 보이지 않는 선을 긋습니다.
-							bool bHit = SourceCharacter->GetWorld()->LineTraceSingleByChannel(
-								HitResult, StartLoc, EndLoc, ECC_Visibility, TraceParams);
-
-							if (bHit)
-							{
-								// 캡슐(피부)에 맞았다면 그 정확한 표면 지점과 각도를 사용합니다.
-								CueParams.Location = HitResult.ImpactPoint;
-								CueParams.Normal = HitResult.ImpactNormal;
-							}
-							else
-							{
-								// 만약 장애물 등으로 빗나갔다면(예외 상황) 기본 위치로 세팅
-								CueParams.Location = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
-								CueParams.Normal = (StartLoc - EndLoc).GetSafeNormal();
-							}
-
-							SourceASC->ExecuteGameplayCue(GameplayCueTag, CueParams);
+							// 캡슐(피부)에 맞았다면 그 정확한 표면 지점과 각도를 사용합니다.
+							CueParams.Location = HitResult.ImpactPoint;
+							CueParams.Normal = HitResult.ImpactNormal;
 						}
+						else
+						{
+							// 만약 장애물 등으로 빗나갔다면(예외 상황) 기본 위치로 세팅
+							CueParams.Location = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
+							CueParams.Normal = (StartLoc - EndLoc).GetSafeNormal();
+						}
+
+						SourceASC->ExecuteGameplayCue(GameplayCueTag, CueParams);
+					}
+					else if (SoundToPlay)
+					{
+						UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, TargetActor->GetActorLocation());
 					}
 				}
 			}
