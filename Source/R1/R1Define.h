@@ -86,6 +86,29 @@ enum class ER1EquipmentSlot : uint8
 	Boots		
 };
 
+// 무기 포즈 카테고리 — 개별 무기 종류가 아니라 ABP가 사용할 애니메이션 포즈 묶음.
+// (도끼/망치/단검=OneHanded, 검=TwoHanded, 너클=Unarmed 포즈 재사용)
+UENUM(BlueprintType)
+enum class ER1WeaponType : uint8
+{
+	Unarmed		UMETA(DisplayName = "맨손"),
+	OneHanded	UMETA(DisplayName = "한손 무기"),
+	TwoHanded	UMETA(DisplayName = "양손 무기"),
+	Pistol		UMETA(DisplayName = "권총"),
+	Shuriken	UMETA(DisplayName = "수리검")
+};
+
+// 아이템/무기의 속성 원소. 현재는 Fire만 콘텐츠 존재, 나머지는 예약값.
+UENUM(BlueprintType)
+enum class ER1ElementType : uint8
+{
+	None		UMETA(DisplayName = "무속성"),
+	Fire		UMETA(DisplayName = "화염"),
+	Ice			UMETA(DisplayName = "냉기"),
+	Lightning	UMETA(DisplayName = "번개"),
+	Poison		UMETA(DisplayName = "독")
+};
+
 UENUM(BlueprintType)
 enum class ECreatureState: uint8
 {

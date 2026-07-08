@@ -70,6 +70,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	TArray<ER1EquipmentSlot> EquipSlots;
 
+	// 무기 슬롯 아이템에서만 의미 있음. 비무기 아이템은 기본값(Unarmed) 유지.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
+	ER1WeaponType WeaponType = ER1WeaponType::Unarmed;
+
+	// 아이템의 속성 (향후 저항/속성 데미지 판정용 게임플레이 정체성)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
+	ER1ElementType ElementType = ER1ElementType::None;
+
+	// 장착 중 무기 메시에 붙는 루프 이펙트 (없으면 미표시)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Visual")
+	TSoftObjectPtr<class UNiagaraSystem> WeaponAuraVFX;
+
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS")

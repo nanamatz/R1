@@ -23,7 +23,6 @@ namespace R1GameplayTags
 
 	//Abiility tags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack,"Ability.Attack");
-	UE_DEFINE_GAMEPLAY_TAG(Ability_FistAttack,"Ability.FistAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_JumpAttack,"Ability.JumpAttack");
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_LevelUp,"Ability.LevelUp");
@@ -123,5 +122,6 @@ namespace R1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Weapon_Impact, "GameplayCue.Weapon.Impact");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_ChainLightning, "GameplayCue.Skill.ChainLightning");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Burning, "GameplayCue.Status.Burning");
 
 }

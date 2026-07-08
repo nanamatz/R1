@@ -10,6 +10,8 @@
 #include "R1GameplayTags.h"
 #include "Data/R1ItemAssetData.h"
 #include "Character/R1Player.h"
+#include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 // Sets default values for this component's properties
 UR1EquipmentManagerComponent::UR1EquipmentManagerComponent()
 {
@@ -39,7 +41,12 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 	{
 		ASC->ClearAbility(DefaultAttackAbilityHandle);
 		DefaultAttackAbilityHandle = FGameplayAbilitySpecHandle();
-		UpdateWeaponState(true);
+	}
+
+	// 무기 포즈 타입은 기본 공격 핸들 상태와 무관하게 항상 갱신
+	if (EquipSlot == ER1EquipmentSlot::Weapon)
+	{
+		UpdateWeaponState(ItemData->WeaponType);
 	}
 
 	FR1EquipmentActiveHandles NewHandles;
@@ -148,6 +155,23 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 
 			// 나중에 장비를 벗을 때 지우기 위해 맵에 기록해 둡니다.
 			EquippedMeshesMap.Add(EquipSlot, WeaponMeshComp);
+
+			// 속성 무기라면 무기 메시에 오라 이펙트를 부착합니다.
+			if (!ItemData->WeaponAuraVFX.IsNull())
+			{
+				if (UNiagaraSystem* AuraSystem = ItemData->WeaponAuraVFX.LoadSynchronous())
+				{
+					UNiagaraComponent* AuraComp = NewObject<UNiagaraComponent>(GetOwner());
+					AuraComp->SetAsset(AuraSystem);
+					AuraComp->SetupAttachment(WeaponMeshComp);
+					AuraComp->RegisterComponent();
+					EquippedVFXMap.Add(EquipSlot, AuraComp);
+				}
+				else
+				{
+					UE_LOG(LogR1, Warning, TEXT("[%s] WeaponAuraVFX 로드 실패"), *ItemData->ItemName.ToString());
+				}
+			}
 		}
 	}
 
@@ -186,6 +210,16 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 		EquippedHandlesMap.Remove(EquipSlot);
 		EquippedItemsMap.Remove(EquipSlot);
 
+		// 속성 이펙트를 무기 메시보다 먼저 파괴합니다 (부착 부모가 사라지기 전).
+		if (TObjectPtr<UNiagaraComponent>* FoundVFX = EquippedVFXMap.Find(EquipSlot))
+		{
+			if (*FoundVFX)
+			{
+				(*FoundVFX)->DestroyComponent();
+			}
+			EquippedVFXMap.Remove(EquipSlot);
+		}
+
 		if (UStaticMeshComponent** FoundMeshComp = EquippedMeshesMap.Find(EquipSlot))
 		{
 			if (*FoundMeshComp)
@@ -204,7 +238,7 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 			{
 				DefaultAttackAbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(DefaultAttackAbilityClass, 1));
 			}
-			UpdateWeaponState(false);
+			UpdateWeaponState(ER1WeaponType::Unarmed);
 		}
 
 		UE_LOG(LogR1, Warning, TEXT("[%s] 슬롯 장착 해제 완료! 모든 효과 정상 회수됨"), *UEnum::GetValueAsString(EquipSlot));
@@ -265,11 +299,12 @@ void UR1EquipmentManagerComponent::AutoAssignToEmptySlot(FGameplayAbilitySpecHan
 	UE_LOG(LogR1, Warning, TEXT("⚠️ 스킬 단축키가 모두 꽉 찼습니다! (Q,W,E,R 모두 사용 중)"));
 }
 
-void UR1EquipmentManagerComponent::UpdateWeaponState(bool bIsEquipped)
+void UR1EquipmentManagerComponent::UpdateWeaponState(ER1WeaponType NewWeaponType)
 {
 	if (AR1Player* Player = Cast<AR1Player>(GetOwner()))
 	{
-		Player->SetIsWeaponEquipped(bIsEquipped);
+		Player->SetWeaponType(NewWeaponType);
+		UE_LOG(LogR1, Log, TEXT("무기 포즈 타입 변경: %s"), *UEnum::GetValueAsString(NewWeaponType));
 	}
 }
 
@@ -287,7 +322,7 @@ void UR1EquipmentManagerComponent::BeginPlay()
 		{
 			DefaultAttackAbilityHandle = ASC->GiveAbility(FGameplayAbilitySpec(DefaultAttackAbilityClass, 1));
 		}
-		UpdateWeaponState(false);
+		UpdateWeaponState(ER1WeaponType::Unarmed);
 	}
 }
 

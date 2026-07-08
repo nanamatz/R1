@@ -65,8 +65,8 @@ public:
 public:
 	class UR1AttributeSet* GetR1AttributeSet() const { return CommonAttributeSet; }
 
-	bool GetIsWeaponEquipped() const { return bIsWeaponEquipped; }
-	void SetIsWeaponEquipped(bool bEquipped) { bIsWeaponEquipped = bEquipped; }
+	ER1WeaponType GetWeaponType() const { return CurrentWeaponType; }
+	void SetWeaponType(ER1WeaponType NewWeaponType) { CurrentWeaponType = NewWeaponType; }
 
 public:
 	void ActivateAbility(FGameplayTag AbilityTag);
@@ -94,7 +94,7 @@ public:
 private:
 	void InitExpBar();
 
-	bool bIsWeaponEquipped = false;
+	ER1WeaponType CurrentWeaponType = ER1WeaponType::Unarmed;
 
 protected:
 	virtual void InitAttributes() override;

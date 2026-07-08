@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "R1Define.h"
 #include "R1AnimInstance.generated.h"
 
 /**
@@ -41,6 +42,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsFalling = false;
 
+	// ABP가 포즈 세트를 고르는 기준
 	UPROPERTY(BlueprintReadOnly)
-	bool bWeaponEquiped = false;
+	ER1WeaponType WeaponType = ER1WeaponType::Unarmed;
 };
