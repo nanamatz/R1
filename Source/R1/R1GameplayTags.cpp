@@ -39,6 +39,12 @@ namespace R1GameplayTags
 	//State tags
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Dead,"Character.State.Dead");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Frozen,"Character.State.Frozen");
+
+	// 상태이상/효과 분류 태그 (GE 에셋 태그·제거 쿼리용)
+	UE_DEFINE_GAMEPLAY_TAG(Effect_DoT, "Effect.DoT");
+	UE_DEFINE_GAMEPLAY_TAG(Effect_DoT_Burning, "Effect.DoT.Burning");
+	UE_DEFINE_GAMEPLAY_TAG(Effect_Frost, "Effect.Frost");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Frozen, "Status.Frozen");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Casting,"Character.State.Casting");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_HitReact,"Character.State.HitReact");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_UnInterruptable,"Character.State.UnInterruptable");
