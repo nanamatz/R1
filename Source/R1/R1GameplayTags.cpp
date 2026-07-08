@@ -23,7 +23,6 @@ namespace R1GameplayTags
 
 	//Abiility tags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack,"Ability.Attack");
-	UE_DEFINE_GAMEPLAY_TAG(Ability_FistAttack,"Ability.FistAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_JumpAttack,"Ability.JumpAttack");
 
 	UE_DEFINE_GAMEPLAY_TAG(Ability_LevelUp,"Ability.LevelUp");
