@@ -39,6 +39,7 @@ namespace R1GameplayTags
 	//State tags
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Dead,"Character.State.Dead");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Frozen,"Character.State.Frozen");
+	UE_DEFINE_GAMEPLAY_TAG(Character_State_Burning,"Character.State.Burning");
 
 	// 상태이상/효과 분류 태그 (GE 에셋 태그·제거 쿼리용)
 	UE_DEFINE_GAMEPLAY_TAG(Effect_DoT, "Effect.DoT");
