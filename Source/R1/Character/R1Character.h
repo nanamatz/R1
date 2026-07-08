@@ -46,6 +46,9 @@ public:
 
 	virtual void InitAbilitySystem();
 
+	// Character.State.Frozen 태그 부착/제거에 반응 (행동 취소 + 애니메이션 정지/재개)
+	void OnFrozenTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Attributes")
 	FOnHpChangedDelegate OnHpChanged;
@@ -69,6 +72,9 @@ public:
 	FName GetCharacterRowName() const { return CharacterRowName; }
 
 protected:
+	// InitAbilitySystem이 중복 호출돼도 태그 델리게이트가 이중 등록되지 않도록 보관
+	FDelegateHandle FrozenTagDelegateHandle;
+
 	// 1. 데이터 테이블 에셋 (에디터에서 지정)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
 	TObjectPtr<class UDataTable> CharacterStatTable;
