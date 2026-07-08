@@ -98,6 +98,17 @@ enum class ER1WeaponType : uint8
 	Shuriken	UMETA(DisplayName = "수리검")
 };
 
+// 아이템/무기의 속성 원소. 현재는 Fire만 콘텐츠 존재, 나머지는 예약값.
+UENUM(BlueprintType)
+enum class ER1ElementType : uint8
+{
+	None		UMETA(DisplayName = "무속성"),
+	Fire		UMETA(DisplayName = "화염"),
+	Ice			UMETA(DisplayName = "냉기"),
+	Lightning	UMETA(DisplayName = "번개"),
+	Poison		UMETA(DisplayName = "독")
+};
+
 UENUM(BlueprintType)
 enum class ECreatureState: uint8
 {
