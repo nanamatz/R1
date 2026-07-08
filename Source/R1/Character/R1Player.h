@@ -65,8 +65,6 @@ public:
 public:
 	class UR1AttributeSet* GetR1AttributeSet() const { return CommonAttributeSet; }
 
-	// 파생값: 무기 포즈가 Unarmed가 아니면 장착 상태로 간주 (기존 ABP 호환용)
-	bool GetIsWeaponEquipped() const { return CurrentWeaponType != ER1WeaponType::Unarmed; }
 	ER1WeaponType GetWeaponType() const { return CurrentWeaponType; }
 	void SetWeaponType(ER1WeaponType NewWeaponType) { CurrentWeaponType = NewWeaponType; }
 
