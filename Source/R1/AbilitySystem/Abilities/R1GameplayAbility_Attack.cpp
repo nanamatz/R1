@@ -33,16 +33,38 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 
 	AR1Character* Attacker = Cast<AR1Character>(ActorInfo->AvatarActor);
 
-	// 콤보 섹션이 설정돼 있으면 순환 재생, 없으면 기존 단일 스윙
+	// 콤보 섹션이 설정돼 있으면 순환(또는 무작위) 재생, 없으면 기존 단일 스윙
 	FName StartSection = NAME_None;
 	if (ComboSections.Num() > 0)
 	{
-		StartSection = ComboSections[ComboIndex % ComboSections.Num()];
+		int32 SectionIndex = 0;
+		if (bRandomComboSelection)
+		{
+			if (ComboSections.Num() > 1 && LastComboIndex != INDEX_NONE)
+			{
+				// 직전 섹션을 제외한 범위에서 뽑고, 그 이상이면 한 칸 밀어 연속 중복 회피
+				SectionIndex = FMath::RandRange(0, ComboSections.Num() - 2);
+				if (SectionIndex >= LastComboIndex)
+				{
+					++SectionIndex;
+				}
+			}
+			else
+			{
+				SectionIndex = FMath::RandRange(0, ComboSections.Num() - 1);
+			}
+			LastComboIndex = SectionIndex;
+		}
+		else
+		{
+			SectionIndex = ComboIndex % ComboSections.Num();
+		}
+		StartSection = ComboSections[SectionIndex];
 	}
 
 	if (PlayAttackMontageAndWaitForEvent(Attacker, AttackEventTag, StartSection))
 	{
-		if (ComboSections.Num() > 0)
+		if (ComboSections.Num() > 0 && !bRandomComboSelection)
 		{
 			ComboIndex = (ComboIndex + 1) % ComboSections.Num();
 		}

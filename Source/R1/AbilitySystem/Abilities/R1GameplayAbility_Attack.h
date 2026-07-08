@@ -44,6 +44,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation|Combo")
 	TArray<FName> ComboSections;
 
+	// [설정] true면 콤보 섹션을 순서 순환 대신 매번 무작위로 선택 (직전 섹션 연속 중복 없음)
+	UPROPERTY(EditDefaultsOnly, Category = "Animation|Combo")
+	bool bRandomComboSelection = false;
+
+	// 무작위 모드에서 직전에 재생한 섹션 인덱스 (연속 중복 방지용)
+	UPROPERTY(Transient)
+	int32 LastComboIndex = INDEX_NONE;
+
 	// 다음에 재생할 콤보 섹션 인덱스 (InstancedPerActor라 액티베이션 간 유지)
 	UPROPERTY(Transient)
 	int32 ComboIndex = 0;
