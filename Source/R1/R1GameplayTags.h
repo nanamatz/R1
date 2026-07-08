@@ -38,6 +38,14 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_ChainLightning);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Dead);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Frozen);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Burning);
+
+	// 상태이상/효과 분류 태그 (GE 에셋 태그·제거 쿼리용)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_DoT);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_DoT_Burning);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Frost);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_Frozen);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Casting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_HitReact);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_UnInterruptable);
@@ -130,5 +138,6 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Weapon_Impact);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Skill_ChainLightning);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Status_Burning);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Status_Frozen);
 
 }

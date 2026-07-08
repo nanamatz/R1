@@ -7,10 +7,13 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "Character/R1Character.h"
+#include "R1GameplayTags.h"
 
 UR1GameplayAbility::UR1GameplayAbility(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	// 빙결 상태에서는 모든 어빌리티 활성화 차단 (플레이어/몬스터 공통 — 모든 GA가 이 클래스를 상속)
+	ActivationBlockedTags.AddTag(R1GameplayTags::Character_State_Frozen);
 }
 
 bool UR1GameplayAbility::PlayAttackMontageAndWaitForEvent(AR1Character* Attacker, const FGameplayTag& InAttackEventTag, FName MontageStartSection)

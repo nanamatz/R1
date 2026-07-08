@@ -85,6 +85,15 @@ void AR1Character::InitAbilitySystem()
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
 		CommonAttributeSet = const_cast<UR1AttributeSet*>(ASC->GetSet<UR1AttributeSet>());
+
+		// 빙결 태그 변화 감지 (중복 등록 방지)
+		if (!FrozenTagDelegateHandle.IsValid())
+		{
+			FrozenTagDelegateHandle = ASC->RegisterGameplayTagEvent(
+				R1GameplayTags::Character_State_Frozen,
+				EGameplayTagEventType::NewOrRemoved
+			).AddUObject(this, &AR1Character::OnFrozenTagChanged);
+		}
 	}
 }
 
@@ -224,4 +233,31 @@ void AR1Character::AddCharacterAbility()
 
 	ASC->AddCharacterAbilities(StartupAbilities);
 
+}
+
+void AR1Character::OnFrozenTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+
+	if (NewCount > 0)
+	{
+		// 빙결: 진행 중인 행동 취소 + 몽타주 정지 + 애니메이션 일시정지
+		if (AbilitySystemComponent)
+		{
+			AbilitySystemComponent->CancelAbilities();
+		}
+		StopAnimMontage();
+		if (MeshComp)
+		{
+			MeshComp->bPauseAnims = true;
+		}
+	}
+	else
+	{
+		// 해제(만료/화염 상쇄/사망): 애니메이션 재개 — 사망 시 데스 몽타주가 정상 재생되도록 반드시 해제
+		if (MeshComp)
+		{
+			MeshComp->bPauseAnims = false;
+		}
+	}
 }
