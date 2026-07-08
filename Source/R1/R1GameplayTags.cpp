@@ -122,5 +122,6 @@ namespace R1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Weapon_Impact, "GameplayCue.Weapon.Impact");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_ChainLightning, "GameplayCue.Skill.ChainLightning");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Burning, "GameplayCue.Status.Burning");
 
 }

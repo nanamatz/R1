@@ -129,5 +129,6 @@ namespace R1GameplayTags
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Weapon_Impact);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Skill_ChainLightning);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Status_Burning);
 
 }
