@@ -10,6 +10,8 @@
 #include "R1GameplayTags.h"
 #include "Data/R1ItemAssetData.h"
 #include "Character/R1Player.h"
+#include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 // Sets default values for this component's properties
 UR1EquipmentManagerComponent::UR1EquipmentManagerComponent()
 {
@@ -153,6 +155,23 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 
 			// 나중에 장비를 벗을 때 지우기 위해 맵에 기록해 둡니다.
 			EquippedMeshesMap.Add(EquipSlot, WeaponMeshComp);
+
+			// 속성 무기라면 무기 메시에 오라 이펙트를 부착합니다.
+			if (!ItemData->WeaponAuraVFX.IsNull())
+			{
+				if (UNiagaraSystem* AuraSystem = ItemData->WeaponAuraVFX.LoadSynchronous())
+				{
+					UNiagaraComponent* AuraComp = NewObject<UNiagaraComponent>(GetOwner());
+					AuraComp->SetAsset(AuraSystem);
+					AuraComp->SetupAttachment(WeaponMeshComp);
+					AuraComp->RegisterComponent();
+					EquippedVFXMap.Add(EquipSlot, AuraComp);
+				}
+				else
+				{
+					UE_LOG(LogR1, Warning, TEXT("[%s] WeaponAuraVFX 로드 실패"), *ItemData->ItemName.ToString());
+				}
+			}
 		}
 	}
 
@@ -190,6 +209,16 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 		// 4. Map에서 영수증 파기!
 		EquippedHandlesMap.Remove(EquipSlot);
 		EquippedItemsMap.Remove(EquipSlot);
+
+		// 속성 이펙트를 무기 메시보다 먼저 파괴합니다 (부착 부모가 사라지기 전).
+		if (TObjectPtr<UNiagaraComponent>* FoundVFX = EquippedVFXMap.Find(EquipSlot))
+		{
+			if (*FoundVFX)
+			{
+				(*FoundVFX)->DestroyComponent();
+			}
+			EquippedVFXMap.Remove(EquipSlot);
+		}
 
 		if (UStaticMeshComponent** FoundMeshComp = EquippedMeshesMap.Find(EquipSlot))
 		{

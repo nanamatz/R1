@@ -84,6 +84,10 @@ private:
 	UPROPERTY()
 	TMap<ER1EquipmentSlot, class UStaticMeshComponent*> EquippedMeshesMap;
 
+	// 장착 중 무기에 붙은 속성 이펙트 컴포넌트 (무기 메시와 함께 생성/파괴)
+	UPROPERTY()
+	TMap<ER1EquipmentSlot, TObjectPtr<class UNiagaraComponent>> EquippedVFXMap;
+
 	UPROPERTY()
 	TMap<ER1EquipmentSlot, TObjectPtr<class UR1ItemAssetData>> EquippedItemsMap;
 };
