@@ -40,9 +40,11 @@ void UR1AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (AR1Player* Player = Cast<AR1Player>(Character))
 	{
 		bWeaponEquiped = Player->GetIsWeaponEquipped();
+		WeaponType = Player->GetWeaponType();
 	}
 	else
 	{
 		bWeaponEquiped = false;
+		WeaponType = ER1WeaponType::Unarmed;
 	}
 }
