@@ -70,6 +70,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	TArray<ER1EquipmentSlot> EquipSlots;
 
+	// 무기 슬롯 아이템에서만 의미 있음. 비무기 아이템은 기본값(Unarmed) 유지.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
+	ER1WeaponType WeaponType = ER1WeaponType::Unarmed;
+
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS")
