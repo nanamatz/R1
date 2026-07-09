@@ -4,6 +4,8 @@
 
 #include "NativeGameplayTags.h"
 
+enum class ER1SkillSlot : uint8;
+
 namespace R1GameplayTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SetDestination);
@@ -23,6 +25,16 @@ namespace R1GameplayTags
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_HitReact);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Critical);
+
+	// 스킬 키 릴리즈(홀드 해제) 이벤트 — 홀드형 스킬(블레이드 웨이브 등)이 슬롯별로 대기
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Skill_Release_Q);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Skill_Release_W);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Skill_Release_E);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Skill_Release_R);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Montage_BladeWave);
+
+	// 슬롯(Q/W/E/R)에 해당하는 릴리즈 이벤트 태그. None이면 빈 태그.
+	FGameplayTag GetSkillReleaseTag(ER1SkillSlot Slot);
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_JumpAttack);
@@ -53,6 +65,8 @@ namespace R1GameplayTags
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Skill_Magnitude);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Skill_Cost);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Skill_Cooldown);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill_BladeWave);
 
 	// Common attributes
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxHealth);
