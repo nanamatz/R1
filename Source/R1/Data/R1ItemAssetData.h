@@ -82,6 +82,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Visual")
 	TSoftObjectPtr<class UNiagaraSystem> WeaponAuraVFX;
 
+	// 장착 시 스폰되는 무기 비주얼 액터 (BP_Weapon_*). 미지정 시 기존 ItemMesh + WeaponAuraVFX 폴백 경로 사용.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Visual")
+	TSoftClassPtr<class AR1WeaponActor> WeaponActorClass;
+
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS")

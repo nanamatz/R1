@@ -12,6 +12,7 @@
 #include "Character/R1Player.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
+#include "Object/R1WeaponActor.h"
 // Sets default values for this component's properties
 UR1EquipmentManagerComponent::UR1EquipmentManagerComponent()
 {
@@ -136,11 +137,36 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 	EquippedItemsMap.Add(EquipSlot, ItemData);
 
 	AR1Player* PlayerChar = Cast<AR1Player>(GetOwner());
-	if (PlayerChar && PlayerChar->GetMesh())
+	if (PlayerChar && PlayerChar->GetMesh() && (ItemData->EquipSlots[0] == ER1EquipmentSlot::Weapon))
 	{
-		if (ItemData->ItemMesh && (ItemData->EquipSlots[0] == ER1EquipmentSlot::Weapon))
+		// 방어적 정리: 같은 슬롯에 무기 액터가 남아 있으면 파괴 (세이브 로드 재장착 등에서 누수 방지)
+		if (TObjectPtr<AR1WeaponActor>* ExistingActor = EquippedWeaponActorsMap.Find(EquipSlot))
 		{
-			//PlayerChar->GetMesh()->HideBoneByName(FName("sword_bottom"), PBO_None);
+			if (*ExistingActor)
+			{
+				(*ExistingActor)->Destroy();
+			}
+			EquippedWeaponActorsMap.Remove(EquipSlot);
+		}
+
+		UClass* LoadedWeaponActorClass = ItemData->WeaponActorClass.LoadSynchronous();
+		if (LoadedWeaponActorClass)
+		{
+			// [신규 경로] BP 무기 액터 스폰 — 메시/VFX 배치는 BP 안에서 완결
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = GetOwner();
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+			AR1WeaponActor* WeaponActor = GetWorld()->SpawnActor<AR1WeaponActor>(LoadedWeaponActorClass, SpawnParams);
+			if (WeaponActor)
+			{
+				WeaponActor->AttachToComponent(PlayerChar->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, ItemData->EquipSocketName);
+				EquippedWeaponActorsMap.Add(EquipSlot, WeaponActor);
+			}
+		}
+		else if (ItemData->ItemMesh)
+		{
+			// [폴백 경로] 미이관 무기: 기존 스태틱 메시 + 오라 이펙트
 
 			// 스태틱 메시 컴포넌트를 런타임에 생성합니다.
 			UStaticMeshComponent* WeaponMeshComp = NewObject<UStaticMeshComponent>(GetOwner());
@@ -209,6 +235,16 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 		// 4. Map에서 영수증 파기!
 		EquippedHandlesMap.Remove(EquipSlot);
 		EquippedItemsMap.Remove(EquipSlot);
+
+		// [신규 경로] 무기 액터 파괴 (부착된 액터는 부모와 함께 파괴되지 않음)
+		if (TObjectPtr<AR1WeaponActor>* FoundWeaponActor = EquippedWeaponActorsMap.Find(EquipSlot))
+		{
+			if (*FoundWeaponActor)
+			{
+				(*FoundWeaponActor)->Destroy();
+			}
+			EquippedWeaponActorsMap.Remove(EquipSlot);
+		}
 
 		// 속성 이펙트를 무기 메시보다 먼저 파괴합니다 (부착 부모가 사라지기 전).
 		if (TObjectPtr<UNiagaraComponent>* FoundVFX = EquippedVFXMap.Find(EquipSlot))
@@ -324,6 +360,22 @@ void UR1EquipmentManagerComponent::BeginPlay()
 		}
 		UpdateWeaponState(ER1WeaponType::Unarmed);
 	}
+}
+
+void UR1EquipmentManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// 부착된 '액터'는 부모(플레이어) 파괴 시 자동 파괴되지 않으므로 여기서 정리
+	// (레벨 전환/런 종료 시 무기 액터가 월드에 고아로 남는 누수 방지)
+	for (auto& Pair : EquippedWeaponActorsMap)
+	{
+		if (Pair.Value)
+		{
+			Pair.Value->Destroy();
+		}
+	}
+	EquippedWeaponActorsMap.Empty();
+
+	Super::EndPlay(EndPlayReason);
 }
 
 
