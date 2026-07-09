@@ -139,5 +139,6 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Skill_ChainLightning);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Status_Burning);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Status_Frozen);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Status_Frost);
 
 }

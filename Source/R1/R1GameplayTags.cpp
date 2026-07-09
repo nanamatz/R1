@@ -132,5 +132,6 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_ChainLightning, "GameplayCue.Skill.ChainLightning");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Burning, "GameplayCue.Status.Burning");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Frozen, "GameplayCue.Status.Frozen");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Frost, "GameplayCue.Status.Frost");
 
 }
