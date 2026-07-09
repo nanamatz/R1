@@ -14,6 +14,12 @@ class R1_API AR1BladeWaveProjectile : public AR1Projectile
 	GENERATED_BODY()
 
 public:
+	AR1BladeWaveProjectile();
+
+	// 검기가 날아가는 동안 회전시키는 컴포넌트 (축/속도는 BP에서 조절)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	TObjectPtr<class URotatingMovementComponent> RotatingMovement;
+
 	// 차지 비율에 따른 균등 스케일 (충돌 구체 + 비주얼). 스폰 직후 1회 호출.
 	void SetChargeScale(float InScale);
 

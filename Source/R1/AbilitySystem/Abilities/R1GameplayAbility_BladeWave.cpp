@@ -125,6 +125,7 @@ void UR1GameplayAbility_BladeWave::OnAttackEventReceived(FGameplayEventData Payl
 	// 발사 확정 전(차지 중) 노티파이 수신은 무시 — 몽타주 구성 실수 안전망
 	if (bReleased == false)
 	{
+		UE_LOG(LogR1, Warning, TEXT("[BladeWave] 발사 노티파이가 릴리즈 전에 도착 — 몽타주 섹션 연결(ChargeLoop 루프)을 확인하세요."));
 		return;
 	}
 

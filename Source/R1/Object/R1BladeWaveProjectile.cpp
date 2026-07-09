@@ -2,6 +2,18 @@
 #include "Character/R1Character.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "GameFramework/RotatingMovementComponent.h"
+
+AR1BladeWaveProjectile::AR1BladeWaveProjectile()
+{
+	// 검기가 날아가는 동안 제자리 회전 (기본: 요 720도/초)
+	RotatingMovement = CreateDefaultSubobject<URotatingMovementComponent>(TEXT("RotatingMovement"));
+	RotatingMovement->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+
+	// 베이스가 켠 속도 방향 강제 회전을 끈다 — 켜두면 매 틱 회전을 덮어써 스핀이 안 보인다.
+	ProjectileMovement->bRotationFollowsVelocity = false;
+}
 
 void AR1BladeWaveProjectile::SetChargeScale(float InScale)
 {
