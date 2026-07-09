@@ -53,6 +53,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AssignSkillToSlot(ER1SkillSlot Slot, FGameplayAbilitySpecHandle AbilityHandle);
 
+	// 해당 어빌리티 핸들이 꽂혀 있는 스킬 슬롯을 반환 (없으면 None)
+	ER1SkillSlot GetSlotForHandle(FGameplayAbilitySpecHandle AbilityHandle) const;
+
 public:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TSubclassOf<class UGameplayAbility> DefaultAttackAbilityClass;
@@ -72,6 +75,8 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 private:
 	// 이 컴포넌트가 부착된 캐릭터의 ASC 캐싱
 	UPROPERTY()
@@ -87,6 +92,10 @@ private:
 	// 장착 중 무기에 붙은 속성 이펙트 컴포넌트 (무기 메시와 함께 생성/파괴)
 	UPROPERTY()
 	TMap<ER1EquipmentSlot, TObjectPtr<class UNiagaraComponent>> EquippedVFXMap;
+
+	// 장착 중 무기 비주얼 액터 (WeaponActorClass 경로). 미이관 무기는 위의 메시/VFX 맵(폴백) 사용.
+	UPROPERTY()
+	TMap<ER1EquipmentSlot, TObjectPtr<class AR1WeaponActor>> EquippedWeaponActorsMap;
 
 	UPROPERTY()
 	TMap<ER1EquipmentSlot, TObjectPtr<class UR1ItemAssetData>> EquippedItemsMap;

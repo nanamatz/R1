@@ -46,6 +46,14 @@ private:
 	// 🌟 중복 제거: Q/W/E/R 스킬 입력 핸들러의 공통 실행 로직
 	void ExecuteSkill(ER1SkillSlot Slot);
 
+	void OnQSkillReleased();
+	void OnWSkillReleased();
+	void OnESkillReleased();
+	void OnRSkillReleased();
+
+	// 스킬 키를 뗐을 때 홀드형 스킬(차지)에게 릴리즈 이벤트를 전달한다.
+	void ReleaseSkill(ER1SkillSlot Slot);
+
 	// 🌟 중복 제거: 태그로 입력 액션을 찾고, 없으면 에러 로그를 남긴다(없으면 nullptr 반환).
 	const class UInputAction* FindInputActionChecked(const class UR1InputData* InputData, const FGameplayTag& Tag, const TCHAR* DebugName) const;
 

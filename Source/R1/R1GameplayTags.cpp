@@ -1,4 +1,5 @@
 #include "R1GameplayTags.h"
+#include "R1Define.h"
 
 namespace R1GameplayTags
 {
@@ -20,6 +21,25 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Montage_End,"Event.Monage.End");
 	UE_DEFINE_GAMEPLAY_TAG(Event_HitReact,"Event.HitReact");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_Critical, "Event.Hit.Critical");
+
+	//Skill key release event tags (hold-type skills)
+	UE_DEFINE_GAMEPLAY_TAG(Event_Skill_Release_Q, "Event.Skill.Release.Q");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Skill_Release_W, "Event.Skill.Release.W");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Skill_Release_E, "Event.Skill.Release.E");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Skill_Release_R, "Event.Skill.Release.R");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Montage_BladeWave, "Event.Montage.BladeWave");
+
+	FGameplayTag GetSkillReleaseTag(ER1SkillSlot Slot)
+	{
+		switch (Slot)
+		{
+		case ER1SkillSlot::Q: return Event_Skill_Release_Q;
+		case ER1SkillSlot::W: return Event_Skill_Release_W;
+		case ER1SkillSlot::E: return Event_Skill_Release_E;
+		case ER1SkillSlot::R: return Event_Skill_Release_R;
+		default:              return FGameplayTag();
+		}
+	}
 
 	//Abiility tags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack,"Ability.Attack");
@@ -52,6 +72,8 @@ namespace R1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Magnitude, "Data.Skill.Magnitude");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Cost, "Data.Skill.Cost");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Cooldown, "Data.Skill.Cooldown");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_BladeWave, "Cooldown.Skill.BladeWave");
 
 	//Common attributes
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxHealth, "Data.Attribute.MaxHealth");
@@ -132,5 +154,6 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Skill_ChainLightning, "GameplayCue.Skill.ChainLightning");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Burning, "GameplayCue.Status.Burning");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Frozen, "GameplayCue.Status.Frozen");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Frost, "GameplayCue.Status.Frost");
 
 }

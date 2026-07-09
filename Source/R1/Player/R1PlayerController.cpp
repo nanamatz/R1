@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 
 #include "Character/R1Player.h"
@@ -121,18 +122,26 @@ void AR1PlayerController::SetupInputComponent()
 	const UInputAction* ActionQSkill = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_SkillQ, TEXT("ActioQSkill"));
 	if (ActionQSkill == nullptr) return;
 	EnhancedInputComponent->BindAction(ActionQSkill, ETriggerEvent::Started, this, &ThisClass::OnQSkill);
+	EnhancedInputComponent->BindAction(ActionQSkill, ETriggerEvent::Completed, this, &ThisClass::OnQSkillReleased);
+	EnhancedInputComponent->BindAction(ActionQSkill, ETriggerEvent::Canceled, this, &ThisClass::OnQSkillReleased);
 
 	const UInputAction* ActionWSkill = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_SkillW, TEXT("ActioWSkill"));
 	if (ActionWSkill == nullptr) return;
 	EnhancedInputComponent->BindAction(ActionWSkill, ETriggerEvent::Started, this, &ThisClass::OnWSkill);
+	EnhancedInputComponent->BindAction(ActionWSkill, ETriggerEvent::Completed, this, &ThisClass::OnWSkillReleased);
+	EnhancedInputComponent->BindAction(ActionWSkill, ETriggerEvent::Canceled, this, &ThisClass::OnWSkillReleased);
 
 	const UInputAction* ActionESkill = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_SkillE, TEXT("ActioESkill"));
 	if (ActionESkill == nullptr) return;
 	EnhancedInputComponent->BindAction(ActionESkill, ETriggerEvent::Started, this, &ThisClass::OnESkill);
+	EnhancedInputComponent->BindAction(ActionESkill, ETriggerEvent::Completed, this, &ThisClass::OnESkillReleased);
+	EnhancedInputComponent->BindAction(ActionESkill, ETriggerEvent::Canceled, this, &ThisClass::OnESkillReleased);
 
 	const UInputAction* ActionRSkill = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_SkillR, TEXT("ActioRSkill"));
 	if (ActionRSkill == nullptr) return;
 	EnhancedInputComponent->BindAction(ActionRSkill, ETriggerEvent::Started, this, &ThisClass::OnRSkill);
+	EnhancedInputComponent->BindAction(ActionRSkill, ETriggerEvent::Completed, this, &ThisClass::OnRSkillReleased);
+	EnhancedInputComponent->BindAction(ActionRSkill, ETriggerEvent::Canceled, this, &ThisClass::OnRSkillReleased);
 
 	const UInputAction* ActionLookClick = FindInputActionChecked(InputData, R1GameplayTags::Input_Action_LookClick, TEXT("ActionLookClick"));
 	if (ActionLookClick == nullptr) return;
@@ -590,6 +599,24 @@ void AR1PlayerController::ExecuteSkill(ER1SkillSlot Slot)
 	{
 		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(Slot);
 	}
+}
+
+void AR1PlayerController::OnQSkillReleased() { ReleaseSkill(ER1SkillSlot::Q); }
+void AR1PlayerController::OnWSkillReleased() { ReleaseSkill(ER1SkillSlot::W); }
+void AR1PlayerController::OnESkillReleased() { ReleaseSkill(ER1SkillSlot::E); }
+void AR1PlayerController::OnRSkillReleased() { ReleaseSkill(ER1SkillSlot::R); }
+
+void AR1PlayerController::ReleaseSkill(ER1SkillSlot Slot)
+{
+	// 주의: IsCasting() 가드를 걸지 않는다 — 차지(Casting) 중인 어빌리티가 이 이벤트를 받아야 발사된다.
+	if (R1Player == nullptr)
+	{
+		return;
+	}
+
+	FGameplayEventData Payload;
+	Payload.Instigator = R1Player;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(R1Player, R1GameplayTags::GetSkillReleaseTag(Slot), Payload);
 }
 
 bool AR1PlayerController::IsCasting() const

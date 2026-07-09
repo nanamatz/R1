@@ -18,6 +18,9 @@ UR1GameplayAbility_HitReact::UR1GameplayAbility_HitReact(const FObjectInitialize
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	AbilityTriggers.Add(TriggerData);
 	ActivationOwnedTags.AddTag(R1GameplayTags::Character_State_HitReact);
+
+	// 차지형 스킬(하이퍼아머) 시전 중에는 피격 리액션을 차단한다.
+	ActivationBlockedTags.AddTag(R1GameplayTags::Character_State_UnInterruptable);
 }
 
 void UR1GameplayAbility_HitReact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
