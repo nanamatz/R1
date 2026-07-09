@@ -23,7 +23,13 @@ public:
 	// 차지 비율에 따른 균등 스케일 (충돌 구체 + 비주얼). 스폰 직후 1회 호출.
 	void SetChargeScale(float InScale);
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	TObjectPtr<class UBoxComponent> BoxComponent;
+
 protected:
+	// BoxComponent에 이벤트를 바인딩하기 위해 BeginPlay 오버라이드
+	virtual void BeginPlay() override;
+
 	virtual void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
 private:
