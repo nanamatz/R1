@@ -53,6 +53,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AssignSkillToSlot(ER1SkillSlot Slot, FGameplayAbilitySpecHandle AbilityHandle);
 
+	// 해당 어빌리티 핸들이 꽂혀 있는 스킬 슬롯을 반환 (없으면 None)
+	ER1SkillSlot GetSlotForHandle(FGameplayAbilitySpecHandle AbilityHandle) const;
+
 public:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 	TSubclassOf<class UGameplayAbility> DefaultAttackAbilityClass;

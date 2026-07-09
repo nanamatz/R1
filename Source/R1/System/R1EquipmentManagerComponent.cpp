@@ -321,6 +321,18 @@ void UR1EquipmentManagerComponent::AssignSkillToSlot(ER1SkillSlot Slot, FGamepla
 
 }
 
+ER1SkillSlot UR1EquipmentManagerComponent::GetSlotForHandle(FGameplayAbilitySpecHandle AbilityHandle) const
+{
+	for (const TPair<ER1SkillSlot, FGameplayAbilitySpecHandle>& Pair : SkillSlotsMap)
+	{
+		if (Pair.Value == AbilityHandle)
+		{
+			return Pair.Key;
+		}
+	}
+	return ER1SkillSlot::None;
+}
+
 
 void UR1EquipmentManagerComponent::AutoAssignToEmptySlot(FGameplayAbilitySpecHandle NewHandle)
 {
