@@ -77,6 +77,19 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 
 void UR1GameplayAbility_Attack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	// 몽타주 콜백을 거치지 않고 외부에서 종료되는 경우(무기 교체 시 ClearAbility 등)에도
+	// Casting 상태가 남지 않도록 여기서 확정적으로 복구한다. (OnMontageEnded와 중복돼도 무해)
+	if (ActorInfo && ActorInfo->AvatarActor.IsValid())
+	{
+		if (AR1Character* Attacker = Cast<AR1Character>(ActorInfo->AvatarActor.Get()))
+		{
+			if (Attacker->GetCreatureState() == ECreatureState::Casting)
+			{
+				Attacker->SetCreatureState(ECreatureState::Moving);
+			}
+		}
+	}
+
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 

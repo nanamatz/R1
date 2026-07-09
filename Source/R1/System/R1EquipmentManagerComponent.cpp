@@ -40,6 +40,9 @@ void UR1EquipmentManagerComponent::EquipItem(ER1EquipmentSlot EquipSlot, UR1Item
 	// 💡 무기를 장착할 때는 기존의 기본 공격(Fist 등)을 제거합니다.
 	if (EquipSlot == ER1EquipmentSlot::Weapon && DefaultAttackAbilityHandle.IsValid())
 	{
+		// 공격 중 장착 시 ClearAbility가 몽타주 델리게이트 없이 어빌리티를 파괴해
+		// Casting 상태가 남는 것을 막기 위해, 먼저 정상 취소 경로(OnInterrupted)를 태운다.
+		ASC->CancelAbilityHandle(DefaultAttackAbilityHandle);
 		ASC->ClearAbility(DefaultAttackAbilityHandle);
 		DefaultAttackAbilityHandle = FGameplayAbilitySpecHandle();
 	}
@@ -223,6 +226,9 @@ void UR1EquipmentManagerComponent::UnEquipItem(ER1EquipmentSlot EquipSlot)
 					It.RemoveCurrent();
 				}
 			}
+			// 활성 중인 어빌리티는 먼저 취소해 몽타주 OnInterrupted 콜백(상태 복구)이 돌게 한 뒤 제거한다.
+			// 비활성 스펙에는 CancelAbilityHandle이 아무 일도 하지 않으므로 안전하다.
+			ASC->CancelAbilityHandle(AbilityHandle);
 			ASC->ClearAbility(AbilityHandle);
 		}
 
