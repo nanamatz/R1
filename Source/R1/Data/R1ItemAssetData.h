@@ -78,6 +78,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment")
 	ER1ElementType ElementType = ER1ElementType::None;
 
+
 	// 장착 중 무기 메시에 붙는 루프 이펙트 (없으면 미표시)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Visual")
 	TSoftObjectPtr<class UNiagaraSystem> WeaponAuraVFX;
