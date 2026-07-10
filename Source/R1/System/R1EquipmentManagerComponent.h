@@ -45,6 +45,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	USoundBase* GetSoundByTag(ER1EquipmentSlot EquipSlot, FGameplayTag AudioTag) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	class UNiagaraSystem* GetHitImpactVFX(ER1EquipmentSlot EquipSlot) const;
+
 public:
 	// Q, W, E, R 단축키를 눌렀을 때 실행할 함수
 	void ExecuteSkillSlot(ER1SkillSlot Slot);

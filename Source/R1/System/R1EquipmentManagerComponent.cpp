@@ -302,6 +302,18 @@ USoundBase* UR1EquipmentManagerComponent::GetSoundByTag(ER1EquipmentSlot EquipSl
 	return nullptr;
 }
 
+UNiagaraSystem* UR1EquipmentManagerComponent::GetHitImpactVFX(ER1EquipmentSlot EquipSlot) const
+{
+	if (const TObjectPtr<UR1ItemAssetData>* FoundItem = EquippedItemsMap.Find(EquipSlot))
+	{
+		if (*FoundItem && !(*FoundItem)->HitImpactVFX.IsNull())
+		{
+			return (*FoundItem)->HitImpactVFX.LoadSynchronous();
+		}
+	}
+	return nullptr;
+}
+
 void UR1EquipmentManagerComponent::ExecuteSkillSlot(ER1SkillSlot Slot)
 {
 	if (ASC && SkillSlotsMap.Contains(Slot))

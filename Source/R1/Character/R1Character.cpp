@@ -2,6 +2,7 @@
 #include "R1LogChannels.h"
 #include "Components/WidgetComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "GameplayEffect.h"
@@ -72,6 +73,44 @@ void AR1Character::OnDead(TObjectPtr<AR1Character> Attacker)
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	OnDeadDelegate.Broadcast(this, Attacker.Get());
+}
+
+void AR1Character::FellOutOfWorld(const UDamageType& dmgType)
+{
+	// 주의: Super::FellOutOfWorld()는 Destroy()를 호출하므로 절대 호출하지 않는다.
+	// (게임오버 UI가 참조하는 폰이 파괴되면 안 됨)
+
+	// 엔진이 KillZ 아래의 액터를 매 프레임 재검사하므로 사망 후 재진입을 차단
+	if (CreatureState == ECreatureState::Dead)
+	{
+		return;
+	}
+
+	// 게임오버 화면 아래에서 무한 낙하하지 않도록 고정
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->StopMovementImmediately();
+		MoveComp->DisableMovement();
+	}
+
+	if (AbilitySystemComponent && FallDeathEffectClass)
+	{
+		FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+		Context.AddSourceObject(this);
+
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(FallDeathEffectClass, 1.0f, Context);
+		if (SpecHandle.IsValid())
+		{
+			AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+	}
+
+	// 안전망: GE 미지정/적용 실패 시에도 낙사가 무시되어 허공에 방치되지 않도록
+	if (CreatureState != ECreatureState::Dead)
+	{
+		ensureMsgf(false, TEXT("FellOutOfWorld: FallDeathEffectClass가 %s를 죽이지 못함 — OnDead() 직접 호출로 폴백"), *GetName());
+		OnDead(nullptr);
+	}
 }
 
 UAbilitySystemComponent* AR1Character::GetAbilitySystemComponent() const

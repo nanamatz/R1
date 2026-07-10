@@ -82,6 +82,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Visual")
 	TSoftObjectPtr<class UNiagaraSystem> WeaponAuraVFX;
 
+	// 명중 시 피격 지점에 재생되는 원샷 임팩트 이펙트 (미지정 시 GCN의 DefaultHitVFX 폴백)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Visual")
+	TSoftObjectPtr<class UNiagaraSystem> HitImpactVFX;
+
 	// 장착 시 스폰되는 무기 비주얼 액터 (BP_Weapon_*). 미지정 시 기존 ItemMesh + WeaponAuraVFX 폴백 경로 사용.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment|Visual")
 	TSoftClassPtr<class AR1WeaponActor> WeaponActorClass;
