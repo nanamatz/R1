@@ -162,7 +162,7 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 					// 나 자신에게 이벤트를 보내서, 내 몸에 장착된 패시브 GA들이 듣고 반응하게 합니다.
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceCharacter, HitEventTag, PayloadData);
 
-					// [오디오] 1) 장착 무기 사운드 + GameplayCue, 2) 없으면 SoundToPlay 폴백(맨손 등)
+					// [오디오] 장착 무기 사운드 조회 (AudioRoutingMap 라우팅)
 					USoundBase* WeaponSound = nullptr;
 					if (AudioTag.IsValid())
 					{
@@ -175,12 +175,12 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 						}
 					}
 
-					if (WeaponSound && GameplayCueTag.IsValid())
+					// [큐] 명중 시 항상 실행: 사운드(SourceObject, 없으면 무음) + 임팩트 VFX(GCN이 무기 DA에서 조회)
+					if (GameplayCueTag.IsValid())
 					{
 						FGameplayCueParameters CueParams;
 						CueParams.SourceObject = WeaponSound;
 						CueParams.Instigator = SourceCharacter;
-
 
 						FVector StartLoc = SourceCharacter->GetActorLocation() + FVector(0, 0, 50.0f); // 명치를 향하도록 Z축 보정
 						FVector EndLoc = TargetActor->GetActorLocation() + FVector(0, 0, 50.0f);
@@ -208,7 +208,9 @@ void UR1GameplayAbility_Attack::OnAttackEventReceived(FGameplayEventData Payload
 
 						SourceASC->ExecuteGameplayCue(GameplayCueTag, CueParams);
 					}
-					else if (SoundToPlay)
+
+					// [오디오 폴백] 큐가 무기 사운드를 재생하지 못하는 경우(맨손/몬스터/큐 태그 미설정) 기존 동작 유지
+					if (!(WeaponSound && GameplayCueTag.IsValid()) && SoundToPlay)
 					{
 						UGameplayStatics::PlaySoundAtLocation(this, SoundToPlay, TargetActor->GetActorLocation());
 					}
