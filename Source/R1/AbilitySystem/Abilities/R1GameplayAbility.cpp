@@ -51,6 +51,14 @@ bool UR1GameplayAbility::PlayAttackMontageAndWaitForEvent(AR1Character* Attacker
 	MontageTask->OnCancelled.AddDynamic(this, &UR1GameplayAbility::OnMontageEnded);
 	MontageTask->ReadyForActivation();
 
+	// 몽타주 재생이 즉시 실패하면 OnCancelled → 서브클래스 OnMontageEnded → EndAbility가
+	// 이 호출 안에서 동기적으로 실행되어 인스턴스가 가비지로 마킹될 수 있다.
+	// 그 상태로 아래에서 AddDynamic을 호출하면 "Unable to bind delegate" ensure가 발생하므로 중단한다.
+	if (!IsActive())
+	{
+		return false;
+	}
+
 	UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 		this,
 		InAttackEventTag,

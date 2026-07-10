@@ -28,7 +28,9 @@ protected:
 	// 🌟 공격류 어빌리티 공통 보일러플레이트 (Template Method):
 	// Casting 전환 → AttackSpeed 배속으로 MontageToPlay 재생(종료/중단/취소 시 OnMontageEnded)
 	// → InAttackEventTag 게임플레이 이벤트 대기(수신 시 OnAttackEventReceived).
-	// Attacker 또는 MontageToPlay가 없으면 아무것도 하지 않고 false 반환 — 호출부에서 EndAbility 처리.
+	// Attacker 또는 MontageToPlay가 없으면 아무것도 하지 않고 false 반환.
+	// 몽타주 시작이 동기 실패해 어빌리티가 이미 종료된 경우에도 false 반환 —
+	// 호출부는 IsActive()를 확인한 뒤에만 EndAbility를 호출할 것 (이중 종료 방지).
 	bool PlayAttackMontageAndWaitForEvent(class AR1Character* Attacker, const FGameplayTag& InAttackEventTag, FName MontageStartSection = NAME_None);
 
 	// 위 보일러플레이트가 바인딩하는 핸들러. 서브클래스에서 override (UFUNCTION 재선언 금지 — UHT 중복 에러).

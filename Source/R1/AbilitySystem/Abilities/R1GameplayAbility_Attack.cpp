@@ -69,8 +69,9 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 			ComboIndex = (ComboIndex + 1) % ComboSections.Num();
 		}
 	}
-	else
+	else if (IsActive())
 	{
+		// 몽타주 동기 실패로 헬퍼 안에서 이미 EndAbility된 경우는 이중 종료를 피한다.
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
 }

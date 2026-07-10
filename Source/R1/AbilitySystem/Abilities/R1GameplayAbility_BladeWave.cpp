@@ -49,7 +49,11 @@ void UR1GameplayAbility_BladeWave::ActivateAbility(const FGameplayAbilitySpecHan
 	// 차지 몽타주 재생(Charge → ChargeLoop 루프) + 발사 노티파이 대기
 	if (PlayAttackMontageAndWaitForEvent(Player, AttackEventTag) == false)
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		// 몽타주 동기 실패로 헬퍼 안에서 이미 EndAbility된 경우는 이중 종료를 피한다.
+		if (IsActive())
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		}
 		return;
 	}
 

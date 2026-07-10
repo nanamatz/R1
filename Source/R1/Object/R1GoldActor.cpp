@@ -46,6 +46,14 @@ void AR1GoldActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 근접 처치 직후 드랍되면 스폰 위치가 이미 플레이어와 겹쳐 있어, 위 Super::BeginPlay()의
+	// 초기 오버랩 디스패치에서 OnSphereOverlap → Interact → Destroy()가 동기 실행될 수 있다.
+	// 파괴 중인 액터에 AddDynamic하면 "Unable to bind delegate" ensure가 발생하므로 중단한다.
+	if (!IsValid(this) || IsActorBeingDestroyed())
+	{
+		return;
+	}
+
 	if (UWorld* World = GetWorld())
 	{
 		if (UGameInstance* GI = World->GetGameInstance())

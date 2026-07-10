@@ -56,6 +56,13 @@ void UR1GameplayAbility_BossAttackBase::ActivateAbility(const FGameplayAbilitySp
 		PlayMontageTask->ReadyForActivation();
 	}
 
+	// 몽타주 재생이 즉시 실패하면 OnCancelled → OnMontageEnded → EndAbility가 위 호출 안에서
+	// 동기 실행될 수 있다. 종료된 인스턴스에 AddDynamic하면 ensure가 발생하므로 중단한다.
+	if (!IsActive())
+	{
+		return;
+	}
+
 	// 4. Wait for Gameplay Event
 	UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AttackEventTag);
 	if (WaitEventTask)
