@@ -583,6 +583,11 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 		{
 			StartDoorTransitionFade(this, 1.0f, 0.0f, DoorFadeInDuration, false);
 		}
+		// 진입 실패 시 이동 중 상태를 반드시 해제해야 한다. 남겨두면 OnPlayerEnteredDoor의
+		// PendingNodeID 가드에 걸려 이후 모든 문 진입이 영구히 막히고, 오토세이브가
+		// 진입 실패한 방을 현재 방으로 기록하는 문제도 생긴다.
+		PendingNodeID = -1;
+		PendingDoorDirection = ER1DoorDirection::None;
 		return;
 	}
 
@@ -594,6 +599,9 @@ void AR1MapGenerator::ActivateRoom(int32 NodeID)
 		{
 			StartDoorTransitionFade(this, 1.0f, 0.0f, DoorFadeInDuration, false);
 		}
+		// 위와 동일 — 실패한 진입이 이동 중 상태로 남지 않게 해제.
+		PendingNodeID = -1;
+		PendingDoorDirection = ER1DoorDirection::None;
 		return;
 	}
 

@@ -132,6 +132,13 @@ void UR1GameplayAbility_ChainLightning::ProcessNextBounce()
 	// 5. 인덱스 증가
 	CurrentBounceIndex++;
 
+	// 위의 GE 적용/큐 실행 중 어빌리티가 취소·종료됐다면(예: 시전자 사망으로 CancelAbilities)
+	// InstancedPerExecution 인스턴스는 이미 가비지 상태 — AddDynamic 전에 중단한다.
+	if (!IsActive())
+	{
+		return;
+	}
+
 	// 6. 💡 딜레이 후 다시 이 함수를 호출하도록 Task 생성 (C++식 딜레이 루프)
 	UAbilityTask_WaitDelay* WaitDelayTask = UAbilityTask_WaitDelay::WaitDelay(this, BounceDelay);
 	WaitDelayTask->OnFinish.AddDynamic(this, &UR1GameplayAbility_ChainLightning::ProcessNextBounce);

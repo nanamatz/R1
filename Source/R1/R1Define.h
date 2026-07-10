@@ -106,7 +106,13 @@ enum class ER1ElementType : uint8
 	Fire		UMETA(DisplayName = "화염"),
 	Ice			UMETA(DisplayName = "냉기"),
 	Lightning	UMETA(DisplayName = "번개"),
-	Poison		UMETA(DisplayName = "독")
+	Poison		UMETA(DisplayName = "독"),
+	Dark		UMETA(DisplayName = "암흑"),
+	Earth		UMETA(DisplayName = "대지"),
+	Water		UMETA(DisplayName = "물"),
+	Wind		UMETA(DisplayName = "물"),
+	Wave		UMETA(DisplayName = "파동"),
+	Matrix		UMETA(DisplayName = "매트릭스")
 };
 
 UENUM(BlueprintType)
