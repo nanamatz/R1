@@ -374,6 +374,18 @@ void UR1GameplayAbility_JumpAttack::OnJumpAttackEventReceived(FGameplayEventData
 			PayloadData.Instigator = AvatarActor;
 			PayloadData.Target = CachedTarget;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AvatarActor, HitEventTag, PayloadData);
+
+			// [VFX] 무기 임팩트 큐 — GCN이 Instigator의 장착 무기 DA에서 HitImpactVFX를 조회 (사운드는 스킬 자체 오디오 유지)
+			// BP에서 GameplayCueTag를 지정하지 않았으면 기본 무기 임팩트 큐로 폴백
+			const FGameplayTag ImpactCueTag = GameplayCueTag.IsValid() ? GameplayCueTag : R1GameplayTags::GameplayCue_Weapon_Impact;
+			if (AvatarActor)
+			{
+				FGameplayCueParameters CueParams;
+				CueParams.Instigator = AvatarActor;
+				CueParams.Location = CachedTarget->GetActorLocation() + FVector(0, 0, 50.0f); // 명치 높이 보정
+				CueParams.Normal = (AvatarActor->GetActorLocation() - CachedTarget->GetActorLocation()).GetSafeNormal();
+				SourceASC->ExecuteGameplayCue(ImpactCueTag, CueParams);
+			}
 		}
 	}
 }
