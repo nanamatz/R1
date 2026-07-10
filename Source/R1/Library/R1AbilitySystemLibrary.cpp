@@ -114,7 +114,7 @@ TArray<AR1Character*> UR1AbilitySystemLibrary::GetChainLightningTargets(AR1Chara
 	return ResultTargets;
 }
 
-void UR1AbilitySystemLibrary::ApplySectorDamageToPlayers(const FGameplayEffectSpecHandle& SpecHandle, AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC)
+void UR1AbilitySystemLibrary::ApplySectorDamageToPlayers(const FGameplayEffectSpecHandle& SpecHandle, AR1Character* SourceCharacter, UAbilitySystemComponent* SourceASC, TArray<AActor*>* OutDamagedPlayers)
 {
 	if (SourceCharacter == nullptr || SourceASC == nullptr)
 	{
@@ -182,6 +182,11 @@ void UR1AbilitySystemLibrary::ApplySectorDamageToPlayers(const FGameplayEffectSp
 			{
 				SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 				ProcessedActors.Add(TargetPlayer);
+
+				if (OutDamagedPlayers)
+				{
+					OutDamagedPlayers->Add(TargetPlayer);
+				}
 			}
 		}
 	}

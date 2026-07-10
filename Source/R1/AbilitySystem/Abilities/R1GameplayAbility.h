@@ -50,6 +50,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	TObjectPtr<class USoundBase> SoundToPlay;
 
+	// 명중 시 피격 지점에 재생할 어빌리티 전용 임팩트 이펙트.
+	// 설정 시 GameplayCue.Weapon.Impact 큐에 SourceObject로 전달되어 무기 DA/기본 VFX보다 우선한다.
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	TObjectPtr<class UNiagaraSystem> HitImpactVFX;
+
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tooltip")
 	FName SkillNameKey;

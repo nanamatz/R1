@@ -21,6 +21,5 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
 	TObjectPtr<UParticleSystem> WaveEffect;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
-	TObjectPtr<UParticleSystem> ImpactEffect;
+	// 타격 임팩트는 레거시 Cascade(ImpactEffect) 대신 베이스의 HitImpactVFX(Niagara) + 무기 임팩트 큐로 재생한다.
 };
