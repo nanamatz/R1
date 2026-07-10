@@ -8,7 +8,6 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "R1GameplayTags.h"
 #include "Particles/ParticleSystemComponent.h"
-#include "NiagaraSystem.h"
 #include "Character/Boss/BossBaby.h"
 
 void UR1GameplayAbility_WaveAttack::OnAttackEventReceived(FGameplayEventData Payload)
@@ -122,7 +121,7 @@ void UR1GameplayAbility_WaveAttack::OnAttackEventReceived(FGameplayEventData Pay
 
 						// [VFX] 피해를 준 플레이어 위치에 무기 임팩트 큐 실행 (어빌리티 지정 VFX를 SourceObject로 전달)
 						FGameplayCueParameters CueParams;
-						CueParams.SourceObject = HitImpactVFX;
+						CueParams.SourceObject = GetHitImpactEffect();
 						CueParams.Instigator = AvatarActor;
 						CueParams.Location = OverlappedActor->GetActorLocation() + FVector(0, 0, 50.0f); // 명치 높이 보정
 						CueParams.Normal = (BossLoc - OverlappedActor->GetActorLocation()).GetSafeNormal();

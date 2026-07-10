@@ -4,7 +4,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Library/R1AbilitySystemLibrary.h"
 #include "R1GameplayTags.h"
-#include "NiagaraSystem.h"
 
 UR1GameplayAbility_MonsterMeeleAttack::UR1GameplayAbility_MonsterMeeleAttack(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -40,7 +39,7 @@ void UR1GameplayAbility_MonsterMeeleAttack::OnAttackEventReceived(FGameplayEvent
 			for (AActor* DamagedPlayer : DamagedPlayers)
 			{
 				FGameplayCueParameters CueParams;
-				CueParams.SourceObject = HitImpactVFX;
+				CueParams.SourceObject = GetHitImpactEffect();
 				CueParams.Instigator = SourceCharacter;
 				CueParams.Location = DamagedPlayer->GetActorLocation() + FVector(0, 0, 50.0f); // 명치 높이 보정
 				CueParams.Normal = (SourceCharacter->GetActorLocation() - DamagedPlayer->GetActorLocation()).GetSafeNormal();

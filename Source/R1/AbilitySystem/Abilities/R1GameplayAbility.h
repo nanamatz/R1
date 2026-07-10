@@ -50,10 +50,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	TObjectPtr<class USoundBase> SoundToPlay;
 
-	// 명중 시 피격 지점에 재생할 어빌리티 전용 임팩트 이펙트.
+	// 명중 시 피격 지점에 재생할 어빌리티 전용 임팩트 이펙트 (Niagara).
 	// 설정 시 GameplayCue.Weapon.Impact 큐에 SourceObject로 전달되어 무기 DA/기본 VFX보다 우선한다.
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")
 	TObjectPtr<class UNiagaraSystem> HitImpactVFX;
+
+	// 레거시 Cascade 임팩트 이펙트. HitImpactVFX(Niagara)와 둘 다 지정되면 Niagara가 우선한다.
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	TObjectPtr<class UParticleSystem> HitImpactCascade;
+
+	// 큐 SourceObject로 전달할 임팩트 이펙트 반환 (Niagara 우선, 없으면 Cascade, 둘 다 없으면 nullptr)
+	UObject* GetHitImpactEffect() const;
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tooltip")

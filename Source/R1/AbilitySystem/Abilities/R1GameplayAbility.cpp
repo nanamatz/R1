@@ -8,6 +8,17 @@
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "Character/R1Character.h"
 #include "R1GameplayTags.h"
+#include "NiagaraSystem.h"
+#include "Particles/ParticleSystem.h"
+
+UObject* UR1GameplayAbility::GetHitImpactEffect() const
+{
+	if (HitImpactVFX)
+	{
+		return HitImpactVFX;
+	}
+	return HitImpactCascade;
+}
 
 UR1GameplayAbility::UR1GameplayAbility(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
