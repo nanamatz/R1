@@ -41,6 +41,9 @@ public:
 
 	virtual void OnDead(const TObjectPtr<AR1Character> Attacker);
 
+	// KillZ 아래로 추락 시 엔진이 호출. 기본 구현(Destroy)을 막고 GAS 사망 파이프라인으로 라우팅
+	virtual void FellOutOfWorld(const UDamageType& dmgType) override;
+
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
@@ -82,6 +85,10 @@ protected:
 	// 2. 초기화용 GE 클래스 (GE_InitStats 넣을 곳)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
 	TSubclassOf<class UGameplayEffect> InitStatEffectClass;
+
+	// 낙사 즉사용 GE (GE_FallDeath) — Health를 0으로 Override
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
+	TSubclassOf<class UGameplayEffect> FallDeathEffectClass;
 
 	// 3. 내 이름 (Row Name) - Player는 "Player", 몬스터는 "Goblin" 등
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Init")
