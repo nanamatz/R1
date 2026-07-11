@@ -317,6 +317,29 @@ void AR1HUD::ToggleGameMenu()
     ToggleWidget(GameMenuUIWidgetClass, GameMenuUIWidget, bIsGameMenuUIVisible);
 }
 
+bool AR1HUD::CloseTopmostOverlay()
+{
+    if (bIsShopUIVisible)
+    {
+        CloseShopUI();
+        return true;
+    }
+
+    if (bIsInventoryUIVisible)
+    {
+        ToggleInventory(); // 상점이 닫혀 있으므로 인벤토리 토글 = 닫기
+        return true;
+    }
+
+    if (bIsCharacterStatUIVisible)
+    {
+        ToggleCharacterStatUI();
+        return true;
+    }
+
+    return false;
+}
+
 void AR1HUD::ToggleOptionsUI()
 {
     if (!OptionsWidgetClass || !GameOptionsSceneWidget) return;
