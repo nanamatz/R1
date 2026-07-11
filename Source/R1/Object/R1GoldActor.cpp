@@ -129,6 +129,27 @@ UPrimitiveComponent* AR1GoldActor::GetInteractTrigger()
 void AR1GoldActor::PopEffect()
 {
 	SphereComp->SetNotifyRigidBodyCollision(true);
+
+	// [진단용] 아래 AddDynamic이 "Unable to bind delegate" ensure를 간헐적으로 발생시키는 원인 추적.
+	// ensure는 프로세스당 한 번만 브레이크하므로, 실패 조건 3가지(약참조 Get / 내부 플래그 / FindFunction)
+	// 중 어느 것이 깨졌는지 매 발생마다 로그로 남긴다. 원인 확정 후 제거할 것.
+	{
+		FScriptDelegate Probe;
+		Probe.BindUFunction(this, FName(TEXT("OnSphereHit")));
+		if (!Probe.IsBound())
+		{
+			UE_LOG(LogR1, Error,
+				TEXT("[GoldActor] OnSphereHit 바인딩 실패 진단: Class=%s IsValid=%d BeingDestroyed=%d WeakGet=%d Garbage=%d Unreachable=%d FindFunction=%d"),
+				*GetClass()->GetPathName(),
+				IsValid(this) ? 1 : 0,
+				IsActorBeingDestroyed() ? 1 : 0,
+				(TWeakObjectPtr<UObject>(this).Get() != nullptr) ? 1 : 0,
+				HasAnyInternalFlags(EInternalObjectFlags::Garbage) ? 1 : 0,
+				HasAnyInternalFlags(EInternalObjectFlags::Unreachable) ? 1 : 0,
+				(FindFunction(FName(TEXT("OnSphereHit"))) != nullptr) ? 1 : 0);
+		}
+	}
+
 	SphereComp->OnComponentHit.AddDynamic(this, &AR1GoldActor::OnSphereHit);
 	float VerticalPower = FMath::RandRange(400.0f, 600.0f);
 
