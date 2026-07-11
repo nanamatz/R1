@@ -23,6 +23,24 @@ floor-specific looping ambient track that is audible across the entire floor.
   stops when it unloads. No cross-floor bleed is possible because only one
   floor is resident at a time.
 
+## Target assets (verified from CLI, 2026-07-12)
+
+Start-room levels referenced by the room PDAs (`Content/Data/RoomDatas/Start/`):
+
+| Floor | PDA | RoomLevel to edit |
+|-------|-----|-------------------|
+| 1F | `DA_Start_1F` | `/Game/Maps/1F/1F_S` |
+| 2F | `DA_Start_2F` | `/Game/Maps/2F/2F_S` |
+| 3F | `DA_Start_3F` | `/Game/Maps/3F/3F_Start` |
+
+All three are classic gameplay maps (DungeonManager present) and contain no
+existing AmbientSound actor.
+
+> Note: `DA_Start_4F` and `DA_Start_5F` both reference `/Game/Maps/5F/5F_S` —
+> floors 4 and 5 share one start-room level. If ambience is later extended to
+> those floors, a level-placed sound cannot differ between them (and the 4F
+> PDA pointing at a 5F map may itself be a mis-wire worth checking).
+
 ## Implementation (per floor, x3)
 
 1. **Sound asset** — one looping ambience track per floor.
