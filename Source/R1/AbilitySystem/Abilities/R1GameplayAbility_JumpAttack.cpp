@@ -30,24 +30,35 @@ bool UR1GameplayAbility_JumpAttack::CanActivateAbility(const FGameplayAbilitySpe
 {
 	if (Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) == false)
 	{
+		UE_LOG(LogR1, Warning, TEXT("[JumpAttack] CanActivate 실패: Super 거부 (태그/쿨다운/코스트/이미 활성)"));
 		return false;
 	}
 
 	AR1Player* PlayerCharacter = Cast<AR1Player>(ActorInfo->AvatarActor.Get());
-	if (!PlayerCharacter) return false;
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogR1, Warning, TEXT("[JumpAttack] CanActivate 실패: AvatarActor가 AR1Player가 아님"));
+		return false;
+	}
 
 	AR1PlayerController* PC = Cast<AR1PlayerController>(PlayerCharacter->GetController());
-	if (!PC) return false;
+	if (!PC)
+	{
+		UE_LOG(LogR1, Warning, TEXT("[JumpAttack] CanActivate 실패: PlayerController 없음"));
+		return false;
+	}
 
 	AR1Character* TargetMonster = PC->GetHighlightActor();
 	if (TargetMonster == nullptr || TargetMonster->GetCreatureState() == ECreatureState::Dead)
 	{
+		UE_LOG(LogR1, Warning, TEXT("[JumpAttack] CanActivate 실패: 하이라이트 대상 없음/사망 (%s)"), *GetNameSafe(TargetMonster));
 		return false;
-	}	
+	}
 	float DistanceToTarget = FVector::Distance(PlayerCharacter->GetActorLocation(), TargetMonster->GetActorLocation());
-	
+
 	if (DistanceToTarget > CachedSkillRange)
 	{
+		UE_LOG(LogR1, Warning, TEXT("[JumpAttack] CanActivate 실패: 거리 초과 (거리 %f > 범위 %f)"), DistanceToTarget, CachedSkillRange);
 		return false;
 	}
 
@@ -374,6 +385,18 @@ void UR1GameplayAbility_JumpAttack::OnJumpAttackEventReceived(FGameplayEventData
 			PayloadData.Instigator = AvatarActor;
 			PayloadData.Target = CachedTarget;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AvatarActor, HitEventTag, PayloadData);
+
+			// [VFX] 무기 임팩트 큐 — GCN이 Instigator의 장착 무기 DA에서 HitImpactVFX를 조회 (사운드는 스킬 자체 오디오 유지)
+			// BP에서 GameplayCueTag를 지정하지 않았으면 기본 무기 임팩트 큐로 폴백
+			const FGameplayTag ImpactCueTag = GameplayCueTag.IsValid() ? GameplayCueTag : R1GameplayTags::GameplayCue_Weapon_Impact;
+			if (AvatarActor)
+			{
+				FGameplayCueParameters CueParams;
+				CueParams.Instigator = AvatarActor;
+				CueParams.Location = CachedTarget->GetActorLocation() + FVector(0, 0, 50.0f); // 명치 높이 보정
+				CueParams.Normal = (AvatarActor->GetActorLocation() - CachedTarget->GetActorLocation()).GetSafeNormal();
+				SourceASC->ExecuteGameplayCue(ImpactCueTag, CueParams);
+			}
 		}
 	}
 }

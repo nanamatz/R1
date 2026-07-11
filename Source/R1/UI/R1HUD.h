@@ -32,6 +32,10 @@ public:
     // 옵션 메뉴 취소(ESC) 요청
     void CloseOptionsUIWithCancel();
 
+    // ESC 우선순위 처리: 열려 있는 최상위 오버레이 UI(상점 → 인벤토리 → 캐릭터 스탯)를 한 번에 하나만 닫는다.
+    // 닫은 UI가 있으면 true, 닫을 오버레이가 없으면 false를 반환한다.
+    bool CloseTopmostOverlay();
+
     //UUserWidget* GetInventoryWidget() const { return InventoryUIWidget; }
     //UUserWidget* GetBaseUIWidget() const { return BaseUIWidget; }
     //UUserWidget* GetGameOverUIWidget() const { return GameOverUIWidget; }

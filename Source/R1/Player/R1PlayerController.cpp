@@ -571,11 +571,7 @@ void AR1PlayerController::OnOptionsUIToggle()
 
 void AR1PlayerController::OnQSkill()
 {
-	if (R1Player && R1Player->GetEquipmentComponent() && !IsCasting())
-	{
-		R1Player->CombatTarget = Cast<AR1Character>(HighlightActor);
-		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(ER1SkillSlot::Q);
-	}
+	ExecuteSkill(ER1SkillSlot::Q);
 }
 
 void AR1PlayerController::OnWSkill()
@@ -597,7 +593,18 @@ void AR1PlayerController::ExecuteSkill(ER1SkillSlot Slot)
 {
 	if (R1Player && R1Player->GetEquipmentComponent() && !IsCasting())
 	{
+		// 스킬이 어느 슬롯에 있든 현재 하이라이트 대상을 전투 대상으로 갱신
+		// (JumpAttack 등 GetHighlightActor()->CombatTarget 의존 스킬이 Q 외 슬롯에서도 동작하도록)
+		R1Player->CombatTarget = Cast<AR1Character>(HighlightActor);
 		R1Player->GetEquipmentComponent()->ExecuteSkillSlot(Slot);
+	}
+	else
+	{
+		UE_LOG(LogR1, Warning, TEXT("[%s] 스킬 입력 무시됨 (Player: %d, EquipComp: %d, IsCasting: %d)"),
+			*UEnum::GetValueAsString(Slot),
+			R1Player != nullptr,
+			R1Player && R1Player->GetEquipmentComponent() != nullptr,
+			IsCasting());
 	}
 }
 
@@ -660,6 +667,11 @@ void AR1PlayerController::OnGameMenuToggle()
 			// 옵션 UI가 열려있다면 ESC 누를 때 취소(Cancel) 로직(모달 체크 등)을 실행하도록 요청
 			MyR1HUD->CloseOptionsUIWithCancel();
 			return; // 옵션만 처리하고 게임 메뉴나 일시정지 상태는 건드리지 않음
+		}
+
+		if (MyR1HUD->CloseTopmostOverlay())
+		{
+			return; // 오버레이 UI(상점/인벤토리/스탯)만 닫고, 게임 메뉴·일시정지는 건드리지 않음
 		}
 
 		MyR1HUD->ToggleGameMenu();

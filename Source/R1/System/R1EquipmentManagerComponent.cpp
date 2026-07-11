@@ -321,7 +321,15 @@ void UR1EquipmentManagerComponent::ExecuteSkillSlot(ER1SkillSlot Slot)
 		FGameplayAbilitySpecHandle HandleToExecute = SkillSlotsMap[Slot];
 		if (HandleToExecute.IsValid())
 		{
-			ASC->TryActivateAbility(HandleToExecute);
+			const bool bActivated = ASC->TryActivateAbility(HandleToExecute);
+			if (!bActivated)
+			{
+				const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(HandleToExecute);
+				UE_LOG(LogR1, Warning, TEXT("[%s] 스킬 활성화 실패: %s (스펙 존재: %d)"),
+					*UEnum::GetValueAsString(Slot),
+					Spec ? *GetNameSafe(Spec->Ability) : TEXT("스펙 없음"),
+					Spec != nullptr);
+			}
 			return;
 		}
 	}

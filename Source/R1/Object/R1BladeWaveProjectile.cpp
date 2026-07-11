@@ -1,5 +1,6 @@
 #include "Object/R1BladeWaveProjectile.h"
 #include "Character/R1Character.h"
+#include "R1GameplayTags.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -73,4 +74,19 @@ void AR1BladeWaveProjectile::OnOverlap(UPrimitiveComponent* OverlappedComponent,
 
 	HitActors.Add(OtherActor);
 	SourceASC->ApplyGameplayEffectSpecToTarget(*DamageSpecHandle.Data.Get(), TargetASC);
+
+	// [VFX] 무기 임팩트 큐 — GCN이 Instigator의 장착 무기 DA에서 HitImpactVFX를 조회 (검기 자체 비주얼과 별개)
+	FGameplayCueParameters CueParams;
+	CueParams.Instigator = GetInstigator();
+	CueParams.Location = TargetCharacter->GetActorLocation() + FVector(0, 0, 50.0f); // 명치 높이 보정
+
+	// 임팩트 방향은 검기 진행 방향의 반대 (정지 상태 등 예외 시 검기→대상 방향으로 폴백)
+	FVector HitNormal = -GetVelocity().GetSafeNormal();
+	if (HitNormal.IsNearlyZero())
+	{
+		HitNormal = (GetActorLocation() - TargetCharacter->GetActorLocation()).GetSafeNormal();
+	}
+	CueParams.Normal = HitNormal;
+
+	SourceASC->ExecuteGameplayCue(R1GameplayTags::GameplayCue_Weapon_Impact, CueParams);
 }

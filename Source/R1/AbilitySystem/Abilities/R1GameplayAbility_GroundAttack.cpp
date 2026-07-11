@@ -51,6 +51,14 @@ void UR1GameplayAbility_GroundAttack::OnAttackEventReceived(FGameplayEventData P
 		if (TargetASC)
 		{
 			SourceASC->ApplyGameplayEffectSpecToTarget(*EffectSpecHandle.Data.Get(), TargetASC);
+
+			// [VFX] 피해를 준 플레이어 위치에 무기 임팩트 큐 실행 (어빌리티 지정 VFX를 SourceObject로 전달)
+			FGameplayCueParameters CueParams;
+			CueParams.SourceObject = GetHitImpactEffect();
+			CueParams.Instigator = AvatarActor;
+			CueParams.Location = OverlappedActor->GetActorLocation() + FVector(0, 0, 50.0f); // 명치 높이 보정
+			CueParams.Normal = (AttackLocation - OverlappedActor->GetActorLocation()).GetSafeNormal();
+			SourceASC->ExecuteGameplayCue(R1GameplayTags::GameplayCue_Weapon_Impact, CueParams);
 		}
 	}
 

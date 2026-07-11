@@ -4,6 +4,7 @@
 #include "System/R1EquipmentManagerComponent.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Particles/ParticleSystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 
@@ -21,13 +22,18 @@ bool UR1GameplayCueNotify_WeaponImpact::OnExecute_Implementation(AActor* MyTarge
 		UGameplayStatics::PlaySoundAtLocation(MyTarget, Sound, Parameters.Location);
 	}
 
-	// [VFX] 공격자의 장착 무기 DA → HitImpactVFX, 없으면 DefaultHitVFX 폴백
-	UNiagaraSystem* ImpactVFX = nullptr;
-	if (AR1Player* Player = Cast<AR1Player>(Parameters.GetInstigator()))
+	// [VFX] 우선순위: 어빌리티 지정(SourceObject) → 장착 무기 DA → DefaultHitVFX
+	// 어빌리티 지정은 Niagara/레거시 Cascade 모두 허용 (UFXSystemAsset 공통 베이스, 둘 다 지정 시 어빌리티가 Niagara를 우선 전달).
+	// 플레이어 기본 공격은 SourceObject가 사운드라 캐스트 실패 → 무기 DA 경로로 폴백.
+	UFXSystemAsset* ImpactVFX = Cast<UFXSystemAsset>(const_cast<UObject*>(Parameters.GetSourceObject()));
+	if (!ImpactVFX)
 	{
-		if (UR1EquipmentManagerComponent* EquipManager = Player->GetEquipmentComponent())
+		if (AR1Player* Player = Cast<AR1Player>(Parameters.GetInstigator()))
 		{
-			ImpactVFX = EquipManager->GetHitImpactVFX(ER1EquipmentSlot::Weapon);
+			if (UR1EquipmentManagerComponent* EquipManager = Player->GetEquipmentComponent())
+			{
+				ImpactVFX = EquipManager->GetHitImpactVFX(ER1EquipmentSlot::Weapon);
+			}
 		}
 	}
 	if (!ImpactVFX)
@@ -35,10 +41,15 @@ bool UR1GameplayCueNotify_WeaponImpact::OnExecute_Implementation(AActor* MyTarge
 		ImpactVFX = DefaultHitVFX;
 	}
 
-	if (ImpactVFX)
+	if (UNiagaraSystem* NiagaraVFX = Cast<UNiagaraSystem>(ImpactVFX))
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			MyTarget, ImpactVFX, Parameters.Location, Parameters.Normal.Rotation());
+			MyTarget, NiagaraVFX, Parameters.Location, Parameters.Normal.Rotation());
+	}
+	else if (UParticleSystem* CascadeVFX = Cast<UParticleSystem>(ImpactVFX))
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(
+			MyTarget->GetWorld(), CascadeVFX, Parameters.Location, Parameters.Normal.Rotation());
 	}
 
 	return false;
