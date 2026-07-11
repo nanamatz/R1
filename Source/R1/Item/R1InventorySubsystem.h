@@ -10,6 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShopUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponChanged,bool,bIsEquipped);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int32, NewGold);
 class UR1ItemInstance;
+struct FStreamableHandle;
 
 /**
  * 
@@ -60,6 +61,14 @@ protected:
 
 	// 🌟 중복 제거용 도우미 함수 3: UI 에러 사운드 재생 (구매 실패·골드 부족 등)
 	void PlayInventoryErrorSound() const;
+
+	// 아이템의 소프트 참조 비주얼/오디오 에셋(무기 액터 BP, 오라·임팩트 VFX, 오디오 라우팅 사운드)을
+	// 획득 시점에 비동기 프리로드. 첫 장착 시 EquipItem의 LoadSynchronous가 디스크를 치며
+	// hitch를 내는 것을 방지한다 (프리로드 후에는 즉시 반환되는 안전망으로만 동작).
+	void PreloadItemVisualAssets(UR1ItemAssetData* InItemData);
+
+	// 프리로드한 에셋을 월드 수명 동안 메모리에 유지하는 핸들 (경로 기준 중복 로드 방지)
+	TMap<FSoftObjectPath, TSharedPtr<FStreamableHandle>> PreloadedAssetHandles;
 
 public:
 	// 아이템을 인벤토리에서 장비창으로 이동

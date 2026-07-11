@@ -8,6 +8,8 @@
 #include "UI/R1HUD.h"
 #include "Data/R1UISoundData.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 
 void UR1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -17,6 +19,9 @@ void UR1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UR1InventorySubsystem::Deinitialize()
 {
+	// 프리로드 핸들 해제 (TSharedPtr 소멸 시 스트리밍 참조도 함께 반환됨)
+	PreloadedAssetHandles.Empty();
+
 	Super::Deinitialize();
 }
 
@@ -131,9 +136,46 @@ UR1EquipmentManagerComponent* UR1InventorySubsystem::GetEquipmentManager() const
 UR1ItemInstance* UR1InventorySubsystem::CreateItemInstance(UR1ItemAssetData* InItemData, EItemRarity Rarity)
 {
 	if (!InItemData) return nullptr;
+
+	// 획득(줍기·구매·세이브 로드) 시점에 장착 비주얼 에셋을 미리 비동기 로드해 첫 장착 hitch 제거
+	PreloadItemVisualAssets(InItemData);
+
 	UR1ItemInstance* NewItem = NewObject<UR1ItemInstance>(this);
 	NewItem->Init(InItemData, Rarity);
 	return NewItem;
+}
+
+void UR1InventorySubsystem::PreloadItemVisualAssets(UR1ItemAssetData* InItemData)
+{
+	if (!InItemData) return;
+
+	TArray<FSoftObjectPath> PathsToLoad;
+	auto AddPathOnce = [this, &PathsToLoad](const FSoftObjectPath& Path)
+	{
+		if (Path.IsValid() && !PreloadedAssetHandles.Contains(Path))
+		{
+			PathsToLoad.AddUnique(Path);
+		}
+	};
+
+	AddPathOnce(InItemData->WeaponActorClass.ToSoftObjectPath());
+	AddPathOnce(InItemData->WeaponAuraVFX.ToSoftObjectPath());
+	AddPathOnce(InItemData->HitImpactVFX.ToSoftObjectPath());
+
+	// 전투 중 GetSoundByTag의 LoadSynchronous hitch도 같이 예방
+	for (const TPair<FGameplayTag, TSoftObjectPtr<USoundBase>>& Pair : InItemData->AudioRoutingMap)
+	{
+		AddPathOnce(Pair.Value.ToSoftObjectPath());
+	}
+
+	if (PathsToLoad.IsEmpty()) return;
+
+	FStreamableManager& Streamable = UAssetManager::Get().GetStreamableManager();
+	for (const FSoftObjectPath& Path : PathsToLoad)
+	{
+		// 핸들을 보관해 월드 수명 동안 로드 상태 유지 → 이후 LoadSynchronous는 즉시 반환
+		PreloadedAssetHandles.Add(Path, Streamable.RequestAsyncLoad(Path));
+	}
 }
 
 void UR1InventorySubsystem::PlayInventoryErrorSound() const
