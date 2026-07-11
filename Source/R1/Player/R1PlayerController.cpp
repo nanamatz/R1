@@ -669,6 +669,11 @@ void AR1PlayerController::OnGameMenuToggle()
 			return; // 옵션만 처리하고 게임 메뉴나 일시정지 상태는 건드리지 않음
 		}
 
+		if (MyR1HUD->CloseTopmostOverlay())
+		{
+			return; // 오버레이 UI(상점/인벤토리/스탯)만 닫고, 게임 메뉴·일시정지는 건드리지 않음
+		}
+
 		MyR1HUD->ToggleGameMenu();
 	}
 
