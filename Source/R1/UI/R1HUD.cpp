@@ -9,6 +9,7 @@
 
 #include "Item/R1InventorySubsystem.h"
 #include "Object/R1MerchantNPC.h"
+#include "Data/R1UISoundData.h"
 
 #include "Blueprint/WidgetTree.h"
 
@@ -247,6 +248,11 @@ void AR1HUD::OpenShopUI(AR1MerchantNPC* MerchantNPC)
         ShopSceneWidget->SetVisibility(ESlateVisibility::Visible);
         bIsShopUIVisible = true;
 
+        if (UISoundData && UISoundData->ShopOpen)
+        {
+            UGameplayStatics::PlaySound2D(this, UISoundData->ShopOpen);
+        }
+
         if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
         {
             InvenSubsys->bIsShopOpen = true;
@@ -262,6 +268,11 @@ void AR1HUD::CloseShopUI()
     {
         ShopSceneWidget->SetVisibility(ESlateVisibility::Hidden);
         bIsShopUIVisible = false;
+
+        if (UISoundData && UISoundData->ShopClose)
+        {
+            UGameplayStatics::PlaySound2D(this, UISoundData->ShopClose);
+        }
 
         if (UR1InventorySubsystem* InvenSubsys = GetWorld()->GetSubsystem<UR1InventorySubsystem>())
         {
