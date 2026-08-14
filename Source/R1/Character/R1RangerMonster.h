@@ -16,11 +16,5 @@ class R1_API AR1RangerMonster : public AR1Monster
 public:
     AR1RangerMonster();
 
-public:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-    TSubclassOf<class AR1Projectile> ProjectileClass;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-    FName MuzzleSocketName = FName("Muzzle_Front");
-	
+    // ProjectileClass / MuzzleSocketName은 AR1Monster로 올라갔다 (보스도 사용해야 하므로).
 };

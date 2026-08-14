@@ -8,11 +8,11 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "R1GameplayTags.h"
 #include "Particles/ParticleSystemComponent.h"
-#include "Character/Boss/BossBaby.h"
+#include "Character/R1Monster.h"
 
 void UR1GameplayAbility_WaveAttack::OnAttackEventReceived(FGameplayEventData Payload)
 {
-	ABossBaby* AvatarActor = Cast<ABossBaby>(GetAvatarActorFromActorInfo());
+	AR1Monster* AvatarActor = Cast<AR1Monster>(GetAvatarActorFromActorInfo());
 	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 
 	if (!AvatarActor || !SourceASC || !TelegraphData || !DamageEffect)

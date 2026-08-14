@@ -60,6 +60,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS")
 	TSubclassOf<class UGameplayEffect> XpEffect;
 
+	// 발사체 계열 어빌리티(RangedAttack)가 스폰할 투사체 클래스.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<class AR1Projectile> ProjectileClass;
+
+	// 투사체/빔 VFX가 출발할 메시 소켓 이름. BP_Baby는 "Muzzle_02"로 덮어쓴다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	FName MuzzleSocketName = FName("Muzzle_Front");
+
 protected:
 	virtual void OnHealthChanged(float Ratio, bool bIsDamage) override;
 	virtual void InitAttributes() override;
