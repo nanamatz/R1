@@ -11,6 +11,9 @@
 #include "NiagaraComponent.h"
 #include "System/R1EquipmentManagerComponent.h"
 #include "Character/R1Player.h"
+#include "R1LogChannels.h"
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 UR1GameplayAbility_ChainLightning::UR1GameplayAbility_ChainLightning()
 {
@@ -19,17 +22,30 @@ UR1GameplayAbility_ChainLightning::UR1GameplayAbility_ChainLightning()
 
 void UR1GameplayAbility_ChainLightning::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	if (!TriggerEventData || !TriggerEventData->Target)
+	AR1Character* SourceActor = Cast<AR1Character>(GetAvatarActorFromActorInfo());
+
+	// 플레이어는 평타 적중 이벤트로 발동하므로 TriggerEventData에 타겟이 실려 온다.
+	AR1Character* InitialTarget = nullptr;
+	if (TriggerEventData && TriggerEventData->Target)
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-		return;
+		InitialTarget = Cast<AR1Character>(const_cast<AActor*>(TriggerEventData->Target.Get()));
 	}
 
-	AR1Character* SourceActor = Cast<AR1Character>(GetAvatarActorFromActorInfo());
-	AR1Character* InitialTarget = Cast<AR1Character>(const_cast<AActor*>(TriggerEventData->Target.Get()));
+	// 보스는 BT에서 직접 발동하므로 이벤트가 없다 — 블랙보드 TargetActor로 대체한다.
+	if (!InitialTarget && SourceActor)
+	{
+		if (AAIController* AIC = Cast<AAIController>(SourceActor->GetController()))
+		{
+			if (UBlackboardComponent* BB = AIC->GetBlackboardComponent())
+			{
+				InitialTarget = Cast<AR1Character>(BB->GetValueAsObject(TEXT("TargetActor")));
+			}
+		}
+	}
 
 	if (!InitialTarget)
 	{
+		UE_LOG(LogR1, Warning, TEXT("[ChainLightning] no initial target from event or blackboard"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}

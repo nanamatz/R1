@@ -10,6 +10,7 @@
 
 class UBoxComponent;
 class UStaticMeshComponent;
+class USoundBase;
 
 UCLASS()
 class R1_API AR1Portal : public AActor, public IR1HighlightInterface, public IR1InteractionInterface
@@ -39,4 +40,12 @@ public:
 	// 플레이어 접근을 감지할 트리거 박스
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UBoxComponent> TriggerBox;
+
+	// 포탈이 생성될 때 위치에서 재생되는 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
+	TObjectPtr<USoundBase> SpawnSound;
+
+	// 포탈에 진입해 다음 층으로 이동할 때 재생되는 사운드 (포탈 파괴 후에도 유지되도록 2D 재생)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
+	TObjectPtr<USoundBase> EnterSound;
 };

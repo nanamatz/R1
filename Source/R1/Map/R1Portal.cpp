@@ -39,6 +39,12 @@ void AR1Portal::Interact_Implementation(AR1PlayerController* Interactor)
 	// 바로 다음 층으로 이동!
 	if (AR1MapGenerator* Generator = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
 	{
+		// 포탈이 파괴되고 플레이어가 순간이동해도 끊기지 않도록 2D로 재생
+		if (EnterSound)
+		{
+			UGameplayStatics::PlaySound2D(this, EnterSound);
+		}
+
 		Generator->GoToNextFloor();
 		Destroy();
 	}
@@ -49,6 +55,10 @@ void AR1Portal::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (SpawnSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, SpawnSound, GetActorLocation());
+	}
 }
 
 void AR1Portal::Highlight()

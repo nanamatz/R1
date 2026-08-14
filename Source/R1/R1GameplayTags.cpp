@@ -54,6 +54,8 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Monster_SpecialAttack, "Ability.Monster.SpecialAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Monster_Skill_GroundAttack, "Ability.Monster.Skill.GroundAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Monster_Skill_WaveAttack, "Ability.Monster.Skill.WaveAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Monster_Skill_LeapAttack, "Ability.Monster.Skill.LeapAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Monster_Skill_Summon, "Ability.Monster.Skill.Summon");
 
 
 	//State tags

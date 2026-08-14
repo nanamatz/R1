@@ -1,5 +1,5 @@
 #include "AbilitySystem/Abilities/R1GameplayAbility_RangedAttack.h"
-#include "Character/R1RangerMonster.h"
+#include "Character/R1Monster.h"
 #include "Object/R1Projectile.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -7,7 +7,7 @@
 
 void UR1GameplayAbility_RangedAttack::OnAttackEventReceived(FGameplayEventData Payload)
 {
-    AR1RangerMonster* SourceCharacter = Cast<AR1RangerMonster>(GetAvatarActorFromActorInfo());
+    AR1Monster* SourceCharacter = Cast<AR1Monster>(GetAvatarActorFromActorInfo());
     if (!SourceCharacter || !SourceCharacter->ProjectileClass) return;
 
     if (SoundToPlay)

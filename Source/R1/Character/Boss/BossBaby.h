@@ -14,7 +14,6 @@ class R1_API ABossBaby : public AR1Boss
 {
 	GENERATED_BODY()
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
-	FName MuzzleSocketName = FName("Muzzle_02");
+	// MuzzleSocketName은 AR1Monster로 올라갔다. 베이스 기본값은 "Muzzle_Front"이므로
+	// BP_Baby에서 "Muzzle_02"로 덮어쓸 것.
 };

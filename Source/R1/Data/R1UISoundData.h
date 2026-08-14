@@ -23,6 +23,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop")
 	TObjectPtr<USoundBase> ShopPurchase;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop")
+	TObjectPtr<USoundBase> ShopOpen;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop")
+	TObjectPtr<USoundBase> ShopClose;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TObjectPtr<USoundBase> InventoryFullError;
 

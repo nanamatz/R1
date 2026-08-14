@@ -133,3 +133,17 @@ void UR1GameplayAbility_BossAttackBase::ApplyCost(const FGameplayAbilitySpecHand
 		}
 	}
 }
+
+void UR1GameplayAbility_BossAttackBase::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	// 쿨다운 GE의 지속시간을 DT_BossSkillData의 Cooldown 값으로 주입한다. (Super 미호출 — GE 고정 duration 대체)
+	if (CooldownGameplayEffectClass && CachedCooldown > 0.0f)
+	{
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, CooldownGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo));
+		if (SpecHandle.IsValid())
+		{
+			SpecHandle.Data.Get()->SetSetByCallerMagnitude(R1GameplayTags::Data_Skill_Cooldown, CachedCooldown);
+			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
+		}
+	}
+}
