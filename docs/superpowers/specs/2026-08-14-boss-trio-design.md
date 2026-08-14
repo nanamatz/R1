@@ -30,28 +30,27 @@ random skill every 0.5s and the designed rotations do not exist.
 ### 1A. Boss skill cooldowns are never applied
 
 `UR1GameplayAbility_BossAttackBase::OnAvatarSet` caches `CachedCooldown` from the
-`FSkillDataRow`, but nothing ever applies it — there is no `CooldownGameplayEffectClass`
-and no `ApplyCooldown` override. Every boss skill is permanently off cooldown.
+`FSkillDataRow`, but nothing ever applies it — there is no `ApplyCooldown`
+override. Every boss skill is permanently off cooldown.
 
-**Change** (`R1GameplayAbility_BossAttackBase.h/.cpp`):
+`UR1GameplayAbility_BladeWave` already solves exactly this for the player
+(`R1GameplayAbility_BladeWave.cpp:279`). Copy it.
 
-- Add `UPROPERTY(EditDefaultsOnly, Category = "Skill Data") TSubclassOf<UGameplayEffect> CooldownEffectClass;`
-- Override `ApplyCooldown(...)`: if `CooldownEffectClass` is set and
-  `CachedCooldown > 0`, make an outgoing spec, `SetSetByCallerMagnitude` for the
-  duration, apply to owner. Mirrors the existing `ApplyCost` implementation
-  (same file) exactly.
-- Override `CheckCooldown(...)` only if the default tag-based check proves
-  insufficient — the standard GAS path should work once the GE grants a
-  cooldown tag.
+**Change** (`R1GameplayAbility_BossAttackBase.h/.cpp`): override `ApplyCooldown`
+with BladeWave's body verbatim. No new `UPROPERTY` — `CooldownGameplayEffectClass`
+is a built-in `UGameplayAbility` member, assignable from any ability Blueprint.
+No `CheckCooldown` override — the stock tag-based check works once the GE grants
+a tag.
+
+**No new gameplay tags.** `Data.Skill.Cooldown` already exists
+(`R1GameplayTags.h:68`).
 
 **New asset:** `GE_BossSkillCooldown` — Duration policy `HasDuration`, duration
-magnitude `SetByCaller` on a new tag `Data.Skill.Cooldown`. Each ability
-Blueprint gets its own child of this GE granting its own `Cooldown.Boss.<SkillID>`
-tag. One shared tag across all boss skills would put the entire kit on a single
-global cooldown, so per-skill tags are required, not optional.
-
-**New gameplay tags** in `R1GameplayTags`: `Data.Skill.Cooldown`, plus the
-`Cooldown.Boss.*` parent.
+magnitude `SetByCaller` on `Data.Skill.Cooldown`. Each ability Blueprint gets its
+own child of this GE granting its own `Cooldown.Boss.<SkillID>` tag (plain asset
+tags, no C++ declaration needed). One shared tag across all boss skills would put
+the entire kit on a single global cooldown, so per-skill tags are required, not
+optional.
 
 ### 1B. Skill picker must respect cooldowns
 
@@ -167,11 +166,11 @@ retrofitting — the player version also consumes player mana and player input s
 **New class** `UR1GameplayAbility_BossLeap : public UR1GameplayAbility_BossAttackBase`:
 
 - Target = the AI controller's blackboard `TargetActor` (same key `BB_Boss` uses),
-  read once on activation and cached as a location.
-- Root-motion dash to the cached location over `DashDuration`, using
-  `UAbilityTask_ApplyRootMotionMoveToForce` with the optional `JumpHeightCurve` —
-  the same construction as `JumpAttack.cpp`'s dash section, minus the player
-  plumbing.
+  read once on activation.
+- Root-motion dash via `UAbilityTask_ApplyRootMotionMoveToActorForce` — the same
+  construction as `JumpAttack.cpp:154`, minus the player plumbing. Targeting the
+  actor (not a frozen location) means the leap tracks a moving player, which is
+  what makes it a threat.
 - On root-motion finish (`bReachedDestination` / `bTimedOut` both land): sphere
   overlap at the landing point with radius `TelegraphData->TelegraphSize.X`,
   filtered to `AR1Player`, apply `DamageEffect` with
@@ -179,7 +178,9 @@ retrofitting — the player version also consumes player mana and player input s
   identical to `GroundAttack::OnAttackEventReceived`.
 - Telegraph actor is spawned by the base class at the *boss's* location on
   activation, which is wrong for a leap. Override the spawn to place it at the
-  cached landing location instead.
+  target's location at activation time. It will not perfectly match a tracking
+  landing point; that mismatch is acceptable telegraph slop and the alternative
+  (a telegraph actor that follows the target) is out of scope.
 - `EndAbility` on both the root-motion-finished and interrupted paths.
 
 Estimated ~120 lines, most lifted from `JumpAttack.cpp`.
