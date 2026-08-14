@@ -62,6 +62,10 @@ public:
 	virtual void OnHealthChanged(float Ratio, bool bIsDamage);
 	float GetHealthRatio() const;
 
+	// 피해로 체력이 이 값 아래로 내려가지 않는다. 기본 0 = 제한 없음.
+	// 보스가 페이즈 임계값에서 체력을 멈추기 위해 override 한다.
+	virtual float GetHealthFloor() const { return 0.0f; }
+
 	void ApplyHitStop(float Duration);
 
 public:

@@ -32,6 +32,13 @@ void UBTService_PrepareSkill::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 	AR1Boss* BossCharacter = Cast<AR1Boss>(AIC->GetPawn());
 	if (!BossCharacter) return;
 
+	// 페이즈 전환 연출 중에는 새 스킬을 고르지 않는다. 블랙보드를 건드리지 않으므로
+	// ExecuteSkill이 null을 읽고 Failed를 반환하고, 연출이 끝나면 자연히 재개된다.
+	if (BossCharacter->IsInPhaseTransition())
+	{
+		return;
+	}
+
 	bool bCanAttack = false;
 	AR1Character* Target = Cast<AR1Character>(BlackboardComp->GetValueAsObject(BBKey_TargetActor.SelectedKeyName));
 	UAbilitySystemComponent* ASC = BossCharacter->GetAbilitySystemComponent();

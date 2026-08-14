@@ -46,6 +46,13 @@ public:
 public:
 	TArray<TSubclassOf<class UGameplayAbility>> GetDefaultSkillList() { return ActiveDefaultSkills; }
 	TArray<TSubclassOf<class UGameplayAbility>> GetAdditionalSkillList() { return ActiveAdditionalSkills; }
+
+	// 페이즈 전환 연출 재생 중인지. BT가 이 동안 새 스킬을 고르지 않게 한다.
+	bool IsInPhaseTransition() const { return bIsInPhaseTransition; }
+
+	// 다음 미진입 페이즈의 임계 체력. 전환 연출 중에는 현재 페이즈의 임계값으로 고정된다.
+	virtual float GetHealthFloor() const override;
+
 protected:
     virtual void BeginPlay() override;
     virtual void OnDead(const TObjectPtr<class AR1Character> Attacker) override;
@@ -57,6 +64,16 @@ protected:
 
 	// 페이즈 하나에 실제로 진입 (스킬 부여, 목록 교체, 격노 GE, 몽타주, 블랙보드).
 	void EnterPhase(int32 PhaseIndex);
+
+	// 전환 연출 시작 — 진행 중인 어빌리티 취소, 이동 정지, 하이퍼아머 태그 부착 후 몽타주 재생.
+	// 몽타주가 없거나 재생에 실패하면 전환 상태로 들어가지 않고 false를 반환한다.
+	bool BeginPhaseTransition(class UAnimMontage* TransitionMontage);
+
+	UFUNCTION()
+	void OnPhaseTransitionMontageEnded(class UAnimMontage* Montage, bool bInterrupted);
+
+	// 전환 종료 처리 (태그 제거, 이동 복구). 몽타주 종료와 사망 양쪽에서 호출된다.
+	void EndPhaseTransition();
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
@@ -71,6 +88,12 @@ protected:
 
 	// 현재 페이즈 인덱스. INDEX_NONE = 페이즈 0 진입 전(초기 상태).
 	int32 CurrentPhaseIndex = INDEX_NONE;
+
+	// 전환 연출 재생 중 여부. 이 동안 체력 하한이 현재 페이즈 임계값으로 고정된다.
+	bool bIsInPhaseTransition = false;
+
+	// 전환 중 이동을 막기 위해 MaxWalkSpeed를 0으로 만들기 전의 값.
+	float CachedMaxWalkSpeed = 0.0f;
 
 	// 런타임 스킬 목록. BeginPlay에서 Default/AdditionalSkillAbilities로 초기화된다.
 	UPROPERTY(Transient)

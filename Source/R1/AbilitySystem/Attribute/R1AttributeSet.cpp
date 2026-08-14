@@ -84,10 +84,14 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
-		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
-
 		AActor* AvatarActor = Data.Target.GetAvatarActor();
 		AR1Character* Character = Cast<AR1Character>(AvatarActor);
+
+		// 하한은 보통 0이지만, 보스가 페이즈 임계값에 있을 때는 그 값이 하한이 된다.
+		// (임계값에서 체력을 멈춰 페이즈 연출을 보장하고 페이즈 건너뛰기를 막는다.)
+		const float HealthFloor = Character ? Character->GetHealthFloor() : 0.0f;
+		SetHealth(FMath::Clamp(GetHealth(), HealthFloor, GetMaxHealth()));
+
 		if (Character)
 		{
 			float Ratio = static_cast<float>(GetHealth()) / GetMaxHealth();
