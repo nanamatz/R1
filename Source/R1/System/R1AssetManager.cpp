@@ -28,22 +28,47 @@ UR1AssetData* UR1AssetManager::GetLoadedAssetData()
 	return Get().LoadedAssetData;
 }
 
+namespace
+{
+	UObject* LoadPathDirect(const FSoftObjectPath& AssetPath)
+	{
+		if (UObject* Resolved = AssetPath.ResolveObject())
+		{
+			return Resolved;
+		}
+
+		if (UAssetManager::IsInitialized())
+		{
+			return UAssetManager::GetStreamableManager().LoadSynchronous(AssetPath, false);
+		}
+
+		return AssetPath.TryLoad();
+	}
+
+	// UBlueprint는 쿠킹 시 제거되므로 패키지 빌드에는 생성된 클래스(_C)만 남는다.
+	// 에디터에서만 해석되는 BP 경로를 위해 _C 를 붙여 한 번 더 시도한다.
+	UObject* LoadPathWithBlueprintClassFallback(const FSoftObjectPath& AssetPath)
+	{
+		if (UObject* LoadedAsset = LoadPathDirect(AssetPath))
+		{
+			return LoadedAsset;
+		}
+
+		const FString PathString = AssetPath.ToString();
+		if (PathString.EndsWith(TEXT("_C")) == false)
+		{
+			return LoadPathDirect(FSoftObjectPath(PathString + TEXT("_C")));
+		}
+
+		return nullptr;
+	}
+}
+
 void UR1AssetManager::LoadSyncByPath(const FSoftObjectPath& AssetPath)
 {
 	if (AssetPath.IsValid())
 	{
-		UObject* LoadedAsset = AssetPath.ResolveObject();
-		if (LoadedAsset == nullptr)
-		{
-			if (UAssetManager::IsInitialized())
-			{
-				LoadedAsset = UAssetManager::GetStreamableManager().LoadSynchronous(AssetPath, false);
-			}
-			else
-			{
-				LoadedAsset = AssetPath.TryLoad();
-			}
-		}
+		UObject* LoadedAsset = LoadPathWithBlueprintClassFallback(AssetPath);
 
 		if (LoadedAsset)
 		{
@@ -109,7 +134,7 @@ void UR1AssetManager::LoadSyncByLabel(const FName& Label)
 		const FSoftObjectPath& AssetPath = AssetEntry.AssetPath;
 		if (AssetPath.IsValid())
 		{
-			if (UObject* LoadedAsset = AssetPath.ResolveObject())
+			if (UObject* LoadedAsset = LoadPathWithBlueprintClassFallback(AssetPath))
 			{
 				Get().AddLoadedAsset(AssetEntry.AssetName, LoadedAsset);
 			}
