@@ -67,15 +67,11 @@ void UR1GameplayAbility_WaveAttack::OnAttackEventReceived(FGameplayEventData Pay
 			FVector BeamEndLocation = MuzzleLocation + (BossForward * Length);
 			ParticleComp->SetVectorParameter(FName("BeamTarget"), BeamEndLocation);
 		}
+	}
 
-		// Overlap Check (Box)
-		TArray<AActor*> IgnoreActors;
-		IgnoreActors.Add(AvatarActor);
-
-		TArray<AActor*> OverlappedActors;
-		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
-
+	// 데미지는 VFX 유무와 무관하게 항상 적용한다.
+	// (이전에는 이 블록 전체가 if (WaveEffect) 안에 있어 파티클 미지정 시 무피해였다.)
+	{
 		// 1. 회전이 적용된 박스 형태(Collision Shape)와 방향(Quat) 설정
 		FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
 		FQuat BoxRotation = AvatarActor->GetActorQuat(); // 보스의 회전값을 그대로 적용!
