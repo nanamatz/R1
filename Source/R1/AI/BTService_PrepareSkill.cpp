@@ -32,10 +32,12 @@ void UBTService_PrepareSkill::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 	AR1Boss* BossCharacter = Cast<AR1Boss>(AIC->GetPawn());
 	if (!BossCharacter) return;
 
-	// 페이즈 전환 연출 중에는 새 스킬을 고르지 않는다. 블랙보드를 건드리지 않으므로
-	// ExecuteSkill이 null을 읽고 Failed를 반환하고, 연출이 끝나면 자연히 재개된다.
+	// 페이즈 전환 연출 중에는 새 스킬을 고르지 않는다.
+	// 직전에 골라둔 값이 남아 있으면 ExecuteSkill이 그걸 그대로 발동해 연출을 덮어쓰므로
+	// 반드시 지운다. (실제 발동 차단은 ASC의 ActivationInhibited가 담당한다.)
 	if (BossCharacter->IsInPhaseTransition())
 	{
+		BlackboardComp->SetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName, nullptr);
 		return;
 	}
 
