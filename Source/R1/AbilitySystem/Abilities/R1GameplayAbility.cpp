@@ -27,7 +27,7 @@ UR1GameplayAbility::UR1GameplayAbility(const FObjectInitializer& ObjectInitializ
 	ActivationBlockedTags.AddTag(R1GameplayTags::Character_State_Frozen);
 }
 
-bool UR1GameplayAbility::PlayAttackMontageAndWaitForEvent(AR1Character* Attacker, const FGameplayTag& InAttackEventTag, FName MontageStartSection)
+bool UR1GameplayAbility::PlayAttackMontageAndWaitForEvent(AR1Character* Attacker, const FGameplayTag& InAttackEventTag, FName MontageStartSection, bool bTriggerEventOnce)
 {
 	if (Attacker == nullptr || MontageToPlay == nullptr)
 	{
@@ -74,7 +74,7 @@ bool UR1GameplayAbility::PlayAttackMontageAndWaitForEvent(AR1Character* Attacker
 		this,
 		InAttackEventTag,
 		nullptr,
-		true,
+		bTriggerEventOnce,
 		false
 	);
 	WaitEventTask->EventReceived.AddDynamic(this, &UR1GameplayAbility::OnAttackEventReceived);

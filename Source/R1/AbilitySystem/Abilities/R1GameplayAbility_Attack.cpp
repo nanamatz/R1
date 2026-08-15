@@ -62,7 +62,7 @@ void UR1GameplayAbility_Attack::ActivateAbility(const FGameplayAbilitySpecHandle
 		StartSection = ComboSections[SectionIndex];
 	}
 
-	if (PlayAttackMontageAndWaitForEvent(Attacker, AttackEventTag, StartSection))
+	if (PlayAttackMontageAndWaitForEvent(Attacker, AttackEventTag, StartSection, !bAllowMultipleAttackEvents))
 	{
 		if (ComboSections.Num() > 0 && !bRandomComboSelection)
 		{
