@@ -70,6 +70,11 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Skill_Cooldown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill_BladeWave);
 
+	// 보스 스킬 쿨다운 태그. 스킬마다 하나씩 필요하다 — 공유하면 전 스킬이 한 쿨다운을 쓰게 된다.
+	// 이 프로젝트는 태그를 ini에 등록하지 않고 전부 여기서 네이티브로 선언한다.
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_BabyGround);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_RavagerCharge);
+
 	// Common attributes
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxHealth);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_Health);

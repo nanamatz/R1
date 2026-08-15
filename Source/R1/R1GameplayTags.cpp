@@ -76,6 +76,8 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Cost, "Data.Skill.Cost");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Cooldown, "Data.Skill.Cooldown");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_BladeWave, "Cooldown.Skill.BladeWave");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_BabyGround, "Cooldown.Boss.BabyGround");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_RavagerCharge, "Cooldown.Boss.RavagerCharge");
 
 	//Common attributes
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxHealth, "Data.Attribute.MaxHealth");
