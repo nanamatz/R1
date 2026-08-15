@@ -15,7 +15,7 @@ to compile. Phase 0 exists to catch that before any new boss content is built on
 - **Bold** asset names are new assets you create. `Code font` is an exact value to type.
 - Each item is a checkbox. Work top to bottom — later phases depend on earlier ones.
 
-## Three mistakes that produce a silently do-nothing boss
+## Four mistakes that produce a silently do-nothing boss
 
 Read these once before starting. Each fails with no error, no log line, no crash.
 
@@ -30,6 +30,12 @@ Read these once before starting. Each fails with no error, no log line, no crash
 3. **Wrong room level in the RoomData asset.** `DA_Boss_*F` must point at a gameplay
    map containing a `DungeonManager` and a `NavMeshBoundsVolume`. `PLA_Map` levels are
    art-only — pointing at one leaves the room unregistered and the navmesh gate times out.
+4. **Phase with no Transition Montage gets no gate.** The whole phase-gate behaviour
+   hangs off `TransitionMontage`. Leave it empty and `BeginPhaseTransition` returns
+   early: no health pin at the threshold, no hyper-armor, no BT pause — health sails
+   straight through the threshold and the phase swap just happens mid-swing. The skill
+   lists and enrage GE still apply, so it looks *almost* right, which is what makes it
+   easy to miss. Every phase that should read as a beat needs a montage assigned.
 
 ---
 
@@ -83,21 +89,42 @@ Damage used to be nested inside `if (WaveEffect)`. It now always runs.
       (was `0`; leave `0` unless the designer wants otherwise). Keep the GE and the
       ability wiring — both are correct and stay.
 
-## 0.4 Phase system — Task 3
+## 0.4 Phase system, health gate, and transition montage — Task 3 (+ `fed8ebf`, `e1dd0e4`)
+
+> **Verified working 2026-08-15** on Baby. Re-run only if the phase code changes.
 
 - [ ] Open **`BB_Boss`** and add an **Int** key named exactly `Phase`.
       Nothing reads it yet; it exists for designer use in Behavior Trees.
 - [ ] Create **`GE_TestEnrage`**: Infinite duration, one modifier —
       `UR1AttributeSet.MoveSpeed`, `Multiply`, `2.0`
-- [ ] `BP_Baby` → **Phases** → add one entry:
-      **Health Ratio Threshold** `0.5`, **Enrage Effect** `GE_TestEnrage`, rest empty
+- [ ] `BP_Baby` → **Phases** → add one entry: **Health Ratio Threshold** `0.5`,
+      **Enrage Effect** `GE_TestEnrage`, **Transition Montage** = any Baby montage.
+      *The montage is not optional for this test — with it empty the gate does nothing
+      (mistake #4 above).*
 - [ ] PIE: damage Baby past 50%. `LogR1` shows exactly one
       `entered boss phase 0 (threshold 0.50)`, and Baby visibly doubles speed.
 - [ ] PIE: keep hitting it — that line must **not** repeat.
-- [ ] Add a second **Phases** entry: **Health Ratio Threshold** `0.2`, everything empty.
-      Take Baby from full health to below 20% in one hit (temporarily raise a weapon's
-      damage, or lower Baby's MaxHealth in `CharacterStatTable`).
-- [ ] PIE: that single hit must log **two** consecutive `entered boss phase` lines (0 then 1).
+
+**Health pins at the threshold**
+- [ ] PIE: hit Baby with an attack big enough to cross 50% from above. The HP bar must
+      stop **exactly** on 50%, not below. Overkill damage past the gate is discarded.
+- [ ] PIE: keep attacking during the transition. Damage numbers still appear, but the
+      bar does not move until the montage finishes.
+
+**Transition montage always plays**
+- [ ] PIE: `LogR1` shows the pair
+      `phase transition montage '<name>' started (<duration>s)` then
+      `phase transition montage ended (interrupted: 0)`, roughly the montage duration apart.
+- [ ] PIE: the montage runs start to finish — Baby does not attack, slide, or hit-react
+      through it, even under continuous damage.
+- [ ] PIE: the moment it ends, Baby resumes attacking and the HP bar can drop again.
+      **A boss that stays passive means the activation inhibit never cleared — report it,
+      it is a code bug, not a setup problem.**
+
+> **Not testable: crossing two thresholds in one hit.** Earlier drafts of this checklist
+> asked for that. The health floor now stops the hit at the first gate, so a single hit
+> can never advance two phases. The `while` loop in `AdvancePhasesForRatio` is retained
+> only as a safety net.
 
 ## 0.5 New abilities — Tasks 6 and 7
 
@@ -265,7 +292,9 @@ Every one of these needs, in addition to the properties listed:
 - [ ] **Default Skills** — leave empty (in-range behaviour unchanged)
 - [ ] **Additional Skills** = `[GA_WardenVolley, GA_WardenBeam, GA_WardenBeamWide]`
 - [ ] **Enrage Effect** = `GE_WardenEnrage`
-- [ ] **Transition Montage** — optional
+- [ ] **Transition Montage** = the 2F phase-change montage. **Required for the gate** —
+      leave it empty and health will not pin at 55%, the boss keeps attacking through the
+      swap, and the phase change reads as nothing happening (mistake #4).
 
 **Rewards and feedback** (mirror `BP_Baby`)
 - [ ] **Gold Actor Class**, **Min/Max Gold Drop**, **Gold Drop Chance**
@@ -299,6 +328,8 @@ Every one of these needs, in addition to the properties listed:
 - [ ] Walking into melee triggers `GA_WardenRepulse_C` with a circular telegraph
 - [ ] Below 55% health: exactly one `entered boss phase 0 (threshold 0.55)` line,
       attacks visibly speed up, `GA_WardenBeamWide_C` starts appearing
+- [ ] The HP bar stops **exactly** on 55%, the transition montage plays start to finish
+      (`interrupted: 0`), and Warden resumes attacking the moment it ends
 - [ ] On death: HUD bar clears, gold drops, XP awarded
 - [ ] No `ensureMsgf` about phase ordering at spawn
 
@@ -403,10 +434,12 @@ trips an `ensureMsgf` at `BeginPlay` and the later phase never fires.
   - **Default Skills** `[GA_RavagerComboRage]`
   - **Additional Skills** `[GA_RavagerLeap, GA_RavagerCharge, GA_RavagerShockwave]`
   - **Enrage Effect** `GE_RavagerEnrage`
+  - **Transition Montage** = the 3F phase-change montage — **required**, see mistake #4
 - [ ] Entry 1: **Health Ratio Threshold** `0.20`
   - **Default Skills** — empty (keeps the 4-section combo)
   - **Additional Skills** `[GA_RavagerLeapRage, GA_RavagerCharge, GA_RavagerShockwave]`
   - **Enrage Effect** `GE_RavagerFrenzy`
+  - **Transition Montage** = the 3F desperation montage — **required**, see mistake #4
 
 ## 3.7 `BT_Ravager`
 
@@ -425,6 +458,8 @@ trips an `ensureMsgf` at `BeginPlay` and the later phase never fires.
 - [ ] Below 50%: one `entered boss phase 0 (threshold 0.50)`, movement and attacks speed
       up, combo gains a 4th swing, shockwave starts appearing
 - [ ] Below 20%: one `entered boss phase 1 (threshold 0.20)`, leaps come ~twice as often
+- [ ] Both gates pin the HP bar exactly on 50% and 20%, and both transition montages play
+      to completion (`interrupted: 0`) with Ravager resuming immediately after
 - [ ] No phase-ordering `ensureMsgf` at spawn
 
 ---
@@ -536,11 +571,13 @@ Same rule as 2.5 for cooldown GE + blocked tag on every ability.
   - **Additional Skills**
     `[GA_HierarchSummon, GA_HierarchBolt, GA_HierarchNova, GA_HierarchChain]`
   - **Enrage Effect** `GE_HierarchEnrage`
+  - **Transition Montage** = the 5F phase-change montage — **required**, see mistake #4
 - [ ] Entry 1: **Health Ratio Threshold** `0.33`
   - **Default Skills** — empty
   - **Additional Skills**
     `[GA_HierarchSummonMass, GA_HierarchBolt, GA_HierarchNovaFast, GA_HierarchChain]`
   - **Enrage Effect** — none
+  - **Transition Montage** = the 5F final-stand montage — **required**, see mistake #4
 
 ## 4.7 `BT_Hierarch`
 
@@ -561,6 +598,9 @@ Same rule as 2.5 for cooldown GE + blocked tag on every ability.
       and bounces from you to nearby adds
 - [ ] Below 33%: one `entered boss phase 1 (threshold 0.33)`, summons come in 3s up to
       6 alive, nova telegraph shortens to 1.5s
+- [ ] Both gates pin the HP bar exactly on 66% and 33%, and both transition montages play
+      to completion (`interrupted: 0`). Note adds keep attacking during the transition —
+      only the boss is inhibited, which is intended.
 - [ ] Chain lightning respects its 12s cooldown (this is the check that 4.3's
       fixed-duration GE is wired correctly — if it spams, that GE is wrong)
 
@@ -645,6 +685,9 @@ not redeclare them.
 | `BTService_PrepareSkill: Selected Ability X (CanAttack: N, Candidates: M)` | skill picked; `Candidates` shrinking proves cooldown filtering works |
 | `BTService_PrepareSkill: no ability off cooldown` | Verbose level — everything is cooling down; boss will retry |
 | `<Boss> entered boss phase N (threshold X)` | phase transition; must appear exactly once per threshold |
+| `<Boss>: phase transition montage 'X' started (Ns)` | gate engaged — health pinned, all ability activation inhibited |
+| `<Boss>: phase transition montage ended (interrupted: 0)` | gate released cleanly; `interrupted: 1` means something still overrode the montage |
+| `<Boss>: phase transition montage failed to play` | `Montage_Play` returned 0 — bad montage asset or no anim instance; the gate is skipped |
 | `BossLeap: landed, hit N actors` | leap resolved |
 | `[BossLeap] blackboard key 'TargetActor' has no target actor` | leap had no target, ended cleanly |
 | `SummonAdds: spawned N adds (M alive, cap C)` | summon resolved |
