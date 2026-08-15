@@ -109,7 +109,12 @@ void UR1GameplayAbility_BossAttackBase::OnAvatarSet(const FGameplayAbilityActorI
 {
 	Super::OnAvatarSet(ActorInfo, Spec);
 
-	if (SkillID.IsNone()) return;
+	if (SkillID.IsNone())
+	{
+		// SkillID가 비면 DataTable 조회를 아예 안 하므로 Damage/Cooldown이 0으로 남는다.
+		UE_LOG(LogR1, Warning, TEXT("[%s] SkillID is empty — damage and cooldown stay 0"), *GetName());
+		return;
+	}
 
 	if (ActorInfo == nullptr || !ActorInfo->AvatarActor.IsValid()) return;
 
@@ -124,6 +129,16 @@ void UR1GameplayAbility_BossAttackBase::OnAvatarSet(const FGameplayAbilityActorI
 			CachedManaCost = Data->ManaCost;
 			CachedCooldown = Data->Cooldown;
 			CachedRange = Data->Range;
+
+			UE_LOG(LogR1, Log, TEXT("[%s] SkillID '%s' resolved: Damage=%.1f Cooldown=%.1f Range=%.1f"),
+				*GetName(), *SkillID.ToString(), CachedDamage, CachedCooldown, CachedRange);
+		}
+		else
+		{
+			// GameInstance는 SkillDataTable 포인터를 하나만 들고 있다. 보스/플레이어 테이블이
+			// 따로 있으므로, 그 포인터가 다른 테이블을 가리키면 여기서 전부 실패한다.
+			UE_LOG(LogR1, Error, TEXT("[%s] SkillID '%s' not found in the GameInstance SkillDataTable — damage and cooldown will be 0"),
+				*GetName(), *SkillID.ToString());
 		}
 	}
 }
@@ -160,6 +175,17 @@ void UR1GameplayAbility_BossAttackBase::ApplyCost(const FGameplayAbilitySpecHand
 void UR1GameplayAbility_BossAttackBase::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
 	// 쿨다운 GE의 지속시간을 DT_BossSkillData의 Cooldown 값으로 주입한다. (Super 미호출 — GE 고정 duration 대체)
+	// 두 조건 중 하나라도 빠지면 쿨다운이 조용히 사라지므로 각각 이름을 찍어준다.
+	if (CooldownGameplayEffectClass == nullptr)
+	{
+		UE_LOG(LogR1, Warning, TEXT("[%s] no Cooldown Gameplay Effect Class assigned — this skill has no cooldown"), *GetName());
+	}
+	else if (CachedCooldown <= 0.0f)
+	{
+		UE_LOG(LogR1, Warning, TEXT("[%s] SkillID '%s' has Cooldown=0 in the DataTable — cooldown GE not applied"),
+			*GetName(), *SkillID.ToString());
+	}
+
 	if (CooldownGameplayEffectClass && CachedCooldown > 0.0f)
 	{
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, CooldownGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo));
