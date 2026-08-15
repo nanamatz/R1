@@ -28,8 +28,15 @@ EBTNodeResult::Type UBTTask_ExecuteSkill::ExecuteTask(UBehaviorTreeComponent& Ow
 
 	UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent();
 
-	// 1. 블랙보드에서 실행할 어빌리티 클래스 읽어오기
-	UClass* TargetClass = BlackboardComp->GetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName);
+	// 1. 실행할 어빌리티 클래스 결정.
+	//    AbilityClassOverride가 지정돼 있으면 그걸 쓰고(BT에서 직접 지정한 스킬),
+	//    아니면 기존대로 PrepareSkill이 골라둔 블랙보드 값을 읽는다.
+	UClass* TargetClass = AbilityClassOverride;
+	if (!TargetClass)
+	{
+		TargetClass = BlackboardComp->GetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName);
+	}
+
 	if (!TargetClass)
 	{
 		UE_LOG(LogR1, Warning, TEXT("BTTask_ExecuteSkill: TargetAbilityClass is NULL! (KeyName: %s)"), *BBKey_TargetAbilityClass.SelectedKeyName.ToString());
@@ -78,10 +85,15 @@ void UBTTask_ExecuteSkill::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uin
 {
 	FBTExecuteSkillMemory* MyMemory = reinterpret_cast<FBTExecuteSkillMemory*>(NodeMemory);
 
-	// 5. 블랙보드 값 초기화 (서비스에서 다음 스킬을 고를 수 있게)
-	if (UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent())
+	// 5. 블랙보드 값 초기화 (서비스에서 다음 스킬을 고를 수 있게).
+	//    Override를 쓴 노드는 블랙보드를 읽지 않았으므로 건드리지 않는다 —
+	//    PrepareSkill이 다른 노드용으로 방금 고른 값을 지워버리면 안 된다.
+	if (AbilityClassOverride == nullptr)
 	{
-		BlackboardComp->SetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName, nullptr);
+		if (UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent())
+		{
+			BlackboardComp->SetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName, nullptr);
+		}
 	}
 
 	// 6. 태스크 종료 시 안전하게 찌꺼기 정리
