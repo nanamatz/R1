@@ -170,6 +170,9 @@ void AR1Boss::EnterPhase(int32 PhaseIndex)
     }
 
     UE_LOG(LogR1, Log, TEXT("%s entered boss phase %d (threshold %.2f)"), *GetName(), PhaseIndex, Phase.HealthRatioThreshold);
+
+    // 6. BP 연출 훅. 상태 변경이 모두 끝난 뒤 마지막에 호출한다.
+    OnPhaseEntered(PhaseIndex);
 }
 
 float AR1Boss::GetHealthFloor() const
