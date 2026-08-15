@@ -4,6 +4,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "R1GameplayTags.h"
+#include "R1LogChannels.h"
 #include "System/R1GameInstance.h"
 
 UR1GameplayAbility_BossAttackBase::UR1GameplayAbility_BossAttackBase()
@@ -67,9 +68,18 @@ void UR1GameplayAbility_BossAttackBase::ActivateAbility(const FGameplayAbilitySp
 	UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AttackEventTag);
 	if (WaitEventTask)
 	{
-		WaitEventTask->EventReceived.AddDynamic(this, &UR1GameplayAbility_BossAttackBase::OnAttackEventReceived);
+		bWaitingForAttackEvent = true;
+		bAttackEventReceived = false;
+
+		WaitEventTask->EventReceived.AddDynamic(this, &UR1GameplayAbility_BossAttackBase::HandleAttackEventReceived);
 		WaitEventTask->ReadyForActivation();
 	}
+}
+
+void UR1GameplayAbility_BossAttackBase::HandleAttackEventReceived(FGameplayEventData Payload)
+{
+	bAttackEventReceived = true;
+	OnAttackEventReceived(Payload);
 }
 
 void UR1GameplayAbility_BossAttackBase::OnAttackEventReceived(FGameplayEventData Payload)
@@ -79,6 +89,19 @@ void UR1GameplayAbility_BossAttackBase::OnAttackEventReceived(FGameplayEventData
 
 void UR1GameplayAbility_BossAttackBase::OnMontageEnded()
 {
+	// 몽타주는 끝났는데 공격 노티파이가 한 번도 안 왔다면, 이 스킬은 아무 일도 하지 않았다.
+	// 원래 조용히 실패하는 경로라 (데미지 없음/이동 없음/로그 없음) 여기서 이름을 찍어준다.
+	// 흔한 원인: 몽타주에 노티파이가 없음, 노티파이의 태그가 AttackEventTag와 불일치,
+	// 몽타주 슬롯이 ABP에 없어 재생 자체가 실패.
+	if (bWaitingForAttackEvent && !bAttackEventReceived)
+	{
+		UE_LOG(LogR1, Warning,
+			TEXT("[%s] montage ended without ever receiving '%s'. Check the montage has an AnimNotify sending that exact tag (note: the registered string, not the C++ symbol name)."),
+			*GetName(), *AttackEventTag.ToString());
+	}
+
+	bWaitingForAttackEvent = false;
+
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
