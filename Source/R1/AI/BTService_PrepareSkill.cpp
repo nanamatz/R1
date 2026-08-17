@@ -68,6 +68,13 @@ void UBTService_PrepareSkill::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 		}
 	}
 
+	// 판정 결과를 블랙보드에 노출한다. 아래 조기 return들보다 먼저 기록해야
+	// 스킬 후보가 없을 때도 BT가 최신 거리 상태를 볼 수 있다.
+	if (BBKey_CanAttack.SelectedKeyName.IsNone() == false)
+	{
+		BlackboardComp->SetValueAsBool(BBKey_CanAttack.SelectedKeyName, bCanAttack);
+	}
+
 	TArray<TSubclassOf<UGameplayAbility>> AbilityList = bCanAttack ? BossCharacter->GetDefaultSkillList() : BossCharacter->GetAdditionalSkillList();
 
 	if (AbilityList.Num() == 0 || ASC == nullptr)

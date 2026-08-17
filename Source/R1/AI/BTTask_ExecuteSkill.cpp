@@ -81,6 +81,32 @@ EBTNodeResult::Type UBTTask_ExecuteSkill::ExecuteTask(UBehaviorTreeComponent& Ow
 	return EBTNodeResult::Failed;
 }
 
+EBTNodeResult::Type UBTTask_ExecuteSkill::AbortTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	// BT가 이 분기를 선점(Lower Priority abort)하면 태스크만 끝나고 어빌리티는 계속
+	// 돌아간다. 그러면 새 스킬의 몽타주가 이전 몽타주 위에 겹치므로 여기서 끊는다.
+	FBTExecuteSkillMemory* MyMemory = reinterpret_cast<FBTExecuteSkillMemory*>(NodeMemory);
+
+	AAIController* AIController = OwnerComp.GetAIOwner();
+	IAbilitySystemInterface* ASI = AIController ? Cast<IAbilitySystemInterface>(AIController->GetPawn()) : nullptr;
+	UAbilitySystemComponent* ASC = ASI ? ASI->GetAbilitySystemComponent() : nullptr;
+
+	if (ASC && MyMemory->ExecutingClass.IsValid())
+	{
+		for (const FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+		{
+			if (Spec.Ability && Spec.Ability->GetClass() == MyMemory->ExecutingClass.Get())
+			{
+				ASC->CancelAbilityHandle(Spec.Handle);
+				break;
+			}
+		}
+	}
+
+	// 정리(델리게이트 해제·블랙보드)는 OnTaskFinished가 Aborted로도 호출되므로 거기서 처리된다.
+	return EBTNodeResult::Aborted;
+}
+
 void UBTTask_ExecuteSkill::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, EBTNodeResult::Type TaskResult)
 {
 	FBTExecuteSkillMemory* MyMemory = reinterpret_cast<FBTExecuteSkillMemory*>(NodeMemory);
