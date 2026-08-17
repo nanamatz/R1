@@ -9,6 +9,13 @@
 
 UR1GameplayAbility_BossAttackBase::UR1GameplayAbility_BossAttackBase()
 {
+	// ⚠️ 엔진 기본값은 InstancedPerExecution이다(GameplayAbility.cpp:81).
+	// 그 정책에서는 OnAvatarSet이 CDO에서 돌고, 발동마다 클래스 기본값으로 새 인스턴스가
+	// 만들어지므로 CachedDamage/CachedCooldown/CachedRange가 전부 0인 인스턴스가 실행된다.
+	// (쿨다운이 영영 안 걸리고, SetByCaller 데미지도 0이 된다.)
+	// 이 계열은 OnAvatarSet 캐시에 의존하므로 액터당 인스턴스가 필수다.
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+
 	AttackEventTag = R1GameplayTags::Event_Montage_Attack;
 }
 
