@@ -123,7 +123,7 @@ void UR1GameplayAbility_BossAttackBase::OnAvatarSet(const FGameplayAbilityActorI
 
 	if (UR1GameInstance* GI = Cast<UR1GameInstance>(World->GetGameInstance()))
 	{
-		if (const FSkillDataRow* Data = GI->GetSkillData(SkillID))
+		if (const FSkillDataRow* Data = GI->GetBossSkillData(SkillID))
 		{
 			CachedDamage = Data->Damage;
 			CachedManaCost = Data->ManaCost;
@@ -137,7 +137,7 @@ void UR1GameplayAbility_BossAttackBase::OnAvatarSet(const FGameplayAbilityActorI
 		{
 			// GameInstance는 SkillDataTable 포인터를 하나만 들고 있다. 보스/플레이어 테이블이
 			// 따로 있으므로, 그 포인터가 다른 테이블을 가리키면 여기서 전부 실패한다.
-			UE_LOG(LogR1, Error, TEXT("[%s] SkillID '%s' not found in the GameInstance SkillDataTable — damage and cooldown will be 0"),
+			UE_LOG(LogR1, Error, TEXT("[%s] SkillID '%s' not found in the GameInstance BossSkillDataTable — damage and cooldown will be 0"),
 				*GetName(), *SkillID.ToString());
 		}
 	}
@@ -182,7 +182,9 @@ void UR1GameplayAbility_BossAttackBase::ApplyCooldown(const FGameplayAbilitySpec
 	}
 	else if (CachedCooldown <= 0.0f)
 	{
-		UE_LOG(LogR1, Warning, TEXT("[%s] SkillID '%s' has Cooldown=0 in the DataTable — cooldown GE not applied"),
+		// 행을 못 찾았을 때도 여기로 온다 (캐시가 0으로 남으므로). 두 경우를 구분하려면
+		// OnAvatarSet이 남긴 로그를 볼 것 — resolved 줄이 없으면 조회 자체가 실패한 것.
+		UE_LOG(LogR1, Warning, TEXT("[%s] CachedCooldown is 0 for SkillID '%s' — either the row's Cooldown is 0 or the row was never found (see the OnAvatarSet log above)"),
 			*GetName(), *SkillID.ToString());
 	}
 

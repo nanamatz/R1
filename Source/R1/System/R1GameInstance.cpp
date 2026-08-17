@@ -42,3 +42,16 @@ const FSkillDataRow* UR1GameInstance::GetSkillData(FName SkillName) const
 	return SkillDataTable->FindRow<FSkillDataRow>(SkillName, TEXT(""));
 }
 
+const FSkillDataRow* UR1GameInstance::GetBossSkillData(FName SkillName) const
+{
+	// 보스 테이블이 지정돼 있으면 그쪽을 본다.
+	if (BossSkillDataTable)
+	{
+		return BossSkillDataTable->FindRow<FSkillDataRow>(SkillName, TEXT(""));
+	}
+
+	// 미지정이면 기존 동작대로 공용 테이블로 폴백 (에디터에서 아직 안 넣었을 때 대비).
+	UE_LOG(LogR1, Warning, TEXT("UR1GameInstance: BossSkillDataTable이 비어있어 SkillDataTable로 폴백합니다. BP_R1GameInstance에 DT_BossSkillData를 지정하세요."));
+	return GetSkillData(SkillName);
+}
+
