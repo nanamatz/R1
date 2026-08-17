@@ -25,9 +25,11 @@ protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 private:
-	// 루트모션 종료 시 착지 판정. 델리게이트 시그니처를 그대로 따라야 한다.
+	// 루트모션 종료 시 착지 판정.
+	// ApplyRootMotionMoveToForce의 OnTimedOut / OnTimedOutAndDestinationReached는
+	// 둘 다 파라미터가 없다. 어느 쪽으로 끝나든 처리는 같다.
 	UFUNCTION()
-	void OnLeapFinished(bool bReachedDestination, bool bTimedOut, FVector FinalTargetLocation);
+	void OnLeapFinished();
 
 	// 착지 지점 구체 판정 + 피해 적용
 	void ApplyLandingDamage(const FVector& LandingLocation);
@@ -50,4 +52,8 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<AActor> CachedTarget;
+
+	// 텔레그래프를 깐 좌표. 도약은 타겟을 추적하지 않고 이 지점에 착지한다 —
+	// 추적하면 예고 원과 실제 착지점이 어긋나 회피가 불가능해진다.
+	FVector CachedLandingLocation = FVector::ZeroVector;
 };
