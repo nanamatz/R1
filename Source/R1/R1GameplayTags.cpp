@@ -79,6 +79,8 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_BladeWave, "Cooldown.Skill.BladeWave");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_BabyGround, "Cooldown.Boss.BabyGround");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_RavagerCharge, "Cooldown.Boss.RavagerCharge");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_RavagerJump, "Cooldown.Boss.RavagerJump");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_RavagerSweep, "Cooldown.Boss.RavagerSweep");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_HierarchCharge, "Cooldown.Boss.HierarchCharge");
 
 	//Common attributes

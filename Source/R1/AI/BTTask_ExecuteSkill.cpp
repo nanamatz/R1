@@ -39,11 +39,11 @@ EBTNodeResult::Type UBTTask_ExecuteSkill::ExecuteTask(UBehaviorTreeComponent& Ow
 
 	if (!TargetClass)
 	{
-		UE_LOG(LogR1, Warning, TEXT("BTTask_ExecuteSkill: TargetAbilityClass is NULL! (KeyName: %s)"), *BBKey_TargetAbilityClass.SelectedKeyName.ToString());
+		// PrepareSkill이 아직 후보를 못 골랐거나(전부 쿨다운) 페이즈 전환 중이면 정상적으로
+		// 비어 있다. 매 틱 나올 수 있으므로 Warning이 아니라 Verbose.
+		UE_LOG(LogR1, Verbose, TEXT("BTTask_ExecuteSkill: no ability selected yet (KeyName: %s)"), *BBKey_TargetAbilityClass.SelectedKeyName.ToString());
 		return EBTNodeResult::Failed;
 	}
-
-	UE_LOG(LogR1, Log, TEXT("BTTask_ExecuteSkill: Executing Ability %s"), *GetNameSafe(TargetClass));
 
 	MyMemory->ExecutingClass = TargetClass;
 	MyMemory->CachedOwnerComp = &OwnerComp;
@@ -70,13 +70,19 @@ EBTNodeResult::Type UBTTask_ExecuteSkill::ExecuteTask(UBehaviorTreeComponent& Ow
 		}
 	}
 
-	// 4. 해당 어빌리티 실행 시도
+	// 4. 해당 어빌리티 실행 시도.
+	//    로그는 '시도'가 아니라 '성공'에만 남긴다 — 시도 단계에서 찍으면 쿨다운에 막힌
+	//    재시도까지 전부 발동한 것처럼 보여서 로그를 오독하게 된다.
 	if (FoundSpec && ASC->TryActivateAbility(FoundSpec->Handle))
 	{
+		UE_LOG(LogR1, Log, TEXT("BTTask_ExecuteSkill: activated %s"), *GetNameSafe(TargetClass));
 		return EBTNodeResult::InProgress;
 	}
 
-	// 실행 실패 시 바인딩 해제 후 종료
+	// 실행 실패(쿨다운·코스트·차단태그, 또는 미부여). 매 틱 반복될 수 있으므로 Verbose.
+	UE_LOG(LogR1, Verbose, TEXT("BTTask_ExecuteSkill: %s could not activate (%s)"),
+		*GetNameSafe(TargetClass), FoundSpec ? TEXT("blocked") : TEXT("not granted to this ASC"));
+
 	ASC->AbilityEndedCallbacks.Remove(MyMemory->DelegateHandle);
 	return EBTNodeResult::Failed;
 }

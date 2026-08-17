@@ -75,6 +75,8 @@ namespace R1GameplayTags
 	// 이 프로젝트는 태그를 ini에 등록하지 않고 전부 여기서 네이티브로 선언한다.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_BabyGround);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_RavagerCharge);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_RavagerJump);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_RavagerSweep);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_HierarchCharge);
 
 	// Common attributes

@@ -110,8 +110,16 @@ void UBTService_PrepareSkill::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*
 	}
 
 	UClass* SelectedClass = Candidates[FMath::RandRange(0, Candidates.Num() - 1)];
+
+	// 선택이 실제로 바뀐 경우에만 로그를 남긴다. 0.5초마다 같은 줄이 쌓이면
+	// 정작 봐야 할 줄이 묻힌다.
+	const UClass* PreviousClass = BlackboardComp->GetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName);
+	if (PreviousClass != SelectedClass)
+	{
+		UE_LOG(LogR1, Log, TEXT("BTService_PrepareSkill: Selected Ability %s (CanAttack: %d, Candidates: %d)"), *SelectedClass->GetName(), bCanAttack, Candidates.Num());
+	}
+
 	BlackboardComp->SetValueAsClass(BBKey_TargetAbilityClass.SelectedKeyName, SelectedClass);
-	UE_LOG(LogR1, Log, TEXT("BTService_PrepareSkill: Selected Ability %s (CanAttack: %d, Candidates: %d)"), *SelectedClass->GetName(), bCanAttack, Candidates.Num());
 }
 
 void UBTService_PrepareSkill::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
