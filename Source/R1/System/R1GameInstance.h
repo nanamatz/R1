@@ -35,10 +35,19 @@ public:
 public:
 	const FSkillDataRow* GetSkillData(FName SkillName) const;
 
+	// 보스 스킬 전용 조회. 플레이어 테이블과 행 이름이 겹칠 수 있어 테이블을 분리한다
+	// (예: UR1GameplayAbility_Attack의 기본 SkillID "Attack"은 양쪽에 다 존재할 수 있음).
+	// BossSkillDataTable이 비어 있으면 SkillDataTable로 폴백한다.
+	const FSkillDataRow* GetBossSkillData(FName SkillName) const;
+
 protected:
 	// 🌟 블루프린트(BP_R1GameInstance)에서 등록할 딱 하나의 스킬 데이터 테이블
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
 	TObjectPtr<class UDataTable> SkillDataTable;
+
+	// 보스 스킬 테이블 (DT_BossSkillData). BP_R1GameInstance에서 지정할 것.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
+	TObjectPtr<class UDataTable> BossSkillDataTable;
 
 //private:
 //	static const FString RespawnSlotName;

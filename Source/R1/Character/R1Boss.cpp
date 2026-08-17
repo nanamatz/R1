@@ -7,7 +7,6 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "R1LogChannels.h"
-#include "R1GameplayTags.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Animation/AnimInstance.h"
@@ -171,6 +170,9 @@ void AR1Boss::EnterPhase(int32 PhaseIndex)
     }
 
     UE_LOG(LogR1, Log, TEXT("%s entered boss phase %d (threshold %.2f)"), *GetName(), PhaseIndex, Phase.HealthRatioThreshold);
+
+    // 6. BP 연출 훅. 상태 변경이 모두 끝난 뒤 마지막에 호출한다.
+    OnPhaseEntered(PhaseIndex);
 }
 
 float AR1Boss::GetHealthFloor() const
@@ -217,13 +219,22 @@ bool AR1Boss::BeginPhaseTransition(UAnimMontage* TransitionMontage)
         return false;
     }
 
-    // 1. 진행 중인 공격 어빌리티를 끊는다. 안 끊으면 그 몽타주가 전환 연출을 덮어쓴다.
+    if (bIsInPhaseTransition)
+    {
+        // 이전 전환이 아직 안 끝났으면 먼저 정리한다 (Inhibit 이중 설정 방지).
+        EndPhaseTransition();
+    }
+
     if (AbilitySystemComponent)
     {
+        // 1. 진행 중인 어빌리티를 끊는다. 안 끊으면 그 몽타주가 전환 연출을 덮어쓴다.
         AbilitySystemComponent->CancelAbilities();
 
-        // 2. 하이퍼아머 — HitReact가 이 태그를 ActivationBlockedTags로 이미 막고 있다.
-        AbilitySystemComponent->AddLooseGameplayTag(R1GameplayTags::Character_State_UnInterruptable);
+        // 2. 전환이 끝날 때까지 '모든' 어빌리티 활성화를 막는다.
+        //    UGameplayAbility::CanActivateAbility의 첫 번째 검사라서 BT 경유든
+        //    게임플레이 이벤트(HitReact) 경유든 경로에 상관없이 막힌다.
+        //    태그 하나만 막으면 어태크 어빌리티가 새 몽타주를 재생해 연출을 덮어썼다.
+        AbilitySystemComponent->SetUserAbilityActivationInhibited(true);
     }
 
     // 3. 연출 중 미끄러지지 않도록 이동 정지 (HitReact와 같은 방식)
@@ -249,11 +260,14 @@ bool AR1Boss::BeginPhaseTransition(UAnimMontage* TransitionMontage)
     EndDelegate.BindUObject(this, &AR1Boss::OnPhaseTransitionMontageEnded);
     AnimInstance->Montage_SetEndDelegate(EndDelegate, TransitionMontage);
 
+    UE_LOG(LogR1, Log, TEXT("%s: phase transition montage '%s' started (%.2fs)"), *GetName(), *TransitionMontage->GetName(), Duration);
     return true;
 }
 
 void AR1Boss::OnPhaseTransitionMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
+    UE_LOG(LogR1, Log, TEXT("%s: phase transition montage ended (interrupted: %d)"), *GetName(), bInterrupted ? 1 : 0);
+
     // 중단되어도 상태는 반드시 원복한다 — 안 그러면 보스가 무적인 채로 굳는다.
     EndPhaseTransition();
 }
@@ -264,7 +278,7 @@ void AR1Boss::EndPhaseTransition()
 
     if (AbilitySystemComponent)
     {
-        AbilitySystemComponent->RemoveLooseGameplayTag(R1GameplayTags::Character_State_UnInterruptable);
+        AbilitySystemComponent->SetUserAbilityActivationInhibited(false);
     }
 
     if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())

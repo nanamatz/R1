@@ -20,7 +20,7 @@ struct FBossPhase
 	UPROPERTY(EditAnywhere, Category = "Phase")
 	TArray<TSubclassOf<class UGameplayAbility>> DefaultSkills;
 
-	// 진입 시 원거리(사거리 밖) 스킬 목록을 교체한다. 비어 있으면 기존 목록 유지.
+	// 진입 시 원거리(사거리 밖) 스킬 목록을 교체한다. 비어 있으면 기존 목록c 유지.
 	UPROPERTY(EditAnywhere, Category = "Phase")
 	TArray<TSubclassOf<class UGameplayAbility>> AdditionalSkills;
 
@@ -52,6 +52,13 @@ public:
 
 	// 다음 미진입 페이즈의 임계 체력. 전환 연출 중에는 현재 페이즈의 임계값으로 고정된다.
 	virtual float GetHealthFloor() const override;
+
+	// 페이즈 진입 시점에 BP로 알린다 (외형 변경, 오라 VFX, 사운드 등 연출용).
+	// 스킬 목록 교체 / 격노 GE 적용 / 전환 몽타주 재생이 모두 끝난 뒤 호출된다.
+	// 주의: 외형에 SetOverlayMaterial을 쓰지 말 것 — AR1Monster::ResetHitFlash가
+	// 피격 0.15초 뒤 오버레이를 nullptr로 지운다.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Phases")
+	void OnPhaseEntered(int32 PhaseIndex);
 
 protected:
     virtual void BeginPlay() override;

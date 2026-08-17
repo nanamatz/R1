@@ -21,6 +21,14 @@ protected:
 	virtual void OnAttackEventReceived(FGameplayEventData Payload) override;
 	virtual void OnMontageEnded() override;
 
+private:
+	// WaitGameplayEvent가 실제로 바인딩하는 래퍼. 수신 여부를 기록한 뒤 가상 함수로 넘긴다.
+	// (서브클래스는 OnAttackEventReceived에서 Super를 부르지 않으므로 여기서 기록해야 한다)
+	UFUNCTION()
+	void HandleAttackEventReceived(FGameplayEventData Payload);
+
+protected:
+
 	virtual void OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
@@ -46,4 +54,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	FGameplayTag AttackEventTag;
+
+private:
+	// 이 액티베이션에서 AttackEventTag 대기를 걸었는가 (베이스 흐름을 탔는가).
+	// 베이스를 거치지 않는 서브클래스(BossLeap 등)는 false라 경고 대상이 아니다.
+	bool bWaitingForAttackEvent = false;
+
+	// 대기 중 노티파이가 실제로 도착했는가.
+	bool bAttackEventReceived = false;
 };

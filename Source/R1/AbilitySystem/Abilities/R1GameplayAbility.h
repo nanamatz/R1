@@ -31,7 +31,9 @@ protected:
 	// Attacker 또는 MontageToPlay가 없으면 아무것도 하지 않고 false 반환.
 	// 몽타주 시작이 동기 실패해 어빌리티가 이미 종료된 경우에도 false 반환 —
 	// 호출부는 IsActive()를 확인한 뒤에만 EndAbility를 호출할 것 (이중 종료 방지).
-	bool PlayAttackMontageAndWaitForEvent(class AR1Character* Attacker, const FGameplayTag& InAttackEventTag, FName MontageStartSection = NAME_None);
+	// bTriggerEventOnce=false로 주면 한 번의 액티베이션에서 노티파이가 여러 번 와도 매번 처리한다
+	// (한 섹션에 타격 애님이 2개 이상인 콤보용). 기본값 true는 기존 동작 그대로.
+	bool PlayAttackMontageAndWaitForEvent(class AR1Character* Attacker, const FGameplayTag& InAttackEventTag, FName MontageStartSection = NAME_None, bool bTriggerEventOnce = true);
 
 	// 위 보일러플레이트가 바인딩하는 핸들러. 서브클래스에서 override (UFUNCTION 재선언 금지 — UHT 중복 에러).
 	UFUNCTION()

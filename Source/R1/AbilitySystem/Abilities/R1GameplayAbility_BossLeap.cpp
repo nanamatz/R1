@@ -8,7 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Abilities/Tasks/AbilityTask_ApplyRootMotionMoveToActorForce.h"
+#include "Abilities/Tasks/AbilityTask_ApplyRootMotionMoveToForce.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
@@ -59,8 +59,11 @@ void UR1GameplayAbility_BossLeap::ActivateAbility(const FGameplayAbilitySpecHand
 		return;
 	}
 
-	// 2. 텔레그래프를 '타겟의 현재 위치'에 배치.
-	//    도약은 타겟을 추적하므로 착지점과 완전히 일치하지는 않는다 (허용된 오차).
+	// 2. 착지 지점을 여기서 확정한다. 이후 타겟이 움직여도 이 값은 바뀌지 않는다 —
+	//    예고한 원이 곧 실제 착지점이어야 회피가 성립한다.
+	CachedLandingLocation = CachedTarget->GetActorLocation();
+
+	// 3. 텔레그래프를 그 지점에 배치.
 	if (TelegraphData && TelegraphActorClass)
 	{
 		FActorSpawnParameters SpawnParams;
@@ -69,11 +72,21 @@ void UR1GameplayAbility_BossLeap::ActivateAbility(const FGameplayAbilitySpecHand
 
 		const FRotator SpawnRotation = FRotator(0.0f, AvatarCharacter->GetActorRotation().Yaw, 0.0f);
 		AR1TelegraphActor* TelegraphActor = GetWorld()->SpawnActor<AR1TelegraphActor>(
-			TelegraphActorClass, CachedTarget->GetActorLocation(), SpawnRotation, SpawnParams);
+			TelegraphActorClass, CachedLandingLocation, SpawnRotation, SpawnParams);
 
 		if (TelegraphActor)
 		{
 			TelegraphActor->InitializeTelegraph(TelegraphData);
+		}
+	}
+
+	// 착지 지점을 바라보게 맞춘다 (몸이 옆을 본 채로 날아가지 않도록).
+	{
+		FVector ToLanding = CachedLandingLocation - AvatarCharacter->GetActorLocation();
+		ToLanding.Z = 0.0f;
+		if (!ToLanding.IsNearlyZero())
+		{
+			AvatarCharacter->SetActorRotation(ToLanding.Rotation());
 		}
 	}
 
@@ -98,29 +111,21 @@ void UR1GameplayAbility_BossLeap::ActivateAbility(const FGameplayAbilitySpecHand
 		}
 	}
 
-	// 4. 루트모션 도약. 타겟 액터를 직접 추적하므로 움직이는 플레이어를 따라간다.
-	const float MyRadius = AvatarCharacter->GetCapsuleComponent()->GetScaledCapsuleRadius();
-	const FVector TargetOffset(MyRadius + 60.f, 0.f, 0.f);
-
-	UAbilityTask_ApplyRootMotionMoveToActorForce* LeapTask =
-		UAbilityTask_ApplyRootMotionMoveToActorForce::ApplyRootMotionMoveToActorForce(
+	// 4. 루트모션 도약. 액터가 아니라 '고정 좌표'로 간다 — 액터를 따라가면
+	//    예고 원을 벗어난 곳에 착지하게 되어 구르기로 피할 수 없다.
+	UAbilityTask_ApplyRootMotionMoveToForce* LeapTask =
+		UAbilityTask_ApplyRootMotionMoveToForce::ApplyRootMotionMoveToForce(
 			this,
 			TEXT("BossLeap_RootMotion"),
-			CachedTarget,
-			TargetOffset,
-			ERootMotionMoveToActorTargetOffsetType::AlignFromTargetToSource,
+			CachedLandingLocation,
 			DashDuration,
-			nullptr,
-			nullptr,
-			true,
+			/*bSetNewMovementMode=*/true,
 			MOVE_Flying,
-			true,
+			/*bRestrictSpeedToExpected=*/false,
 			JumpHeightCurve,
-			nullptr,
 			ERootMotionFinishVelocityMode::SetVelocity,
 			FVector::ZeroVector,
-			0.0f,
-			false
+			0.0f
 		);
 
 	if (!LeapTask)
@@ -129,17 +134,23 @@ void UR1GameplayAbility_BossLeap::ActivateAbility(const FGameplayAbilitySpecHand
 		return;
 	}
 
-	LeapTask->OnFinished.AddDynamic(this, &UR1GameplayAbility_BossLeap::OnLeapFinished);
+	// 이 태스크는 항상 Duration만큼 돌고 끝난다. 도달 여부로 델리게이트가 갈리므로 둘 다 묶는다.
+	LeapTask->OnTimedOut.AddDynamic(this, &UR1GameplayAbility_BossLeap::OnLeapFinished);
+	LeapTask->OnTimedOutAndDestinationReached.AddDynamic(this, &UR1GameplayAbility_BossLeap::OnLeapFinished);
 	LeapTask->ReadyForActivation();
 }
 
-void UR1GameplayAbility_BossLeap::OnLeapFinished(bool bReachedDestination, bool bTimedOut, FVector FinalTargetLocation)
+void UR1GameplayAbility_BossLeap::OnLeapFinished()
 {
-	// 도착이든 타임아웃이든 착지 처리는 동일하게 수행한다.
-	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
+	// 두 델리게이트가 모두 걸려 있으므로 중복 진입을 막는다.
+	if (!IsActive())
 	{
-		ApplyLandingDamage(AvatarActor->GetActorLocation());
+		return;
 	}
+
+	// 판정은 '예고한 착지 지점' 기준이다. 보스의 실제 위치를 쓰면 벽에 걸려 덜 왔을 때
+	// 판정 원이 예고와 어긋난다.
+	ApplyLandingDamage(CachedLandingLocation);
 
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

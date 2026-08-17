@@ -56,6 +56,7 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Monster_Skill_WaveAttack, "Ability.Monster.Skill.WaveAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Monster_Skill_LeapAttack, "Ability.Monster.Skill.LeapAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Monster_Skill_Summon, "Ability.Monster.Skill.Summon");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Monster_Skill_Dash, "Ability.Monster.Skill.Dash");
 
 
 	//State tags
@@ -76,6 +77,11 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Cost, "Data.Skill.Cost");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Cooldown, "Data.Skill.Cooldown");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill_BladeWave, "Cooldown.Skill.BladeWave");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_BabyGround, "Cooldown.Boss.BabyGround");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_RavagerCharge, "Cooldown.Boss.RavagerCharge");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_RavagerJump, "Cooldown.Boss.RavagerJump");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_RavagerSweep, "Cooldown.Boss.RavagerSweep");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_HierarchCharge, "Cooldown.Boss.HierarchCharge");
 
 	//Common attributes
 	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxHealth, "Data.Attribute.MaxHealth");

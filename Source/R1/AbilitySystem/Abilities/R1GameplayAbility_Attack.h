@@ -48,6 +48,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation|Combo")
 	bool bRandomComboSelection = false;
 
+	// [설정] 한 섹션 안에 타격 애님이 2개 이상일 때 true로 켠다.
+	// 켜면 Event.Montage.Attack 노티파이가 올 때마다 매번 OnAttackEventReceived가 실행된다.
+	// (기본 false = 액티베이션당 첫 노티파이 1회만 — 기존 동작)
+	UPROPERTY(EditDefaultsOnly, Category = "Animation|Combo")
+	bool bAllowMultipleAttackEvents = false;
+
 	// 무작위 모드에서 직전에 재생한 섹션 인덱스 (연속 중복 방지용)
 	UPROPERTY(Transient)
 	int32 LastComboIndex = INDEX_NONE;

@@ -5,6 +5,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Particles/ParticleSystemComponent.h" // UFXSystemComponent (나이아가라/캐스케이드 공통 베이스)
 
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "AbilitySystem/Attribute/MonsterAttributeSet.h"
@@ -169,6 +170,19 @@ void AR1Monster::UpdateDissolve()
 		GetWorldTimerManager().ClearTimer(DissolveTimerHandle);
 
 		//setactorhiddeninGame(true);
+
+		// 디졸브는 메시 머티리얼만 지운다. 부착된 VFX(보스 페이즈 오라 등)는 그대로 남아
+		// 시체가 사라진 자리에 계속 떠 있으므로 여기서 함께 끈다.
+		// Deactivate라서 이미 방출된 파티클은 수명대로 사라진다 (몸과 같이 페이드).
+		TArray<UFXSystemComponent*> FXComponents;
+		GetComponents<UFXSystemComponent>(FXComponents);
+		for (UFXSystemComponent* FXComp : FXComponents)
+		{
+			if (FXComp)
+			{
+				FXComp->Deactivate();
+			}
+		}
 
 		if (OnReadyToSleep.IsBound())
 		{
