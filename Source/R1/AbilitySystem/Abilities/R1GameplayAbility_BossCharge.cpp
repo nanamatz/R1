@@ -11,6 +11,7 @@
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 #include "Character/R1Player.h"
 
@@ -51,6 +52,12 @@ void UR1GameplayAbility_BossCharge::ActivateAbility(const FGameplayAbilitySpecHa
 			// 타겟이 없으면 현재 바라보는 방향으로 그대로 돌진한다 (중단하지는 않는다).
 			UE_LOG(LogR1, Warning, TEXT("[BossCharge] no target on blackboard key '%s' — charging along current facing"), *BBKey_TargetActor.ToString());
 		}
+
+		// 이 방향이 곧 텔레그래프가 깔릴 방향이다. 돌진은 반드시 이 값을 쓴다.
+		CachedChargeDirection = AvatarCharacter->GetActorForwardVector().GetSafeNormal2D();
+
+		// 예고를 깐 뒤에도 계속 돌면 예고가 거짓말이 된다. 윈드업 동안 회전 정지.
+		SetRotationLocked(true);
 	}
 
 	HitActors.Reset();
@@ -68,7 +75,16 @@ void UR1GameplayAbility_BossCharge::OnAttackEventReceived(FGameplayEventData Pay
 	}
 
 	const FVector StartLocation = AvatarCharacter->GetActorLocation();
-	const FVector ChargeDirection = AvatarCharacter->GetActorForwardVector().GetSafeNormal2D();
+
+	// 텔레그래프를 깔던 시점의 방향을 그대로 쓴다. 여기서 forward를 다시 읽으면
+	// 윈드업 중 회전한 만큼 예고와 경로가 갈라져 회피가 불가능해진다.
+	const FVector ChargeDirection = CachedChargeDirection.IsNearlyZero()
+		? AvatarCharacter->GetActorForwardVector().GetSafeNormal2D()
+		: CachedChargeDirection;
+
+	// 메시가 다른 곳을 보며 옆으로 미끄러지지 않도록 실제 회전도 그 방향으로 맞춘다.
+	AvatarCharacter->SetActorRotation(ChargeDirection.Rotation());
+
 	const FVector TargetLocation = StartLocation + ChargeDirection * ChargeDistance;
 
 	// 돌진 중에는 플레이어를 밀지 않고 통과한다 (JumpAttack이 쓰는 방식과 동일).
@@ -204,9 +220,10 @@ void UR1GameplayAbility_BossCharge::OnChargeFinished()
 
 void UR1GameplayAbility_BossCharge::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	// 취소(페이즈 전환의 CancelAbilities 등)로 끝나도 충돌과 타이머는 반드시 원복한다.
+	// 취소(페이즈 전환의 CancelAbilities 등)로 끝나도 충돌·타이머·회전은 반드시 원복한다.
 	StopChargeSweep();
 	SetPawnCollisionPassThrough(false);
+	SetRotationLocked(false);
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
@@ -216,6 +233,36 @@ void UR1GameplayAbility_BossCharge::StopChargeSweep()
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(SweepTimerHandle);
+	}
+}
+
+void UR1GameplayAbility_BossCharge::SetRotationLocked(bool bLocked)
+{
+	ACharacter* AvatarCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	UCharacterMovementComponent* MoveComp = AvatarCharacter ? AvatarCharacter->GetCharacterMovement() : nullptr;
+	if (!MoveComp)
+	{
+		return;
+	}
+
+	if (bLocked)
+	{
+		if (bRotationLocked)
+		{
+			return;
+		}
+		bCachedUseControllerDesiredRotation = MoveComp->bUseControllerDesiredRotation;
+		bCachedOrientRotationToMovement = MoveComp->bOrientRotationToMovement;
+
+		MoveComp->bUseControllerDesiredRotation = false;
+		MoveComp->bOrientRotationToMovement = false;
+		bRotationLocked = true;
+	}
+	else if (bRotationLocked)
+	{
+		MoveComp->bUseControllerDesiredRotation = bCachedUseControllerDesiredRotation;
+		MoveComp->bOrientRotationToMovement = bCachedOrientRotationToMovement;
+		bRotationLocked = false;
 	}
 }
 

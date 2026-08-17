@@ -45,6 +45,10 @@ private:
 	// 돌진 중 폰 충돌을 Overlap으로 낮춘다(통과용). 종료 시 원복.
 	void SetPawnCollisionPassThrough(bool bPassThrough);
 
+	// 윈드업 동안 회전을 잠근다. AR1Monster는 bUseControllerDesiredRotation=true라
+	// 그냥 두면 예고 후에도 계속 타겟을 향해 돌아 텔레그래프와 실제 경로가 어긋난다.
+	void SetRotationLocked(bool bLocked);
+
 	void StopChargeSweep();
 
 protected:
@@ -75,6 +79,10 @@ private:
 	UPROPERTY()
 	TSet<TObjectPtr<AActor>> HitActors;
 
+	// 텔레그래프를 깔던 시점의 돌진 방향. 노티파이 때 forward를 다시 읽으면
+	// 윈드업 중 회전한 만큼 예고와 실제 경로가 갈라진다.
+	FVector CachedChargeDirection = FVector::ZeroVector;
+
 	FVector LastSweepLocation = FVector::ZeroVector;
 
 	FTimerHandle SweepTimerHandle;
@@ -83,4 +91,9 @@ private:
 	TEnumAsByte<ECollisionResponse> CachedPawnResponse = ECR_Block;
 
 	bool bCollisionModified = false;
+
+	// 원복용 — 회전 잠금 전 설정
+	bool bCachedUseControllerDesiredRotation = true;
+	bool bCachedOrientRotationToMovement = false;
+	bool bRotationLocked = false;
 };
