@@ -15,14 +15,30 @@ to compile. Phase 0 exists to catch that before any new boss content is built on
 - **Bold** asset names are new assets you create. `Code font` is an exact value to type.
 - Each item is a checkbox. Work top to bottom — later phases depend on earlier ones.
 
-## Four mistakes that produce a silently do-nothing boss
+## Seven mistakes that produce a silently do-nothing boss
 
-Read these once before starting. Each fails with no error, no log line, no crash.
+Read these once before starting. Every one of these was hit for real while building
+the Hierarch. Each fails with no error, no crash — and, unless noted, no log either.
 
+0. **`BP_R1GameInstance` → `Boss Skill Data Table` not set.** Do this **first**, once,
+   before any other work: set it to `DT_BossSkillData`. The GameInstance holds one
+   table pointer per lookup, and the boss lookup is separate from the player one. Unset,
+   every boss `SkillID` resolves to nothing and *both* Damage and Cooldown silently
+   become 0 — which is why boss cooldowns "don't work" no matter what you change in the
+   DataTable. Damage still lands (it comes from `BaseDamage` via
+   `R1DamageExecutionCalc`), which is what makes this so hard to spot.
+   *Logs a warning since `d5357b4`, so check for `BossSkillDataTable이 비어있어`.*
 1. **Missing AnimNotify.** Every attack montage needs an AnimNotify sending
    `Event.Montage.Attack` at the damage frame. Without it `OnAttackEventReceived`
    never fires — the boss plays its animation and deals nothing. Combo abilities need
    **one notify per section**.
+   *Logs a warning since `0cd1f22`: `montage ended without ever receiving '...'`.*
+
+   ⚠️ **The registered tag string is misspelled** — `"Event.Monage.Attack"`, missing the
+   `t` (`R1GameplayTags.cpp:19`). The C++ symbol is spelled correctly, so nothing in code
+   breaks, but a notify whose tag you **typed by hand** as `Event.Montage.Attack` will
+   never match. Always pick the tag from the picker. Do not "fix" the string casually:
+   every existing notify in the project uses the typo'd version and would break at once.
 2. **Missing Activation Blocked Tag.** A cooldown GE granting `Cooldown.Boss.X` does
    **not** by itself stop re-activation. The ability must also list `Cooldown.Boss.X`
    in **Activation Blocked Tags**. Without it the cooldown is decorative and the boss
@@ -36,6 +52,16 @@ Read these once before starting. Each fails with no error, no log line, no crash
    straight through the threshold and the phase swap just happens mid-swing. The skill
    lists and enrage GE still apply, so it looks *almost* right, which is what makes it
    easy to miss. Every phase that should read as a beat needs a montage assigned.
+5. **Anim Blueprint has no `Slot 'DefaultSlot'` node.** The montage plays, notifies fire,
+   damage lands — and nothing animates, because the pose never reaches the output. Every
+   new boss ABP needs a Slot node between its state machine and the final pose, matching
+   the slot named in the montage. Cost a full debugging round on the Hierarch.
+6. **`Flow Abort Mode: None` on a distance-gated branch.** A branch whose condition is
+   distance-based will not re-evaluate while another branch runs, so the skill only ever
+   fires right after some other task happens to finish. Gate such branches on a
+   **Blackboard** decorator (`CanAttack`) with `Flow Abort Mode: Lower Priority` —
+   custom decorators like `IsTooClose` derive from `BTDecorator_BlackboardBase` and only
+   re-check when the *key* changes, which distance never does.
 
 ---
 
@@ -76,10 +102,13 @@ Damage used to be nested inside `if (WaveEffect)`. It now always runs.
   - Duration Magnitude: `Set By Caller`, Data Tag `Data.Skill.Cooldown`
   - No modifiers, no granted tags (children add their own)
 - [ ] `DT_BossSkillData` → row `GroundAttack` → set **Cooldown** to `10.0`
+- [ ] **`BP_R1GameInstance` → `Boss Skill Data Table` = `DT_BossSkillData`** — do this
+      before anything else, or the row below is never read and Cooldown stays 0 (mistake #0)
 - [ ] `Cooldown.Boss.BabyGround` must already be declared in `R1GameplayTags`
       (done — see Appendix B; undeclared tags do not appear in the picker)
-- [ ] Duplicate `GE_BossSkillCooldown` → **`GE_Cooldown_BabyGround`**, and under
-      **Components → Grant Tags to Target Actor** add `Cooldown.Boss.BabyGround`
+- [ ] New Blueprint Class with **parent `GE_BossSkillCooldown`** → **`GE_Cooldown_BabyGround`**,
+      then **Components → Grant Tags to Target Actor → Add Tags → Added** =
+      `Cooldown.Boss.BabyGround`
 - [ ] `GA_BabyGroundAttack`:
   - **Cooldown Gameplay Effect Class** (category *Cooldowns*) = `GE_Cooldown_BabyGround`
   - **Activation Blocked Tags** (category *Tags*) += `Cooldown.Boss.BabyGround`
@@ -170,16 +199,27 @@ Damage used to be nested inside `if (WaveEffect)`. It now always runs.
 
 # Phase 1 — Shared setup
 
+- [ ] **`BP_R1GameInstance` → Data → `Boss Skill Data Table` = `DT_BossSkillData`.**
+      Nothing below works without this — see mistake #0. Find the class via
+      Project Settings → Maps & Modes → Game Instance Class.
 - [ ] Create folder `Content/Data/Telegraph/` (if absent)
 - [ ] Create folder `Content/Blueprints/AbilitySystem/GE/Boss/`
 - [ ] Create folders `Content/Blueprints/AbilitySystem/GA/Monster/Warden/`,
       `.../Ravager/`, `.../Hierarch/`
 - [ ] Confirm `GE_BossSkillCooldown` exists from Phase 0.3 — every cooldown GE below is
-      a duplicate of it
+      a **child** of it
 
-**Cooldown GE recipe** (used ~17 times below): duplicate `GE_BossSkillCooldown`, rename,
-then set **Components → Grant Tags to Target Actor** to the one tag named in the table.
-Nothing else changes. The duration comes from the DataTable at runtime.
+**Cooldown GE recipe** (used ~17 times below): create a Blueprint Class whose **parent is
+`GE_BossSkillCooldown`** — not a duplicate. Then set **Components → Grant Tags to Target
+Actor → Add Tags → Added** to the one tag named in the table. Nothing else changes; the
+duration is inherited and filled from the DataTable at runtime.
+
+Child classes over duplicates because a later fix to the parent's Duration settings then
+reaches all ~17 at once instead of needing seventeen edits.
+
+⚠️ **The tag must already be declared in `R1GameplayTags`** or it will not appear in the
+picker — see Appendix B. Only `Cooldown.Boss.BabyGround`, `.RavagerCharge` and
+`.HierarchCharge` are declared so far.
 
 ---
 
@@ -700,6 +740,13 @@ not redeclare them.
 | `<Boss>: phase transition montage 'X' started (Ns)` | gate engaged — health pinned, all ability activation inhibited |
 | `<Boss>: phase transition montage ended (interrupted: 0)` | gate released cleanly; `interrupted: 1` means something still overrode the montage |
 | `<Boss>: phase transition montage failed to play` | `Montage_Play` returned 0 — bad montage asset or no anim instance; the gate is skipped |
+| `BossSkillDataTable이 비어있어 SkillDataTable로 폴백합니다` | mistake #0 — `BP_R1GameInstance` still needs `DT_BossSkillData` |
+| `[GA_X] SkillID 'Y' resolved: Damage=.. Cooldown=.. Range=..` | the row was found; these are the values actually in use |
+| `[GA_X] SkillID 'Y' not found in the ... BossSkillDataTable` | row name ≠ the ability's `Skill ID`, or the table pointer is wrong |
+| `[GA_X] CachedCooldown is 0 for SkillID 'Y'` | row Cooldown is 0 **or** the row was never found — check for a `resolved` line above |
+| `[GA_X] no Cooldown Gameplay Effect Class assigned` | the ability has no cooldown GE, so it can never go on cooldown |
+| `[GA_X] montage ended without ever receiving '...'` | mistake #1 — no notify, or its tag does not match (watch the `Monage` typo) |
+| `BossCharge: hit <actor>` / `finished (targets hit: N)` | dash connected / completed. `Executing Ability` alone does **not** mean it activated — that line is printed before `TryActivateAbility`, so repeats are usually cooldown-blocked retries |
 | `BossLeap: landed, hit N actors` | leap resolved |
 | `[BossLeap] blackboard key 'TargetActor' has no target actor` | leap had no target, ended cleanly |
 | `SummonAdds: spawned N adds (M alive, cap C)` | summon resolved |
