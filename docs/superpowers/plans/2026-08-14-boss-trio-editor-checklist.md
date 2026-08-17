@@ -76,6 +76,8 @@ Damage used to be nested inside `if (WaveEffect)`. It now always runs.
   - Duration Magnitude: `Set By Caller`, Data Tag `Data.Skill.Cooldown`
   - No modifiers, no granted tags (children add their own)
 - [ ] `DT_BossSkillData` → row `GroundAttack` → set **Cooldown** to `10.0`
+- [ ] `Cooldown.Boss.BabyGround` must already be declared in `R1GameplayTags`
+      (done — see Appendix B; undeclared tags do not appear in the picker)
 - [ ] Duplicate `GE_BossSkillCooldown` → **`GE_Cooldown_BabyGround`**, and under
       **Components → Grant Tags to Target Actor** add `Cooldown.Boss.BabyGround`
 - [ ] `GA_BabyGroundAttack`:
@@ -651,8 +653,18 @@ therefore wait for adds that outlive the boss.
 
 # Appendix B — Gameplay tags introduced
 
-All are plain asset tags set in the GE's **Grant Tags to Target Actor** — none need a
-C++ declaration.
+⚠️ **Each of these must be declared natively in `R1GameplayTags` before it can be used.**
+This project registers **no** tags through `DefaultGameplayTags.ini` (it is empty) — every
+tag is a `UE_DECLARE_GAMEPLAY_TAG_EXTERN` / `UE_DEFINE_GAMEPLAY_TAG` pair, as
+`Cooldown.Skill.BladeWave` already is. An undeclared tag simply will not appear in the
+editor's tag picker, so the GE cannot grant it and the ability cannot block on it.
+
+Declare them in batches as each boss is built, not all at once — the boss names are still
+placeholders, and renaming seventeen tags later is pure rework. Only
+`Cooldown.Boss.BabyGround` is declared so far (for the Phase 0.3 smoke test).
+
+Once declared, each is set on its GE via **Grant Tags to Target Actor** and on its ability
+via **Activation Blocked Tags**.
 
 ```
 Cooldown.Boss.BabyGround
