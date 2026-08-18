@@ -59,6 +59,15 @@ UR1DamageExecutionCalc::UR1DamageExecutionCalc()
 
 void UR1DamageExecutionCalc::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, OUT FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
 {
+	// 부활 직후 무적 구간에는 피해를 아예 계산하지 않는다.
+	if (const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent())
+	{
+		if (TargetASC->HasMatchingGameplayTag(R1GameplayTags::Character_State_Invulnerable))
+		{
+			return;
+		}
+	}
+
 	FAggregatorEvaluateParameters EvaluationParameters;
 	EvaluationParameters.SourceTags = ExecutionParams.GetOwningSpec().CapturedSourceTags.GetAggregatedTags();
 	EvaluationParameters.TargetTags = ExecutionParams.GetOwningSpec().CapturedTargetTags.GetAggregatedTags();

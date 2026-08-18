@@ -112,7 +112,7 @@ bool UR1ShopSlotsWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDr
 		// 방금 새로 만든 RemoveItem을 사용하여 인벤토리에서 제거합니다.
 		if (InvenSubsys->RemoveItem(DroppedItem))
 		{
-			InvenSubsys->AddGold(SellPrice);
+			InvenSubsys->AddGold(SellPrice, /*bApplyGoldBonus=*/false);
 			UE_LOG(LogR1, Log, TEXT("아이템 판매 완료! +%d 골드"), SellPrice);
 
 			if (AR1HUD* HUD = Cast<AR1HUD>(GetOwningPlayer()->GetHUD()))

@@ -51,12 +51,27 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	void SetPlayerClass(ER1CharacterClass InClass) { PlayerClass = InClass; }
 
+	// 메타 업그레이드 Revive 충전이 남아 있으면 1회 소모하고 true. 이번 런 동안 누적된 사용량으로 판정한다.
+	// Revive 어트리뷰트 자체를 깎지 않는 이유: 메타 업그레이드 GE의 가산 모디파이어가 살아 있어
+	// 애그리게이터가 재평가될 때마다 값이 되돌아오기 때문이다.
+	bool TryConsumeRevive();
+
+	UFUNCTION(BlueprintPure, Category = "Attributes")
+	int32 GetRevivesUsed() const { return RevivesUsed; }
+
 protected:
 	virtual void BeginPlay() override;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	int32 RunLevel = 1;
+
+	// 이번 런에서 소모한 부활 횟수.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	int32 RevivesUsed = 0;
+
+	// Honor 보너스 강화 포인트를 이미 지급했는지 (ApplyMetaUpgrades가 두 번 불려도 중복 지급 방지).
+	bool bHonorPointsGranted = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	ER1CharacterClass PlayerClass = ER1CharacterClass::Knight;

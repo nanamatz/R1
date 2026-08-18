@@ -64,6 +64,7 @@ namespace R1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Casting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_HitReact);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_UnInterruptable);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Character_State_Invulnerable);
 
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Skill_Magnitude);

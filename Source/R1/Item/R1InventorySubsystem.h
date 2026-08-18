@@ -93,8 +93,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	int32 GetGold() const { return Gold; }
 
+	// bApplyGoldBonus: 메타 업그레이드 ExtraGold(%) 보너스 적용 여부. 판매 환급 등 비획득 경로는 false.
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void AddGold(int32 Amount);
+	void AddGold(int32 Amount, bool bApplyGoldBonus = true);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool ConsumeGold(int32 Amount);

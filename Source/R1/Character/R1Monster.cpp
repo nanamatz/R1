@@ -9,6 +9,8 @@
 
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
 #include "AbilitySystem/Attribute/MonsterAttributeSet.h"
+#include "AbilitySystem/Attribute/PlayerAttributeSet.h"
+#include "Library/R1AbilitySystemLibrary.h"
 #include "AbilitySystem/R1AbilitySystemComponent.h"
 
 #include "AI/R1AIController.h"
@@ -199,7 +201,11 @@ void AR1Monster::DropGold()
 		return;
 	}
 
-	if (FMath::RandRange(0.0f, 1.0f) < GoldDropChance)
+	// 메타 업그레이드 Luck은 퍼센트 포인트 단위(10 = 드랍 확률 +10%p). GoldDropChance는 0~1 스케일.
+	const float LuckBonus = UR1AbilitySystemLibrary::GetPlayerMetaBonus(this, UPlayerAttributeSet::GetLuckAttribute()) / 100.0f;
+	const float FinalGoldDropChance = FMath::Clamp(GoldDropChance + LuckBonus, 0.0f, 1.0f);
+
+	if (FMath::RandRange(0.0f, 1.0f) < FinalGoldDropChance)
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
