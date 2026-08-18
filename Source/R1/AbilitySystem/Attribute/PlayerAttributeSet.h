@@ -38,6 +38,7 @@ public:
 
 
 	ATTRIBUTE_ACCESSORS(ThisClass, ExtraGold);
+	ATTRIBUTE_ACCESSORS(ThisClass, ExtraExp);
 	ATTRIBUTE_ACCESSORS(ThisClass, Honor);
 	ATTRIBUTE_ACCESSORS(ThisClass, Luck);
 	ATTRIBUTE_ACCESSORS(ThisClass, Revive);
@@ -82,6 +83,10 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData ExtraGold;
+
+	// 획득 경험치 추가 비율(퍼센트 단위, 10 = +10%). 메타 업그레이드 전용.
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData ExtraExp;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData Honor;

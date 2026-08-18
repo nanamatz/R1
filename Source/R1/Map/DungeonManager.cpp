@@ -15,6 +15,8 @@
 #include "Data/R1ItemPoolData.h"
 #include "Data/R1RoomDefinitionData.h"
 #include "Math/UnrealMathUtility.h"
+#include "AbilitySystem/Attribute/PlayerAttributeSet.h"
+#include "Library/R1AbilitySystemLibrary.h"
 
 // Sets default values
 ADungeonManager::ADungeonManager()
@@ -193,10 +195,14 @@ void ADungeonManager::SpawnRoomClearReward()
 		return;
 	}
 
+	// 메타 업그레이드 Luck은 퍼센트 포인트 단위(10 = 드랍 확률 +10%p). RoomClearDropChance는 0~100 스케일.
+	const float LuckBonus = UR1AbilitySystemLibrary::GetPlayerMetaBonus(this, UPlayerAttributeSet::GetLuckAttribute());
+	const float FinalDropChance = FMath::Clamp(RoomClearDropChance + LuckBonus, 0.0f, 100.0f);
+
 	float DropRoll = FMath::FRandRange(1.f, 100.0f);
-	if (DropRoll > RoomClearDropChance)
+	if (DropRoll > FinalDropChance)
 	{
-		UE_LOG(LogR1, Log, TEXT("방 클리어 보상 드랍 실패 (확률: %.1f%%, 결과: %.1f)"), RoomClearDropChance, DropRoll);
+		UE_LOG(LogR1, Log, TEXT("방 클리어 보상 드랍 실패 (확률: %.1f%% (기본 %.1f%% + 행운 %.1f%%p), 결과: %.1f)"), FinalDropChance, RoomClearDropChance, LuckBonus, DropRoll);
 		return;
 	}
 

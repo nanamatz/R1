@@ -20,6 +20,7 @@ UPlayerAttributeSet::UPlayerAttributeSet()
 	InitHonor(0.f);
 	InitRevive(0.f);
 	InitExtraGold(0.f);
+	InitExtraExp(0.f);
 	InitLuck(0.f);
 }
 
@@ -56,6 +57,14 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 	{
 		// 1. 방금 얻은 경험치량 (GE가 더해준 값)
 		float GainedExp = Data.EvaluatedData.Magnitude;
+
+		// 메타 업그레이드 ExtraExp는 퍼센트 단위(10 = +10%).
+		// GE가 이미 더한 원본 획득량에 비례해 추가분만 얹는다. 아래 레벨업 루프가 갱신된 Exp를 그대로 사용한다.
+		const float ExtraExpPercent = FMath::Max(0.0f, GetExtraExp());
+		if (ExtraExpPercent > 0.0f && GainedExp > 0.0f)
+		{
+			SetExp(GetExp() + GainedExp * (ExtraExpPercent / 100.0f));
+		}
 
 		// 2. 현재 누적된 총 경험치
 		float CurExp = GetExp();

@@ -11,6 +11,57 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "System/R1DamageUISubsystem.h"
 
+namespace
+{
+	// 부활 직후 연타로 다시 죽지 않도록 주는 무적 시간(초).
+	constexpr float ReviveInvulnerabilityDuration = 2.0f;
+
+	// 메타 업그레이드 Revive 충전이 남아 있으면 사망을 취소하고 그 자리에서 부활시킨다.
+	// 부활했으면 true(= OnDead를 부르지 않는다), 아니면 false.
+	bool TryReviveInPlace(AR1Character* Character, UR1AttributeSet* AttributeSet)
+	{
+		AR1Player* Player = Cast<AR1Player>(Character);
+		if (!Player || !AttributeSet)
+		{
+			return false;
+		}
+
+		AR1PlayerState* PS = Player->GetPlayerState<AR1PlayerState>();
+		if (!PS || !PS->TryConsumeRevive())
+		{
+			return false;
+		}
+
+		const float RevivedHealth = AttributeSet->GetMaxHealth() * 0.5f;
+		AttributeSet->SetHealth(RevivedHealth);
+
+		// 위쪽 OnHealthChanged는 체력 0 기준으로 이미 나갔으므로, 회복된 값으로 UI를 다시 갱신한다.
+		Character->OnHealthChanged(RevivedHealth / AttributeSet->GetMaxHealth(), false);
+
+		// R1DamageExecutionCalc가 이 태그를 보고 피해를 무시한다.
+		if (UAbilitySystemComponent* ASC = AttributeSet->GetOwningAbilitySystemComponent())
+		{
+			ASC->AddLooseGameplayTag(R1GameplayTags::Character_State_Invulnerable);
+
+			if (UWorld* World = Character->GetWorld())
+			{
+				TWeakObjectPtr<UAbilitySystemComponent> WeakASC(ASC);
+				FTimerHandle InvulnerabilityTimer;
+				World->GetTimerManager().SetTimer(InvulnerabilityTimer, [WeakASC]()
+				{
+					if (WeakASC.IsValid())
+					{
+						WeakASC->RemoveLooseGameplayTag(R1GameplayTags::Character_State_Invulnerable);
+					}
+				}, ReviveInvulnerabilityDuration, false);
+			}
+		}
+
+		UE_LOG(LogR1, Warning, TEXT("[Revive] 부활! 체력 %.0f 로 복구, %.1f초 무적"), RevivedHealth, ReviveInvulnerabilityDuration);
+		return true;
+	}
+}
+
 UR1AttributeSet::UR1AttributeSet()
 {
 	InitHealth(100.f);
@@ -163,7 +214,11 @@ void UR1AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 				
 				if (Character->GetCreatureState() != ECreatureState::Dead)
 				{
-					Character->OnDead(Cast<AR1Character>(Attacker));
+					// 부활 충전이 남아 있으면 사망 처리 자체를 건너뛴다.
+					if (!TryReviveInPlace(Character, this))
+					{
+						Character->OnDead(Cast<AR1Character>(Attacker));
+					}
 				}
 			}
 		}

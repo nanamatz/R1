@@ -72,6 +72,7 @@ namespace R1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_Casting,"Character.State.Casting");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_HitReact,"Character.State.HitReact");
 	UE_DEFINE_GAMEPLAY_TAG(Character_State_UnInterruptable,"Character.State.UnInterruptable");
+	UE_DEFINE_GAMEPLAY_TAG(Character_State_Invulnerable,"Character.State.Invulnerable");
 
 	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Magnitude, "Data.Skill.Magnitude");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Skill_Cost, "Data.Skill.Cost");

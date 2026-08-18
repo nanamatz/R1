@@ -10,6 +10,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
+#include "AbilitySystem/Attribute/PlayerAttributeSet.h"
+#include "Library/R1AbilitySystemLibrary.h"
 
 void UR1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -515,9 +517,20 @@ bool UR1InventorySubsystem::ConsumeKeyItem()
 	return false; // 인벤토리에 열쇠가 없음
 }
 
-void UR1InventorySubsystem::AddGold(int32 Amount)
+void UR1InventorySubsystem::AddGold(int32 Amount, bool bApplyGoldBonus)
 {
 	if (Amount <= 0) return;
+
+	// 메타 업그레이드 ExtraGold는 퍼센트 단위(10 = +10%). 획득 골드에만 적용하고,
+	// 판매 환급에는 적용하지 않는다(구매가 대비 70% 환급을 뚫고 무한 차익거래가 나오는 것을 막기 위함).
+	if (bApplyGoldBonus)
+	{
+		const float ExtraGoldPercent = UR1AbilitySystemLibrary::GetPlayerMetaBonus(this, UPlayerAttributeSet::GetExtraGoldAttribute());
+		if (ExtraGoldPercent > 0.0f)
+		{
+			Amount = FMath::Max(Amount, FMath::FloorToInt(Amount * (1.0f + ExtraGoldPercent / 100.0f)));
+		}
+	}
 
 	Gold += Amount;
 	OnGoldChanged.Broadcast(Gold);
@@ -548,7 +561,7 @@ void UR1InventorySubsystem::SellItem(UR1ItemInstance* Item, int32 Quantity)
 	int32 UnitValue = Item->GetItemData()->BaseValue;
 	int32 SaleValue = FMath::Max(1, FMath::FloorToInt(UnitValue * SellValueRatio)) * Quantity;
 
-	AddGold(SaleValue);
+	AddGold(SaleValue, /*bApplyGoldBonus=*/false);
 
 	// 아이템 개수 차감
 	Item->ItemCount -= Quantity;

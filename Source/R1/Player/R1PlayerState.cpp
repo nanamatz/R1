@@ -59,6 +59,8 @@ void AR1PlayerState::BeginPlay()
 	{
 		RunUpgradeComponent->Reset();
 	}
+
+	RevivesUsed = 0;
 }
 
 float AR1PlayerState::GetCurrentExpRatio() const
@@ -184,6 +186,41 @@ void AR1PlayerState::ApplyMetaUpgrades()
 	{
 		AbilitySystemComponent->SetNumericAttributeBase(PlayerAttr->GetManaAttribute(), PlayerAttr->GetMaxMana());
 	}
+
+	// Honor: 명예 수치만큼 런 시작 강화 포인트를 추가 지급한다.
+	// 세이브 로드 시에는 뒤이어 LoadUpgradeData가 저장된 포인트로 덮어쓰므로 중복 지급되지 않는다.
+	if (RunUpgradeComponent && !bHonorPointsGranted)
+	{
+		if (UPlayerAttributeSet* PlayerAttr = GetPlayerAttributeSet())
+		{
+			const int32 HonorPoints = FMath::FloorToInt(FMath::Max(0.0f, PlayerAttr->GetHonor()));
+			if (HonorPoints > 0)
+			{
+				RunUpgradeComponent->AddPoints(HonorPoints);
+				bHonorPointsGranted = true;
+				UE_LOG(LogR1, Warning, TEXT("[PlayerState] 명예 보너스 강화 포인트 지급: +%d"), HonorPoints);
+			}
+		}
+	}
+}
+
+bool AR1PlayerState::TryConsumeRevive()
+{
+	UPlayerAttributeSet* PlayerAttr = GetPlayerAttributeSet();
+	if (!PlayerAttr)
+	{
+		return false;
+	}
+
+	const int32 MaxRevives = FMath::FloorToInt(FMath::Max(0.0f, PlayerAttr->GetRevive()));
+	if (RevivesUsed >= MaxRevives)
+	{
+		return false;
+	}
+
+	RevivesUsed++;
+	UE_LOG(LogR1, Warning, TEXT("[PlayerState] 부활 사용: %d / %d"), RevivesUsed, MaxRevives);
+	return true;
 }
 
 void AR1PlayerState::OnLevelChanged(const FOnAttributeChangeData& Data)

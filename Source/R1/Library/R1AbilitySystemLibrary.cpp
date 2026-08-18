@@ -9,6 +9,9 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/Attribute/R1AttributeSet.h"
+#include "Player/R1PlayerState.h"
+#include "Engine/Engine.h"
+#include "GameFramework/PlayerController.h"
 
 TArray<AR1Character*> UR1AbilitySystemLibrary::GetChainLightningTargets(AR1Character* SourceActor, AR1Character* InitialTarget, float BounceRadius, int32 MaxBounces)
 {
@@ -190,4 +193,23 @@ void UR1AbilitySystemLibrary::ApplySectorDamageToPlayers(const FGameplayEffectSp
 			}
 		}
 	}
+}
+
+float UR1AbilitySystemLibrary::GetPlayerMetaBonus(const UObject* WorldContextObject, const FGameplayAttribute& Attribute)
+{
+	if (!WorldContextObject || !Attribute.IsValid()) return 0.0f;
+
+	UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull) : nullptr;
+	if (!World) return 0.0f;
+
+	APlayerController* PC = World->GetFirstPlayerController();
+	if (!PC) return 0.0f;
+
+	AR1PlayerState* PS = PC->GetPlayerState<AR1PlayerState>();
+	if (!PS) return 0.0f;
+
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+	if (!ASC) return 0.0f;
+
+	return FMath::Max(0.0f, ASC->GetNumericAttribute(Attribute));
 }
