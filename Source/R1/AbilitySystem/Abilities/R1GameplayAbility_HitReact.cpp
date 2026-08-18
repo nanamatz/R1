@@ -1,4 +1,4 @@
-
+﻿
 
 #include "AbilitySystem/Abilities/R1GameplayAbility_HitReact.h"
 #include "R1LogChannels.h"
@@ -74,7 +74,9 @@ void UR1GameplayAbility_HitReact::OnMontageFinished()
 	AR1Monster* Monster = Cast<AR1Monster>(CurrentActorInfo->AvatarActor.Get());
 	if (Monster && Monster->GetCharacterMovement())
 	{
-		Monster->GetCharacterMovement()->MaxWalkSpeed = Monster->GetR1AttributeSet()->GetMoveSpeed();
+		// ASC에 등록된 어트리뷰트에서 직접 읽는다. 캐시된 CoreAttributeSet 포인터는 BP CDO 직렬화가
+		// None으로 덮어써 널이 될 수 있어(HitReact가 여기서 크래시났음) 신뢰하지 않는다.
+		Monster->GetCharacterMovement()->MaxWalkSpeed = Monster->GetAbilitySystemComponent()->GetNumericAttribute(UR1AttributeSet::GetMoveSpeedAttribute());
 	}
 
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
