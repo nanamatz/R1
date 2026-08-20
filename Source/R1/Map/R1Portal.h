@@ -1,4 +1,4 @@
-
+﻿
 
 #pragma once
 
@@ -48,4 +48,10 @@ public:
 	// 포탈에 진입해 다음 층으로 이동할 때 재생되는 사운드 (포탈 파괴 후에도 유지되도록 2D 재생)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
 	TObjectPtr<USoundBase> EnterSound;
+
+	// 마지막 층 보스를 잡고 생성된 포탈이 이동시킬 엔딩 레벨.
+	// 비워두면 마지막 층에서도 아무 곳으로도 이동하지 않는다.
+	// 레벨에 직접 배치한 포탈(DevMap 테스트용)에서 인스턴스별로 덮어쓸 수 있다.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ending")
+	TSoftObjectPtr<UWorld> EndingLevel;
 };

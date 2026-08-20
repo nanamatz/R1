@@ -1,4 +1,4 @@
-
+﻿
 
 
 #include "Map/DungeonManager.h"
@@ -105,24 +105,12 @@ void ADungeonManager::CompleteRoom()
 
 	UnlockRoomDoors();
 
-	if (ClearCondition == ER1RoomClearCondition::KillBoss)
+	if (ClearCondition == ER1RoomClearCondition::KillBoss && PortalClass)
 	{
-		bool bIsLastFloor = false;
-
-		if (AR1MapGenerator* Generator = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
-		{
-			bIsLastFloor = Generator->IsLastFloor();
-
-			if (bIsLastFloor)
-			{
-				// TODO: 여기에 게임 클리어 UI를 띄우거나, 엔딩 씬으로 넘어가는 코드
-			}
-			else if (PortalClass)
-			{
-				FVector PortalLocation = GetActorLocation() + FVector(0.0f, 0.0f, 50.0f);
-				GetWorld()->SpawnActor<AActor>(PortalClass, PortalLocation, FRotator::ZeroRotator);
-			}
-		}
+		// 마지막 층이든 아니든 포탈은 항상 생성한다.
+		// 다음 층으로 갈지 엔딩 레벨로 갈지는 포탈(AR1Portal)이 판단한다.
+		FVector PortalLocation = GetActorLocation() + PortalSpawnOffset;
+		GetWorld()->SpawnActor<AActor>(PortalClass, PortalLocation, FRotator::ZeroRotator);
 	}
 
 	if (OnRoomCleared.IsBound())

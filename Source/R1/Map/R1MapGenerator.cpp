@@ -518,7 +518,37 @@ void AR1MapGenerator::RegisterRoomManager(ADungeonManager* Manager, int32 RoomNo
 		}
 	}
 
-	if (MatchedNodeID == -1 || !GeneratedMap.IsValidIndex(MatchedNodeID)) return;
+	if (MatchedNodeID == -1 || !GeneratedMap.IsValidIndex(MatchedNodeID))
+	{
+		// 위치 매칭 실패 = 그 방의 문 연결/전투/입장이 영구히 죽는다는 뜻이다.
+		// 조용히 return하면 나중에 ActivateRoom에서 "매니저 미등록"으로만 드러나므로,
+		// 어느 룸 에셋이 원점(0,0,0)에 매니저를 두지 않았는지 여기서 바로 특정한다.
+		const FVector ManagerLoc = Manager->GetActorLocation();
+		int32 NearestNode = -1;
+		double NearestDist = TNumericLimits<double>::Max();
+		for (int32 i = 0; i < GeneratedMap.Num(); ++i)
+		{
+			const double Dist = FVector::Dist(GeneratedMap[i].SpawnLocation, ManagerLoc);
+			if (Dist < NearestDist)
+			{
+				NearestDist = Dist;
+				NearestNode = i;
+			}
+		}
+
+		const UR1RoomDefinitionData* NearestDef = GeneratedMap.IsValidIndex(NearestNode)
+			? GeneratedMap[NearestNode].RoomDefinition : nullptr;
+
+		UE_LOG(LogR1, Error,
+			TEXT("[MapGenerator] RegisterRoomManager 위치 매칭 실패! 레벨=%s / 매니저=%s / 위치=%s / 가장 가까운 노드=%d (거리 %.1f, 방데이터=%s). DungeonManager가 룸 서브레벨 원점(0,0,0)에 있는지 확인하세요."),
+			*GetNameSafe(Manager->GetLevel() ? Manager->GetLevel()->GetOutermost() : nullptr),
+			*Manager->GetName(),
+			*ManagerLoc.ToCompactString(),
+			NearestNode,
+			NearestDist,
+			*GetNameSafe(NearestDef));
+		return;
+	}
 
 	ActiveManagers.Add(MatchedNodeID, Manager);
 

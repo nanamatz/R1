@@ -103,6 +103,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Room Setup")
 	TSubclassOf<AActor> PortalClass;
 
+	// 보스 클리어 시 포탈이 생길 위치. 이 매니저 액터 위치 기준의 월드축 오프셋이며 방마다 따로 지정한다.
+	// 매니저 자체는 룸 서브레벨 원점(0,0,0)에 있어야 RegisterRoomManager의 위치 매칭이 성공하므로,
+	// 포탈 높이/위치를 바꾸려면 매니저를 옮기지 말고 반드시 이 값을 조정할 것.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Setup")
+	FVector PortalSpawnOffset = FVector(0.0f, 0.0f, 50.0f);
+
 protected:
 	// 🌟 에디터에서 맘대로 추가/수정할 수 있는 방 클리어 보상 풀
 	UPROPERTY(EditAnywhere, Category = "Loot")

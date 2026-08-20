@@ -1,4 +1,4 @@
-#include "Map/R1Portal.h"
+﻿#include "Map/R1Portal.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -36,15 +36,25 @@ void AR1Portal::Interact_Implementation(AR1PlayerController* Interactor)
 {
 	if (!Interactor) return;
 
-	// 바로 다음 층으로 이동!
-	if (AR1MapGenerator* Generator = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass())))
-	{
-		// 포탈이 파괴되고 플레이어가 순간이동해도 끊기지 않도록 2D로 재생
-		if (EnterSound)
-		{
-			UGameplayStatics::PlaySound2D(this, EnterSound);
-		}
+	AR1MapGenerator* Generator = Cast<AR1MapGenerator>(UGameplayStatics::GetActorOfClass(this, AR1MapGenerator::StaticClass()));
 
+	// 포탈이 파괴되고 플레이어가 순간이동해도 끊기지 않도록 2D로 재생
+	if (EnterSound)
+	{
+		UGameplayStatics::PlaySound2D(this, EnterSound);
+	}
+
+	// 엔딩 레벨로 이동: 마지막 층이거나, 맵 제너레이터가 없는 테스트 맵(DevMap 등)에 직접 배치된 포탈.
+	// 레벨이 통째로 바뀌므로 Destroy 불필요.
+	if (!EndingLevel.IsNull() && (!Generator || Generator->IsLastFloor()))
+	{
+		UGameplayStatics::OpenLevelBySoftObjectPtr(this, EndingLevel);
+		return;
+	}
+
+	// 바로 다음 층으로 이동!
+	if (Generator)
+	{
 		Generator->GoToNextFloor();
 		Destroy();
 	}

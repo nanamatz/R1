@@ -14,19 +14,19 @@ struct FR1MapNodeSaveData
 	GENERATED_BODY()
 
 	UPROPERTY() 
-	int32 NodeID;
+	int32 NodeID = 0;
 
 	UPROPERTY() 
-	bool bIsCleared;
+	bool bIsCleared = false;
 
 	UPROPERTY()
-	bool bIsVisited;
+	bool bIsVisited = false;
 
 	UPROPERTY() 
-	ER1MinimapRoomState MinimapState;
+	ER1MinimapRoomState MinimapState = ER1MinimapRoomState::Hidden;
 
 	UPROPERTY()
-	FIntPoint GridPosition;
+	FIntPoint GridPosition = FIntPoint::ZeroValue;
 
 	UPROPERTY()
 	TArray<int32> ConnectedNodeIDs;

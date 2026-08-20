@@ -24,6 +24,6 @@ struct FR1StatUpgradeData : public FTableRowBase {
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat Upgrade") FText StatName;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat Upgrade") FName LocalizationKey;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat Upgrade") FGameplayAttribute Attribute;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat Upgrade") float IncreaseAmount;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat Upgrade") ER1StatDisplayType DisplayType;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat Upgrade") float IncreaseAmount = 0.f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat Upgrade") ER1StatDisplayType DisplayType = ER1StatDisplayType::Integer;
 };
